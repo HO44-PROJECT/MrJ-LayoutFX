@@ -1,0 +1,58 @@
+{
+  "name": "MrJ-RailwayFX",
+  "version": "1.0.0",
+  "description": "Compact ESP32/Nano-based DCC accessory decoder for model railways. Supports advanced lighting effects (signals, beacons, campfires, welding arcs, etc.) and extensible peripheral control via I2C, UART, and SPI.",
+  "keywords": "audio, railway",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HO44-PROJECT/MrJ-RailwayFX.git"
+  },
+  "authors": {
+    "name": "MrJ",
+    "email": "ho44project@gmail.com"
+  },
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": [
+    "atmelavr",
+    "espressif32"
+  ],
+  "dependencies": [
+    {
+      "name": "bxparks/AceRoutine",
+      "version": "^1.5.1"
+    },
+    {
+      "name": "mrrwa/NmraDcc",
+      "version": "^2.0.17"
+    },
+    {
+      "name": "solarcaratuva/boost-preprocessor",
+      "version": "^1.77.0"
+    },
+    {
+      "name": "madhephaestus/lx16a-servo",
+      "version": "^0.9.3"
+    },
+    {
+      "name": "olikraus/U8g2",
+      "version": "^2.36.12"
+    },
+    {
+      "name": "featherfly/SoftwareSerial",
+      "version": "^1.0",
+      "platforms": [
+        "atmelavr"
+      ]
+    },
+    {
+      "name": "plerup/EspSoftwareSerial",
+      "version": "^8.2.0",
+      "platforms": [
+        "espressif32"
+      ]
+    }
+  ],
+  "src_dir": "src",
+  "include_dir": "include"
+}
