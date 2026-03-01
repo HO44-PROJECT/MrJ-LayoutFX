@@ -22,7 +22,7 @@
 #include "MrJRailwayFX_configure.h"
 #include <assert.h>
 #include "utils/ArduinoBoard.h"
-#include "NmraDcc.h"
+#include <NmraDcc.h>
 #include "utils/utils.h"
 
 // Type alias for DCC address
