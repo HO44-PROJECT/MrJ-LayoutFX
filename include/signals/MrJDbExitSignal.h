@@ -1,8 +1,8 @@
 /**
  * @file MrJDBExitSignal.h
- * @brief Defines the `MrJDBExitSignal` class for simulating a DB exitk signal.
+ * @brief Defines the `MrJDBExitSignal` class for simulating a DB exit signal.
  *
- * This header file defines a class that simulates a German "Deutsche Bahn" (DB) exitk signal.
+ * This header file defines a class that simulates a German "Deutsche Bahn" (DB) exit signal.
  * It inherits from `CharliePlexingSignal`, which extends `Device`, to manage two output pins
  * and implements a Persistence of Vision (POV) effect for smooth lamp transitions between states.
  *
@@ -26,10 +26,10 @@
 
 /**
  * @class MrJDBExitSignal
- * @brief Manages a simulated Deutsche Bahn exitk signal with a POV effect.
+ * @brief Manages a simulated Deutsche Bahn exit signal with a POV effect.
  *
  * This class extends `CharliePlexingSignal` to implement a state machine and coroutine
- * for controlling a two-pin DB exitk signal. It uses a Persistence of Vision (POV) effect
+ * for controlling a two-pin DB exit signal. It uses a Persistence of Vision (POV) effect
  * to simulate smooth fading transitions, mimicking the behavior of traditional light bulbs.
  */
 class MrJDBExitSignal : public CharliePlexingSignal<MrJDBExitSignalState_PIN_COUNT>
