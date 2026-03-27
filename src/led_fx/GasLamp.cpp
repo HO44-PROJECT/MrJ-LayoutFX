@@ -120,9 +120,13 @@ int GasLamp::runCoroutine()
 
             if (currentTime - startTime >= GASLAMP_EXTINCTION_STEP_MS)
             {
-                brightness -= (GASLAMP_MAX_INTENSITY * GASLAMP_EXTINCTION_STEP_MS) / GASLAMP_EXTINCTION_DURATION_MS;
-                brightness += random(GASLAMP_EXTINCTION_FLICKER_MIN_VARIATION, GASLAMP_EXTINCTION_FLICKER_MAX_VARIATION);
-                brightness = constrain(brightness, 0, GASLAMP_MAX_INTENSITY);
+                // Cast to int before arithmetic: prevents uint8_t underflow wrap-around
+                // (brightness near 0 minus decrement would silently wrap to ~255 otherwise).
+                brightness = (uint8_t)constrain(
+                    (int)brightness
+                    - (GASLAMP_MAX_INTENSITY * GASLAMP_EXTINCTION_STEP_MS) / GASLAMP_EXTINCTION_DURATION_MS
+                    + random(GASLAMP_EXTINCTION_FLICKER_MIN_VARIATION, GASLAMP_EXTINCTION_FLICKER_MAX_VARIATION),
+                    0, GASLAMP_MAX_INTENSITY);
                 startTime = currentTime;
             }
             if (brightness <= GASLAMP_BRIGHTENING_OFF_THRESHOLD)
