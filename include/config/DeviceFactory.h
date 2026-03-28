@@ -78,11 +78,35 @@ public:
    */
   bool load(const char* json);
 
+  /**
+   * @brief SPI expansion bus configuration (from system.spi_cards).
+   */
+  struct SpiCardsCfg {
+    int  mosi  = -1;  ///< MOSI GPIO pin, or -1 if not configured.
+    int  sclk  = -1;  ///< SCLK GPIO pin, or -1 if not configured.
+    int  latch = -1;  ///< Latch GPIO pin, or -1 if not configured.
+    uint8_t count = 0;  ///< Number of daisy-chained 74HC595 cards (0 = no SPI expansion).
+
+    bool configured() const { return count > 0 && mosi >= 0 && sclk >= 0 && latch >= 0; }
+  };
+
   /** @brief Number of successfully created devices. */
-  size_t  count()           const { return _count; }
+  size_t  count()              const { return _count; }
 
   /** @brief Device at index i, or nullptr if i >= count(). */
-  Device* device(size_t i)  const { return (i < _count) ? _devices[i] : nullptr; }
+  Device* device(size_t i)     const { return (i < _count) ? _devices[i] : nullptr; }
+
+  /** @brief Id of device at index i (from JSON "id" field), or "" if i >= count(). */
+  const char* deviceId(size_t i) const { return (i < _count) ? _ids[i] : ""; }
+
+  /**
+   * @brief Daughter SPI card index for device i (1-based), or 0 for main ESP32 GPIO.
+   *        Parsed from the optional JSON "board" field.
+   */
+  uint8_t deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
+
+  /** @brief SPI expansion bus configuration from system.spi_cards, or unconfigured if absent. */
+  const SpiCardsCfg& spiCards() const { return _spiCards; }
 
   /** @brief DCC input pin from system.dcc_pin, or -1 if not configured. */
   int     dccPin()          const { return _dccPin; }
@@ -97,9 +121,12 @@ public:
   void initAll();
 
 private:
-  Device*  _devices[FACTORY_MAX_DEVICES];
-  size_t   _count     = 0;
-  int      _dccPin    = -1;   ///< From system.dcc_pin, -1 if absent.
+  Device*     _devices[FACTORY_MAX_DEVICES];
+  char        _ids[FACTORY_MAX_DEVICES][32];
+  uint8_t     _boards[FACTORY_MAX_DEVICES];   ///< Daughter card index per device (0 = main ESP32).
+  size_t      _count      = 0;
+  int         _dccPin     = -1;   ///< From system.dcc_pin, -1 if absent.
+  SpiCardsCfg _spiCards;          ///< From system.spi_cards, unconfigured if absent.
 
   PortCfg  _ports[FACTORY_MAX_PORTS];
   size_t   _portCount = 0;

@@ -44,6 +44,22 @@ bool DeviceFactory::load(const char* json) {
 
   _dccPin = doc["system"]["dcc_pin"] | -1;
 
+  if (doc["system"]["spi_cards"].is<JsonObject>()) {
+    JsonObject sc   = doc["system"]["spi_cards"].as<JsonObject>();
+    _spiCards.mosi  = sc["mosi"]  | -1;
+    _spiCards.sclk  = sc["sclk"]  | -1;
+    _spiCards.latch = sc["latch"] | -1;
+    _spiCards.count = (uint8_t)(sc["count"] | 0);
+    if (_spiCards.configured()) {
+      Serial.print(F("DeviceFactory: spi_cards mosi="));  Serial.print(_spiCards.mosi);
+      Serial.print(F(" sclk="));  Serial.print(_spiCards.sclk);
+      Serial.print(F(" latch=")); Serial.print(_spiCards.latch);
+      Serial.print(F(" count=")); Serial.println(_spiCards.count);
+    } else {
+      Serial.println(F("DeviceFactory: spi_cards — incomplete config, ignored"));
+    }
+  }
+
   if (doc["serial_ports"].is<JsonObject>()) {
     _parsePorts(doc["serial_ports"].as<JsonObject>());
   }
@@ -56,6 +72,10 @@ bool DeviceFactory::load(const char* json) {
     }
     Device* d = _createDevice(obj);
     if (d) {
+      const char* id = obj["id"] | "";
+      strncpy(_ids[_count], id, sizeof(_ids[0]) - 1);
+      _ids[_count][sizeof(_ids[0]) - 1] = '\0';
+      _boards[_count] = (uint8_t)(obj["board"] | 0);
       _devices[_count++] = d;
     }
   }
