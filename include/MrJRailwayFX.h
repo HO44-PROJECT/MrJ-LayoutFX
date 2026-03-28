@@ -56,6 +56,7 @@
 #include "utils/utils.h"
 
 #include "api/ApiServer.h"
+#include "api/WebUI.h"
 #include "config/ConfigManager.h"
 
 #endif // __MRJ_RAILWAY_FX_H__

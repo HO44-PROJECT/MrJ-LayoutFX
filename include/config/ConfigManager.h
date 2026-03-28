@@ -29,6 +29,9 @@ public:
      */
     static void init(const char* configPath);
 
+    /** @brief Read-only access to the device factory (for WebUI and other modules). */
+    static const DeviceFactory& factory() { return _factory; }
+
 private:
     static DeviceFactory _factory;
     static const char*   _configPath;
