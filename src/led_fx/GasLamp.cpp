@@ -139,8 +139,9 @@ int GasLamp::runCoroutine()
         }
 
         // Single PWM and delay call per loop iteration.
+        // simulatePWM routes via pinWrite: GPIO → digitalWrite, SPI → Spi595Bus.
         if (_pwm) {
-            analogWrite(_pin, brightness);
+            analogWrite(pinId(_pin), brightness);
         } else {
             simulatePWM(_pin, brightness, GASLAMP_PWM_PERIOD_US);
         }

@@ -101,6 +101,16 @@ public:
     bool configured() const { return type != SPI_CARD_UNKNOWN && pinCount > 0; }
   };
 
+  /** @brief Configuration for one named board (from top-level "boards" array). */
+  struct BoardCfg {
+    char        id[32]   = {};  ///< Unique board identifier, e.g. "spi1".
+    char        name[48] = {};  ///< Optional human-readable label.
+    SpiCardType type     = SPI_CARD_UNKNOWN;
+    uint8_t     pinCount = 0;
+
+    bool configured() const { return type != SPI_CARD_UNKNOWN && pinCount > 0; }
+  };
+
   /** @brief Number of successfully created devices. */
   size_t  count()              const { return _count; }
 
@@ -119,10 +129,16 @@ public:
   /** @brief SPI physical bus config from system.spi_bus, or unconfigured if absent. */
   const SpiBusCfg&  spiBus()                    const { return _spiBus; }
 
-  /** @brief Number of configured SPI daughter cards. */
-  uint8_t           spiCardCount()              const { return _spiCardCount; }
+  /** @brief Number of configured boards. */
+  uint8_t           boardCount()                const { return _spiCardCount; }
 
-  /** @brief Config for daughter card at 1-based index i, or unconfigured if out of range. */
+  /** @brief Config for board at 1-based index i, or unconfigured if out of range. */
+  const BoardCfg&   board(uint8_t i)            const {
+      static const BoardCfg empty;
+      return (i >= 1 && i <= _spiCardCount) ? _boards_cfg[i - 1] : empty;
+  }
+
+  /** @brief Config for daughter card at 1-based index i (alias kept for compatibility). */
   const SpiCardCfg& spiCard(uint8_t i)          const {
       static const SpiCardCfg empty;
       return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
@@ -149,8 +165,12 @@ private:
   size_t     _count         = 0;
   int        _dccPin        = -1;                 ///< From system.dcc_pin, -1 if absent.
   SpiBusCfg  _spiBus;                             ///< From system.spi_bus.
-  SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];    ///< From system.spi_cards[].
-  uint8_t    _spiCardCount  = 0;                  ///< Number of entries parsed in spi_cards[].
+  BoardCfg   _boards_cfg[FACTORY_MAX_SPI_CARDS];  ///< From top-level "boards" array.
+  SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];    ///< Mirrors _boards_cfg for Spi595Bus init.
+  uint8_t    _spiCardCount  = 0;                  ///< Number of entries parsed in "boards".
+
+  uint8_t    _resolveBoardId(const char* id) const;  ///< board id string → 1-based index, 0 if not found.
+  uint8_t    _resolveBoardIdx(JsonVariant v) const;  ///< string id (new) or integer (legacy) → 1-based index.
 
   PortCfg  _ports[FACTORY_MAX_PORTS];
   size_t   _portCount = 0;

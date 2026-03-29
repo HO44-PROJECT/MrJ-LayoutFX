@@ -14,6 +14,9 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <esp_system.h>     // esp_get_free_heap_size, esp_chip_info
+#ifdef SPI_CARDS
+#  include "spi/Spi595Bus.h"
+#endif
 
 #define FIRMWARE_VERSION "v1"
 
@@ -44,6 +47,8 @@ void WebUI::init(const DeviceFactory& factory) {
     ApiServer::on("/api/config",  HTTP_GET,  _onGetConfig);
     ApiServer::on("/api/config",  HTTP_POST, _onPostConfig);
     ApiServer::on("/api/status",  HTTP_GET,  _onGetStatus);
+    ApiServer::on("/api/test/gpio", HTTP_POST, _onTestGpio);
+    ApiServer::on("/api/test/spi",  HTTP_POST, _onTestSpi);
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +256,73 @@ void WebUI::_onGetStatus() {
     String json;
     serializeJson(doc, json);
     ApiServer::server().send(200, "application/json", json);
+}
+
+// ---------------------------------------------------------------------------
+// Raw GPIO test (debug view — bypasses device state machine)
+// ---------------------------------------------------------------------------
+
+void WebUI::_onTestGpio() {
+    if (!ApiServer::server().hasArg("plain")) {
+        ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+        return;
+    }
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, ApiServer::server().arg("plain"));
+    if (err || !doc["pin"].is<int>()) {
+        ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+        return;
+    }
+    int pin   = doc["pin"].as<int>();
+    int state = doc["state"] | 0;
+    if (pin < 0 || pin > 39) {
+        ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid pin\"}"));
+        return;
+    }
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, state ? HIGH : LOW);
+    Serial.print(F("WebUI test: GPIO "));
+    Serial.print(pin);
+    Serial.print(F(" -> "));
+    Serial.println(state);
+    ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+}
+
+// ---------------------------------------------------------------------------
+// Raw SPI channel test (debug view — bypasses device state machine)
+// ---------------------------------------------------------------------------
+
+void WebUI::_onTestSpi() {
+    if (!ApiServer::server().hasArg("plain")) {
+        ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+        return;
+    }
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, ApiServer::server().arg("plain"));
+    if (err || !doc["card"].is<int>() || !doc["channel"].is<int>()) {
+        ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+        return;
+    }
+    int card    = doc["card"].as<int>();
+    int channel = doc["channel"].as<int>();
+    int state   = doc["state"] | 0;
+#ifdef SPI_CARDS
+    if (!Spi595Bus::ready()) {
+        ApiServer::server().send(503, "application/json", F("{\"error\":\"SPI not ready\"}"));
+        return;
+    }
+    Spi595Bus::testPin((uint8_t)card, (uint8_t)channel, (uint8_t)(state ? 1 : 0));
+    Serial.print(F("WebUI test: SPI card="));
+    Serial.print(card);
+    Serial.print(F(" ch="));
+    Serial.print(channel);
+    Serial.print(F(" -> "));
+    Serial.println(state);
+    ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+#else
+    (void)card; (void)channel;
+    ApiServer::server().send(501, "application/json", F("{\"error\":\"SPI_CARDS not enabled\"}"));
+#endif
 }
 
 #endif  // ESP32

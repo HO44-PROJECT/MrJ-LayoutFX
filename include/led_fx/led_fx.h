@@ -4,6 +4,7 @@
 
 
 #include "Beacon.h"
+#include "Led.h"
 #include "CampFire.h"
 #include "DefectLamp.h"
 #include "DoubleBeacon.h"

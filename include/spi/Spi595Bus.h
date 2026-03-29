@@ -65,6 +65,19 @@ public:
   /** @brief Push the current image to hardware without changing any bit. */
   static void flush();
 
+  /**
+   * @brief Flush a temporary image with only one bit set — does NOT modify _buf.
+   *
+   * Used by the debug test endpoint: shows only the requested LED without
+   * disturbing the shared animation buffer.  Device coroutines restore normal
+   * states on their next setPin() call.
+   *
+   * @param card1based  Card index (1-based).
+   * @param bit         Wiring value (1-based, same convention as setPin).
+   * @param value       HIGH (1) or LOW (0).
+   */
+  static void testPin(uint8_t card1based, uint8_t bit, uint8_t value);
+
   /** @brief True if init() has been called. */
   static bool ready() { return _totalBytes > 0; }
 

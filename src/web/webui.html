@@ -67,9 +67,17 @@
     }
 
     /* Burger → X animation when drawer is open */
-    body.drawer-open #burger span:nth-child(1) { transform: translateY(7px) rotate(45deg) }
-    body.drawer-open #burger span:nth-child(2) { opacity: 0 }
-    body.drawer-open #burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg) }
+    body.drawer-open #burger span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg)
+    }
+
+    body.drawer-open #burger span:nth-child(2) {
+      opacity: 0
+    }
+
+    body.drawer-open #burger span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg)
+    }
 
     h1 {
       font-size: 1rem;
@@ -96,9 +104,19 @@
       transition: opacity .15s
     }
 
-    .gbtn:active { opacity: .6 }
-    .gbtn.on  { background: #27ae60; color: #fff }
-    .gbtn.off { background: #c0392b; color: #fff }
+    .gbtn:active {
+      opacity: .6
+    }
+
+    .gbtn.on {
+      background: #27ae60;
+      color: #fff
+    }
+
+    .gbtn.off {
+      background: #c0392b;
+      color: #fff
+    }
 
     /* Status bar (cockpit) */
     #sb {
@@ -109,18 +127,22 @@
       border-bottom: 1px solid #0f3460
     }
 
-    #sb span { color: #4CAF50 }
+    #sb span {
+      color: #4CAF50
+    }
 
     /* ── Overlay (closes drawer on outside click) ───────────────────────── */
     #overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.55);
+      background: rgba(0, 0, 0, .55);
       z-index: 200
     }
 
-    body.drawer-open #overlay { display: block }
+    body.drawer-open #overlay {
+      display: block
+    }
 
     /* ── Navigation drawer (slides in from left) ────────────────────────── */
     #drawer {
@@ -138,7 +160,9 @@
       flex-direction: column
     }
 
-    body.drawer-open #drawer { transform: translateX(0) }
+    body.drawer-open #drawer {
+      transform: translateX(0)
+    }
 
     .drawer-title {
       padding: 1.2rem 1rem .8rem;
@@ -150,7 +174,10 @@
       border-bottom: 1px solid #0f3460
     }
 
-    #drawer nav { flex: 1; padding: .5rem 0 }
+    #drawer nav {
+      flex: 1;
+      padding: .5rem 0
+    }
 
     .nav-item {
       display: flex;
@@ -164,7 +191,10 @@
       border-left: 3px solid transparent
     }
 
-    .nav-item:hover { background: #16213e; color: #e0e0e0 }
+    .nav-item:hover {
+      background: #16213e;
+      color: #e0e0e0
+    }
 
     .nav-item.active {
       background: #16213e;
@@ -172,7 +202,11 @@
       border-left-color: #e94560
     }
 
-    .nav-icon { font-size: 1.1rem; width: 1.4rem; text-align: center }
+    .nav-icon {
+      font-size: 1.1rem;
+      width: 1.4rem;
+      text-align: center
+    }
 
     .drawer-footer {
       padding: .75rem 1rem;
@@ -182,8 +216,13 @@
     }
 
     /* ── Views ──────────────────────────────────────────────────────────── */
-    .view { display: none }
-    .view.active { display: block }
+    .view {
+      display: none
+    }
+
+    .view.active {
+      display: block
+    }
 
     /* ── Cockpit view (existing card layout) ────────────────────────────── */
     #grid {
@@ -210,8 +249,16 @@
       text-transform: uppercase
     }
 
-    .gcnt { color: #4a6fa5; font-size: .8rem; font-weight: 400 }
-    .gbtns { display: flex; gap: .4rem }
+    .gcnt {
+      color: #4a6fa5;
+      font-size: .8rem;
+      font-weight: 400
+    }
+
+    .gbtns {
+      display: flex;
+      gap: .4rem
+    }
 
     .gcards {
       display: grid;
@@ -230,13 +277,31 @@
       transition: border-color .4s
     }
 
-    .card.on   { border-color: #27ae60 }
-    .card.off  { border-color: #2c2c3e }
-    .card.busy { border-color: #e67e22 }
-    .card.stop  { border-color: #c0392b }
-    .card.flash { border-color: #e67e22 }
+    .card.on {
+      border-color: #27ae60
+    }
 
-    .ch { display: flex; align-items: center; justify-content: space-between }
+    .card.off {
+      border-color: #2c2c3e
+    }
+
+    .card.busy {
+      border-color: #e67e22
+    }
+
+    .card.stop {
+      border-color: #c0392b
+    }
+
+    .card.flash {
+      border-color: #e67e22
+    }
+
+    .ch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
 
     .cid {
       font-weight: 700;
@@ -246,22 +311,68 @@
       text-overflow: ellipsis
     }
 
-    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0 }
-    .dot.on    { background: #27ae60; box-shadow: 0 0 6px #27ae60 }
-    .dot.off   { background: #3d3d3d }
-    .dot.busy  { background: #e67e22; animation: pulse .7s infinite alternate }
-    .dot.stop  { background: #c0392b; box-shadow: 0 0 6px #c0392b }
-    .dot.flash { background: #e67e22; box-shadow: 0 0 6px #e67e22 }
-
-    @keyframes pulse {
-      from { box-shadow: 0 0 2px #e67e22 }
-      to   { box-shadow: 0 0 10px #e67e22 }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0
     }
 
-    .icon { height: 44px; display: flex; align-items: center; justify-content: center; color: #3a5070 }
-    .icon svg { width: 40px; height: 40px; transition: color .4s }
-    .card.on   .icon { color: #4CAF50 }
-    .card.busy .icon { color: #e67e22 }
+    .dot.on {
+      background: #27ae60;
+      box-shadow: 0 0 6px #27ae60
+    }
+
+    .dot.off {
+      background: #3d3d3d
+    }
+
+    .dot.busy {
+      background: #e67e22;
+      animation: pulse .7s infinite alternate
+    }
+
+    .dot.stop {
+      background: #c0392b;
+      box-shadow: 0 0 6px #c0392b
+    }
+
+    .dot.flash {
+      background: #e67e22;
+      box-shadow: 0 0 6px #e67e22
+    }
+
+    @keyframes pulse {
+      from {
+        box-shadow: 0 0 2px #e67e22
+      }
+
+      to {
+        box-shadow: 0 0 10px #e67e22
+      }
+    }
+
+    .icon {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3a5070
+    }
+
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      transition: color .4s
+    }
+
+    .card.on .icon {
+      color: #4CAF50
+    }
+
+    .card.busy .icon {
+      color: #e67e22
+    }
 
     .badge {
       font-size: .6rem;
@@ -273,7 +384,11 @@
       letter-spacing: .5px
     }
 
-    .meta { display: flex; flex-wrap: wrap; gap: 3px }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px
+    }
 
     .mtag {
       font-size: .58rem;
@@ -296,13 +411,37 @@
       transition: opacity .15s
     }
 
-    .btn:active    { opacity: .65 }
-    .btn.on        { background: #c0392b; color: #fff }
-    .btn.off       { background: #27ae60; color: #fff }
-    .btn.busy      { background: #3d3d3d; color: #666; cursor: default }
-    .btn.static    { background: #1e3a5f; color: #4a6fa5; cursor: default; font-style: italic }
+    .btn:active {
+      opacity: .65
+    }
 
-    .tbtns { display: flex; gap: 3px }
+    .btn.on {
+      background: #c0392b;
+      color: #fff
+    }
+
+    .btn.off {
+      background: #27ae60;
+      color: #fff
+    }
+
+    .btn.busy {
+      background: #3d3d3d;
+      color: #666;
+      cursor: default
+    }
+
+    .btn.static {
+      background: #1e3a5f;
+      color: #4a6fa5;
+      cursor: default;
+      font-style: italic
+    }
+
+    .tbtns {
+      display: flex;
+      gap: 3px
+    }
 
     .tbtn {
       flex: 1;
@@ -317,13 +456,37 @@
       transition: opacity .15s
     }
 
-    .tbtn.active                          { opacity: 1 }
-    .tbtn:not(.active):not([disabled]):hover { opacity: .6 }
-    .tbtn[disabled]                       { cursor: default }
-    .tbtn.t-off   { background: #2c2c3e; color: #aaa }
-    .tbtn.t-stop  { background: #c0392b; color: #fff }
-    .tbtn.t-go    { background: #27ae60; color: #fff }
-    .tbtn.t-flash { background: #e67e22; color: #fff }
+    .tbtn.active {
+      opacity: 1
+    }
+
+    .tbtn:not(.active):not([disabled]):hover {
+      opacity: .6
+    }
+
+    .tbtn[disabled] {
+      cursor: default
+    }
+
+    .tbtn.t-off {
+      background: #2c2c3e;
+      color: #aaa
+    }
+
+    .tbtn.t-stop {
+      background: #c0392b;
+      color: #fff
+    }
+
+    .tbtn.t-go {
+      background: #27ae60;
+      color: #fff
+    }
+
+    .tbtn.t-flash {
+      background: #e67e22;
+      color: #fff
+    }
 
     /* ── Config view ─────────────────────────────────────────────────────── */
     .cfg-panel {
@@ -346,7 +509,9 @@
       gap: .6rem
     }
 
-    .cfg-card-icon { font-size: 2rem }
+    .cfg-card-icon {
+      font-size: 2rem
+    }
 
     .cfg-card-title {
       font-size: .9rem;
@@ -355,7 +520,10 @@
       letter-spacing: 1px
     }
 
-    .cfg-card-desc { font-size: .75rem; color: #7f8c8d }
+    .cfg-card-desc {
+      font-size: .75rem;
+      color: #7f8c8d
+    }
 
     .cfg-filename {
       font-size: .72rem;
@@ -368,7 +536,11 @@
       text-overflow: ellipsis
     }
 
-    .cfg-actions { display: flex; gap: .5rem; margin-top: .25rem }
+    .cfg-actions {
+      display: flex;
+      gap: .5rem;
+      margin-top: .25rem
+    }
 
     .cfg-btn {
       flex: 1;
@@ -384,10 +556,24 @@
       transition: opacity .15s
     }
 
-    .cfg-btn:active  { opacity: .7 }
-    .cfg-btn:disabled { background: #1e3a5f; color: #4a6fa5; cursor: default }
-    .cfg-btn.secondary { background: #1e3a5f; color: #7f8c8d }
-    .cfg-btn.secondary:hover { color: #e0e0e0 }
+    .cfg-btn:active {
+      opacity: .7
+    }
+
+    .cfg-btn:disabled {
+      background: #1e3a5f;
+      color: #4a6fa5;
+      cursor: default
+    }
+
+    .cfg-btn.secondary {
+      background: #1e3a5f;
+      color: #7f8c8d
+    }
+
+    .cfg-btn.secondary:hover {
+      color: #e0e0e0
+    }
 
     .cfg-status {
       width: 100%;
@@ -399,8 +585,17 @@
       letter-spacing: 1px
     }
 
-    .cfg-status.ok  { background: #1a3a2a; color: #27ae60; border: 1px solid #27ae60 }
-    .cfg-status.err { background: #3a1a1a; color: #c0392b; border: 1px solid #c0392b }
+    .cfg-status.ok {
+      background: #1a3a2a;
+      color: #27ae60;
+      border: 1px solid #27ae60
+    }
+
+    .cfg-status.err {
+      background: #3a1a1a;
+      color: #c0392b;
+      border: 1px solid #c0392b
+    }
 
     /* ── Params view ────────────────────────────────────────────────────── */
     .prm-panel {
@@ -438,9 +633,17 @@
       min-height: 2rem
     }
 
-    .prm-label { flex: 1; font-size: .8rem; color: #a0aec0 }
+    .prm-label {
+      flex: 1;
+      font-size: .8rem;
+      color: #a0aec0
+    }
 
-    .prm-field { display: flex; align-items: center; gap: .4rem }
+    .prm-field {
+      display: flex;
+      align-items: center;
+      gap: .4rem
+    }
 
     .prm-input {
       background: #0d1f38;
@@ -453,8 +656,14 @@
       text-align: right
     }
 
-    .prm-input:focus { outline: none; border-color: #4a6fa5 }
-    .prm-input-sm { width: 72px }
+    .prm-input:focus {
+      outline: none;
+      border-color: #4a6fa5
+    }
+
+    .prm-input-sm {
+      width: 72px
+    }
 
     .prm-select {
       background: #0d1f38;
@@ -466,9 +675,15 @@
       width: 105px
     }
 
-    .prm-unit { font-size: .72rem; color: #4a6fa5 }
+    .prm-unit {
+      font-size: .72rem;
+      color: #4a6fa5
+    }
 
-    .prm-lang-btns { display: flex; gap: .4rem }
+    .prm-lang-btns {
+      display: flex;
+      gap: .4rem
+    }
 
     .prm-lang-btn {
       padding: .3rem .75rem;
@@ -482,9 +697,17 @@
       transition: all .15s
     }
 
-    .prm-lang-btn.active { background: #4a6fa5; color: #fff; border-color: #4a6fa5 }
+    .prm-lang-btn.active {
+      background: #4a6fa5;
+      color: #fff;
+      border-color: #4a6fa5
+    }
 
-    .prm-save-row { display: flex; flex-direction: column; gap: .6rem }
+    .prm-save-row {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem
+    }
 
     .prm-status {
       width: 100%;
@@ -496,9 +719,400 @@
       letter-spacing: 1px
     }
 
-    .prm-status.ok  { background: #1a3a2a; color: #27ae60; border: 1px solid #27ae60 }
-    .prm-status.err { background: #3a1a1a; color: #c0392b; border: 1px solid #c0392b }
-    .prm-info { font-size: .8rem; color: #4a6fa5; text-align: center; padding: .4rem }
+    .prm-status.ok {
+      background: #1a3a2a;
+      color: #27ae60;
+      border: 1px solid #27ae60
+    }
+
+    .prm-status.err {
+      background: #3a1a1a;
+      color: #c0392b;
+      border: 1px solid #c0392b
+    }
+
+    .prm-info {
+      font-size: .8rem;
+      color: #4a6fa5;
+      text-align: center;
+      padding: .4rem
+    }
+
+    /* ── Debug (mise au point) ──────────────────────────────────────────── */
+    .dbg-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .dbg-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .dbg-add-panel {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem
+    }
+
+    .dbg-add-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #7f8c8d;
+      letter-spacing: 2px;
+      text-transform: uppercase
+    }
+
+    .dbg-add-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .dbg-add-btn {
+      padding: .4rem .9rem;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      background: #0d1f38;
+      color: #a0aec0;
+      font-size: .78rem;
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .dbg-add-btn:hover {
+      border-color: #4a6fa5;
+      color: #e0e0e0
+    }
+
+    #dbg-boards {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 1rem
+    }
+
+    .dbg-board {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      padding: 1rem;
+      display: inline-flex;
+      flex-direction: column;
+      gap: .75rem;
+      width: fit-content
+    }
+
+    .dbg-board-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .dbg-board-name {
+      font-size: .85rem;
+      font-weight: 700;
+      color: #e0e0e0
+    }
+
+    .dbg-idx-badge {
+      display: inline-block;
+      background: #0f3460;
+      color: #4a6fa5;
+      font-size: .65rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: .5rem;
+      letter-spacing: .5px
+    }
+
+    .dbg-board-actions {
+      display: flex;
+      gap: .3rem
+    }
+
+    .dbg-hbtn {
+      padding: .25rem .6rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      transition: opacity .15s
+    }
+
+    .dbg-hbtn.on {
+      background: #27ae60;
+      color: #fff
+    }
+
+    .dbg-hbtn.off {
+      background: #c0392b;
+      color: #fff
+    }
+
+    .dbg-hbtn.rm {
+      background: #1a2a3a;
+      color: #4a6fa5
+    }
+
+    .dbg-hbtn:active {
+      opacity: .6
+    }
+
+    /* PCB area */
+    .dbg-pcb {
+      background: #061208;
+      border: 1px solid #1a3a20;
+      border-radius: 6px;
+      padding: .75rem;
+      overflow-x: auto
+    }
+
+    .dbg-extra-row {
+      display: flex;
+      gap: .25rem;
+      flex-wrap: wrap;
+      margin-bottom: .6rem;
+      padding-bottom: .6rem;
+      border-bottom: 1px dashed #1a3a20
+    }
+
+    .dbg-dip {
+      display: flex;
+      flex-direction: column;
+      gap: .3rem
+    }
+
+    .dbg-col {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: .25rem
+    }
+
+    .dbg-chip {
+      background: #0a1a08;
+      border: 1px solid #1a3a18;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: .62rem;
+      color: #2a7a3a;
+      letter-spacing: 1px;
+      padding: .4rem .75rem;
+      line-height: 1.5;
+      min-height: 28px
+    }
+
+    .dbg-flat {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem;
+      align-items: center
+    }
+
+    .dbg-flat-sep {
+      width: 10px
+    }
+
+    /* Pin buttons */
+    .dbg-pin {
+      width: 48px;
+      height: 52px;
+      padding: 3px 2px;
+      border: 1px solid #1a3a20;
+      background: #0a1a0e;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #2a7a3a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: all .15s;
+      user-select: none;
+      box-sizing: border-box
+    }
+
+    .dbg-pin-ico {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .dbg-pin-ico svg {
+      width: 22px;
+      height: 22px
+    }
+
+    .dbg-pin-num {
+      font-size: .58rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: .3px
+    }
+
+    .dbg-pin:not(.nc):not(.gnd):not(.pwr):not(.sys):not(.jtag):not(.ro):not(.boot):not(.flash):not(.busy):hover {
+      border-color: #27ae60;
+      color: #4CAF50
+    }
+
+    .dbg-pin.on {
+      background: #0d2a14;
+      border-color: #27ae60;
+      color: #27ae60;
+      box-shadow: 0 0 5px rgba(39, 174, 96, .3)
+    }
+
+    .dbg-pin.off {
+      background: #100808;
+      border-color: #4a1f1f;
+      color: #7a4040
+    }
+
+    .dbg-pin.test-on {
+      background: #07131a;
+      border-color: #2a6080;
+      color: #5aafcf
+    }
+
+    .dbg-pin.busy {
+      background: #130f00;
+      border-color: #5a4000;
+      color: #e67e22;
+      cursor: default
+    }
+
+    .dbg-pin.sys {
+      background: #071520;
+      border-color: #1a3a60;
+      color: #4a8aaa;
+      cursor: default
+    }
+
+    .dbg-pin.jtag {
+      background: #0d0a00;
+      border-color: #3a3000;
+      color: #6a5a20;
+      cursor: default
+    }
+
+    .dbg-pin.ro {
+      background: #0a0a14;
+      border-color: #1a1a30;
+      color: #3a3a5a;
+      cursor: default
+    }
+
+    .dbg-pin.boot {
+      background: #100800;
+      border-color: #3a2800;
+      color: #7a5520;
+      cursor: default
+    }
+
+    .dbg-pin.flash {
+      border: none;
+      background: transparent;
+      color: #1a1a22;
+      cursor: default
+    }
+
+    .dbg-pin.nc {
+      border: none;
+      background: transparent;
+      color: #1a3a1a;
+      cursor: default
+    }
+
+    .dbg-pin.gnd {
+      border: none;
+      background: transparent;
+      color: #1a2a18;
+      cursor: default;
+      font-size: .58rem
+    }
+
+    .dbg-pin.pwr {
+      border: none;
+      background: transparent;
+      color: #2a1a10;
+      cursor: default;
+      font-size: .58rem
+    }
+
+    .dbg-pin-sys {
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: .2px;
+      line-height: 1;
+      color: inherit
+    }
+
+    /* Raw GPIO test sub-button (LED icon) overlaid on pin */
+    .dbg-pin {
+      position: relative
+    }
+
+    .dbg-led-btn {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid #1a5a2a;
+      background: #071510;
+      color: #2a6a3a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .12s;
+      z-index: 2;
+      padding: 0
+    }
+
+    .dbg-led-btn svg {
+      width: 10px;
+      height: 10px
+    }
+
+    .dbg-led-btn:hover {
+      border-color: #27ae60;
+      color: #4CAF50
+    }
+
+    .dbg-led-btn.on {
+      border-color: #27ae60;
+      background: #0d2a14;
+      color: #27ae60;
+      box-shadow: 0 0 4px rgba(39, 174, 96, .4)
+    }
+
+    .dbg-led-btn.off {
+      border-color: #4a1f1f;
+      background: #100808;
+      color: #5a3030
+    }
 
     /* ── About view ─────────────────────────────────────────────────────── */
     .abt-panel {
@@ -535,7 +1149,9 @@
       transition: color .15s
     }
 
-    .abt-refresh:hover { color: #e0e0e0 }
+    .abt-refresh:hover {
+      color: #e0e0e0
+    }
 
     .abt-grid {
       display: grid;
@@ -570,7 +1186,11 @@
       gap: .5rem
     }
 
-    .abt-label { font-size: .75rem; color: #7f8c8d; white-space: nowrap }
+    .abt-label {
+      font-size: .75rem;
+      color: #7f8c8d;
+      white-space: nowrap
+    }
 
     .abt-value {
       font-size: .8rem;
@@ -579,8 +1199,15 @@
       text-align: right
     }
 
-    .abt-link { font-size: .75rem; color: #4a6fa5; text-decoration: none }
-    .abt-link:hover { color: #e94560 }
+    .abt-link {
+      font-size: .75rem;
+      color: #4a6fa5;
+      text-decoration: none
+    }
+
+    .abt-link:hover {
+      color: #e94560
+    }
 
     .abt-bar-wrap {
       height: 5px;
@@ -597,8 +1224,13 @@
       transition: width .5s
     }
 
-    .abt-bar.warn { background: #e67e22 }
-    .abt-bar.crit { background: #c0392b }
+    .abt-bar.warn {
+      background: #e67e22
+    }
+
+    .abt-bar.crit {
+      background: #c0392b
+    }
 
     /* ── Placeholder views ───────────────────────────────────────────────── */
     .placeholder {
@@ -611,7 +1243,9 @@
       color: #3a4a5a
     }
 
-    .placeholder-icon { font-size: 3.5rem }
+    .placeholder-icon {
+      font-size: 3.5rem
+    }
 
     .placeholder h2 {
       font-size: 1rem;
@@ -620,7 +1254,12 @@
       color: #4a6fa5
     }
 
-    .placeholder p { font-size: .8rem; color: #3a4a5a; text-align: center; max-width: 280px }
+    .placeholder p {
+      font-size: .8rem;
+      color: #3a4a5a;
+      text-align: center;
+      max-width: 280px
+    }
   </style>
 </head>
 
@@ -636,7 +1275,7 @@
     </button>
     <h1>&#9881; MrJ RailwayFX</h1>
     <div id="hdr-actions">
-      <button class="gbtn on"  onclick="allDevices(1)" data-i18n="hdr.allon">TOUT ALLUMER</button>
+      <button class="gbtn on" onclick="allDevices(1)" data-i18n="hdr.allon">TOUT ALLUMER</button>
       <button class="gbtn off" onclick="allDevices(0)" data-i18n="hdr.alloff">TOUT ÉTEINDRE</button>
     </div>
   </header>
@@ -663,6 +1302,9 @@
       <div class="nav-item" data-view="params" onclick="switchView('params')">
         <span class="nav-icon">⚙</span> <span data-i18n="nav.params">Paramètres</span>
       </div>
+      <div class="nav-item" data-view="debug" onclick="switchView('debug')">
+        <span class="nav-icon">🔧</span> <span data-i18n="nav.debug">Vue technique</span>
+      </div>
       <div class="nav-item" data-view="about" onclick="switchView('about')">
         <span class="nav-icon">ℹ</span> <span data-i18n="nav.about">À propos</span>
       </div>
@@ -673,6 +1315,38 @@
   <!-- ── View: Cockpit ─────────────────────────────────────────────────── -->
   <div id="view-cockpit" class="view active">
     <div id="grid"></div>
+  </div>
+
+  <!-- ── View: Debug (mise au point) ─────────────────────────────────── -->
+  <div id="view-debug" class="view">
+    <div class="dbg-panel">
+
+      <div class="dbg-top">
+        <div class="abt-title" data-i18n="nav.debug">Vue technique</div>
+        <div style="display:flex;gap:.4rem">
+          <button class="abt-refresh" onclick="refreshDebug()" data-i18n="abt.refresh">Actualiser</button>
+          <button class="abt-refresh" onclick="showAddBoard()" data-i18n="dbg.add_board">+ Carte</button>
+        </div>
+      </div>
+
+      <!-- Board type selector -->
+      <div id="dbg-add-panel" style="display:none" class="dbg-add-panel">
+        <div class="dbg-add-title" data-i18n="dbg.select_type">Type de carte</div>
+        <div class="dbg-add-grid">
+          <div class="dbg-add-btn" onclick="addBoard('esp32devkitc')">ESP32 DevKit C</div>
+          <div class="dbg-add-btn" onclick="addBoard('mrj_esp32')">MrJ RailwayFX ESP32</div>
+          <div class="dbg-add-btn" onclick="addBoard('shiftreg16')">Registre 16 sorties</div>
+          <div class="dbg-add-btn" onclick="addBoard('mrj_spi')">MrJ SPI Daughter Card</div>
+        </div>
+        <div>
+          <button class="abt-refresh" onclick="showAddBoard()" data-i18n="dbg.cancel">Annuler</button>
+        </div>
+      </div>
+
+      <!-- Board cards -->
+      <div id="dbg-boards"></div>
+
+    </div>
   </div>
 
   <!-- ── View: À propos ───────────────────────────────────────────────── -->
@@ -715,14 +1389,15 @@
       <div class="cfg-card">
         <div class="cfg-card-icon">⬆</div>
         <div class="cfg-card-title" data-i18n="cfg.ul.title">Uploader</div>
-        <div class="cfg-card-desc" data-i18n="cfg.ul.desc">Envoie un nouveau fichier JSON — l'ESP32 redémarre pour l'appliquer.</div>
+        <div class="cfg-card-desc" data-i18n="cfg.ul.desc">Envoie un nouveau fichier JSON — l'ESP32 redémarre pour
+          l'appliquer.</div>
         <div id="cfg-filename" class="cfg-filename">Aucun fichier sélectionné</div>
         <input type="file" id="cfg-file" accept=".json" onchange="onCfgFileSelect(this)" style="display:none">
         <div class="cfg-actions">
           <button class="cfg-btn secondary" onclick="document.getElementById('cfg-file').click()"
-                  data-i18n="cfg.ul.choose">Choisir…</button>
-          <button class="cfg-btn" id="cfg-upload-btn" onclick="uploadConfig()"
-                  disabled data-i18n="cfg.ul.upload">Uploader</button>
+            data-i18n="cfg.ul.choose">Choisir…</button>
+          <button class="cfg-btn" id="cfg-upload-btn" onclick="uploadConfig()" disabled
+            data-i18n="cfg.ul.upload">Uploader</button>
         </div>
       </div>
 
@@ -751,8 +1426,8 @@
         <div class="prm-row">
           <span class="prm-label" data-i18n="prm.poll_interval">Rafraîchissement</span>
           <div class="prm-field">
-            <input type="number" id="prm-poll" min="500" max="30000" step="500"
-                   class="prm-input prm-input-sm" onchange="savePollInterval()">
+            <input type="number" id="prm-poll" min="500" max="30000" step="500" class="prm-input prm-input-sm"
+              onchange="savePollInterval()">
             <span class="prm-unit">ms</span>
           </div>
         </div>
@@ -766,8 +1441,8 @@
 
       <!-- Save -->
       <div class="prm-save-row">
-        <button class="cfg-btn" id="prm-save-btn" onclick="saveParams()"
-                data-i18n="prm.save" disabled>Enregistrer et redémarrer</button>
+        <button class="cfg-btn" id="prm-save-btn" onclick="saveParams()" data-i18n="prm.save" disabled>Enregistrer et
+          redémarrer</button>
         <div id="prm-status" style="display:none" class="prm-status"></div>
       </div>
 
@@ -777,7 +1452,7 @@
   <script>
 
     /* ── Constants ──────────────────────────────────────────────────────── */
-    var POLL         = 3000;
+    var POLL = 3000;
     var STATIC_TYPES = ['StaticLow'];
     var TRAFFIC_TYPES = ['Traffic Light 3ph', 'Traffic Light 4ph'];
 
@@ -795,14 +1470,14 @@
 
     function switchView(name) {
       // Hide all views
-      document.querySelectorAll('.view').forEach(function(v) {
+      document.querySelectorAll('.view').forEach(function (v) {
         v.classList.remove('active');
       });
       // Show target view
       document.getElementById('view-' + name).classList.add('active');
 
       // Update nav items
-      document.querySelectorAll('.nav-item').forEach(function(item) {
+      document.querySelectorAll('.nav-item').forEach(function (item) {
         item.classList.toggle('active', item.dataset.view === name);
       });
 
@@ -814,12 +1489,18 @@
       _currentView = name;
       closeDrawer();
       if (name === 'params') loadParams();
-      if (name === 'about')  loadAbout();
+      if (name === 'about') loadAbout();
+      if (name === 'debug') loadDebug();
     }
 
     /* ── SVG Icons ──────────────────────────────────────────────────────── */
     var S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">';
     var E = '</svg>';
+    // Mini LED SVG for the raw-GPIO test sub-button
+    var LED_ICO = S + '<circle cx="12" cy="11" r="4"/>'
+      + '<path d="M12 1v2M12 18v2M3 11H1M23 11h-2M5.6 4.6l1.4 1.4M15 15.4l1.4 1.4M5.6 17.4l1.4-1.4M15 6.6l1.4-1.4"/>'
+      + '<line x1="9" y1="21" x2="15" y2="21"/><line x1="12" y1="15" x2="12" y2="21"/>'
+      + E;
     var ICONS = {
       'Beacon': S
         + '<circle cx="12" cy="10" r="3.5"/>'
@@ -980,6 +1661,13 @@
         + '<path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2 2M16.8 16.8l2 2M19.8 4.2l-2 2M7.2 16.8l-2 2"/>'
         + E,
 
+      'Led': S
+        + '<circle cx="12" cy="11" r="4"/>'
+        + '<path d="M12 1v2M12 18v2M3 11H1M23 11h-2M5.6 4.6l1.4 1.4M15 15.4l1.4 1.4M5.6 17.4l1.4-1.4M15 6.6l1.4-1.4"/>'
+        + '<line x1="9" y1="21" x2="15" y2="21"/>'
+        + '<line x1="12" y1="15" x2="12" y2="21"/>'
+        + E,
+
       '_': S
         + '<circle cx="12" cy="12" r="9"/>'
         + '<path d="M9.5 9.5a3 3 0 1 1 3 3V14"/>'
@@ -996,7 +1684,7 @@
     }
 
     function clsTraffic(d) {
-      if (d.state < 0)    return 'busy';
+      if (d.state < 0) return 'busy';
       if (d.desired === 2) return 'on';
       if (d.desired === 1) return 'stop';
       if (d.desired === 3) return 'flash';
@@ -1005,8 +1693,8 @@
 
     function lbl(c) {
       if (c === 'static') return t('ck.static');
-      if (c === 'busy')   return t('ck.busy');
-      if (c === 'on')     return t('ck.on');
+      if (c === 'busy') return t('ck.busy');
+      if (c === 'on') return t('ck.on');
       return t('ck.off');
     }
 
@@ -1033,7 +1721,7 @@
         + '<div class="icon">' + ico + '</div>'
         + '<span class="badge">' + d.type + '</span>'
         + meta(d)
-        + '<div class="tbtns">' + tbtn('OFF','off',0) + tbtn('GO','go',2) + tbtn('FLASH','flash',3) + tbtn('STOP','stop',1) + '</div>'
+        + '<div class="tbtns">' + tbtn('OFF', 'off', 0) + tbtn('GO', 'go', 2) + tbtn('FLASH', 'flash', 3) + tbtn('STOP', 'stop', 1) + '</div>'
         + '</div>';
     }
 
@@ -1055,12 +1743,12 @@
     function render(devs) {
       var order = [];
       var groups = {};
-      devs.forEach(function(d) {
+      devs.forEach(function (d) {
         if (!groups[d.type]) { groups[d.type] = []; order.push(d.type); }
         groups[d.type].push(d);
       });
       var html = '';
-      order.forEach(function(type) {
+      order.forEach(function (type) {
         var list = groups[type];
         var isStatic = STATIC_TYPES.indexOf(type) >= 0;
         html += '<div class="group">';
@@ -1089,8 +1777,8 @@
 
     function poll() {
       fetch('/api/devices')
-        .then(function(r) { if (!r.ok) throw r; return r.json(); })
-        .then(function(d) { document.getElementById('err').style.display = 'none'; render(d); })
+        .then(function (r) { if (!r.ok) throw r; return r.json(); })
+        .then(function (d) { document.getElementById('err').style.display = 'none'; render(d); })
         .catch(showErr);
     }
 
@@ -1133,10 +1821,10 @@
       if (!file) return;
 
       var reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         // Validate JSON client-side before sending
         try { JSON.parse(e.target.result); }
-        catch(err) { cfgStatus('JSON invalide : ' + err.message, 'err'); return; }
+        catch (err) { cfgStatus('JSON invalide : ' + err.message, 'err'); return; }
 
         document.getElementById('cfg-upload-btn').disabled = true;
         cfgStatus('Envoi en cours…', 'ok');
@@ -1146,9 +1834,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: e.target.result
         })
-        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function() { startRebootCountdown(); })
-        .catch(function(err) { cfgStatus('Erreur : ' + err.message, 'err'); });
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function () { startRebootCountdown(); })
+          .catch(function (err) { cfgStatus('Erreur : ' + err.message, 'err'); });
       };
       reader.readAsText(file);
     }
@@ -1156,7 +1844,7 @@
     function startRebootCountdown() {
       var n = 5;
       function tick() {
-        cfgStatus(t('cfg.rebooting', {n: n}), 'ok');
+        cfgStatus(t('cfg.rebooting', { n: n }), 'ok');
         if (n-- > 0) setTimeout(tick, 1000);
       }
       tick();
@@ -1169,6 +1857,432 @@
       el.textContent = msg;
     }
 
+    /* ── Debug (mise au point) ──────────────────────────────────────────── */
+
+    // Board definitions — pins arrays: GPIO number (gpio boards) or channel 1..N (spi boards)
+    // Special strings ('GND', '3V3', 'VCC') render as non-clickable labels.
+    var BOARD_DEFS = {
+      'esp32devkitc': {
+        name: 'ESP32 DevKit C', short: 'ESP32', btype: 'gpio',
+        left: [
+          { lbl: 'GND', gnd: true },
+          { g: 23 }, { g: 22 },
+          { g: 1, sys: 'TX0' }, { g: 3, sys: 'RX0' },
+          { g: 21 },
+          { lbl: 'GND', gnd: true },
+          { g: 19 }, { g: 18 }, { g: 5 },
+          { g: 17 }, { g: 16 }, { g: 4 },
+          { g: 0, boot: true },
+          { g: 2 },
+          { g: 15 },
+          { lbl: 'SD1', flash: true }, { lbl: 'SD0', flash: true }, { lbl: 'CLK', flash: true }
+        ],
+        right: [
+          { lbl: '3V3', pwr: true },
+          { lbl: 'EN', sys: 'EN' },
+          { g: 36, ro: true, sys: 'VP' }, { g: 39, ro: true, sys: 'VN' },
+          { g: 34, ro: true }, { g: 35, ro: true },
+          { g: 32 }, { g: 33 }, { g: 25 }, { g: 26 }, { g: 27 },
+          { g: 14 }, { g: 12 },
+          { lbl: 'GND', gnd: true },
+          { g: 13 },
+          { lbl: 'SD2', flash: true }, { lbl: 'SD3', flash: true }, { lbl: 'CMD', flash: true },
+          { lbl: '5V', pwr: true }
+        ]
+      },
+      'mrj_esp32': {
+        name: 'MrJ RailwayFX ESP32', short: 'MrJ\u00b7ESP32', btype: 'gpio',
+        extra: [19, 21, 3, 1, 22, 23, 'GND', 'GND'],
+        left: [23, 22, 1, 3, 21, 19, 18, 5, 17, 16, 4, 2],
+        right: [32, 33, 25, 26, 27, 14, 12, 13, 15]
+      },
+      'shiftreg16': {
+        name: 'Registre 16 sorties', short: 'HC595', btype: 'spi',
+        flat: true, channels: 16
+      },
+      'mrj_spi': {
+        name: 'MrJ SPI Daughter Card', short: 'HC595\u00d72', btype: 'spi',
+        left: [1, 2, 3, 4, 5, 6, 7, 8],
+        right: [9, 10, 11, 12, 13, 14, 15, 16]
+      }
+    };
+
+    var _dbgBoards = [];  // persisted to localStorage
+    var _dbgDevs = [];  // from /api/devices
+    var _dbgTest = {};  // client GPIO test state: {'g17': 0|1}
+    var _dbgTestSpi = {};  // client SPI test state: {'c1_p9': 0|1}
+    var _dbgSysPins = {};  // gpio → sys label from config: {23:'MOSI', 18:'SCLK', ...}
+
+    // Extract system-used GPIO labels from /api/config payload
+    function loadSystemPins(cfg) {
+      _dbgSysPins = {};
+      if (!cfg) return;
+      var sys = cfg.system || {};
+      if (sys.dcc_pin >= 0) _dbgSysPins[sys.dcc_pin] = 'DCC';
+      if (sys.spi_bus) {
+        if (sys.spi_bus.mosi >= 0) _dbgSysPins[sys.spi_bus.mosi] = 'MOSI';
+        if (sys.spi_bus.sclk >= 0) _dbgSysPins[sys.spi_bus.sclk] = 'SCLK';
+        if (sys.spi_bus.latch >= 0) _dbgSysPins[sys.spi_bus.latch] = 'LATCH';
+      }
+      var ports = (cfg.system && cfg.system.serial_ports) || {};
+      Object.keys(ports).forEach(function (name) {
+        var p = ports[name];
+        var shortName = name.replace('uart', 'U').toUpperCase();
+        if (p.tx >= 0) _dbgSysPins[p.tx] = shortName + '\u00b7TX';
+        if (p.rx >= 0) _dbgSysPins[p.rx] = shortName + '\u00b7RX';
+      });
+    }
+
+    // Return the GPIO number from a pin spec (object or number), or null if non-gpio
+    function pinGpio(spec) {
+      if (typeof spec === 'number') return spec;
+      if (spec && typeof spec.g === 'number') return spec.g;
+      return null;
+    }
+
+    function dbgSaveBoards() {
+      localStorage.setItem('dbg_boards', JSON.stringify(_dbgBoards));
+    }
+
+    function dbgLoadBoards() {
+      var s = localStorage.getItem('dbg_boards');
+      try { _dbgBoards = s ? JSON.parse(s) : []; } catch (e) { _dbgBoards = []; }
+      if (!_dbgBoards.length) {
+        _dbgBoards = [{ id: 'b0', type: 'esp32devkitc', boardIdx: 0 }];
+        dbgSaveBoards();
+      }
+    }
+
+    function showAddBoard() {
+      var p = document.getElementById('dbg-add-panel');
+      p.style.display = p.style.display === 'none' ? '' : 'none';
+    }
+
+    function addBoard(type) {
+      var def = BOARD_DEFS[type];
+      if (!def) return;
+      var isSpi = def.btype === 'spi';
+      var nextIdx = 0;
+      if (isSpi) {
+        _dbgBoards.forEach(function (b) {
+          var d = BOARD_DEFS[b.type];
+          if (d && d.btype === 'spi' && b.boardIdx >= nextIdx) nextIdx = b.boardIdx + 1;
+        });
+        if (nextIdx < 1) nextIdx = 1;
+      }
+      _dbgBoards.push({ id: 'b' + Date.now(), type: type, boardIdx: nextIdx });
+      dbgSaveBoards();
+      document.getElementById('dbg-add-panel').style.display = 'none';
+      renderDebugBoards();
+    }
+
+    function removeBoard(id) {
+      _dbgBoards = _dbgBoards.filter(function (b) { return b.id !== id; });
+      dbgSaveBoards();
+      renderDebugBoards();
+    }
+
+    // Sync _dbgBoards with what config.json declares:
+    // - always keep (or add) the ESP32 GPIO board (boardIdx 0)
+    // - add/remove SPI boards to match top-level "boards" array
+    function syncBoardsFromConfig(cfg) {
+      if (!cfg) return;
+
+      // Ensure ESP32 board exists
+      var hasGpio = _dbgBoards.some(function (b) {
+        return BOARD_DEFS[b.type] && BOARD_DEFS[b.type].btype === 'gpio';
+      });
+      if (!hasGpio) {
+        _dbgBoards.unshift({ id: 'b_gpio', type: 'esp32devkitc', boardIdx: 0 });
+      }
+
+      // Sync boards from config: add missing, remove stale
+      var cfgBoards = cfg.boards || [];
+      cfgBoards.forEach(function (bd, i) {
+        var boardIdx = i + 1;
+        var already = _dbgBoards.some(function (b) {
+          return BOARD_DEFS[b.type] && BOARD_DEFS[b.type].btype === 'spi' && b.boardIdx === boardIdx;
+        });
+        if (!already) {
+          var btype = 'shiftreg16';
+          if (bd.type === 'HC595' && (bd.pin_count || 0) > 16) btype = 'mrj_spi';
+          _dbgBoards.push({ id: 'cfg_spi_' + boardIdx, type: btype, boardIdx: boardIdx, label: bd.name || bd.id });
+        }
+      });
+      // Remove SPI boards whose boardIdx exceeds what config declares
+      var configBoardCount = cfgBoards.length;
+      _dbgBoards = _dbgBoards.filter(function (b) {
+        var d = BOARD_DEFS[b.type];
+        if (!d || d.btype !== 'spi') return true;
+        return b.boardIdx >= 1 && b.boardIdx <= configBoardCount;
+      });
+
+      dbgSaveBoards();
+    }
+
+    function loadDebug() {
+      dbgLoadBoards();
+      var pDevs = fetch('/api/devices')
+        .then(function (r) { if (!r.ok) throw r; return r.json(); })
+        .then(function (devs) { _dbgDevs = devs; })
+        .catch(function () { });
+      var pCfg = fetch('/api/config')
+        .then(function (r) { if (!r.ok) throw r; return r.json(); })
+        .then(function (cfg) { loadSystemPins(cfg); syncBoardsFromConfig(cfg); })
+        .catch(function () { });
+      Promise.all([pDevs, pCfg]).then(function () { renderDebugBoards(); });
+    }
+
+    function refreshDebug() { loadDebug(); }
+
+    // Find a device by board index and pin/channel number
+    function dbgFindDev(boardIdx, num) {
+      for (var i = 0; i < _dbgDevs.length; i++) {
+        if (_dbgDevs[i].board === boardIdx && _dbgDevs[i].pin === num) return _dbgDevs[i];
+      }
+      return null;
+    }
+
+    // ── Rendering ────────────────────────────────────────────────────────
+
+    function renderDebugBoards() {
+      var html = _dbgBoards.map(renderDbgBoard).join('');
+      document.getElementById('dbg-boards').innerHTML =
+        html || '<div class="prm-info">' + t('dbg.no_boards') + '</div>';
+    }
+
+    function renderDbgBoard(board) {
+      var def = BOARD_DEFS[board.type];
+      if (!def) return '';
+      var isSpi = def.btype === 'spi';
+      var badge = isSpi
+        ? ' <span class="dbg-idx-badge">board\u00a0' + board.boardIdx + '</span>'
+        : ' <span class="dbg-idx-badge">GPIO</span>';
+
+      return '<div class="dbg-board">'
+        + '<div class="dbg-board-hdr">'
+        + '<span class="dbg-board-name">' + def.name + badge + '</span>'
+        + '<div class="dbg-board-actions">'
+        + '<button class="dbg-hbtn on"  onclick="dbgAll(\'' + board.id + '\',1)">' + t('dbg.all_on') + '</button>'
+        + '<button class="dbg-hbtn off" onclick="dbgAll(\'' + board.id + '\',0)">' + t('dbg.all_off') + '</button>'
+        + '<button class="dbg-hbtn rm"  onclick="removeBoard(\'' + board.id + '\')">\u2715</button>'
+        + '</div></div>'
+        + (def.flat ? renderFlatPcb(board, def) : renderDipPcb(board, def))
+        + '</div>';
+    }
+
+    function renderDipPcb(board, def) {
+      var extra = '';
+      if (def.extra) {
+        extra = '<div class="dbg-extra-row">'
+          + def.extra.map(function (p) { return renderPin(board, def, p); }).join('')
+          + '</div>';
+      }
+      var leftCols = (def.left || []).map(function (p) { return renderPin(board, def, p); }).join('');
+      var rightCols = (def.right || []).map(function (p) { return renderPin(board, def, p); }).join('');
+      return '<div class="dbg-pcb">'
+        + extra
+        + '<div class="dbg-dip">'
+        + '<div class="dbg-col">' + leftCols + '</div>'
+        + '<div class="dbg-chip">' + def.short + '</div>'
+        + '<div class="dbg-col">' + rightCols + '</div>'
+        + '</div></div>';
+    }
+
+    function renderFlatPcb(board, def) {
+      var n = def.channels || 16;
+      var pins = '';
+      for (var i = 1; i <= n; i++) {
+        if (i === n / 2 + 1) pins += '<div class="dbg-flat-sep"></div>';
+        pins += renderPin(board, def, i);
+      }
+      return '<div class="dbg-pcb"><div class="dbg-flat">' + pins + '</div></div>';
+    }
+
+    function renderPin(board, def, spec) {
+      var isSpi = def.btype === 'spi';
+
+      // Legacy string labels (GND, 3V3, etc.) — kept for mrj_esp32 extra row
+      if (typeof spec === 'string') {
+        var sc = spec === 'GND' ? 'gnd' : 'pwr';
+        return '<div class="dbg-pin ' + sc + '">' + spec + '</div>';
+      }
+
+      // Object spec with no GPIO (pure label: GND, 3V3, 5V, EN, flash pins, etc.)
+      if (typeof spec === 'object' && typeof spec.g !== 'number') {
+        var lbl = spec.lbl || '?';
+        var sc2 = spec.gnd ? 'gnd' : spec.pwr ? 'pwr' : spec.flash ? 'flash' : spec.sys ? 'sys' : 'nc';
+        return '<div class="dbg-pin ' + sc2 + '">' + lbl + '</div>';
+      }
+
+      // Numeric spec (legacy SPI channels or mrj_esp32 GPIO numbers)
+      var num = (typeof spec === 'number') ? spec : spec.g;
+
+      var dev = isSpi ? dbgFindDev(board.boardIdx, num) : dbgFindDev(0, num);
+      var cls = '';
+      var onclick = '';
+      var inner = '';
+
+      var ledBtn = '';  // raw GPIO test sub-button — only for GPIO (not SPI) pins
+
+      // Helper: build the LED sub-button for direct GPIO toggle
+      function mkLedBtn(gpio) {
+        var ts = _dbgTest['g' + gpio] ? 1 : 0;
+        return '<button class="dbg-led-btn ' + (ts ? 'on' : 'off') + '"'
+          + ' onclick="event.stopPropagation();dbgTestGpio(' + gpio + ',' + (1 - ts) + ')"'
+          + ' title="GPIO\u00a0' + gpio + ' direct">' + LED_ICO + '</button>';
+      }
+
+      // Helper: build the LED sub-button for direct SPI channel toggle (unassigned)
+      function mkSpiLedBtn(card, ch) {
+        var key = 'c' + card + '_p' + ch;
+        var ts = _dbgTestSpi[key] ? 1 : 0;
+        return '<button class="dbg-led-btn ' + (ts ? 'on' : 'off') + '"'
+          + ' onclick="event.stopPropagation();dbgTestSpi(' + card + ',' + ch + ',' + (1 - ts) + ')"'
+          + ' title="card\u00a0' + card + '\u00a0ch\u00a0' + ch + '">' + LED_ICO + '</button>';
+      }
+
+      if (dev) {
+        cls = dev.desired > 0 ? 'on' : 'off';
+        var ns = dev.desired > 0 ? 0 : 1;
+        onclick = ' onclick="dbgToggleDev(\'' + dev.id + '\',' + ns + ')"';
+        var ico = ICONS[dev.type] || ICONS['_'];
+        inner = '<div class="dbg-pin-ico">' + ico + '</div>'
+          + '<span class="dbg-pin-num">' + num + '</span>';
+        if (!isSpi) {
+          // GPIO: sub-button for raw GPIO test (bypasses device state machine)
+          ledBtn = mkLedBtn(num);
+        } else {
+          // SPI: sub-button for raw SPI channel test (bypasses device state machine)
+          ledBtn = mkSpiLedBtn(board.boardIdx, num);
+        }
+      } else if (!isSpi) {
+        // Determine pin category from spec flags
+        var specObj = (typeof spec === 'object') ? spec : {};
+        if (specObj.jtag) {
+          cls = 'jtag';
+          inner = '<span class="dbg-pin-num">' + num + '</span>'
+            + '<span class="dbg-pin-sys">JTAG</span>';
+        } else if (specObj.boot) {
+          cls = 'boot';
+          inner = '<span class="dbg-pin-num">' + num + '</span>'
+            + '<span class="dbg-pin-sys">BOOT</span>';
+        } else if (specObj.ro) {
+          cls = 'ro';
+          var roLbl = specObj.sys || '';
+          inner = '<span class="dbg-pin-num">' + num + '</span>'
+            + (roLbl ? '<span class="dbg-pin-sys">' + roLbl + '</span>' : '');
+        } else {
+          var sysLbl = _dbgSysPins[num] || (specObj.sys || '');
+          if (sysLbl) {
+            cls = 'sys';
+            inner = '<span class="dbg-pin-num">' + num + '</span>'
+              + '<span class="dbg-pin-sys">' + sysLbl + '</span>';
+          } else {
+            // Free GPIO: just the number + LED sub-button (no big icon in main area)
+            var ts = _dbgTest['g' + num] ? 1 : 0;
+            cls = ts ? 'test-on' : '';
+            onclick = ' onclick="dbgTestGpio(' + num + ',' + (1 - ts) + ')"';
+            inner = '<span class="dbg-pin-num">' + num + '</span>';
+            ledBtn = mkLedBtn(num);
+          }
+        }
+      } else {
+        // Unassigned SPI channel: visible box + LED direct-test sub-button (like free GPIO)
+        var spiKey = 'c' + board.boardIdx + '_p' + num;
+        var spiTs = _dbgTestSpi[spiKey] ? 1 : 0;
+        cls = spiTs ? 'test-on' : '';
+        onclick = ' onclick="dbgTestSpi(' + board.boardIdx + ',' + num + ',' + (1 - spiTs) + ')"';
+        inner = '<span class="dbg-pin-num">' + num + '</span>';
+        ledBtn = mkSpiLedBtn(board.boardIdx, num);
+      }
+
+      return '<div class="dbg-pin' + (cls ? ' ' + cls : '') + '"' + onclick + '>' + inner + ledBtn + '</div>';
+    }
+
+    // ── Actions ──────────────────────────────────────────────────────────
+
+    function dbgToggleDev(id, state) {
+      post('/api/device', { id: id, state: state })
+        .then(function () { loadDebug(); })
+        .catch(function (e) { console.error('dbgToggleDev', e); });
+    }
+
+    function dbgTestGpio(pin, state) {
+      fetch('/api/test/gpio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin, state: state })
+      })
+        .then(function () {
+          _dbgTest['g' + pin] = state;
+          renderDebugBoards();  // fast local re-render
+        })
+        .catch(function (e) { console.error('dbgTestGpio', e); });
+    }
+
+    function dbgTestSpi(card, channel, state) {
+      fetch('/api/test/spi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ card: card, channel: channel, state: state })
+      })
+        .then(function () {
+          _dbgTestSpi['c' + card + '_p' + channel] = state;
+          renderDebugBoards();  // fast local re-render
+        })
+        .catch(function (e) { console.error('dbgTestSpi', e); });
+    }
+
+    // Sequential all-on/off to avoid overwhelming ESP32 web server
+    function dbgAll(boardId, state) {
+      var board = null;
+      for (var i = 0; i < _dbgBoards.length; i++) {
+        if (_dbgBoards[i].id === boardId) { board = _dbgBoards[i]; break; }
+      }
+      if (!board) return;
+      var def = BOARD_DEFS[board.type];
+      if (!def) return;
+      var isSpi = def.btype === 'spi';
+      var pins = [];
+      if (def.flat) {
+        for (var j = 1; j <= (def.channels || 16); j++) pins.push(j);
+      } else {
+        var allSpecs = (def.left || []).concat(def.right || []).concat(def.extra || []);
+        allSpecs.forEach(function (p) { var g = pinGpio(p); if (g !== null) pins.push(g); });
+      }
+      // Deduplicate (extra may overlap left/right)
+      var seen = {};
+      pins = pins.filter(function (p) { if (seen[p]) return false; seen[p] = true; return true; });
+
+      function doNext(idx) {
+        if (idx >= pins.length) { loadDebug(); return; }
+        var num = pins[idx];
+        var dev = isSpi ? dbgFindDev(board.boardIdx, num) : dbgFindDev(0, num);
+        var p;
+        if (dev) {
+          p = post('/api/device', { id: dev.id, state: state });
+        } else if (!isSpi) {
+          p = fetch('/api/test/gpio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: num, state: state })
+          }).then(function () { _dbgTest['g' + num] = state; });
+        } else {
+          // Unassigned SPI channel — direct raw test
+          (function (c, ch, s) {
+            p = fetch('/api/test/spi', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ card: c, channel: ch, state: s })
+            }).then(function () { _dbgTestSpi['c' + c + '_p' + ch] = s; });
+          })(board.boardIdx, num, state);
+        }
+        p.then(function () { doNext(idx + 1); }).catch(function () { doNext(idx + 1); });
+      }
+      doNext(0);
+    }
+
     /* ── About ──────────────────────────────────────────────────────────── */
 
     function pad2(n) { return n < 10 ? '0' + n : String(n); }
@@ -1176,7 +2290,7 @@
     function fmtBytes(b) {
       if (b === undefined || b === null) return '\u2014';
       if (b >= 1048576) return (b / 1048576).toFixed(1) + '\u00a0MB';
-      if (b >= 1024)    return (b / 1024).toFixed(1) + '\u00a0KB';
+      if (b >= 1024) return (b / 1024).toFixed(1) + '\u00a0KB';
       return b + '\u00a0B';
     }
 
@@ -1192,18 +2306,18 @@
     function abtCard(title, rows) {
       return '<div class="abt-card">'
         + '<div class="abt-card-title">' + title + '</div>'
-        + rows.map(function(r) {
-            var barHtml = '';
-            if (r.bar !== undefined) {
-              var cls = r.bar > 85 ? ' crit' : r.bar > 65 ? ' warn' : '';
-              barHtml = '<div class="abt-bar-wrap"><div class="abt-bar' + cls
-                + '" style="width:' + r.bar + '%"></div></div>';
-            }
-            return '<div class="abt-row">'
-              + '<span class="abt-label">' + r.label + '</span>'
-              + '<span class="abt-value">' + r.value + '</span>'
-              + '</div>' + barHtml;
-          }).join('')
+        + rows.map(function (r) {
+          var barHtml = '';
+          if (r.bar !== undefined) {
+            var cls = r.bar > 85 ? ' crit' : r.bar > 65 ? ' warn' : '';
+            barHtml = '<div class="abt-bar-wrap"><div class="abt-bar' + cls
+              + '" style="width:' + r.bar + '%"></div></div>';
+          }
+          return '<div class="abt-row">'
+            + '<span class="abt-label">' + r.label + '</span>'
+            + '<span class="abt-value">' + r.value + '</span>'
+            + '</div>' + barHtml;
+        }).join('')
         + '</div>';
     }
 
@@ -1212,9 +2326,9 @@
       grid.innerHTML = '<div class="prm-info">' + t('prm.loading') + '</div>';
 
       fetch('/api/status')
-        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function(s) { renderAbout(s); })
-        .catch(function(err) {
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (s) { renderAbout(s); })
+        .catch(function (err) {
           grid.innerHTML = '<div class="prm-info">' + t('prm.load_err') + ': ' + err.message + '</div>';
         });
     }
@@ -1225,44 +2339,50 @@
       // Firmware
       html += abtCard(t('abt.firmware'), [
         { label: t('abt.version'), value: s.version || '\u2014' },
-        { label: t('abt.build'),   value: s.build_date || '\u2014' },
+        { label: t('abt.build'), value: s.build_date || '\u2014' },
         { label: t('abt.project'), value: t('abt.coming_soon') },
       ]);
 
       // System
       var chip = (s.chip || 'ESP32') + ' rev.\u00a0' + (s.chip_rev !== undefined ? s.chip_rev : '?');
       html += abtCard(t('abt.system'), [
-        { label: t('abt.chip'),     value: chip },
+        { label: t('abt.chip'), value: chip },
         { label: t('abt.cpu_freq'), value: (s.cpu_mhz || '\u2014') + '\u00a0MHz' },
-        { label: t('abt.uptime'),   value: fmtUptime(s.uptime_s || 0) },
+        { label: t('abt.uptime'), value: fmtUptime(s.uptime_s || 0) },
       ]);
 
       // Memory
       var heapPct = s.heap_total ? Math.round((1 - s.heap_free / s.heap_total) * 100) : 0;
       html += abtCard(t('abt.memory'), [
-        { label: t('abt.heap_free'),
+        {
+          label: t('abt.heap_free'),
           value: fmtBytes(s.heap_free) + '\u00a0/\u00a0' + fmtBytes(s.heap_total),
-          bar: heapPct },
+          bar: heapPct
+        },
         { label: t('abt.heap_min'), value: fmtBytes(s.heap_min) },
       ]);
 
       // Flash
-      var fwUsed  = s.sketch_size || 0;
+      var fwUsed = s.sketch_size || 0;
       var fwTotal = fwUsed + (s.sketch_free || 0);
-      var fwPct   = fwTotal ? Math.round(fwUsed / fwTotal * 100) : 0;
+      var fwPct = fwTotal ? Math.round(fwUsed / fwTotal * 100) : 0;
       html += abtCard(t('abt.flash'), [
-        { label: t('abt.firmware_size'),
+        {
+          label: t('abt.firmware_size'),
           value: fmtBytes(fwUsed) + '\u00a0/\u00a0' + fmtBytes(fwTotal),
-          bar: fwPct },
+          bar: fwPct
+        },
       ]);
 
       // Filesystem
       if (s.fs_total !== undefined) {
         var fsPct = s.fs_total ? Math.round(s.fs_used / s.fs_total * 100) : 0;
         html += abtCard(t('abt.fs'), [
-          { label: 'LittleFS',
+          {
+            label: 'LittleFS',
             value: fmtBytes(s.fs_used) + '\u00a0/\u00a0' + fmtBytes(s.fs_total),
-            bar: fsPct },
+            bar: fsPct
+          },
         ]);
       }
 
@@ -1270,9 +2390,11 @@
       if (s.temp_c !== undefined) {
         var tempPct = Math.min(100, Math.max(0, Math.round((s.temp_c - 20) * 100 / 80)));
         html += abtCard(t('abt.temp'), [
-          { label: 'CPU',
+          {
+            label: 'CPU',
             value: s.temp_c.toFixed(1) + '\u00a0\u00b0C',
-            bar: tempPct },
+            bar: tempPct
+          },
         ]);
       }
 
@@ -1324,6 +2446,14 @@
         'ck.busy': '\u2026',
         'ck.grp_on': 'ALLUMER',
         'ck.grp_off': '\u00c9TEINDRE',
+        // debug view
+        'nav.debug': 'Vue technique',
+        'dbg.add_board': '+ Carte',
+        'dbg.cancel': 'Annuler',
+        'dbg.select_type': 'Type de carte',
+        'dbg.all_on': 'Tout ON',
+        'dbg.all_off': 'Tout OFF',
+        'dbg.no_boards': 'Aucune carte. Cliquez sur \u00ab\u00a0+\u00a0Carte\u00a0\u00bb pour commencer.',
         // about view
         'nav.about': '\u00c0 propos',
         'abt.refresh': 'Actualiser',
@@ -1388,6 +2518,14 @@
         'ck.busy': '\u2026',
         'ck.grp_on': 'TURN ON',
         'ck.grp_off': 'TURN OFF',
+        // debug view
+        'nav.debug': 'Debug',
+        'dbg.add_board': '+ Board',
+        'dbg.cancel': 'Cancel',
+        'dbg.select_type': 'Board type',
+        'dbg.all_on': 'All ON',
+        'dbg.all_off': 'All OFF',
+        'dbg.no_boards': 'No boards. Click \u00ab\u00a0+\u00a0Board\u00a0\u00bb to start.',
         // about view
         'nav.about': 'About',
         'abt.refresh': 'Refresh',
@@ -1415,7 +2553,7 @@
 
     function t(key, vars) {
       var s = (TRANSLATIONS[_lang] || TRANSLATIONS['fr'])[key] || key;
-      if (vars) Object.keys(vars).forEach(function(k) { s = s.replace('{' + k + '}', vars[k]); });
+      if (vars) Object.keys(vars).forEach(function (k) { s = s.replace('{' + k + '}', vars[k]); });
       return s;
     }
 
@@ -1426,7 +2564,7 @@
     }
 
     function applyLang() {
-      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
         // Skip the cfg-filename div — its text is managed by onCfgFileSelect
         if (el.id === 'cfg-filename') return;
         // Skip prm-system-fields — it contains dynamically generated HTML
@@ -1460,13 +2598,13 @@
       prmStatus('', '');
 
       fetch('/api/config')
-        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function(cfg) {
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (cfg) {
           _cfgData = cfg;
           renderSystemFields(cfg);
           document.getElementById('prm-save-btn').disabled = false;
         })
-        .catch(function(err) {
+        .catch(function (err) {
           flds.className = 'prm-info';
           flds.textContent = t('prm.load_err') + ': ' + err.message;
         });
@@ -1481,30 +2619,30 @@
 
     function gpioInput(id, val) {
       return '<input type="number" id="' + id + '" value="' + (val !== undefined ? val : '') + '"'
-           + ' min="0" max="39" class="prm-input prm-input-sm">';
+        + ' min="0" max="39" class="prm-input prm-input-sm">';
     }
 
     function baudSelect(id, val) {
       var bauds = [9600, 19200, 38400, 57600, 115200];
       return '<select id="' + id + '" class="prm-select">'
-        + bauds.map(function(b) {
-            return '<option value="' + b + '"' + (b === val ? ' selected' : '') + '>' + b + '</option>';
-          }).join('')
+        + bauds.map(function (b) {
+          return '<option value="' + b + '"' + (b === val ? ' selected' : '') + '>' + b + '</option>';
+        }).join('')
         + '</select>';
     }
 
     function pinCountSelect(id, val) {
       var counts = [8, 16, 24, 32];
       return '<select id="' + id + '" class="prm-select">'
-        + counts.map(function(c) {
-            return '<option value="' + c + '"' + (c === val ? ' selected' : '') + '>' + c + '</option>';
-          }).join('')
+        + counts.map(function (c) {
+          return '<option value="' + c + '"' + (c === val ? ' selected' : '') + '>' + c + '</option>';
+        }).join('')
         + '</select>';
     }
 
     function renderSystemFields(cfg) {
       var sys = cfg.system || {};
-      var sp  = cfg.serial_ports || {};
+      var sp = sys.serial_ports || {};
       var html = '';
 
       if (sys.dcc_pin !== undefined) {
@@ -1515,21 +2653,21 @@
         html += frow(t('prm.oled.scl'), gpioInput('pf-oled_scl', sys.oled.scl));
       }
       if (sys.spi_bus) {
-        html += frow(t('prm.spi.mosi'),  gpioInput('pf-spi_mosi',  sys.spi_bus.mosi));
-        html += frow(t('prm.spi.sclk'),  gpioInput('pf-spi_sclk',  sys.spi_bus.sclk));
+        html += frow(t('prm.spi.mosi'), gpioInput('pf-spi_mosi', sys.spi_bus.mosi));
+        html += frow(t('prm.spi.sclk'), gpioInput('pf-spi_sclk', sys.spi_bus.sclk));
         html += frow(t('prm.spi.latch'), gpioInput('pf-spi_latch', sys.spi_bus.latch));
       }
-      if (sys.spi_cards && sys.spi_cards.length) {
-        sys.spi_cards.forEach(function(card, i) {
-          var lbl = t('prm.spi_card', {n: i + 1}) + ' \u00b7 ' + t('prm.pin_count');
-          html += frow(lbl, pinCountSelect('pf-spi_card_' + i + '_pins', card.pin_count));
+      if (cfg.boards && cfg.boards.length) {
+        cfg.boards.forEach(function (bd, i) {
+          var lbl = (bd.name || bd.id) + ' \u00b7 ' + t('prm.pin_count');
+          html += frow(lbl, pinCountSelect('pf-board_' + i + '_pins', bd.pin_count));
         });
       }
-      Object.keys(sp).forEach(function(uartKey) {
+      Object.keys(sp).forEach(function (uartKey) {
         var u = sp[uartKey];
         var pfx = uartKey.toUpperCase() + ' \u00b7 ';
-        html += frow(pfx + t('prm.tx'),   gpioInput('pf-' + uartKey + '_tx',   u.tx));
-        html += frow(pfx + t('prm.rx'),   gpioInput('pf-' + uartKey + '_rx',   u.rx));
+        html += frow(pfx + t('prm.tx'), gpioInput('pf-' + uartKey + '_tx', u.tx));
+        html += frow(pfx + t('prm.rx'), gpioInput('pf-' + uartKey + '_rx', u.rx));
         html += frow(pfx + t('prm.baud'), baudSelect('pf-' + uartKey + '_baud', u.baud));
       });
 
@@ -1542,7 +2680,7 @@
       if (!_cfgData) return;
       var cfg = JSON.parse(JSON.stringify(_cfgData));
       var sys = cfg.system || {};
-      var sp  = cfg.serial_ports || {};
+      var sp = sys.serial_ports || {};
 
       function getInt(id) {
         var el = document.getElementById(id);
@@ -1557,27 +2695,27 @@
         if (document.getElementById('pf-oled_scl')) sys.oled.scl = getInt('pf-oled_scl');
       }
       if (sys.spi_bus) {
-        if (document.getElementById('pf-spi_mosi'))  sys.spi_bus.mosi  = getInt('pf-spi_mosi');
-        if (document.getElementById('pf-spi_sclk'))  sys.spi_bus.sclk  = getInt('pf-spi_sclk');
+        if (document.getElementById('pf-spi_mosi')) sys.spi_bus.mosi = getInt('pf-spi_mosi');
+        if (document.getElementById('pf-spi_sclk')) sys.spi_bus.sclk = getInt('pf-spi_sclk');
         if (document.getElementById('pf-spi_latch')) sys.spi_bus.latch = getInt('pf-spi_latch');
       }
-      if (sys.spi_cards) {
-        sys.spi_cards.forEach(function(card, i) {
-          var el = document.getElementById('pf-spi_card_' + i + '_pins');
-          if (el) card.pin_count = parseInt(el.value, 10);
+      if (cfg.boards) {
+        cfg.boards.forEach(function (bd, i) {
+          var el = document.getElementById('pf-board_' + i + '_pins');
+          if (el) bd.pin_count = parseInt(el.value, 10);
         });
       }
-      Object.keys(sp).forEach(function(uartKey) {
+      Object.keys(sp).forEach(function (uartKey) {
         var u = sp[uartKey];
         var tx = document.getElementById('pf-' + uartKey + '_tx');
         var rx = document.getElementById('pf-' + uartKey + '_rx');
         var bd = document.getElementById('pf-' + uartKey + '_baud');
-        if (tx) u.tx   = parseInt(tx.value, 10);
-        if (rx) u.rx   = parseInt(rx.value, 10);
+        if (tx) u.tx = parseInt(tx.value, 10);
+        if (rx) u.rx = parseInt(rx.value, 10);
         if (bd) u.baud = parseInt(bd.value, 10);
       });
+      sys.serial_ports = sp;
       cfg.system = sys;
-      cfg.serial_ports = sp;
 
       document.getElementById('prm-save-btn').disabled = true;
       prmStatus('', '');
@@ -1587,19 +2725,19 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cfg)
       })
-      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function() {
-        var n = 5;
-        function tick() {
-          prmStatus(t('prm.saved', {n: n}), 'ok');
-          if (n-- > 0) setTimeout(tick, 1000);
-        }
-        tick();
-      })
-      .catch(function(err) {
-        document.getElementById('prm-save-btn').disabled = false;
-        prmStatus(t('prm.save_err', {msg: err.message}), 'err');
-      });
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function () {
+          var n = 5;
+          function tick() {
+            prmStatus(t('prm.saved', { n: n }), 'ok');
+            if (n-- > 0) setTimeout(tick, 1000);
+          }
+          tick();
+        })
+        .catch(function (err) {
+          document.getElementById('prm-save-btn').disabled = false;
+          prmStatus(t('prm.save_err', { msg: err.message }), 'err');
+        });
     }
 
     function prmStatus(msg, cls) {
@@ -1610,7 +2748,7 @@
     }
 
     /* ── Boot ───────────────────────────────────────────────────────────── */
-    (function() {
+    (function () {
       var stored = parseInt(localStorage.getItem('poll') || '0', 10);
       if (stored >= 500) POLL = stored;
       document.getElementById('prm-poll').value = POLL;

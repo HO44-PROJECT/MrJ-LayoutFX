@@ -53,6 +53,8 @@ private:
     static void _onGetConfig();
     static void _onPostConfig();
     static void _onGetStatus();
+    static void _onTestGpio();
+    static void _onTestSpi();
 };
 
 #endif  // ESP32
