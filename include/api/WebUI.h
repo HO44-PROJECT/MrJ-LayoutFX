@@ -3,10 +3,12 @@
  *
  * @brief Web interface for live device monitoring and on/off control (ESP32 / WEBUI only).
  *
- * Registers three routes on ApiServer:
+ * Registers routes on ApiServer:
  *   GET  /ui          → serve the control panel HTML page
  *   GET  /api/devices → JSON array of all devices with current state
  *   POST /api/device  → body {"id":"<id>","state":<0|1>} — toggle a device
+ *   POST /api/all     → body {"state":<0|1>} — control all non-static devices
+ *   POST /api/group   → body {"type":"<DeviceName>","state":<0|1>} — control a type
  *
  * Must be called after ConfigManager::init() and before ApiServer::init().
  *
@@ -43,6 +45,8 @@ private:
     static void _onGetUi();
     static void _onGetDevices();
     static void _onPostDevice();
+    static void _onAllDevices();
+    static void _onGroupDevices();
 };
 
 #endif  // ESP32

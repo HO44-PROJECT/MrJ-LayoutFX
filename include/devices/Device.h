@@ -20,6 +20,9 @@
 
 #include "MrJRailwayFX_configure.h"
 #include "devices/PinState.h"
+#ifdef SPI_CARDS
+#  include "spi/Spi595Bus.h"
+#endif
 #include "utils/utils.h"
 #include "devices/Pov.h"
 #include <assert.h>
@@ -222,13 +225,14 @@ public:
         }
         if (pin_count > 0 && label == ' ')
         {
-            setLabel(toHexChar(pins[0]));
+            setLabel(toHexChar(pinId(pins[0])));
         }
         // TODO
         // return validatePins();
         return true;
     }
 
+#ifndef SPI_CARDS
     virtual bool setPins(size_t pin_count, ...)
     {
         va_list args;
@@ -244,14 +248,12 @@ public:
 
         if (pin_count > 0 && label == ' ')
         {
-            // premier pin pour label
-            // ⚠️ si tu veux être 100% correct il faut le récupérer dans une première boucle
-            // et stocker temporairement
             setLabel(toHexChar(getPin(0)));
         }
 
         return true;
     }
+#endif // !SPI_CARDS
     virtual bool validatePins()
     {
         // DEBUG_PRINTF("validate pins for device %s\n", getDeviceName());
@@ -303,26 +305,24 @@ public:
      * @param pin_count The number of pins provided.
      * @param ... A variable list of PIN_ID arguments.
      */
+#ifndef SPI_CARDS
     virtual bool setVarPins(size_t pin_count, ...)
     {
         {
-
-            // Initialize variadic argument list
             va_list args;
             va_start(args, pin_count);
 
-            // Assign pins from variadic arguments, filling unused slots with NO_PIN
             for (size_t i = 0; i < getPinCount(); i++)
             {
                 setPin(i, i < pin_count ? static_cast<PIN_ID>(va_arg(args, int)) : NO_PIN);
             }
 
-            // Clean up variadic argument list
             va_end(args);
 
             return validatePins();
         }
     }
+#endif // !SPI_CARDS
 
     /**
      * @brief Initializes the device's pins.
@@ -382,27 +382,29 @@ public:
     virtual PIN_ID getPin(size_t index) const = 0;
 
     /**
-     * @brief Activates the specified pin.
-     *
-     * Sets the pin to its active state using the configured `active_state`.
-     *
-     * @param pin The pin number to activate.
+     * @brief Activates the specified pin (GPIO or SPI daughter card).
      */
-    void outputActive(uint8_t pin)
+    void outputActive(PIN_ID pin)
     {
+#ifdef SPI_CARDS
+        if (pin.isSpi()) { Spi595Bus::setPin(pin.card, pin.pin, active_state.value); return; }
+        digitalWrite(pin.pin, active_state.value);
+#else
         digitalWrite(pin, active_state.value);
+#endif
     }
 
     /**
-     * @brief Deactivates the specified pin.
-     *
-     * Sets the pin to its inactive state using the configured `inactive_state`.
-     *
-     * @param pin The pin number to deactivate.
+     * @brief Deactivates the specified pin (GPIO or SPI daughter card).
      */
-    void outputInactive(uint8_t pin)
+    void outputInactive(PIN_ID pin)
     {
+#ifdef SPI_CARDS
+        if (pin.isSpi()) { Spi595Bus::setPin(pin.card, pin.pin, inactive_state.value); return; }
+        digitalWrite(pin.pin, inactive_state.value);
+#else
         digitalWrite(pin, inactive_state.value);
+#endif
     }
 
     /**
@@ -415,9 +417,7 @@ public:
         label = newLabel;
         for (uint8_t i = 0; i < getPinCount(); i++)
         {
-            // Serial.print("status label ");
-            // Serial.println(getPin(i));
-            STATUS_LABEL(getPin(i), label);
+            STATUS_LABEL(pinId(getPin(i)), label);
         }
     }
 
@@ -472,7 +472,7 @@ protected:
         // Refresh status on display
         for (uint8_t i = 0; i < getPinCount(); i++)
         {
-            STATUS(getPin(i), statusChar());
+            STATUS(pinId(getPin(i)), statusChar());
         }
 
         activateNewTarget();
@@ -487,15 +487,21 @@ protected:
      * @param pin The pin number to configure.
      * @param state A PIN_STATE object defining the mode and value.
      */
-    virtual void pin_it(uint8_t pin, PIN_STATE state)
+    virtual void pin_it(PIN_ID pin, PIN_STATE state)
     {
         if (pin == NO_PIN)
             return;
-
-        // DEBUG_PRINT("pin it "); DEBUG_PRINT(pin); DEBUG_PRINT(" value = "); DEBUG_PRINTLN(state.value);
-
+#ifdef SPI_CARDS
+        if (pin.isSpi()) {
+            Spi595Bus::setPin(pin.card, pin.pin, state.value);
+            return;
+        }
+        pinMode(pin.pin, state.mode);
+        digitalWrite(pin.pin, state.value);
+#else
         pinMode(pin, state.mode);
         digitalWrite(pin, state.value);
+#endif
     }
 
     PIN_STATE active_state = H;   ///< Active output state (default: high).

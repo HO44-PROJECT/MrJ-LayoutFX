@@ -150,6 +150,7 @@ public:
      */
     uint8_t registerDccDrivableDevice(ADDRESS address)
     {
+        decoderAddress = address;
         if (DccDrivableDeviceNumber < MAX_PIN_NUMBER)
         {
             DccDrivableDevices[DccDrivableDeviceNumber] = this;
@@ -159,6 +160,9 @@ public:
         }
         return NOT_A_DCC_DEVICE;
     }
+
+    /** @brief Returns the registered DCC address, or 0 if not registered. */
+    ADDRESS getDccAddress() const { return decoderAddress; }
 
 protected:
     // DCC address for the device

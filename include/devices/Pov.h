@@ -18,6 +18,9 @@
 #define __POV_H__
 
 #include <AceRoutine.h>
+#ifdef SPI_CARDS
+#  include "spi/Spi595Bus.h"
+#endif
 using namespace ace_routine;
 
 /**
@@ -35,9 +38,9 @@ using namespace ace_routine;
 #define simulatePWM_raw(pin, intensity, period)                             \
   do                                                                        \
   {                                                                         \
-    digitalWrite(pin, HIGH);                                                \
+    pinWrite(pin, HIGH);                                                    \
     COROUTINE_DELAY_MICROS((uint32_t)(intensity) * (period) / 255);         \
-    digitalWrite(pin, LOW);                                                 \
+    pinWrite(pin, LOW);                                                     \
     COROUTINE_DELAY_MICROS((uint32_t)(255 - (intensity)) * (period) / 255); \
   } while (0)
 
@@ -58,12 +61,12 @@ using namespace ace_routine;
   {                                                                           \
     if (intensity > 0)                                                        \
     {                                                                         \
-      digitalWrite(pin, HIGH);                                                \
+      pinWrite(pin, HIGH);                                                    \
       COROUTINE_DELAY_MICROS((uint32_t)(intensity) * (period) / 255);         \
     }                                                                         \
     if (intensity < 255)                                                      \
     {                                                                         \
-      digitalWrite(pin, LOW);                                                 \
+      pinWrite(pin, LOW);                                                     \
       COROUTINE_DELAY_MICROS((uint32_t)(255 - (intensity)) * (period) / 255); \
     }                                                                         \
   } while (0)
@@ -99,12 +102,12 @@ using namespace ace_routine;
   {                                                                           \
     if (intensity < 255)                                                      \
     {                                                                         \
-      digitalWrite(pin, LOW);                                                 \
+      pinWrite(pin, LOW);                                                     \
       COROUTINE_DELAY_MICROS((uint32_t)(255 - (intensity)) * (period) / 255); \
     }                                                                         \
     if (intensity > 0)                                                        \
     {                                                                         \
-      digitalWrite(pin, HIGH);                                                \
+      pinWrite(pin, HIGH);                                                    \
       COROUTINE_DELAY_MICROS((uint32_t)(intensity) * (period) / 255);         \
     }                                                                         \
   } while (0)

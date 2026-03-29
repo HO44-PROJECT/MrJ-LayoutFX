@@ -53,7 +53,7 @@
 #include <ArduinoJson.h>
 #include "devices/Device.h"
 
-static constexpr uint8_t FACTORY_MAX_DEVICES = 16;
+static constexpr uint8_t FACTORY_MAX_DEVICES = 24;
 static constexpr uint8_t FACTORY_MAX_PORTS   =  4;
 
 class DeviceFactory {
@@ -78,16 +78,27 @@ public:
    */
   bool load(const char* json);
 
-  /**
-   * @brief SPI expansion bus configuration (from system.spi_cards).
-   */
-  struct SpiCardsCfg {
-    int  mosi  = -1;  ///< MOSI GPIO pin, or -1 if not configured.
-    int  sclk  = -1;  ///< SCLK GPIO pin, or -1 if not configured.
-    int  latch = -1;  ///< Latch GPIO pin, or -1 if not configured.
-    uint8_t count = 0;  ///< Number of daisy-chained 74HC595 cards (0 = no SPI expansion).
+  /** @brief SPI bus shared by all HC595 daughter cards in daisy-chain. */
+  struct SpiBusCfg {
+    int mosi  = -1;  ///< MOSI GPIO pin (data into first register).
+    int sclk  = -1;  ///< SCLK GPIO pin (shared clock).
+    int latch = -1;  ///< Latch GPIO pin (ST_CP, shared — pulses once for the full chain).
 
-    bool configured() const { return count > 0 && mosi >= 0 && sclk >= 0 && latch >= 0; }
+    bool configured() const { return mosi >= 0 && sclk >= 0 && latch >= 0; }
+  };
+
+  /** @brief Hardware type of one daughter card slot. */
+  enum SpiCardType : uint8_t {
+    SPI_CARD_UNKNOWN = 0,
+    SPI_CARD_HC595   = 1,  ///< 74HC595 shift register — output only (H/L).
+  };
+
+  /** @brief Configuration for one HC595 daughter card slot (one entry in spi_cards[]). */
+  struct SpiCardCfg {
+    SpiCardType type     = SPI_CARD_UNKNOWN;
+    uint8_t     pinCount = 0;  ///< Number of output pins on this card (multiple of 8).
+
+    bool configured() const { return type != SPI_CARD_UNKNOWN && pinCount > 0; }
   };
 
   /** @brief Number of successfully created devices. */
@@ -105,8 +116,17 @@ public:
    */
   uint8_t deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
 
-  /** @brief SPI expansion bus configuration from system.spi_cards, or unconfigured if absent. */
-  const SpiCardsCfg& spiCards() const { return _spiCards; }
+  /** @brief SPI physical bus config from system.spi_bus, or unconfigured if absent. */
+  const SpiBusCfg&  spiBus()                    const { return _spiBus; }
+
+  /** @brief Number of configured SPI daughter cards. */
+  uint8_t           spiCardCount()              const { return _spiCardCount; }
+
+  /** @brief Config for daughter card at 1-based index i, or unconfigured if out of range. */
+  const SpiCardCfg& spiCard(uint8_t i)          const {
+      static const SpiCardCfg empty;
+      return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
+  }
 
   /** @brief DCC input pin from system.dcc_pin, or -1 if not configured. */
   int     dccPin()          const { return _dccPin; }
@@ -121,12 +141,16 @@ public:
   void initAll();
 
 private:
-  Device*     _devices[FACTORY_MAX_DEVICES];
-  char        _ids[FACTORY_MAX_DEVICES][32];
-  uint8_t     _boards[FACTORY_MAX_DEVICES];   ///< Daughter card index per device (0 = main ESP32).
-  size_t      _count      = 0;
-  int         _dccPin     = -1;   ///< From system.dcc_pin, -1 if absent.
-  SpiCardsCfg _spiCards;          ///< From system.spi_cards, unconfigured if absent.
+  static constexpr uint8_t FACTORY_MAX_SPI_CARDS = 8;
+
+  Device*    _devices[FACTORY_MAX_DEVICES];
+  char       _ids[FACTORY_MAX_DEVICES][32];
+  uint8_t    _boards[FACTORY_MAX_DEVICES];        ///< Daughter card index per device (0 = main ESP32).
+  size_t     _count         = 0;
+  int        _dccPin        = -1;                 ///< From system.dcc_pin, -1 if absent.
+  SpiBusCfg  _spiBus;                             ///< From system.spi_bus.
+  SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];    ///< From system.spi_cards[].
+  uint8_t    _spiCardCount  = 0;                  ///< Number of entries parsed in spi_cards[].
 
   PortCfg  _ports[FACTORY_MAX_PORTS];
   size_t   _portCount = 0;
@@ -143,11 +167,20 @@ private:
   PortCfg* _findPort(const char* portName);
   HardwareSerial* _findSerial(const char* portName);
 
-  /** Extract a single PIN_ID from a JsonVariant (scalar or first element of array). */
-  static PIN_ID  _pin (JsonVariant v);
+  /**
+   * @brief Extract a PIN_ID from a JsonVariant, incorporating the board field.
+   *
+   * @param v      "wiring" JSON value (scalar or array — only first element used).
+   * @param board  "board" JSON value (0 = native GPIO, 1-N = SPI daughter card).
+   *               When SPI_CARDS is defined and board > 0, returns PIN_ID::spi(board, bit).
+   *               Otherwise returns the raw wiring value as a GPIO pin.
+   *               Without SPI_CARDS, board > 0 logs a warning and returns NO_PIN.
+   */
+  static PIN_ID  _pin (JsonVariant v, uint8_t board = 0);
 
-  /** Fill pins[] from a JsonVariant (scalar → pins[0]; array → pins[0..N-1]). */
-  static size_t  _pins(JsonVariant v, PIN_ID* out, size_t maxPins);
+  /** Fill pins[] from a JsonVariant (scalar → pins[0]; array → pins[0..N-1]).
+   *  board is always 0 for multi-pin devices (CharliePlexing — native GPIO only). */
+  static size_t  _pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t board = 0);
 };
 
 #endif  // ESP32

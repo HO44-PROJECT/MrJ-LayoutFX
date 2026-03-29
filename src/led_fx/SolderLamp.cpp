@@ -59,7 +59,7 @@ int SolderLamp::runCoroutine()
                 {
                     currentDurationMs = random(OFF_DURATION_MIN_MS, OFF_DURATION_MAX_MS);
                     offStartTime = millis();
-                    digitalWrite(_pin, inactive_state.value);
+                    pinWrite(_pin, inactive_state.value);
                     setState(RUN_OFF);
                 }
                 // Otherwise, randomly start a burst of flashes.

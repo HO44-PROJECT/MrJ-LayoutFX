@@ -51,7 +51,7 @@ public:
     virtual int runCoroutine() override;
 
 protected:
-    PIN_ID working_pin = 0; ///< Current active pin for flashing (first or second pin).
+    PIN_ID working_pin = NO_PIN; ///< Current active pin for flashing (first or second pin).
 
 private:
     uint32_t timerStart = 0; ///< Timestamp for tracking delays in the flash pattern (ms).
