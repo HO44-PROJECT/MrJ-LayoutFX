@@ -9,6 +9,9 @@
  *   POST /api/device  → body {"id":"<id>","state":<0|1>} — toggle a device
  *   POST /api/all     → body {"state":<0|1>} — control all non-static devices
  *   POST /api/group   → body {"type":"<DeviceName>","state":<0|1>} — control a type
+ *   GET  /api/config  → download /config.json from LittleFS
+ *   POST /api/config  → body <raw JSON> — overwrite /config.json then reboot
+ *   GET  /api/status  → JSON object with firmware version and ESP32 metrics
  *
  * Must be called after ConfigManager::init() and before ApiServer::init().
  *
@@ -47,6 +50,9 @@ private:
     static void _onPostDevice();
     static void _onAllDevices();
     static void _onGroupDevices();
+    static void _onGetConfig();
+    static void _onPostConfig();
+    static void _onGetStatus();
 };
 
 #endif  // ESP32

@@ -14,8 +14,6 @@
 
 #include "utils/utils.h"
 
-#pragma message("Compiling utils.cpp")
-
 /// @brief Allocates memory and duplicates the contents of a source buffer.
 /// @param in A pointer to the source memory buffer.
 /// @param size The size of the memory buffer to duplicate.

@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MrJ RailwayFX</title>
+  <style>
+    /* ── Reset ─────────────────────────────────────────────────────────── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    /* ── Error banner ───────────────────────────────────────────────────── */
+    #err {
+      display: none;
+      background: #c0392b;
+      color: #fff;
+      text-align: center;
+      padding: .4rem;
+      font-size: .8rem
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      background: #16213e;
+      padding: .75rem 1rem;
+      border-bottom: 2px solid #0f3460;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      position: sticky;
+      top: 0;
+      z-index: 100
+    }
+
+    /* Burger button */
+    #burger {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #e0e0e0;
+      padding: .25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0
+    }
+
+    #burger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: currentColor;
+      border-radius: 2px;
+      transition: transform .25s, opacity .25s
+    }
+
+    /* Burger → X animation when drawer is open */
+    body.drawer-open #burger span:nth-child(1) { transform: translateY(7px) rotate(45deg) }
+    body.drawer-open #burger span:nth-child(2) { opacity: 0 }
+    body.drawer-open #burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg) }
+
+    h1 {
+      font-size: 1rem;
+      color: #e94560;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      flex: 1
+    }
+
+    /* Global on/off — only visible on cockpit view */
+    #hdr-actions {
+      display: flex;
+      gap: .5rem
+    }
+
+    .gbtn {
+      padding: .3rem .7rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transition: opacity .15s
+    }
+
+    .gbtn:active { opacity: .6 }
+    .gbtn.on  { background: #27ae60; color: #fff }
+    .gbtn.off { background: #c0392b; color: #fff }
+
+    /* Status bar (cockpit) */
+    #sb {
+      font-size: .72rem;
+      color: #555;
+      padding: .3rem 1rem;
+      background: #16213e;
+      border-bottom: 1px solid #0f3460
+    }
+
+    #sb span { color: #4CAF50 }
+
+    /* ── Overlay (closes drawer on outside click) ───────────────────────── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 200
+    }
+
+    body.drawer-open #overlay { display: block }
+
+    /* ── Navigation drawer (slides in from left) ────────────────────────── */
+    #drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 240px;
+      background: #0f1b2d;
+      border-right: 1px solid #0f3460;
+      z-index: 300;
+      transform: translateX(-100%);
+      transition: transform .28s ease;
+      display: flex;
+      flex-direction: column
+    }
+
+    body.drawer-open #drawer { transform: translateX(0) }
+
+    .drawer-title {
+      padding: 1.2rem 1rem .8rem;
+      font-size: .75rem;
+      font-weight: 700;
+      color: #e94560;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #0f3460
+    }
+
+    #drawer nav { flex: 1; padding: .5rem 0 }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .75rem 1.25rem;
+      cursor: pointer;
+      font-size: .85rem;
+      color: #a0aec0;
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent
+    }
+
+    .nav-item:hover { background: #16213e; color: #e0e0e0 }
+
+    .nav-item.active {
+      background: #16213e;
+      color: #e94560;
+      border-left-color: #e94560
+    }
+
+    .nav-icon { font-size: 1.1rem; width: 1.4rem; text-align: center }
+
+    .drawer-footer {
+      padding: .75rem 1rem;
+      font-size: .65rem;
+      color: #3a4a5a;
+      border-top: 1px solid #0f3460
+    }
+
+    /* ── Views ──────────────────────────────────────────────────────────── */
+    .view { display: none }
+    .view.active { display: block }
+
+    /* ── Cockpit view (existing card layout) ────────────────────────────── */
+    #grid {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem
+    }
+
+    .ghdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .8rem;
+      border-bottom: 1px solid #0f3460;
+      padding-bottom: .5rem
+    }
+
+    .gname {
+      font-size: .85rem;
+      font-weight: 700;
+      color: #7f8c8d;
+      letter-spacing: 2px;
+      text-transform: uppercase
+    }
+
+    .gcnt { color: #4a6fa5; font-size: .8rem; font-weight: 400 }
+    .gbtns { display: flex; gap: .4rem }
+
+    .gcards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem
+    }
+
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      border: 2px solid #0f3460;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      transition: border-color .4s
+    }
+
+    .card.on   { border-color: #27ae60 }
+    .card.off  { border-color: #2c2c3e }
+    .card.busy { border-color: #e67e22 }
+    .card.stop  { border-color: #c0392b }
+    .card.flash { border-color: #e67e22 }
+
+    .ch { display: flex; align-items: center; justify-content: space-between }
+
+    .cid {
+      font-weight: 700;
+      font-size: .85rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0 }
+    .dot.on    { background: #27ae60; box-shadow: 0 0 6px #27ae60 }
+    .dot.off   { background: #3d3d3d }
+    .dot.busy  { background: #e67e22; animation: pulse .7s infinite alternate }
+    .dot.stop  { background: #c0392b; box-shadow: 0 0 6px #c0392b }
+    .dot.flash { background: #e67e22; box-shadow: 0 0 6px #e67e22 }
+
+    @keyframes pulse {
+      from { box-shadow: 0 0 2px #e67e22 }
+      to   { box-shadow: 0 0 10px #e67e22 }
+    }
+
+    .icon { height: 44px; display: flex; align-items: center; justify-content: center; color: #3a5070 }
+    .icon svg { width: 40px; height: 40px; transition: color .4s }
+    .card.on   .icon { color: #4CAF50 }
+    .card.busy .icon { color: #e67e22 }
+
+    .badge {
+      font-size: .6rem;
+      background: #0f3460;
+      color: #7f8c8d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+      letter-spacing: .5px
+    }
+
+    .meta { display: flex; flex-wrap: wrap; gap: 3px }
+
+    .mtag {
+      font-size: .58rem;
+      background: #0d1f38;
+      color: #4a6fa5;
+      padding: 1px 5px;
+      border-radius: 3px;
+      letter-spacing: .3px
+    }
+
+    .btn {
+      width: 100%;
+      padding: .45rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transition: opacity .15s
+    }
+
+    .btn:active    { opacity: .65 }
+    .btn.on        { background: #c0392b; color: #fff }
+    .btn.off       { background: #27ae60; color: #fff }
+    .btn.busy      { background: #3d3d3d; color: #666; cursor: default }
+    .btn.static    { background: #1e3a5f; color: #4a6fa5; cursor: default; font-style: italic }
+
+    .tbtns { display: flex; gap: 3px }
+
+    .tbtn {
+      flex: 1;
+      padding: .35rem .05rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .64rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+      opacity: .28;
+      transition: opacity .15s
+    }
+
+    .tbtn.active                          { opacity: 1 }
+    .tbtn:not(.active):not([disabled]):hover { opacity: .6 }
+    .tbtn[disabled]                       { cursor: default }
+    .tbtn.t-off   { background: #2c2c3e; color: #aaa }
+    .tbtn.t-stop  { background: #c0392b; color: #fff }
+    .tbtn.t-go    { background: #27ae60; color: #fff }
+    .tbtn.t-flash { background: #e67e22; color: #fff }
+
+    /* ── Config view ─────────────────────────────────────────────────────── */
+    .cfg-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      max-width: 640px
+    }
+
+    .cfg-card {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      padding: 1.25rem;
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem
+    }
+
+    .cfg-card-icon { font-size: 2rem }
+
+    .cfg-card-title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #e0e0e0;
+      letter-spacing: 1px
+    }
+
+    .cfg-card-desc { font-size: .75rem; color: #7f8c8d }
+
+    .cfg-filename {
+      font-size: .72rem;
+      color: #4a6fa5;
+      background: #0d1f38;
+      padding: .3rem .6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .cfg-actions { display: flex; gap: .5rem; margin-top: .25rem }
+
+    .cfg-btn {
+      flex: 1;
+      padding: .45rem .5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      background: #27ae60;
+      color: #fff;
+      transition: opacity .15s
+    }
+
+    .cfg-btn:active  { opacity: .7 }
+    .cfg-btn:disabled { background: #1e3a5f; color: #4a6fa5; cursor: default }
+    .cfg-btn.secondary { background: #1e3a5f; color: #7f8c8d }
+    .cfg-btn.secondary:hover { color: #e0e0e0 }
+
+    .cfg-status {
+      width: 100%;
+      padding: .8rem 1rem;
+      border-radius: 6px;
+      font-size: .8rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 1px
+    }
+
+    .cfg-status.ok  { background: #1a3a2a; color: #27ae60; border: 1px solid #27ae60 }
+    .cfg-status.err { background: #3a1a1a; color: #c0392b; border: 1px solid #c0392b }
+
+    /* ── Params view ────────────────────────────────────────────────────── */
+    .prm-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 480px
+    }
+
+    .prm-section {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem
+    }
+
+    .prm-section-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #7f8c8d;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid #0f3460
+    }
+
+    .prm-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-height: 2rem
+    }
+
+    .prm-label { flex: 1; font-size: .8rem; color: #a0aec0 }
+
+    .prm-field { display: flex; align-items: center; gap: .4rem }
+
+    .prm-input {
+      background: #0d1f38;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      color: #e0e0e0;
+      font-size: .82rem;
+      padding: .3rem .5rem;
+      width: 90px;
+      text-align: right
+    }
+
+    .prm-input:focus { outline: none; border-color: #4a6fa5 }
+    .prm-input-sm { width: 72px }
+
+    .prm-select {
+      background: #0d1f38;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      color: #e0e0e0;
+      font-size: .82rem;
+      padding: .3rem .4rem;
+      width: 105px
+    }
+
+    .prm-unit { font-size: .72rem; color: #4a6fa5 }
+
+    .prm-lang-btns { display: flex; gap: .4rem }
+
+    .prm-lang-btn {
+      padding: .3rem .75rem;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      background: #0d1f38;
+      color: #7f8c8d;
+      font-size: .75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .prm-lang-btn.active { background: #4a6fa5; color: #fff; border-color: #4a6fa5 }
+
+    .prm-save-row { display: flex; flex-direction: column; gap: .6rem }
+
+    .prm-status {
+      width: 100%;
+      padding: .8rem 1rem;
+      border-radius: 6px;
+      font-size: .8rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 1px
+    }
+
+    .prm-status.ok  { background: #1a3a2a; color: #27ae60; border: 1px solid #27ae60 }
+    .prm-status.err { background: #3a1a1a; color: #c0392b; border: 1px solid #c0392b }
+    .prm-info { font-size: .8rem; color: #4a6fa5; text-align: center; padding: .4rem }
+
+    /* ── About view ─────────────────────────────────────────────────────── */
+    .abt-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .abt-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .abt-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #7f8c8d;
+      letter-spacing: 2px;
+      text-transform: uppercase
+    }
+
+    .abt-refresh {
+      padding: .3rem .75rem;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      background: #0d1f38;
+      color: #7f8c8d;
+      font-size: .72rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: color .15s
+    }
+
+    .abt-refresh:hover { color: #e0e0e0 }
+
+    .abt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem
+    }
+
+    .abt-card {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .55rem
+    }
+
+    .abt-card-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #4a6fa5;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid #0f3460
+    }
+
+    .abt-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .5rem
+    }
+
+    .abt-label { font-size: .75rem; color: #7f8c8d; white-space: nowrap }
+
+    .abt-value {
+      font-size: .8rem;
+      color: #e0e0e0;
+      font-variant-numeric: tabular-nums;
+      text-align: right
+    }
+
+    .abt-link { font-size: .75rem; color: #4a6fa5; text-decoration: none }
+    .abt-link:hover { color: #e94560 }
+
+    .abt-bar-wrap {
+      height: 5px;
+      background: #0d1f38;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: .1rem
+    }
+
+    .abt-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: #4a6fa5;
+      transition: width .5s
+    }
+
+    .abt-bar.warn { background: #e67e22 }
+    .abt-bar.crit { background: #c0392b }
+
+    /* ── Placeholder views ───────────────────────────────────────────────── */
+    .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      height: calc(100vh - 120px);
+      color: #3a4a5a
+    }
+
+    .placeholder-icon { font-size: 3.5rem }
+
+    .placeholder h2 {
+      font-size: 1rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6fa5
+    }
+
+    .placeholder p { font-size: .8rem; color: #3a4a5a; text-align: center; max-width: 280px }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Error banner ──────────────────────────────────────────────────── -->
+  <div id="err" data-i18n="err.conn">Connexion perdue — reconnexion en cours…</div>
+
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
+  <header>
+    <button id="burger" onclick="toggleDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <h1>&#9881; MrJ RailwayFX</h1>
+    <div id="hdr-actions">
+      <button class="gbtn on"  onclick="allDevices(1)" data-i18n="hdr.allon">TOUT ALLUMER</button>
+      <button class="gbtn off" onclick="allDevices(0)" data-i18n="hdr.alloff">TOUT ÉTEINDRE</button>
+    </div>
+  </header>
+
+  <!-- Status bar (cockpit only) -->
+  <div id="sb">— appareils</div>
+
+  <!-- ── Navigation overlay ───────────────────────────────────────────── -->
+  <div id="overlay" onclick="closeDrawer()"></div>
+
+  <!-- ── Navigation drawer ────────────────────────────────────────────── -->
+  <div id="drawer">
+    <div class="drawer-title">&#9881; RailwayFX</div>
+    <nav>
+      <div class="nav-item active" data-view="cockpit" onclick="switchView('cockpit')">
+        <span class="nav-icon">🎛</span> <span data-i18n="nav.cockpit">Cockpit</span>
+      </div>
+      <div class="nav-item" data-view="canvas" onclick="switchView('canvas')">
+        <span class="nav-icon">🗺</span> <span data-i18n="nav.canvas">Vue plan</span>
+      </div>
+      <div class="nav-item" data-view="config" onclick="switchView('config')">
+        <span class="nav-icon">📁</span> <span data-i18n="nav.config">Configurations</span>
+      </div>
+      <div class="nav-item" data-view="params" onclick="switchView('params')">
+        <span class="nav-icon">⚙</span> <span data-i18n="nav.params">Paramètres</span>
+      </div>
+      <div class="nav-item" data-view="about" onclick="switchView('about')">
+        <span class="nav-icon">ℹ</span> <span data-i18n="nav.about">À propos</span>
+      </div>
+    </nav>
+    <div class="drawer-footer">MrJ-ArduinoRailwayFX</div>
+  </div>
+
+  <!-- ── View: Cockpit ─────────────────────────────────────────────────── -->
+  <div id="view-cockpit" class="view active">
+    <div id="grid"></div>
+  </div>
+
+  <!-- ── View: À propos ───────────────────────────────────────────────── -->
+  <div id="view-about" class="view">
+    <div class="abt-panel">
+      <div class="abt-top">
+        <div class="abt-title" data-i18n="nav.about">À propos</div>
+        <button class="abt-refresh" onclick="loadAbout()" data-i18n="abt.refresh">Actualiser</button>
+      </div>
+      <div id="abt-grid" class="abt-grid">
+        <div class="prm-info" data-i18n="prm.loading">Chargement…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── View: Canvas (plan interactif) ───────────────────────────────── -->
+  <div id="view-canvas" class="view">
+    <div class="placeholder">
+      <div class="placeholder-icon">🗺</div>
+      <h2>Vue Plan</h2>
+      <p>Uploadez un fond de plan et placez vos éléments en mode édition.</p>
+    </div>
+  </div>
+
+  <!-- ── View: Configurations ─────────────────────────────────────────── -->
+  <div id="view-config" class="view">
+    <div class="cfg-panel">
+
+      <!-- Download current config -->
+      <div class="cfg-card">
+        <div class="cfg-card-icon">⬇</div>
+        <div class="cfg-card-title" data-i18n="cfg.dl.title">Télécharger</div>
+        <div class="cfg-card-desc" data-i18n="cfg.dl.desc">Récupère la configuration active de l'ESP32.</div>
+        <div class="cfg-actions">
+          <button class="cfg-btn" onclick="downloadConfig()" data-i18n="cfg.dl.btn">Télécharger config.json</button>
+        </div>
+      </div>
+
+      <!-- Upload new config -->
+      <div class="cfg-card">
+        <div class="cfg-card-icon">⬆</div>
+        <div class="cfg-card-title" data-i18n="cfg.ul.title">Uploader</div>
+        <div class="cfg-card-desc" data-i18n="cfg.ul.desc">Envoie un nouveau fichier JSON — l'ESP32 redémarre pour l'appliquer.</div>
+        <div id="cfg-filename" class="cfg-filename">Aucun fichier sélectionné</div>
+        <input type="file" id="cfg-file" accept=".json" onchange="onCfgFileSelect(this)" style="display:none">
+        <div class="cfg-actions">
+          <button class="cfg-btn secondary" onclick="document.getElementById('cfg-file').click()"
+                  data-i18n="cfg.ul.choose">Choisir…</button>
+          <button class="cfg-btn" id="cfg-upload-btn" onclick="uploadConfig()"
+                  disabled data-i18n="cfg.ul.upload">Uploader</button>
+        </div>
+      </div>
+
+      <!-- Status message -->
+      <div id="cfg-status" style="display:none"></div>
+
+    </div>
+  </div>
+
+  <!-- ── View: Paramètres ─────────────────────────────────────────────── -->
+  <div id="view-params" class="view">
+    <div class="prm-panel">
+
+      <!-- Interface: language + poll interval -->
+      <div class="prm-section">
+        <div class="prm-section-title" data-i18n="prm.interface">Interface</div>
+
+        <div class="prm-row">
+          <span class="prm-label" data-i18n="prm.language">Langue</span>
+          <div class="prm-lang-btns">
+            <button class="prm-lang-btn active" id="lang-fr" onclick="setLang('fr')">FR</button>
+            <button class="prm-lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+          </div>
+        </div>
+
+        <div class="prm-row">
+          <span class="prm-label" data-i18n="prm.poll_interval">Rafraîchissement</span>
+          <div class="prm-field">
+            <input type="number" id="prm-poll" min="500" max="30000" step="500"
+                   class="prm-input prm-input-sm" onchange="savePollInterval()">
+            <span class="prm-unit">ms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System params: loaded from /api/config -->
+      <div class="prm-section">
+        <div class="prm-section-title" data-i18n="prm.system">Système</div>
+        <div id="prm-system-fields" class="prm-info" data-i18n="prm.loading">Chargement…</div>
+      </div>
+
+      <!-- Save -->
+      <div class="prm-save-row">
+        <button class="cfg-btn" id="prm-save-btn" onclick="saveParams()"
+                data-i18n="prm.save" disabled>Enregistrer et redémarrer</button>
+        <div id="prm-status" style="display:none" class="prm-status"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+
+    /* ── Constants ──────────────────────────────────────────────────────── */
+    var POLL         = 3000;
+    var STATIC_TYPES = ['StaticLow'];
+    var TRAFFIC_TYPES = ['Traffic Light 3ph', 'Traffic Light 4ph'];
+
+    /* ── Navigation ─────────────────────────────────────────────────────── */
+
+    var _currentView = 'cockpit';
+
+    function toggleDrawer() {
+      document.body.classList.toggle('drawer-open');
+    }
+
+    function closeDrawer() {
+      document.body.classList.remove('drawer-open');
+    }
+
+    function switchView(name) {
+      // Hide all views
+      document.querySelectorAll('.view').forEach(function(v) {
+        v.classList.remove('active');
+      });
+      // Show target view
+      document.getElementById('view-' + name).classList.add('active');
+
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(function(item) {
+        item.classList.toggle('active', item.dataset.view === name);
+      });
+
+      // Show global actions + status bar only on cockpit
+      var isCockpit = name === 'cockpit';
+      document.getElementById('hdr-actions').style.display = isCockpit ? '' : 'none';
+      document.getElementById('sb').style.display = isCockpit ? '' : 'none';
+
+      _currentView = name;
+      closeDrawer();
+      if (name === 'params') loadParams();
+      if (name === 'about')  loadAbout();
+    }
+
+    /* ── SVG Icons ──────────────────────────────────────────────────────── */
+    var S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">';
+    var E = '</svg>';
+    var ICONS = {
+      'Beacon': S
+        + '<circle cx="12" cy="10" r="3.5"/>'
+        + '<path d="M12 1v3M12 16v3M3 10H1M23 10h-2M4.2 3.8l2 2M16.8 16.2l2 2M4.2 16.2l2-2M16.8 3.8l2-2"/>'
+        + '<line x1="8" y1="21" x2="16" y2="21"/>'
+        + E,
+
+      'DoubleBeacon': S
+        + '<circle cx="7" cy="9" r="2.5"/>'
+        + '<path d="M7 2v2M7 14v2M1 9H3M11 9h2M3.5 5.5l1.5 1.5M8.5 12.5l1.5 1.5M3.5 12.5l1.5-1.5M8.5 5.5l1.5-1.5"/>'
+        + '<circle cx="17" cy="9" r="2.5"/>'
+        + '<path d="M17 2v2M17 14v2M13 9h2M21 9h2M13.5 5.5l1.5 1.5M18.5 12.5l1.5 1.5M13.5 12.5l1.5-1.5M18.5 5.5l1.5-1.5"/>'
+        + '<line x1="5" y1="20" x2="19" y2="20"/>'
+        + E,
+
+      'Gas Lamp': S
+        + '<line x1="12" y1="22" x2="12" y2="10"/>'
+        + '<path d="M12,10 C7,10 5,10 5,5"/>'
+        + '<path d="M12,10 C17,10 19,10 19,5"/>'
+        + '<path d="M3,5 L5,3 L7,5 L7,8 L3,8 Z"/>'
+        + '<path d="M17,5 L19,3 L21,5 L21,8 L17,8 Z"/>'
+        + E,
+
+      'Electric Lamp': S
+        + '<path d="M10 21h4M11 21v-2M13 21v-2"/>'
+        + '<path d="M12 3a6 6 0 0 1 4 10.5V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-3.5A6 6 0 0 1 12 3Z"/>'
+        + '<line x1="10" y1="13" x2="10" y2="15"/>'
+        + E,
+
+      'CampFire': S
+        + '<path d="M12 2C11 5 9 8 11 11C11.5 12.5 12 13 12 13C12 13 12.5 12.5 13 11C15 8 13 5 12 2Z"/>'
+        + '<path d="M9.5 13C8.5 15 9.5 17.5 12 18C14.5 17.5 15.5 15 14.5 13"/>'
+        + '<line x1="5" y1="22" x2="19" y2="22"/>'
+        + '<line x1="6" y1="18" x2="9.5" y2="22"/>'
+        + '<line x1="18" y1="18" x2="14.5" y2="22"/>'
+        + E,
+
+      'Torch': S
+        + '<line x1="6" y1="22" x2="14" y2="13"/>'
+        + '<line x1="12" y1="14" x2="16" y2="12"/>'
+        + '<path d="M13 13 Q10 9 13 5 Q15 8 16 6 Q18 10 16 13Z"/>'
+        + E,
+
+      'Turn Signal': S
+        + '<path d="M4 12L13 3V8H19V16H13V21Z"/>'
+        + E,
+
+      'Storm': S
+        + '<path d="M20 9a8 8 0 0 0-15.3-2.2A4.5 4.5 0 0 0 5 16h13a3 3 0 0 0 2-5.2"/>'
+        + '<polyline points="12,11 10,16 14,16 12,21"/>'
+        + E,
+
+      'SolderLamp': S
+        + '<path d="M4,21 L4,8 Q4,3 12,3 Q20,3 20,8 L20,21 Z"/>'
+        + '<rect x="6" y="10" width="12" height="5" rx="1"/>'
+        + E,
+
+      'DefectLamp': S
+        + '<path d="M10 21h4M11 21v-2M13 21v-2"/>'
+        + '<path d="M12 3a6 6 0 0 1 4 10.5V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-3.5A6 6 0 0 1 12 3Z"/>'
+        + '<line x1="9.5" y1="7.5" x2="14.5" y2="14.5"/>'
+        + '<line x1="14.5" y1="7.5" x2="9.5" y2="14.5"/>'
+        + E,
+
+      'Neon Sign': S
+        + '<rect x="2" y="4" width="20" height="16" rx="2"/>'
+        + '<rect x="5" y="7" width="14" height="10" rx="1" stroke-width="1"/>'
+        + '<path d="M6 15L6 9L9 12.5L12 9L12 15"/>'
+        + '<path d="M13 15v-4M13 12q1.5-1.5 2.5 0"/>'
+        + '<path d="M16.5 9h3M18 9v5q0 1.5-1.5 1.5"/>'
+        + E,
+
+      'Oil Lamp': S
+        + '<ellipse cx="12" cy="15" rx="9" ry="4"/>'
+        + '<path d="M3,15 Q4.5,11 3,8 Q1.5,11 3,15"/>'
+        + '<circle cx="22" cy="13" r="2"/>'
+        + E,
+
+      'SignalFlare': S
+        + '<circle cx="12" cy="5" r="1.5"/>'
+        + '<path d="M12,1 L12,3 M15.5,2 L14,3.5 M17,5 L15,5 M15.5,8 L14,6.5 M8.5,2 L10,3.5 M7,5 L9,5 M8.5,8 L10,6.5"/>'
+        + '<line x1="12" y1="6.5" x2="12" y2="17"/>'
+        + '<rect x="10" y="17" width="4" height="5" rx="1"/>'
+        + E,
+
+      'Train Head Lamp': S
+        + '<rect x="3" y="7" width="18" height="12" rx="3"/>'
+        + '<circle cx="8.5" cy="13" r="2.5"/>'
+        + '<circle cx="15.5" cy="13" r="2.5"/>'
+        + '<line x1="3" y1="10" x2="1" y2="10"/>'
+        + '<line x1="3" y1="16" x2="1" y2="16"/>'
+        + '<line x1="8" y1="19" x2="7" y2="22"/>'
+        + '<line x1="16" y1="19" x2="17" y2="22"/>'
+        + E,
+
+      'Railway Crossing Lights': S
+        + '<line x1="12" y1="2" x2="12" y2="22"/>'
+        + '<line x1="3" y1="7" x2="21" y2="17"/>'
+        + '<line x1="21" y1="7" x2="3" y2="17"/>'
+        + '<circle cx="3" cy="7" r="2.5" fill="currentColor" stroke="none"/>'
+        + '<circle cx="21" cy="17" r="2.5" fill="currentColor" stroke="none"/>'
+        + E,
+
+      'StaticLow': S
+        + '<line x1="4" y1="10" x2="20" y2="10"/>'
+        + '<line x1="7" y1="14" x2="17" y2="14"/>'
+        + '<line x1="10" y1="18" x2="14" y2="18"/>'
+        + E,
+
+      'DB Bloc Signal': S
+        + '<line x1="12" y1="22" x2="12" y2="4"/>'
+        + '<circle cx="12" cy="7" r="2.5"/>'
+        + '<circle cx="12" cy="15" r="2.5"/>'
+        + '<line x1="12" y1="9" x2="19" y2="6"/>'
+        + E,
+
+      'DB Entry Signal': S
+        + '<line x1="12" y1="22" x2="12" y2="2"/>'
+        + '<circle cx="12" cy="5" r="2"/>'
+        + '<circle cx="12" cy="11" r="2"/>'
+        + '<circle cx="12" cy="17" r="2"/>'
+        + '<line x1="12" y1="13" x2="19" y2="10"/>'
+        + E,
+
+      'DB Exit Signal': S
+        + '<line x1="12" y1="22" x2="12" y2="2"/>'
+        + '<circle cx="12" cy="5" r="2"/>'
+        + '<circle cx="12" cy="11" r="2"/>'
+        + '<circle cx="12" cy="17" r="2"/>'
+        + '<line x1="12" y1="13" x2="5" y2="10"/>'
+        + E,
+
+      'Traffic Light 3ph': S
+        + '<rect x="7" y="2" width="10" height="17" rx="2"/>'
+        + '<circle cx="12" cy="6" r="2"/>'
+        + '<circle cx="12" cy="11" r="2"/>'
+        + '<circle cx="12" cy="16" r="2"/>'
+        + '<line x1="12" y1="19" x2="12" y2="22"/>'
+        + E,
+
+      'Traffic Light 4ph': S
+        + '<rect x="7" y="1" width="10" height="20" rx="2"/>'
+        + '<circle cx="12" cy="5" r="1.7"/>'
+        + '<circle cx="12" cy="10" r="1.7"/>'
+        + '<circle cx="12" cy="15" r="1.7"/>'
+        + '<circle cx="12" cy="20" r="1.7"/>'
+        + E,
+
+      'DfAudio': S
+        + '<polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>'
+        + '<path d="M15.5 8.5a5 5 0 0 1 0 7"/>'
+        + '<path d="M19 5a10 10 0 0 1 0 14"/>'
+        + E,
+
+      'Servo': S
+        + '<circle cx="12" cy="12" r="5.5"/>'
+        + '<circle cx="12" cy="12" r="2"/>'
+        + '<path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2 2M16.8 16.8l2 2M19.8 4.2l-2 2M7.2 16.8l-2 2"/>'
+        + E,
+
+      '_': S
+        + '<circle cx="12" cy="12" r="9"/>'
+        + '<path d="M9.5 9.5a3 3 0 1 1 3 3V14"/>'
+        + '<circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/>'
+        + E
+    };
+
+    /* ── Cockpit helpers ────────────────────────────────────────────────── */
+    function cls(d) {
+      if (STATIC_TYPES.indexOf(d.type) >= 0) return 'static';
+      if (d.state < 0) return 'busy';
+      if (d.desired > 0) return 'on';
+      return 'off';
+    }
+
+    function clsTraffic(d) {
+      if (d.state < 0)    return 'busy';
+      if (d.desired === 2) return 'on';
+      if (d.desired === 1) return 'stop';
+      if (d.desired === 3) return 'flash';
+      return 'off';
+    }
+
+    function lbl(c) {
+      if (c === 'static') return t('ck.static');
+      if (c === 'busy')   return t('ck.busy');
+      if (c === 'on')     return t('ck.on');
+      return t('ck.off');
+    }
+
+    function meta(d) {
+      var t = '<div class="meta">';
+      if (d.addr > 0) t += '<span class="mtag">DCC ' + d.addr + '</span>';
+      if (d.board > 0) t += '<span class="mtag">Carte ' + d.board + ' · pin ' + d.pin + '</span>';
+      else if (d.pin > 0 || d.board === 0) t += '<span class="mtag">GPIO ' + d.pin + '</span>';
+      return t + '</div>';
+    }
+
+    function cardTraffic(d) {
+      var c = clsTraffic(d);
+      var busy = d.state < 0;
+      var dis = busy ? 'disabled' : '';
+      var ico = ICONS[d.type] || ICONS['_'];
+      function tbtn(label, cls, st) {
+        var act = (d.desired === st && !busy) ? 'active' : '';
+        return '<button class="tbtn t-' + cls + ' ' + act + '" onclick="setTraffic(\'' + d.id + '\',' + st + ')" ' + dis + '>' + label + '</button>';
+      }
+      return '<div class="card ' + c + '">'
+        + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+        + '<span class="dot ' + c + '"></span></div>'
+        + '<div class="icon">' + ico + '</div>'
+        + '<span class="badge">' + d.type + '</span>'
+        + meta(d)
+        + '<div class="tbtns">' + tbtn('OFF','off',0) + tbtn('GO','go',2) + tbtn('FLASH','flash',3) + tbtn('STOP','stop',1) + '</div>'
+        + '</div>';
+    }
+
+    function card(d) {
+      if (TRAFFIC_TYPES.indexOf(d.type) >= 0) return cardTraffic(d);
+      var c = cls(d);
+      var dis = (c === 'busy' || c === 'static') ? 'disabled' : '';
+      var ico = ICONS[d.type] || ICONS['_'];
+      return '<div class="card ' + c + '">'
+        + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+        + '<span class="dot ' + c + '"></span></div>'
+        + '<div class="icon">' + ico + '</div>'
+        + '<span class="badge">' + d.type + '</span>'
+        + meta(d)
+        + '<button class="btn ' + c + '" onclick="tog(\'' + d.id + '\',' + d.desired + ')" ' + dis + '>' + lbl(c) + '</button>'
+        + '</div>';
+    }
+
+    function render(devs) {
+      var order = [];
+      var groups = {};
+      devs.forEach(function(d) {
+        if (!groups[d.type]) { groups[d.type] = []; order.push(d.type); }
+        groups[d.type].push(d);
+      });
+      var html = '';
+      order.forEach(function(type) {
+        var list = groups[type];
+        var isStatic = STATIC_TYPES.indexOf(type) >= 0;
+        html += '<div class="group">';
+        html += '<div class="ghdr"><span class="gname">' + type + ' <span class="gcnt">(' + list.length + ')</span></span>';
+        if (!isStatic) {
+          html += '<div class="gbtns">'
+            + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
+            + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
+            + '</div>';
+        }
+        html += '</div>';
+        html += '<div class="gcards">' + list.map(card).join('') + '</div>';
+        html += '</div>';
+      });
+      document.getElementById('grid').innerHTML = html;
+      var now = new Date().toLocaleTimeString('fr-FR');
+      document.getElementById('sb').innerHTML = '<span>' + devs.length + '</span> appareils &mdash; ' + now;
+    }
+
+    /* ── API calls ──────────────────────────────────────────────────────── */
+    function post(url, body) {
+      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    }
+
+    function showErr() { document.getElementById('err').style.display = 'block'; }
+
+    function poll() {
+      fetch('/api/devices')
+        .then(function(r) { if (!r.ok) throw r; return r.json(); })
+        .then(function(d) { document.getElementById('err').style.display = 'none'; render(d); })
+        .catch(showErr);
+    }
+
+    function tog(id, desired) {
+      post('/api/device', { id: id, state: desired > 0 ? 0 : 1 }).then(poll).catch(showErr);
+    }
+
+    function setTraffic(id, state) {
+      post('/api/device', { id: id, state: state }).then(poll).catch(showErr);
+    }
+
+    function allDevices(state) {
+      post('/api/all', { state: state }).then(poll).catch(showErr);
+    }
+
+    function groupDevices(type, state) {
+      post('/api/group', { type: type, state: state }).then(poll).catch(showErr);
+    }
+
+    /* ── Config management ──────────────────────────────────────────────── */
+
+    function onCfgFileSelect(input) {
+      var name = input.files.length ? input.files[0].name : t('cfg.ul.nofile');
+      document.getElementById('cfg-filename').textContent = name;
+      document.getElementById('cfg-upload-btn').disabled = !input.files.length;
+      cfgStatus('', '');
+    }
+
+    function downloadConfig() {
+      // Let the browser handle the download — Content-Disposition on server side
+      // names the file, but we also set a fallback via <a download>.
+      var a = document.createElement('a');
+      a.href = '/api/config';
+      a.download = 'config.json';
+      a.click();
+    }
+
+    function uploadConfig() {
+      var file = document.getElementById('cfg-file').files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        // Validate JSON client-side before sending
+        try { JSON.parse(e.target.result); }
+        catch(err) { cfgStatus('JSON invalide : ' + err.message, 'err'); return; }
+
+        document.getElementById('cfg-upload-btn').disabled = true;
+        cfgStatus('Envoi en cours…', 'ok');
+
+        fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: e.target.result
+        })
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function() { startRebootCountdown(); })
+        .catch(function(err) { cfgStatus('Erreur : ' + err.message, 'err'); });
+      };
+      reader.readAsText(file);
+    }
+
+    function startRebootCountdown() {
+      var n = 5;
+      function tick() {
+        cfgStatus(t('cfg.rebooting', {n: n}), 'ok');
+        if (n-- > 0) setTimeout(tick, 1000);
+      }
+      tick();
+    }
+
+    function cfgStatus(msg, cls) {
+      var el = document.getElementById('cfg-status');
+      el.style.display = msg ? '' : 'none';
+      el.className = 'cfg-status ' + cls;
+      el.textContent = msg;
+    }
+
+    /* ── About ──────────────────────────────────────────────────────────── */
+
+    function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+    function fmtBytes(b) {
+      if (b === undefined || b === null) return '\u2014';
+      if (b >= 1048576) return (b / 1048576).toFixed(1) + '\u00a0MB';
+      if (b >= 1024)    return (b / 1024).toFixed(1) + '\u00a0KB';
+      return b + '\u00a0B';
+    }
+
+    function fmtUptime(s) {
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+      var str = pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
+      return d > 0 ? d + 'd\u00a0' + str : str;
+    }
+
+    function abtCard(title, rows) {
+      return '<div class="abt-card">'
+        + '<div class="abt-card-title">' + title + '</div>'
+        + rows.map(function(r) {
+            var barHtml = '';
+            if (r.bar !== undefined) {
+              var cls = r.bar > 85 ? ' crit' : r.bar > 65 ? ' warn' : '';
+              barHtml = '<div class="abt-bar-wrap"><div class="abt-bar' + cls
+                + '" style="width:' + r.bar + '%"></div></div>';
+            }
+            return '<div class="abt-row">'
+              + '<span class="abt-label">' + r.label + '</span>'
+              + '<span class="abt-value">' + r.value + '</span>'
+              + '</div>' + barHtml;
+          }).join('')
+        + '</div>';
+    }
+
+    function loadAbout() {
+      var grid = document.getElementById('abt-grid');
+      grid.innerHTML = '<div class="prm-info">' + t('prm.loading') + '</div>';
+
+      fetch('/api/status')
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(s) { renderAbout(s); })
+        .catch(function(err) {
+          grid.innerHTML = '<div class="prm-info">' + t('prm.load_err') + ': ' + err.message + '</div>';
+        });
+    }
+
+    function renderAbout(s) {
+      var html = '';
+
+      // Firmware
+      html += abtCard(t('abt.firmware'), [
+        { label: t('abt.version'), value: s.version || '\u2014' },
+        { label: t('abt.build'),   value: s.build_date || '\u2014' },
+        { label: t('abt.project'), value: t('abt.coming_soon') },
+      ]);
+
+      // System
+      var chip = (s.chip || 'ESP32') + ' rev.\u00a0' + (s.chip_rev !== undefined ? s.chip_rev : '?');
+      html += abtCard(t('abt.system'), [
+        { label: t('abt.chip'),     value: chip },
+        { label: t('abt.cpu_freq'), value: (s.cpu_mhz || '\u2014') + '\u00a0MHz' },
+        { label: t('abt.uptime'),   value: fmtUptime(s.uptime_s || 0) },
+      ]);
+
+      // Memory
+      var heapPct = s.heap_total ? Math.round((1 - s.heap_free / s.heap_total) * 100) : 0;
+      html += abtCard(t('abt.memory'), [
+        { label: t('abt.heap_free'),
+          value: fmtBytes(s.heap_free) + '\u00a0/\u00a0' + fmtBytes(s.heap_total),
+          bar: heapPct },
+        { label: t('abt.heap_min'), value: fmtBytes(s.heap_min) },
+      ]);
+
+      // Flash
+      var fwUsed  = s.sketch_size || 0;
+      var fwTotal = fwUsed + (s.sketch_free || 0);
+      var fwPct   = fwTotal ? Math.round(fwUsed / fwTotal * 100) : 0;
+      html += abtCard(t('abt.flash'), [
+        { label: t('abt.firmware_size'),
+          value: fmtBytes(fwUsed) + '\u00a0/\u00a0' + fmtBytes(fwTotal),
+          bar: fwPct },
+      ]);
+
+      // Filesystem
+      if (s.fs_total !== undefined) {
+        var fsPct = s.fs_total ? Math.round(s.fs_used / s.fs_total * 100) : 0;
+        html += abtCard(t('abt.fs'), [
+          { label: 'LittleFS',
+            value: fmtBytes(s.fs_used) + '\u00a0/\u00a0' + fmtBytes(s.fs_total),
+            bar: fsPct },
+        ]);
+      }
+
+      // Temperature
+      if (s.temp_c !== undefined) {
+        var tempPct = Math.min(100, Math.max(0, Math.round((s.temp_c - 20) * 100 / 80)));
+        html += abtCard(t('abt.temp'), [
+          { label: 'CPU',
+            value: s.temp_c.toFixed(1) + '\u00a0\u00b0C',
+            bar: tempPct },
+        ]);
+      }
+
+      document.getElementById('abt-grid').innerHTML = html;
+    }
+
+    /* ── i18n ───────────────────────────────────────────────────────────── */
+    var TRANSLATIONS = {
+      fr: {
+        'nav.cockpit': 'Cockpit',
+        'nav.canvas': 'Vue plan',
+        'nav.config': 'Configurations',
+        'nav.params': 'Param\u00e8tres',
+        'hdr.allon': 'TOUT ALLUMER',
+        'hdr.alloff': 'TOUT \u00c9TEINDRE',
+        'err.conn': 'Connexion perdue \u2014 reconnexion en cours\u2026',
+        'cfg.dl.title': 'T\u00e9l\u00e9charger',
+        'cfg.dl.desc': "R\u00e9cup\u00e8re la configuration active de l'ESP32.",
+        'cfg.dl.btn': 'T\u00e9l\u00e9charger config.json',
+        'cfg.ul.title': 'Uploader',
+        'cfg.ul.desc': "Envoie un nouveau fichier JSON \u2014 l'ESP32 red\u00e9marre pour l'appliquer.",
+        'cfg.ul.nofile': 'Aucun fichier s\u00e9lectionn\u00e9',
+        'cfg.ul.choose': 'Choisir\u2026',
+        'cfg.ul.upload': 'Uploader',
+        'cfg.rebooting': 'Configuration appliqu\u00e9e \u2014 red\u00e9marrage dans {n}\u00a0s\u2026',
+        'prm.interface': 'Interface',
+        'prm.language': 'Langue',
+        'prm.poll_interval': 'Rafra\u00eechissement',
+        'prm.system': 'Syst\u00e8me',
+        'prm.save': 'Enregistrer et red\u00e9marrer',
+        'prm.loading': 'Chargement\u2026',
+        'prm.load_err': 'Erreur de chargement',
+        'prm.dcc_pin': 'DCC pin (GPIO)',
+        'prm.oled.sda': 'OLED SDA',
+        'prm.oled.scl': 'OLED SCL',
+        'prm.spi.mosi': 'SPI MOSI',
+        'prm.spi.sclk': 'SPI SCLK',
+        'prm.spi.latch': 'SPI Latch',
+        'prm.spi_card': 'Carte SPI {n}',
+        'prm.pin_count': 'Nombre de pins',
+        'prm.tx': 'TX (GPIO)',
+        'prm.rx': 'RX (GPIO)',
+        'prm.baud': 'Baud rate',
+        'prm.save_err': 'Erreur\u00a0: {msg}',
+        'prm.saved': 'Configuration appliqu\u00e9e \u2014 red\u00e9marrage dans {n}\u00a0s\u2026',
+        'ck.on': '\u00c9TEINDRE',
+        'ck.off': 'ALLUMER',
+        'ck.static': 'FIXE',
+        'ck.busy': '\u2026',
+        'ck.grp_on': 'ALLUMER',
+        'ck.grp_off': '\u00c9TEINDRE',
+        // about view
+        'nav.about': '\u00c0 propos',
+        'abt.refresh': 'Actualiser',
+        'abt.firmware': 'Firmware',
+        'abt.version': 'Version',
+        'abt.build': 'Build',
+        'abt.project': 'Projet',
+        'abt.coming_soon': '\u00c0 venir',
+        'abt.system': 'Syst\u00e8me',
+        'abt.chip': 'Puce',
+        'abt.cpu_freq': 'Fr\u00e9quence CPU',
+        'abt.uptime': 'Uptime',
+        'abt.memory': 'M\u00e9moire',
+        'abt.heap_free': 'Heap libre',
+        'abt.heap_min': 'Min. libre',
+        'abt.flash': 'Flash',
+        'abt.firmware_size': 'Firmware',
+        'abt.fs': 'Syst\u00e8me de fichiers',
+        'abt.temp': 'Temp\u00e9rature CPU',
+        'abt.used_of': '{used} / {total}',
+      },
+      en: {
+        'nav.cockpit': 'Cockpit',
+        'nav.canvas': 'Floor plan',
+        'nav.config': 'Configuration',
+        'nav.params': 'Settings',
+        'hdr.allon': 'ALL ON',
+        'hdr.alloff': 'ALL OFF',
+        'err.conn': 'Connection lost \u2014 reconnecting\u2026',
+        'cfg.dl.title': 'Download',
+        'cfg.dl.desc': 'Get the active configuration from the ESP32.',
+        'cfg.dl.btn': 'Download config.json',
+        'cfg.ul.title': 'Upload',
+        'cfg.ul.desc': 'Send a new JSON file \u2014 the ESP32 reboots to apply it.',
+        'cfg.ul.nofile': 'No file selected',
+        'cfg.ul.choose': 'Browse\u2026',
+        'cfg.ul.upload': 'Upload',
+        'cfg.rebooting': 'Settings applied \u2014 rebooting in {n}\u00a0s\u2026',
+        'prm.interface': 'Interface',
+        'prm.language': 'Language',
+        'prm.poll_interval': 'Refresh interval',
+        'prm.system': 'System',
+        'prm.save': 'Save & reboot',
+        'prm.loading': 'Loading\u2026',
+        'prm.load_err': 'Load error',
+        'prm.dcc_pin': 'DCC pin (GPIO)',
+        'prm.oled.sda': 'OLED SDA',
+        'prm.oled.scl': 'OLED SCL',
+        'prm.spi.mosi': 'SPI MOSI',
+        'prm.spi.sclk': 'SPI SCLK',
+        'prm.spi.latch': 'SPI Latch',
+        'prm.spi_card': 'SPI card {n}',
+        'prm.pin_count': 'Pin count',
+        'prm.tx': 'TX (GPIO)',
+        'prm.rx': 'RX (GPIO)',
+        'prm.baud': 'Baud rate',
+        'prm.save_err': 'Error: {msg}',
+        'prm.saved': 'Settings applied \u2014 rebooting in {n}\u00a0s\u2026',
+        'ck.on': 'TURN OFF',
+        'ck.off': 'TURN ON',
+        'ck.static': 'FIXED',
+        'ck.busy': '\u2026',
+        'ck.grp_on': 'TURN ON',
+        'ck.grp_off': 'TURN OFF',
+        // about view
+        'nav.about': 'About',
+        'abt.refresh': 'Refresh',
+        'abt.firmware': 'Firmware',
+        'abt.version': 'Version',
+        'abt.build': 'Build',
+        'abt.project': 'Project',
+        'abt.coming_soon': 'Coming soon',
+        'abt.system': 'System',
+        'abt.chip': 'Chip',
+        'abt.cpu_freq': 'CPU freq',
+        'abt.uptime': 'Uptime',
+        'abt.memory': 'Memory',
+        'abt.heap_free': 'Free heap',
+        'abt.heap_min': 'Min. free',
+        'abt.flash': 'Flash',
+        'abt.firmware_size': 'Firmware',
+        'abt.fs': 'Filesystem',
+        'abt.temp': 'CPU temperature',
+        'abt.used_of': '{used} / {total}',
+      }
+    };
+
+    var _lang = localStorage.getItem('lang') || 'fr';
+
+    function t(key, vars) {
+      var s = (TRANSLATIONS[_lang] || TRANSLATIONS['fr'])[key] || key;
+      if (vars) Object.keys(vars).forEach(function(k) { s = s.replace('{' + k + '}', vars[k]); });
+      return s;
+    }
+
+    function setLang(lang) {
+      _lang = lang;
+      localStorage.setItem('lang', lang);
+      applyLang();
+    }
+
+    function applyLang() {
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        // Skip the cfg-filename div — its text is managed by onCfgFileSelect
+        if (el.id === 'cfg-filename') return;
+        // Skip prm-system-fields — it contains dynamically generated HTML
+        if (el.id === 'prm-system-fields') return;
+        el.textContent = t(el.getAttribute('data-i18n'));
+      });
+      document.getElementById('lang-fr').classList.toggle('active', _lang === 'fr');
+      document.getElementById('lang-en').classList.toggle('active', _lang === 'en');
+    }
+
+    /* ── Params ─────────────────────────────────────────────────────────── */
+    var _cfgData = null;
+    var _pollTimer = null;
+
+    function savePollInterval() {
+      var v = parseInt(document.getElementById('prm-poll').value, 10);
+      if (v >= 500) {
+        POLL = v;
+        localStorage.setItem('poll', String(v));
+        if (_pollTimer) clearInterval(_pollTimer);
+        _pollTimer = setInterval(poll, POLL);
+      }
+    }
+
+    function loadParams() {
+      // Only reload if no data yet, or force reload each time view is opened
+      var flds = document.getElementById('prm-system-fields');
+      flds.className = 'prm-info';
+      flds.innerHTML = t('prm.loading');
+      document.getElementById('prm-save-btn').disabled = true;
+      prmStatus('', '');
+
+      fetch('/api/config')
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(cfg) {
+          _cfgData = cfg;
+          renderSystemFields(cfg);
+          document.getElementById('prm-save-btn').disabled = false;
+        })
+        .catch(function(err) {
+          flds.className = 'prm-info';
+          flds.textContent = t('prm.load_err') + ': ' + err.message;
+        });
+    }
+
+    function frow(label, inputHtml) {
+      return '<div class="prm-row">'
+        + '<span class="prm-label">' + label + '</span>'
+        + '<div class="prm-field">' + inputHtml + '</div>'
+        + '</div>';
+    }
+
+    function gpioInput(id, val) {
+      return '<input type="number" id="' + id + '" value="' + (val !== undefined ? val : '') + '"'
+           + ' min="0" max="39" class="prm-input prm-input-sm">';
+    }
+
+    function baudSelect(id, val) {
+      var bauds = [9600, 19200, 38400, 57600, 115200];
+      return '<select id="' + id + '" class="prm-select">'
+        + bauds.map(function(b) {
+            return '<option value="' + b + '"' + (b === val ? ' selected' : '') + '>' + b + '</option>';
+          }).join('')
+        + '</select>';
+    }
+
+    function pinCountSelect(id, val) {
+      var counts = [8, 16, 24, 32];
+      return '<select id="' + id + '" class="prm-select">'
+        + counts.map(function(c) {
+            return '<option value="' + c + '"' + (c === val ? ' selected' : '') + '>' + c + '</option>';
+          }).join('')
+        + '</select>';
+    }
+
+    function renderSystemFields(cfg) {
+      var sys = cfg.system || {};
+      var sp  = cfg.serial_ports || {};
+      var html = '';
+
+      if (sys.dcc_pin !== undefined) {
+        html += frow(t('prm.dcc_pin'), gpioInput('pf-dcc_pin', sys.dcc_pin));
+      }
+      if (sys.oled) {
+        html += frow(t('prm.oled.sda'), gpioInput('pf-oled_sda', sys.oled.sda));
+        html += frow(t('prm.oled.scl'), gpioInput('pf-oled_scl', sys.oled.scl));
+      }
+      if (sys.spi_bus) {
+        html += frow(t('prm.spi.mosi'),  gpioInput('pf-spi_mosi',  sys.spi_bus.mosi));
+        html += frow(t('prm.spi.sclk'),  gpioInput('pf-spi_sclk',  sys.spi_bus.sclk));
+        html += frow(t('prm.spi.latch'), gpioInput('pf-spi_latch', sys.spi_bus.latch));
+      }
+      if (sys.spi_cards && sys.spi_cards.length) {
+        sys.spi_cards.forEach(function(card, i) {
+          var lbl = t('prm.spi_card', {n: i + 1}) + ' \u00b7 ' + t('prm.pin_count');
+          html += frow(lbl, pinCountSelect('pf-spi_card_' + i + '_pins', card.pin_count));
+        });
+      }
+      Object.keys(sp).forEach(function(uartKey) {
+        var u = sp[uartKey];
+        var pfx = uartKey.toUpperCase() + ' \u00b7 ';
+        html += frow(pfx + t('prm.tx'),   gpioInput('pf-' + uartKey + '_tx',   u.tx));
+        html += frow(pfx + t('prm.rx'),   gpioInput('pf-' + uartKey + '_rx',   u.rx));
+        html += frow(pfx + t('prm.baud'), baudSelect('pf-' + uartKey + '_baud', u.baud));
+      });
+
+      var flds = document.getElementById('prm-system-fields');
+      flds.className = '';
+      flds.innerHTML = html || '<div class="prm-info">' + t('prm.load_err') + '</div>';
+    }
+
+    function saveParams() {
+      if (!_cfgData) return;
+      var cfg = JSON.parse(JSON.stringify(_cfgData));
+      var sys = cfg.system || {};
+      var sp  = cfg.serial_ports || {};
+
+      function getInt(id) {
+        var el = document.getElementById(id);
+        return el ? parseInt(el.value, 10) : undefined;
+      }
+
+      if (sys.dcc_pin !== undefined && document.getElementById('pf-dcc_pin')) {
+        sys.dcc_pin = getInt('pf-dcc_pin');
+      }
+      if (sys.oled) {
+        if (document.getElementById('pf-oled_sda')) sys.oled.sda = getInt('pf-oled_sda');
+        if (document.getElementById('pf-oled_scl')) sys.oled.scl = getInt('pf-oled_scl');
+      }
+      if (sys.spi_bus) {
+        if (document.getElementById('pf-spi_mosi'))  sys.spi_bus.mosi  = getInt('pf-spi_mosi');
+        if (document.getElementById('pf-spi_sclk'))  sys.spi_bus.sclk  = getInt('pf-spi_sclk');
+        if (document.getElementById('pf-spi_latch')) sys.spi_bus.latch = getInt('pf-spi_latch');
+      }
+      if (sys.spi_cards) {
+        sys.spi_cards.forEach(function(card, i) {
+          var el = document.getElementById('pf-spi_card_' + i + '_pins');
+          if (el) card.pin_count = parseInt(el.value, 10);
+        });
+      }
+      Object.keys(sp).forEach(function(uartKey) {
+        var u = sp[uartKey];
+        var tx = document.getElementById('pf-' + uartKey + '_tx');
+        var rx = document.getElementById('pf-' + uartKey + '_rx');
+        var bd = document.getElementById('pf-' + uartKey + '_baud');
+        if (tx) u.tx   = parseInt(tx.value, 10);
+        if (rx) u.rx   = parseInt(rx.value, 10);
+        if (bd) u.baud = parseInt(bd.value, 10);
+      });
+      cfg.system = sys;
+      cfg.serial_ports = sp;
+
+      document.getElementById('prm-save-btn').disabled = true;
+      prmStatus('', '');
+
+      fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg)
+      })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function() {
+        var n = 5;
+        function tick() {
+          prmStatus(t('prm.saved', {n: n}), 'ok');
+          if (n-- > 0) setTimeout(tick, 1000);
+        }
+        tick();
+      })
+      .catch(function(err) {
+        document.getElementById('prm-save-btn').disabled = false;
+        prmStatus(t('prm.save_err', {msg: err.message}), 'err');
+      });
+    }
+
+    function prmStatus(msg, cls) {
+      var el = document.getElementById('prm-status');
+      el.style.display = msg ? '' : 'none';
+      el.className = 'prm-status ' + cls;
+      el.textContent = msg;
+    }
+
+    /* ── Boot ───────────────────────────────────────────────────────────── */
+    (function() {
+      var stored = parseInt(localStorage.getItem('poll') || '0', 10);
+      if (stored >= 500) POLL = stored;
+      document.getElementById('prm-poll').value = POLL;
+    })();
+    applyLang();
+    poll();
+    _pollTimer = setInterval(poll, POLL);
+
+  </script>
+</body>
+
+</html>
