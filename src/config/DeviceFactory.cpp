@@ -12,7 +12,7 @@
 #ifdef ESP32
 
 #include "config/DeviceFactory.h"
-#include "MrJRailwayFX.h"        // pulls in every device class
+#include "MrJRailwayFX.h"
 #ifdef SPI_CARDS
 #  include "spi/Spi595Bus.h"
 #endif
@@ -22,12 +22,13 @@
 #endif
 
 // ---------------------------------------------------------------------------
-// Internal helper — map port name to the ESP32 global HardwareSerial object.
+// Internal helper — map uart bus key to the ESP32 global HardwareSerial.
+// Convention: uart bus keys must be uart0, uart1, or uart2.
 // ---------------------------------------------------------------------------
-static HardwareSerial* serialFromPortName(const char* name) {
-  if (strcmp(name, "uart0") == 0) return &Serial;
-  if (strcmp(name, "uart1") == 0) return &Serial1;
-  if (strcmp(name, "uart2") == 0) return &Serial2;
+static HardwareSerial* serialFromBusKey(const char* key) {
+  if (strcmp(key, "uart0") == 0) return &Serial;
+  if (strcmp(key, "uart1") == 0) return &Serial1;
+  if (strcmp(key, "uart2") == 0) return &Serial2;
   return nullptr;
 }
 
@@ -36,7 +37,6 @@ static HardwareSerial* serialFromPortName(const char* name) {
 // ---------------------------------------------------------------------------
 
 bool DeviceFactory::load(const char* json) {
-  // 2 kB covers ≈ 16 devices with typical field lengths.
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, json);
   if (err) {
@@ -45,70 +45,70 @@ bool DeviceFactory::load(const char* json) {
     return false;
   }
 
-  _dccPin = doc["system"]["dcc_pin"] | -1;
-
-  if (doc["system"]["spi_bus"].is<JsonObject>()) {
-    JsonObject bus = doc["system"]["spi_bus"].as<JsonObject>();
-    _spiBus.mosi  = bus["mosi"]  | -1;
-    _spiBus.sclk  = bus["sclk"]  | -1;
-    _spiBus.latch = bus["latch"] | -1;
-    if (_spiBus.configured()) {
-      Serial.print(F("DeviceFactory: spi_bus mosi="));  Serial.print(_spiBus.mosi);
-      Serial.print(F(" sclk="));  Serial.print(_spiBus.sclk);
-      Serial.print(F(" latch=")); Serial.println(_spiBus.latch);
-    } else {
-      Serial.println(F("DeviceFactory: spi_bus — incomplete config, ignored"));
-    }
+  // 1. Parse buses — populates _busEntries[], _dccPin, _spiBus, _ports[]
+  if (doc["buses"].is<JsonObject>()) {
+    _parseBuses(doc["buses"].as<JsonObject>());
   }
 
+  // 2. Parse boards — resolve busType from key, build _spiCards[] for HC595
   if (doc["boards"].is<JsonArray>()) {
-    JsonArray bds = doc["boards"].as<JsonArray>();
-    for (JsonObject bd : bds) {
-      if (_spiCardCount >= FACTORY_MAX_SPI_CARDS) {
-        Serial.println(F("DeviceFactory: FACTORY_MAX_SPI_CARDS reached"));
+    for (JsonObject bd : doc["boards"].as<JsonArray>()) {
+      if (_boardCount >= FACTORY_MAX_BOARDS) {
+        Serial.println(F("DeviceFactory: FACTORY_MAX_BOARDS reached"));
         break;
       }
-      const char* t = bd["type"] | "";
-      SpiCardType cardType = SPI_CARD_UNKNOWN;
-      if      (strcmp(t, "HC595") == 0) cardType = SPI_CARD_HC595;
-      else {
-        Serial.print(F("DeviceFactory: unknown board type — ")); Serial.println(t);
-        continue;
+
+      BoardCfg& bcfg = _boards_cfg[_boardCount];
+      strncpy(bcfg.id,      bd["id"]    | "", sizeof(bcfg.id)      - 1);
+      strncpy(bcfg.label,   bd["label"] | "", sizeof(bcfg.label)   - 1);
+      strncpy(bcfg.typeStr, bd["type"]  | "", sizeof(bcfg.typeStr) - 1);
+      strncpy(bcfg.busKey,  bd["bus"]   | "", sizeof(bcfg.busKey)  - 1);
+      bcfg.busType  = _resolveBusType(bcfg.busKey);
+      bcfg.pinCount = 0;
+      bcfg.spiRank  = 0;
+
+      // SPI boards: assign daisy-chain rank and register in _spiCards[]
+      if (bcfg.busType == BUS_SPI_MASTER) {
+        if (_spiCardCount >= FACTORY_MAX_SPI_CARDS) {
+          Serial.println(F("DeviceFactory: FACTORY_MAX_SPI_CARDS reached"));
+          _boardCount++;
+          continue;
+        }
+        bcfg.pinCount = (uint8_t)(bd["pin_count"] | 0);
+        bcfg.spiRank  = _spiCardCount + 1;
+
+        _spiCards[_spiCardCount].type     = SPI_CARD_HC595;
+        _spiCards[_spiCardCount].pinCount = bcfg.pinCount;
+        _spiCardCount++;
       }
 
-      BoardCfg& bcfg = _boards_cfg[_spiCardCount];
-      strncpy(bcfg.id,   bd["id"]   | "", sizeof(bcfg.id)   - 1);
-      strncpy(bcfg.name, bd["name"] | "", sizeof(bcfg.name) - 1);
-      bcfg.type     = cardType;
-      bcfg.pinCount = (uint8_t)(bd["pin_count"] | 0);
+      Serial.print(F("DeviceFactory: board[")); Serial.print(_boardCount + 1);
+      Serial.print(F("] id="));      Serial.print(bcfg.id);
+      Serial.print(F(" type="));     Serial.print(bcfg.typeStr);
+      if (bcfg.busKey[0]) {
+        Serial.print(F(" bus="));    Serial.print(bcfg.busKey);
+      }
+      if (bcfg.spiRank > 0) {
+        Serial.print(F(" rank="));   Serial.print(bcfg.spiRank);
+        Serial.print(F(" pins="));   Serial.print(bcfg.pinCount);
+      }
+      Serial.println();
 
-      _spiCards[_spiCardCount].type     = cardType;
-      _spiCards[_spiCardCount].pinCount = bcfg.pinCount;
-
-      Serial.print(F("DeviceFactory: board["));
-      Serial.print(_spiCardCount + 1);
-      Serial.print(F("] id=")); Serial.print(bcfg.id);
-      Serial.print(F(" type=HC595 pin_count=")); Serial.println(bcfg.pinCount);
-      _spiCardCount++;
+      _boardCount++;
     }
   }
 
+  // 3. Init Spi595Bus once all SPI boards are registered
 #ifdef SPI_CARDS
   if (_spiBus.configured() && _spiCardCount > 0) {
     uint8_t pinCounts[FACTORY_MAX_SPI_CARDS];
-    for (uint8_t i = 0; i < _spiCardCount; i++) {
-      pinCounts[i] = _spiCards[i].pinCount;
-    }
+    for (uint8_t i = 0; i < _spiCardCount; i++) pinCounts[i] = _spiCards[i].pinCount;
     Spi595Bus::init(_spiBus.mosi, _spiBus.sclk, _spiBus.latch, pinCounts, _spiCardCount);
   }
 #endif
 
-  if (doc["system"]["serial_ports"].is<JsonObject>()) {
-    _parsePorts(doc["system"]["serial_ports"].as<JsonObject>());
-  }
-
-  JsonArray arr = doc["devices"].as<JsonArray>();
-  for (JsonObject obj : arr) {
+  // 4. Parse devices
+  for (JsonObject obj : doc["devices"].as<JsonArray>()) {
     if (_count >= FACTORY_MAX_DEVICES) {
       Serial.println(F("DeviceFactory: FACTORY_MAX_DEVICES reached"));
       break;
@@ -126,82 +126,164 @@ bool DeviceFactory::load(const char* json) {
 }
 
 void DeviceFactory::initAll() {
-  for (size_t i = 0; i < _count; i++) {
-    _devices[i]->initPins();
-  }
+  for (size_t i = 0; i < _count; i++) _devices[i]->initPins();
 }
 
 // ---------------------------------------------------------------------------
-// Private — serial ports
+// Private — buses
 // ---------------------------------------------------------------------------
 
-bool DeviceFactory::_parsePorts(JsonObject ports) {
-  for (JsonPair kv : ports) {
-    if (_portCount >= FACTORY_MAX_PORTS) break;
+bool DeviceFactory::_parseBuses(JsonObject buses) {
+  for (JsonPair kv : buses) {
+    const char* busKey = kv.key().c_str();
+    JsonObject  bus    = kv.value().as<JsonObject>();
+    const char* type   = bus["type"] | "";
 
-    PortCfg& cfg = _ports[_portCount];
-    strncpy(cfg.name, kv.key().c_str(), sizeof(cfg.name) - 1);
-    cfg.name[sizeof(cfg.name) - 1] = '\0';
-
-    JsonObject p = kv.value().as<JsonObject>();
-    cfg.tx   = p["tx"]   | -1;
-    cfg.rx   = p["rx"]   | -1;
-    cfg.baud = p["baud"] | 115200;
-
-    cfg.serial = serialFromPortName(cfg.name);
-    if (cfg.serial && cfg.tx >= 0 && cfg.rx >= 0) {
-      cfg.serial->begin(cfg.baud, SERIAL_8N1, cfg.rx, cfg.tx);
-      Serial.print(F("DeviceFactory: opened "));
-      Serial.print(cfg.name);
-      Serial.print(F(" tx="));  Serial.print(cfg.tx);
-      Serial.print(F(" rx="));  Serial.print(cfg.rx);
-      Serial.print(F(" baud=")); Serial.println(cfg.baud);
+    // Register in bus catalog
+    if (_busCount < FACTORY_MAX_BUSES) {
+      strncpy(_busEntries[_busCount].key, busKey, sizeof(_busEntries[0].key) - 1);
     }
-    _portCount++;
+
+    if (strcmp(type, "dcc") == 0) {
+      _dccPin = bus["pin"] | -1;
+      if (_busCount < FACTORY_MAX_BUSES) _busEntries[_busCount].type = BUS_DCC;
+      Serial.print(F("DeviceFactory: bus dcc pin=")); Serial.println(_dccPin);
+    }
+    else if (strcmp(type, "spi_master_only") == 0) {
+      _spiBus.mosi  = bus["mosi"]  | -1;
+      _spiBus.sclk  = bus["sclk"]  | -1;
+      _spiBus.latch = bus["latch"] | -1;
+      if (_busCount < FACTORY_MAX_BUSES) _busEntries[_busCount].type = BUS_SPI_MASTER;
+      if (_spiBus.configured()) {
+        Serial.print(F("DeviceFactory: bus spi mosi=")); Serial.print(_spiBus.mosi);
+        Serial.print(F(" sclk="));  Serial.print(_spiBus.sclk);
+        Serial.print(F(" latch=")); Serial.println(_spiBus.latch);
+      } else {
+        Serial.println(F("DeviceFactory: bus spi — incomplete config, ignored"));
+      }
+    }
+    else if (strcmp(type, "spi_full_duplex") == 0) {
+      if (_busCount < FACTORY_MAX_BUSES) _busEntries[_busCount].type = BUS_SPI_FULL;
+      Serial.print(F("DeviceFactory: bus spi_full_duplex ")); Serial.print(busKey);
+      Serial.println(F(" — not yet handled"));
+    }
+    else if (strcmp(type, "uart") == 0) {
+      if (_busCount < FACTORY_MAX_BUSES) _busEntries[_busCount].type = BUS_UART;
+      if (_portCount < FACTORY_MAX_PORTS) {
+        PortCfg& cfg = _ports[_portCount];
+        strncpy(cfg.name, busKey, sizeof(cfg.name) - 1);
+        cfg.name[sizeof(cfg.name) - 1] = '\0';
+        cfg.tx   = bus["tx"]   | -1;
+        cfg.rx   = bus["rx"]   | -1;
+        cfg.baud = bus["baud"] | 115200;
+        cfg.serial = serialFromBusKey(cfg.name);
+        if (cfg.serial && cfg.tx >= 0 && cfg.rx >= 0) {
+          cfg.serial->begin(cfg.baud, SERIAL_8N1, cfg.rx, cfg.tx);
+          Serial.print(F("DeviceFactory: bus uart ")); Serial.print(cfg.name);
+          Serial.print(F(" tx=")); Serial.print(cfg.tx);
+          Serial.print(F(" rx=")); Serial.print(cfg.rx);
+          Serial.print(F(" baud=")); Serial.println(cfg.baud);
+        } else {
+          Serial.print(F("DeviceFactory: bus uart ")); Serial.print(busKey);
+          Serial.println(F(" — key must be uart0/uart1/uart2"));
+        }
+        _portCount++;
+      } else {
+        Serial.println(F("DeviceFactory: FACTORY_MAX_PORTS reached"));
+      }
+    }
+    else if (strcmp(type, "i2c") == 0) {
+      if (_busCount < FACTORY_MAX_BUSES) _busEntries[_busCount].type = BUS_I2C;
+      Serial.print(F("DeviceFactory: bus i2c ")); Serial.print(busKey);
+      Serial.print(F(" sda=")); Serial.print((int)(bus["sda"] | -1));
+      Serial.print(F(" scl=")); Serial.println((int)(bus["scl"] | -1));
+    }
+    else {
+      Serial.print(F("DeviceFactory: unknown bus type — ")); Serial.println(type);
+    }
+
+    if (_busCount < FACTORY_MAX_BUSES) _busCount++;
   }
   return true;
 }
 
-DeviceFactory::PortCfg* DeviceFactory::_findPort(const char* portName) {
+DeviceFactory::BusType DeviceFactory::_resolveBusType(const char* busKey) const {
+  if (!busKey || busKey[0] == '\0') return BUS_NONE;
+  for (uint8_t i = 0; i < _busCount; i++) {
+    if (strcmp(_busEntries[i].key, busKey) == 0) return _busEntries[i].type;
+  }
+  return BUS_NONE;
+}
+
+// ---------------------------------------------------------------------------
+// Private — port lookup
+// ---------------------------------------------------------------------------
+
+DeviceFactory::PortCfg* DeviceFactory::_findPort(const char* busKey) {
   for (size_t i = 0; i < _portCount; i++) {
-    if (strcmp(_ports[i].name, portName) == 0) return &_ports[i];
+    if (strcmp(_ports[i].name, busKey) == 0) return &_ports[i];
   }
   return nullptr;
 }
 
-HardwareSerial* DeviceFactory::_findSerial(const char* portName) {
-  PortCfg* cfg = _findPort(portName);
+HardwareSerial* DeviceFactory::_findSerial(const char* busKey) {
+  PortCfg* cfg = _findPort(busKey);
   return cfg ? cfg->serial : nullptr;
+}
+
+// ---------------------------------------------------------------------------
+// Private — board resolution
+// ---------------------------------------------------------------------------
+
+uint8_t DeviceFactory::_resolveBoardId(const char* id) const {
+  if (!id || id[0] == '\0') return 0;
+  for (uint8_t i = 0; i < _boardCount; i++) {
+    if (strcmp(_boards_cfg[i].id, id) == 0) return i + 1;
+  }
+  Serial.print(F("DeviceFactory: unknown board id — ")); Serial.println(id);
+  return 0;
+}
+
+uint8_t DeviceFactory::_resolveBoardIdx(JsonVariant v) const {
+  if (v.is<const char*>()) return _resolveBoardId(v.as<const char*>());
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
 // Private — pin helpers
 // ---------------------------------------------------------------------------
 
-PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t board) {
+PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   uint8_t bit = v.is<JsonArray>()
               ? (uint8_t)v.as<JsonArray>()[0].as<int>()
               : (uint8_t)v.as<int>();
+
+  if (boardIdx > 0 && boardIdx <= _boardCount) {
+    const BoardCfg& bcfg = _boards_cfg[boardIdx - 1];
+    if (bcfg.busType == BUS_SPI_MASTER && bcfg.spiRank > 0) {
 #ifdef SPI_CARDS
-  if (board > 0) return PIN_ID::spi(board, bit);  // wiring 1-based, Spi595Bus::setPin() handles the offset
+      return PIN_ID::spi(bcfg.spiRank, bit);
+#else
+      Serial.println(F("DeviceFactory: SPI board requires -DSPI_CARDS — device skipped"));
+      return (PIN_ID)255;  // NO_PIN
+#endif
+    }
+  }
+#ifdef SPI_CARDS
   return PIN_ID::gpio(bit);
 #else
-  if (board > 0) {
-    Serial.println(F("DeviceFactory: board > 0 requires -DSPI_CARDS — device skipped"));
-    return (PIN_ID)255;  // NO_PIN — device will be skipped (validatePins fails)
-  }
   return (PIN_ID)bit;
 #endif
 }
 
-size_t DeviceFactory::_pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t board) {
+size_t DeviceFactory::_pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t boardIdx) {
   if (v.is<JsonArray>()) {
     JsonArray arr = v.as<JsonArray>();
     size_t n = min((size_t)arr.size(), maxPins);
-    for (size_t i = 0; i < n; i++) out[i] = _pin(arr[i], board);
+    for (size_t i = 0; i < n; i++) out[i] = _pin(arr[i], boardIdx);
     return n;
   }
-  out[0] = _pin(v, board);
+  out[0] = _pin(v, boardIdx);
   return 1;
 }
 
@@ -209,115 +291,103 @@ size_t DeviceFactory::_pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t 
 // Private — device factory
 // ---------------------------------------------------------------------------
 
-uint8_t DeviceFactory::_resolveBoardId(const char* id) const {
-  if (!id || id[0] == '\0') return 0;
-  for (uint8_t i = 0; i < _spiCardCount; i++) {
-    if (strcmp(_boards_cfg[i].id, id) == 0) return i + 1;
-  }
-  Serial.print(F("DeviceFactory: unknown board id — ")); Serial.println(id);
-  return 0;
-}
-
-// Resolve board field: string id (new format) or integer index (legacy).
-uint8_t DeviceFactory::_resolveBoardIdx(JsonVariant v) const {
-  if (v.is<const char*>()) return _resolveBoardId(v.as<const char*>());
-  if (v.is<int>())         return (uint8_t)v.as<int>();   // legacy: direct 1-based index
-  return 0;
-}
-
 Device* DeviceFactory::_createDevice(JsonObject obj) {
   const char* type    = obj["type"]    | "";
   const char* label   = obj["label"]   | " ";
   int         address = obj["address"] | 0;
-  const char* port    = obj["port"]    | "";
   JsonVariant wiring  = obj["wiring"];
-  uint8_t     board   = _resolveBoardIdx(obj["board"]);
+  uint8_t     boardIdx = _resolveBoardIdx(obj["board"]);
 
   Device* d = nullptr;
 
   // ------------------------------------------------------------------
-  // Single-pin LED effects  (wiring: scalar GPIO or SPI bit when board > 0)
+  // Single-pin LED effects
   // ------------------------------------------------------------------
-  if      (strcmp(type, "Beacon")                == 0) d = new Beacon               (_pin(wiring, board));
-  else if (strcmp(type, "CampFire")              == 0) d = new CampFire              (_pin(wiring, board));
-  else if (strcmp(type, "Led")                   == 0) d = new Led                  (_pin(wiring, board));
-  else if (strcmp(type, "DefectLamp")            == 0) d = new DefectLamp            (_pin(wiring, board));
-  else if (strcmp(type, "ElectricLamp")          == 0) d = new ElectricLamp          (_pin(wiring, board));
-  else if (strcmp(type, "GasLamp")               == 0) d = new GasLamp               (_pin(wiring, board));
-  else if (strcmp(type, "NeonSign")              == 0) d = new NeonSign              (_pin(wiring, board));
-  else if (strcmp(type, "OilLamp")               == 0) d = new OilLamp               (_pin(wiring, board));
-  else if (strcmp(type, "RailwayCrossingLights") == 0) d = new RailwayCrossingLights (_pin(wiring, board));
-  else if (strcmp(type, "SignalFlare")           == 0) d = new SignalFlare           (_pin(wiring, board));
-  else if (strcmp(type, "SolderLamp")            == 0) d = new SolderLamp            (_pin(wiring, board));
-  else if (strcmp(type, "Storm")                 == 0) d = new Storm                 (_pin(wiring, board));
-  else if (strcmp(type, "Torch")                 == 0) d = new Torch                 (_pin(wiring, board));
-  else if (strcmp(type, "TrainHeadLamp")         == 0) d = new TrainHeadLamp         (_pin(wiring, board));
-  else if (strcmp(type, "TurnSignal")            == 0) d = new TurnSignal            (_pin(wiring, board));
+  if      (strcmp(type, "Beacon")                == 0) d = new Beacon               (_pin(wiring, boardIdx));
+  else if (strcmp(type, "CampFire")              == 0) d = new CampFire              (_pin(wiring, boardIdx));
+  else if (strcmp(type, "Led")                   == 0) d = new Led                  (_pin(wiring, boardIdx));
+  else if (strcmp(type, "DefectLamp")            == 0) d = new DefectLamp            (_pin(wiring, boardIdx));
+  else if (strcmp(type, "ElectricLamp")          == 0) d = new ElectricLamp          (_pin(wiring, boardIdx));
+  else if (strcmp(type, "GasLamp")               == 0) d = new GasLamp               (_pin(wiring, boardIdx));
+  else if (strcmp(type, "NeonSign")              == 0) d = new NeonSign              (_pin(wiring, boardIdx));
+  else if (strcmp(type, "OilLamp")               == 0) d = new OilLamp               (_pin(wiring, boardIdx));
+  else if (strcmp(type, "RailwayCrossingLights") == 0) d = new RailwayCrossingLights (_pin(wiring, boardIdx));
+  else if (strcmp(type, "SignalFlare")           == 0) d = new SignalFlare           (_pin(wiring, boardIdx));
+  else if (strcmp(type, "SolderLamp")            == 0) d = new SolderLamp            (_pin(wiring, boardIdx));
+  else if (strcmp(type, "Storm")                 == 0) d = new Storm                 (_pin(wiring, boardIdx));
+  else if (strcmp(type, "Torch")                 == 0) d = new Torch                 (_pin(wiring, boardIdx));
+  else if (strcmp(type, "TrainHeadLamp")         == 0) d = new TrainHeadLamp         (_pin(wiring, boardIdx));
+  else if (strcmp(type, "TurnSignal")            == 0) d = new TurnSignal            (_pin(wiring, boardIdx));
 
   // ------------------------------------------------------------------
-  // StaticLow — drive 1-4 pins OUTPUT LOW (wiring: scalar or [gpio…])
-  // Useful to suppress boot pull-ups on JTAG/strapping pins with a LED.
+  // StaticLow
   // ------------------------------------------------------------------
   else if (strcmp(type, "StaticLow") == 0) {
     PIN_ID pins[FACTORY_MAX_DEVICES];
-    size_t n = _pins(wiring, pins, FACTORY_MAX_DEVICES, board);
+    size_t n = _pins(wiring, pins, FACTORY_MAX_DEVICES, boardIdx);
     d = new StaticLow(n, pins);
   }
 
   // ------------------------------------------------------------------
-  // Two-pin alternating effect  (wiring: [gpio, gpio])
+  // Two-pin
   // ------------------------------------------------------------------
   else if (strcmp(type, "DoubleBeacon") == 0) {
     PIN_ID pins[2] = { NO_PIN, NO_PIN };
-    _pins(wiring, pins, 2, board);
+    _pins(wiring, pins, 2, boardIdx);
     d = new DoubleBeacon(pins[0], pins[1]);
   }
 
   // ------------------------------------------------------------------
-  // 2-pin signal  (wiring: [gpio, gpio])
+  // 2-pin signals
   // ------------------------------------------------------------------
   else if (strcmp(type, "MrJDBBlocSignal") == 0) {
     PIN_ID pins[2] = { NO_PIN, NO_PIN };
-    _pins(wiring, pins, 2, board);
+    _pins(wiring, pins, 2, boardIdx);
     d = new MrJDBBlocSignal(pins);
   }
 
   // ------------------------------------------------------------------
-  // 3-pin signals  (wiring: [gpio, gpio, gpio])
+  // 3-pin signals
   // ------------------------------------------------------------------
   else if (strcmp(type, "MrJDBEntrySignal") == 0) {
     PIN_ID pins[3] = { NO_PIN, NO_PIN, NO_PIN };
-    _pins(wiring, pins, 3, board);
+    _pins(wiring, pins, 3, boardIdx);
     d = new MrJDBEntrySignal(pins);
   }
   else if (strcmp(type, "MrJDBExitSignal") == 0) {
     PIN_ID pins[3] = { NO_PIN, NO_PIN, NO_PIN };
-    _pins(wiring, pins, 3, board);
+    _pins(wiring, pins, 3, boardIdx);
     d = new MrJDBExitSignal(pins);
   }
   else if (strcmp(type, "TrafficLight3Phase") == 0) {
     PIN_ID pins[3] = { NO_PIN, NO_PIN, NO_PIN };
-    _pins(wiring, pins, 3, board);
+    _pins(wiring, pins, 3, boardIdx);
     d = new TrafficLight3Phases(pins);
   }
-
-  // ------------------------------------------------------------------
-  // 4-pin signal  (wiring: [gpio, gpio, gpio, gpio])
-  // ------------------------------------------------------------------
   else if (strcmp(type, "TrafficLight4Phase") == 0) {
     PIN_ID pins[3] = { NO_PIN, NO_PIN, NO_PIN };
-    _pins(wiring, pins, 3, board);
+    _pins(wiring, pins, 3, boardIdx);
     d = new TrafficLight4Phases(pins);
   }
 
   // ------------------------------------------------------------------
-  // DfAudio  (port → rx/tx GPIO; no wiring)
+  // DfAudio — rx/tx come from the board's uart bus
   // ------------------------------------------------------------------
   else if (strcmp(type, "DfAudio") == 0) {
-    PortCfg* cfg = _findPort(port);
+    if (boardIdx == 0 || boardIdx > _boardCount) {
+      Serial.println(F("DeviceFactory: DfAudio — board not found"));
+      return nullptr;
+    }
+    const BoardCfg& bcfg = _boards_cfg[boardIdx - 1];
+    if (bcfg.busType != BUS_UART) {
+      Serial.print(F("DeviceFactory: DfAudio — board is not on a uart bus: "));
+      Serial.println(bcfg.id);
+      return nullptr;
+    }
+    PortCfg* cfg = _findPort(bcfg.busKey);
     if (!cfg || cfg->rx < 0 || cfg->tx < 0) {
-      Serial.print(F("DeviceFactory: DfAudio — port not found or incomplete: "));
-      Serial.println(port);
+      Serial.print(F("DeviceFactory: DfAudio — uart config missing for bus: "));
+      Serial.println(bcfg.busKey);
       return nullptr;
     }
 #ifdef SPI_CARDS
@@ -328,14 +398,24 @@ Device* DeviceFactory::_createDevice(JsonObject obj) {
   }
 
   // ------------------------------------------------------------------
-  // SerialServo  (port → HardwareSerial; wiring → servo bus ID)
+  // SerialServo — HardwareSerial comes from the board's uart bus
   // ------------------------------------------------------------------
   else if (strcmp(type, "SerialServo") == 0) {
 #ifdef LOBOT
-    HardwareSerial* ser = _findSerial(port);
+    if (boardIdx == 0 || boardIdx > _boardCount) {
+      Serial.println(F("DeviceFactory: SerialServo — board not found"));
+      return nullptr;
+    }
+    const BoardCfg& bcfg = _boards_cfg[boardIdx - 1];
+    if (bcfg.busType != BUS_UART) {
+      Serial.print(F("DeviceFactory: SerialServo — board is not on a uart bus: "));
+      Serial.println(bcfg.id);
+      return nullptr;
+    }
+    HardwareSerial* ser = _findSerial(bcfg.busKey);
     if (!ser) {
-      Serial.print(F("DeviceFactory: SerialServo — port not found: "));
-      Serial.println(port);
+      Serial.print(F("DeviceFactory: SerialServo — uart not found for bus: "));
+      Serial.println(bcfg.busKey);
       return nullptr;
     }
     uint8_t servoId = (uint8_t)wiring.as<int>();
@@ -352,34 +432,21 @@ Device* DeviceFactory::_createDevice(JsonObject obj) {
 #endif
   }
 
-  // ------------------------------------------------------------------
-  // Unknown type
-  // ------------------------------------------------------------------
   else {
-    Serial.print(F("DeviceFactory: unknown type — "));
-    Serial.println(type);
+    Serial.print(F("DeviceFactory: unknown type — ")); Serial.println(type);
     return nullptr;
   }
 
   // ------------------------------------------------------------------
   // Common post-creation setup
   // ------------------------------------------------------------------
-  if (label[0] != '\0' && label[0] != ' ') {
-    d->setLabel(label[0]);
-  }
-  if (address > 0) {
-    d->registerDccDrivableDevice((ADDRESS)address);
-  }
+  if (label[0] != '\0' && label[0] != ' ') d->setLabel(label[0]);
+  if (address > 0) d->registerDccDrivableDevice((ADDRESS)address);
+  if (strcmp(obj["default_state"] | "off", "on") == 0) d->newState(1);
 
-  const char* defaultState = obj["default_state"] | "off";
-  if (strcmp(defaultState, "on") == 0) {
-    d->newState(1);
-  }
-
-  Serial.print(F("DeviceFactory: created "));
-  Serial.print(type);
-  Serial.print(F(" label="));  Serial.print(label[0]);
-  Serial.print(F(" addr="));   Serial.println(address);
+  Serial.print(F("DeviceFactory: created ")); Serial.print(type);
+  Serial.print(F(" label=")); Serial.print(label[0]);
+  Serial.print(F(" addr="));  Serial.println(address);
 
   return d;
 }
