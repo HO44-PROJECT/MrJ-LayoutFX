@@ -150,7 +150,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Servo");
+        return F("SerialServo");
     }
 
     /**
