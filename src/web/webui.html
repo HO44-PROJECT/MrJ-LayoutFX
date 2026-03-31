@@ -13,9 +13,115 @@
       padding: 0
     }
 
+    /* ── Themes ─────────────────────────────────────────────────────────── */
+    :root {
+      --bg0: #1a1a2e;
+      --bg1: #16213e;
+      --bg2: #0f1b2d;
+      --bg3: #0d1f38;
+      --bd: #0f3460;
+      --acc: #e94560;
+      --t0: #e0e0e0;
+      --t1: #a0aec0;
+      --t2: #7f8c8d;
+      --t3: #4a6fa5;
+      --t4: #3a4a5a;
+      --ico: #4870a0;
+      --d0: #071e0d;
+      --d1: #0d2014;
+      --d2: #1e4028;
+      --d3: #3da858;
+      --d4: #0a1a08
+    }
+
+    body.th-amber {
+      --bg0: #1c1400;
+      --bg1: #261a00;
+      --bg2: #180e00;
+      --bg3: #100800;
+      --bd: #3e2800;
+      --acc: #e8a030;
+      --t0: #ede0c0;
+      --t1: #c0a468;
+      --t2: #906040;
+      --t3: #b09040;
+      --t4: #5a3a18;
+      --ico: #8a6030;
+      --d0: #0e1200;
+      --d1: #1a1800;
+      --d2: #382c00;
+      --d3: #c0a040;
+      --d4: #0c1000
+    }
+
+    body.th-signal {
+      --bg0: #12161e;
+      --bg1: #1a2232;
+      --bg2: #0c1018;
+      --bg3: #0e1a2a;
+      --bd: #2a3c5a;
+      --acc: #38c0e0;
+      --t0: #eaf0ff;
+      --t1: #94aac8;
+      --t2: #6a80a0;
+      --t3: #5898c8;
+      --t4: #303a52;
+      --ico: #4878a8;
+      --d0: #060e18;
+      --d1: #0a1828;
+      --d2: #1a3258;
+      --d3: #5098d0;
+      --d4: #060c18
+    }
+
+    /* Theme switcher */
+    .theme-sw {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem 1.25rem .7rem;
+      border-top: 1px solid var(--bd)
+    }
+
+    .theme-sw-lbl {
+      font-size: .6rem;
+      color: var(--t4);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      margin-right: .25rem
+    }
+
+    .theme-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: border-color .15s
+    }
+
+    .theme-dot.active {
+      border-color: var(--t0)
+    }
+
+    .theme-dot-night {
+      background: #162040
+    }
+
+    .theme-dot-amber {
+      background: #261a00
+    }
+
+    .theme-dot-signal {
+      background: #1a2232
+    }
+
     body {
-      background: #1a1a2e;
-      color: #e0e0e0;
+      background: var(--bg0);
+      color: var(--t0);
       font-family: 'Segoe UI', Arial, sans-serif;
       min-height: 100vh;
       overflow-x: hidden
@@ -33,9 +139,9 @@
 
     /* ── Header ─────────────────────────────────────────────────────────── */
     header {
-      background: #16213e;
+      background: var(--bg1);
       padding: .75rem 1rem;
-      border-bottom: 2px solid #0f3460;
+      border-bottom: 2px solid var(--bd);
       display: flex;
       align-items: center;
       gap: .75rem;
@@ -49,7 +155,7 @@
       background: none;
       border: none;
       cursor: pointer;
-      color: #e0e0e0;
+      color: var(--t0);
       padding: .25rem;
       display: flex;
       flex-direction: column;
@@ -81,7 +187,7 @@
 
     h1 {
       font-size: 1rem;
-      color: #e94560;
+      color: var(--acc);
       letter-spacing: 3px;
       text-transform: uppercase;
       flex: 1
@@ -121,10 +227,10 @@
     /* Status bar (cockpit) */
     #sb {
       font-size: .72rem;
-      color: #555;
+      color: var(--t4);
       padding: .3rem 1rem;
-      background: #16213e;
-      border-bottom: 1px solid #0f3460
+      background: var(--bg1);
+      border-bottom: 1px solid var(--bd)
     }
 
     #sb span {
@@ -151,8 +257,8 @@
       left: 0;
       height: 100%;
       width: 240px;
-      background: #0f1b2d;
-      border-right: 1px solid #0f3460;
+      background: var(--bg2);
+      border-right: 1px solid var(--bd);
       z-index: 300;
       transform: translateX(-100%);
       transition: transform .28s ease;
@@ -168,10 +274,10 @@
       padding: 1.2rem 1rem .8rem;
       font-size: .75rem;
       font-weight: 700;
-      color: #e94560;
+      color: var(--acc);
       letter-spacing: 3px;
       text-transform: uppercase;
-      border-bottom: 1px solid #0f3460
+      border-bottom: 1px solid var(--bd)
     }
 
     #drawer nav {
@@ -186,20 +292,20 @@
       padding: .75rem 1.25rem;
       cursor: pointer;
       font-size: .85rem;
-      color: #a0aec0;
+      color: var(--t1);
       transition: background .15s, color .15s;
       border-left: 3px solid transparent
     }
 
     .nav-item:hover {
-      background: #16213e;
-      color: #e0e0e0
+      background: var(--bg1);
+      color: var(--t0)
     }
 
     .nav-item.active {
-      background: #16213e;
-      color: #e94560;
-      border-left-color: #e94560
+      background: var(--bg1);
+      color: var(--acc);
+      border-left-color: var(--acc)
     }
 
     .nav-icon {
@@ -211,8 +317,8 @@
     .drawer-footer {
       padding: .75rem 1rem;
       font-size: .65rem;
-      color: #3a4a5a;
-      border-top: 1px solid #0f3460
+      color: var(--t4);
+      border-top: 1px solid var(--bd)
     }
 
     /* ── Views ──────────────────────────────────────────────────────────── */
@@ -237,20 +343,20 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: .8rem;
-      border-bottom: 1px solid #0f3460;
+      border-bottom: 1px solid var(--bd);
       padding-bottom: .5rem
     }
 
     .gname {
       font-size: .85rem;
       font-weight: 700;
-      color: #7f8c8d;
+      color: var(--t2);
       letter-spacing: 2px;
       text-transform: uppercase
     }
 
     .gcnt {
-      color: #4a6fa5;
+      color: var(--t3);
       font-size: .8rem;
       font-weight: 400
     }
@@ -267,9 +373,9 @@
     }
 
     .card {
-      background: #16213e;
+      background: var(--bg1);
       border-radius: 8px;
-      border: 2px solid #0f3460;
+      border: 2px solid var(--bd);
       padding: 1rem;
       display: flex;
       flex-direction: column;
@@ -357,7 +463,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #3a5070
+      color: var(--ico)
     }
 
     .icon svg {
@@ -376,8 +482,8 @@
 
     .badge {
       font-size: .6rem;
-      background: #0f3460;
-      color: #7f8c8d;
+      background: var(--bd);
+      color: var(--t2);
       padding: 2px 6px;
       border-radius: 4px;
       align-self: flex-start;
@@ -392,8 +498,8 @@
 
     .mtag {
       font-size: .58rem;
-      background: #0d1f38;
-      color: #4a6fa5;
+      background: var(--bg3);
+      color: var(--t3);
       padding: 1px 5px;
       border-radius: 3px;
       letter-spacing: .3px
@@ -433,7 +539,7 @@
 
     .btn.static {
       background: #1e3a5f;
-      color: #4a6fa5;
+      color: var(--t3);
       cursor: default;
       font-style: italic
     }
@@ -498,8 +604,8 @@
     }
 
     .cfg-card {
-      background: #16213e;
-      border: 2px solid #0f3460;
+      background: var(--bg1);
+      border: 2px solid var(--bd);
       border-radius: 8px;
       padding: 1.25rem;
       flex: 1;
@@ -516,19 +622,19 @@
     .cfg-card-title {
       font-size: .9rem;
       font-weight: 700;
-      color: #e0e0e0;
+      color: var(--t0);
       letter-spacing: 1px
     }
 
     .cfg-card-desc {
       font-size: .75rem;
-      color: #7f8c8d
+      color: var(--t2)
     }
 
     .cfg-filename {
       font-size: .72rem;
-      color: #4a6fa5;
-      background: #0d1f38;
+      color: var(--t3);
+      background: var(--bg3);
       padding: .3rem .6rem;
       border-radius: 4px;
       white-space: nowrap;
@@ -562,17 +668,17 @@
 
     .cfg-btn:disabled {
       background: #1e3a5f;
-      color: #4a6fa5;
+      color: var(--t3);
       cursor: default
     }
 
     .cfg-btn.secondary {
       background: #1e3a5f;
-      color: #7f8c8d
+      color: var(--t2)
     }
 
     .cfg-btn.secondary:hover {
-      color: #e0e0e0
+      color: var(--t0)
     }
 
     .cfg-status {
@@ -607,8 +713,8 @@
     }
 
     .prm-section {
-      background: #16213e;
-      border: 2px solid #0f3460;
+      background: var(--bg1);
+      border: 2px solid var(--bd);
       border-radius: 8px;
       padding: 1.25rem;
       display: flex;
@@ -619,11 +725,11 @@
     .prm-section-title {
       font-size: .75rem;
       font-weight: 700;
-      color: #7f8c8d;
+      color: var(--t2);
       letter-spacing: 2px;
       text-transform: uppercase;
       padding-bottom: .5rem;
-      border-bottom: 1px solid #0f3460
+      border-bottom: 1px solid var(--bd)
     }
 
     .prm-row {
@@ -636,7 +742,7 @@
     .prm-label {
       flex: 1;
       font-size: .8rem;
-      color: #a0aec0
+      color: var(--t1)
     }
 
     .prm-field {
@@ -646,10 +752,10 @@
     }
 
     .prm-input {
-      background: #0d1f38;
-      border: 1px solid #0f3460;
+      background: var(--bg3);
+      border: 1px solid var(--bd);
       border-radius: 5px;
-      color: #e0e0e0;
+      color: var(--t0);
       font-size: .82rem;
       padding: .3rem .5rem;
       width: 90px;
@@ -658,7 +764,7 @@
 
     .prm-input:focus {
       outline: none;
-      border-color: #4a6fa5
+      border-color: var(--t3)
     }
 
     .prm-input-sm {
@@ -666,10 +772,10 @@
     }
 
     .prm-select {
-      background: #0d1f38;
-      border: 1px solid #0f3460;
+      background: var(--bg3);
+      border: 1px solid var(--bd);
       border-radius: 5px;
-      color: #e0e0e0;
+      color: var(--t0);
       font-size: .82rem;
       padding: .3rem .4rem;
       width: 105px
@@ -677,7 +783,7 @@
 
     .prm-unit {
       font-size: .72rem;
-      color: #4a6fa5
+      color: var(--t3)
     }
 
     .prm-lang-btns {
@@ -687,10 +793,10 @@
 
     .prm-lang-btn {
       padding: .3rem .75rem;
-      border: 1px solid #0f3460;
+      border: 1px solid var(--bd);
       border-radius: 4px;
-      background: #0d1f38;
-      color: #7f8c8d;
+      background: var(--bg3);
+      color: var(--t2);
       font-size: .75rem;
       font-weight: 700;
       cursor: pointer;
@@ -698,9 +804,9 @@
     }
 
     .prm-lang-btn.active {
-      background: #4a6fa5;
+      background: var(--t3);
       color: #fff;
-      border-color: #4a6fa5
+      border-color: var(--t3)
     }
 
     .prm-save-row {
@@ -733,7 +839,7 @@
 
     .prm-info {
       font-size: .8rem;
-      color: #4a6fa5;
+      color: var(--t3);
       text-align: center;
       padding: .4rem
     }
@@ -754,44 +860,11 @@
       gap: .5rem
     }
 
-    .dbg-add-panel {
-      background: #16213e;
-      border: 1px solid #0f3460;
-      border-radius: 8px;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: .6rem
-    }
-
-    .dbg-add-title {
-      font-size: .72rem;
-      font-weight: 700;
-      color: #7f8c8d;
-      letter-spacing: 2px;
-      text-transform: uppercase
-    }
-
-    .dbg-add-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem
-    }
-
-    .dbg-add-btn {
-      padding: .4rem .9rem;
-      border: 1px solid #0f3460;
-      border-radius: 6px;
-      background: #0d1f38;
-      color: #a0aec0;
+    .dbg-info {
+      padding: .5rem .75rem;
       font-size: .78rem;
-      cursor: pointer;
-      transition: all .15s
-    }
-
-    .dbg-add-btn:hover {
-      border-color: #4a6fa5;
-      color: #e0e0e0
+      color: var(--t2);
+      font-style: italic
     }
 
     #dbg-boards {
@@ -802,8 +875,8 @@
     }
 
     .dbg-board {
-      background: #16213e;
-      border: 2px solid #0f3460;
+      background: var(--bg1);
+      border: 2px solid var(--bd);
       border-radius: 8px;
       padding: 1rem;
       display: inline-flex;
@@ -823,13 +896,13 @@
     .dbg-board-name {
       font-size: .85rem;
       font-weight: 700;
-      color: #e0e0e0
+      color: var(--t0)
     }
 
     .dbg-idx-badge {
       display: inline-block;
-      background: #0f3460;
-      color: #4a6fa5;
+      background: var(--bd);
+      color: var(--t3);
       font-size: .65rem;
       padding: 1px 6px;
       border-radius: 4px;
@@ -865,7 +938,7 @@
 
     .dbg-hbtn.rm {
       background: #1a2a3a;
-      color: #4a6fa5
+      color: var(--t3)
     }
 
     .dbg-hbtn:active {
@@ -874,8 +947,8 @@
 
     /* PCB area */
     .dbg-pcb {
-      background: #061208;
-      border: 1px solid #1a3a20;
+      background: var(--d0);
+      border: 1px solid var(--d2);
       border-radius: 6px;
       padding: .75rem;
       overflow-x: auto
@@ -887,7 +960,7 @@
       flex-wrap: wrap;
       margin-bottom: .6rem;
       padding-bottom: .6rem;
-      border-bottom: 1px dashed #1a3a20
+      border-bottom: 1px dashed var(--d2)
     }
 
     .dbg-dip {
@@ -904,15 +977,15 @@
     }
 
     .dbg-chip {
-      background: #0a1a08;
-      border: 1px solid #1a3a18;
+      background: var(--d4);
+      border: 1px solid var(--d2);
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
       font-size: .62rem;
-      color: #2a7a3a;
+      color: var(--d3);
       letter-spacing: 1px;
       padding: .4rem .75rem;
       line-height: 1.5;
@@ -935,11 +1008,11 @@
       width: 48px;
       height: 52px;
       padding: 3px 2px;
-      border: 1px solid #1a3a20;
-      background: #0a1a0e;
+      border: 1px solid var(--d2);
+      background: var(--d1);
       border-radius: 5px;
       cursor: pointer;
-      color: #2a7a3a;
+      color: var(--d3);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1131,17 +1204,17 @@
     .abt-title {
       font-size: .75rem;
       font-weight: 700;
-      color: #7f8c8d;
+      color: var(--t2);
       letter-spacing: 2px;
       text-transform: uppercase
     }
 
     .abt-refresh {
       padding: .3rem .75rem;
-      border: 1px solid #0f3460;
+      border: 1px solid var(--bd);
       border-radius: 5px;
-      background: #0d1f38;
-      color: #7f8c8d;
+      background: var(--bg3);
+      color: var(--t2);
       font-size: .72rem;
       font-weight: 700;
       cursor: pointer;
@@ -1150,7 +1223,7 @@
     }
 
     .abt-refresh:hover {
-      color: #e0e0e0
+      color: var(--t0)
     }
 
     .abt-grid {
@@ -1160,8 +1233,8 @@
     }
 
     .abt-card {
-      background: #16213e;
-      border: 2px solid #0f3460;
+      background: var(--bg1);
+      border: 2px solid var(--bd);
       border-radius: 8px;
       padding: 1rem 1.25rem;
       display: flex;
@@ -1172,11 +1245,11 @@
     .abt-card-title {
       font-size: .72rem;
       font-weight: 700;
-      color: #4a6fa5;
+      color: var(--t3);
       letter-spacing: 2px;
       text-transform: uppercase;
       padding-bottom: .4rem;
-      border-bottom: 1px solid #0f3460
+      border-bottom: 1px solid var(--bd)
     }
 
     .abt-row {
@@ -1188,30 +1261,30 @@
 
     .abt-label {
       font-size: .75rem;
-      color: #7f8c8d;
+      color: var(--t2);
       white-space: nowrap
     }
 
     .abt-value {
       font-size: .8rem;
-      color: #e0e0e0;
+      color: var(--t0);
       font-variant-numeric: tabular-nums;
       text-align: right
     }
 
     .abt-link {
       font-size: .75rem;
-      color: #4a6fa5;
+      color: var(--t3);
       text-decoration: none
     }
 
     .abt-link:hover {
-      color: #e94560
+      color: var(--acc)
     }
 
     .abt-bar-wrap {
       height: 5px;
-      background: #0d1f38;
+      background: var(--bg3);
       border-radius: 3px;
       overflow: hidden;
       margin-top: .1rem
@@ -1220,7 +1293,7 @@
     .abt-bar {
       height: 100%;
       border-radius: 3px;
-      background: #4a6fa5;
+      background: var(--t3);
       transition: width .5s
     }
 
@@ -1240,7 +1313,7 @@
       justify-content: center;
       gap: 1rem;
       height: calc(100vh - 120px);
-      color: #3a4a5a
+      color: var(--t4)
     }
 
     .placeholder-icon {
@@ -1251,12 +1324,12 @@
       font-size: 1rem;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #4a6fa5
+      color: var(--t3)
     }
 
     .placeholder p {
       font-size: .8rem;
-      color: #3a4a5a;
+      color: var(--t4);
       text-align: center;
       max-width: 280px
     }
@@ -1309,6 +1382,12 @@
         <span class="nav-icon">ℹ</span> <span data-i18n="nav.about">À propos</span>
       </div>
     </nav>
+    <div class="theme-sw">
+      <span class="theme-sw-lbl">Thème</span>
+      <button class="theme-dot theme-dot-night active" onclick="setTheme('night')" title="Night Rail"></button>
+      <button class="theme-dot theme-dot-amber" onclick="setTheme('amber')" title="Amber"></button>
+      <button class="theme-dot theme-dot-signal" onclick="setTheme('signal')" title="Signal"></button>
+    </div>
     <div class="drawer-footer">MrJ-ArduinoRailwayFX</div>
   </div>
 
@@ -1325,21 +1404,6 @@
         <div class="abt-title" data-i18n="nav.debug">Vue technique</div>
         <div style="display:flex;gap:.4rem">
           <button class="abt-refresh" onclick="refreshDebug()" data-i18n="abt.refresh">Actualiser</button>
-          <button class="abt-refresh" onclick="showAddBoard()" data-i18n="dbg.add_board">+ Carte</button>
-        </div>
-      </div>
-
-      <!-- Board type selector -->
-      <div id="dbg-add-panel" style="display:none" class="dbg-add-panel">
-        <div class="dbg-add-title" data-i18n="dbg.select_type">Type de carte</div>
-        <div class="dbg-add-grid">
-          <div class="dbg-add-btn" onclick="addBoard('esp32devkitc')">ESP32 DevKit C</div>
-          <div class="dbg-add-btn" onclick="addBoard('mrj_esp32')">MrJ RailwayFX ESP32</div>
-          <div class="dbg-add-btn" onclick="addBoard('shiftreg16')">Registre 16 sorties</div>
-          <div class="dbg-add-btn" onclick="addBoard('mrj_spi')">MrJ SPI Daughter Card</div>
-        </div>
-        <div>
-          <button class="abt-refresh" onclick="showAddBoard()" data-i18n="dbg.cancel">Annuler</button>
         </div>
       </div>
 
@@ -1517,11 +1581,15 @@
         + E,
 
       'Gas Lamp': S
-        + '<line x1="12" y1="22" x2="12" y2="10"/>'
-        + '<path d="M12,10 C7,10 5,10 5,5"/>'
-        + '<path d="M12,10 C17,10 19,10 19,5"/>'
-        + '<path d="M3,5 L5,3 L7,5 L7,8 L3,8 Z"/>'
-        + '<path d="M17,5 L19,3 L21,5 L21,8 L17,8 Z"/>'
+        + '<line x1="12" y1="22" x2="12" y2="12"/>'
+        + '<path d="M12,12 C9,10 8,8 7,7"/>'
+        + '<path d="M12,12 C12,10 12,8 12,7"/>'
+        + '<path d="M12,12 C15,10 16,8 17,7"/>'
+        + '<circle cx="7" cy="6" r="1.5"/>'
+        + '<circle cx="12" cy="6" r="1.5"/>'
+        + '<circle cx="17" cy="6" r="1.5"/>'
+        + '<rect x="10" y="22" width="4" height="1.5"/>'
+        + '<path d="M10,23.5 L14,23.5 L13,25 L11,25 Z"/>'
         + E,
 
       'Electric Lamp': S
@@ -1574,9 +1642,21 @@
         + E,
 
       'Oil Lamp': S
-        + '<ellipse cx="12" cy="15" rx="9" ry="4"/>'
-        + '<path d="M3,15 Q4.5,11 3,8 Q1.5,11 3,15"/>'
-        + '<circle cx="22" cy="13" r="2"/>'
+        // Pied
+        + '<rect x="10" y="17" width="4" height="2" rx="1"/>'
+
+        // Réservoir (plus stylé qu’un ellipse)
+        + '<path d="M4,14 Q12,9 20,14 Q18,17 12,17 Q6,17 4,14 Z"/>'
+
+        // Bec
+        + '<path d="M4,14 Q5,10 4,7 Q2.5,10 4,14"/>'
+
+        // Flamme
+        + '<path d="M4,9 Q5,7 4,6 Q3,7 4,9 Z"/>'
+
+        // Poignée / bouton
+        + '<circle cx="21" cy="13" r="1.5"/>'
+
         + E,
 
       'SignalFlare': S
@@ -1656,9 +1736,9 @@
         + E,
 
       'Servo': S
-        + '<circle cx="12" cy="12" r="5.5"/>'
-        + '<circle cx="12" cy="12" r="2"/>'
-        + '<path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2 2M16.8 16.8l2 2M19.8 4.2l-2 2M7.2 16.8l-2 2"/>'
+        + '<rect x="6" y="6" width="12" height="12" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>'  // corps du servo
+        + '<circle cx="12" cy="12" r="2" fill="currentColor"/>'                                                        // axe central
+        + '<line x1="12" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'   // bras du servo
         + E,
 
       'Led': S
@@ -1859,186 +1939,63 @@
 
     /* ── Debug (mise au point) ──────────────────────────────────────────── */
 
-    // Board definitions — pins arrays: GPIO number (gpio boards) or channel 1..N (spi boards)
-    // Special strings ('GND', '3V3', 'VCC') render as non-clickable labels.
-    var BOARD_DEFS = {
-      'esp32devkitc': {
-        name: 'ESP32 DevKit C', short: 'ESP32', btype: 'gpio',
-        left: [
-          { lbl: 'GND', gnd: true },
-          { g: 23 }, { g: 22 },
-          { g: 1, sys: 'TX0' }, { g: 3, sys: 'RX0' },
-          { g: 21 },
-          { lbl: 'GND', gnd: true },
-          { g: 19 }, { g: 18 }, { g: 5 },
-          { g: 17 }, { g: 16 }, { g: 4 },
-          { g: 0, boot: true },
-          { g: 2 },
-          { g: 15 },
-          { lbl: 'SD1', flash: true }, { lbl: 'SD0', flash: true }, { lbl: 'CLK', flash: true }
-        ],
-        right: [
-          { lbl: '3V3', pwr: true },
-          { lbl: 'EN', sys: 'EN' },
-          { g: 36, ro: true, sys: 'VP' }, { g: 39, ro: true, sys: 'VN' },
-          { g: 34, ro: true }, { g: 35, ro: true },
-          { g: 32 }, { g: 33 }, { g: 25 }, { g: 26 }, { g: 27 },
-          { g: 14 }, { g: 12 },
-          { lbl: 'GND', gnd: true },
-          { g: 13 },
-          { lbl: 'SD2', flash: true }, { lbl: 'SD3', flash: true }, { lbl: 'CMD', flash: true },
-          { lbl: '5V', pwr: true }
-        ]
-      },
-      'mrj_esp32': {
-        name: 'MrJ RailwayFX ESP32', short: 'MrJ\u00b7ESP32', btype: 'gpio',
-        extra: [19, 21, 3, 1, 22, 23, 'GND', 'GND'],
-        left: [23, 22, 1, 3, 21, 19, 18, 5, 17, 16, 4, 2],
-        right: [32, 33, 25, 26, 27, 14, 12, 13, 15]
-      },
-      'shiftreg16': {
-        name: 'Registre 16 sorties', short: 'HC595', btype: 'spi',
-        flat: true, channels: 16
-      },
-      'mrj_spi': {
-        name: 'MrJ SPI Daughter Card', short: 'HC595\u00d72', btype: 'spi',
-        left: [1, 2, 3, 4, 5, 6, 7, 8],
-        right: [9, 10, 11, 12, 13, 14, 15, 16]
-      }
-    };
-
-    var _dbgBoards = [];  // persisted to localStorage
+    // Board type definitions — fetched from /api/board-types
+    var _boardTypes = {};
+    var _dbgBoards = [];  // from /api/boards
     var _dbgDevs = [];  // from /api/devices
     var _dbgTest = {};  // client GPIO test state: {'g17': 0|1}
     var _dbgTestSpi = {};  // client SPI test state: {'c1_p9': 0|1}
     var _dbgSysPins = {};  // gpio → sys label from config: {23:'MOSI', 18:'SCLK', ...}
 
-    // Extract system-used GPIO labels from /api/config payload
+    // Extract system-used GPIO labels from /api/config payload (buses format)
     function loadSystemPins(cfg) {
       _dbgSysPins = {};
       if (!cfg) return;
-      var sys = cfg.system || {};
-      if (sys.dcc_pin >= 0) _dbgSysPins[sys.dcc_pin] = 'DCC';
-      if (sys.spi_bus) {
-        if (sys.spi_bus.mosi >= 0) _dbgSysPins[sys.spi_bus.mosi] = 'MOSI';
-        if (sys.spi_bus.sclk >= 0) _dbgSysPins[sys.spi_bus.sclk] = 'SCLK';
-        if (sys.spi_bus.latch >= 0) _dbgSysPins[sys.spi_bus.latch] = 'LATCH';
-      }
-      var ports = (cfg.system && cfg.system.serial_ports) || {};
-      Object.keys(ports).forEach(function (name) {
-        var p = ports[name];
-        var shortName = name.replace('uart', 'U').toUpperCase();
-        if (p.tx >= 0) _dbgSysPins[p.tx] = shortName + '\u00b7TX';
-        if (p.rx >= 0) _dbgSysPins[p.rx] = shortName + '\u00b7RX';
-      });
-    }
-
-    // Return the GPIO number from a pin spec (object or number), or null if non-gpio
-    function pinGpio(spec) {
-      if (typeof spec === 'number') return spec;
-      if (spec && typeof spec.g === 'number') return spec.g;
-      return null;
-    }
-
-    function dbgSaveBoards() {
-      localStorage.setItem('dbg_boards', JSON.stringify(_dbgBoards));
-    }
-
-    function dbgLoadBoards() {
-      var s = localStorage.getItem('dbg_boards');
-      try { _dbgBoards = s ? JSON.parse(s) : []; } catch (e) { _dbgBoards = []; }
-      if (!_dbgBoards.length) {
-        _dbgBoards = [{ id: 'b0', type: 'esp32devkitc', boardIdx: 0 }];
-        dbgSaveBoards();
-      }
-    }
-
-    function showAddBoard() {
-      var p = document.getElementById('dbg-add-panel');
-      p.style.display = p.style.display === 'none' ? '' : 'none';
-    }
-
-    function addBoard(type) {
-      var def = BOARD_DEFS[type];
-      if (!def) return;
-      var isSpi = def.btype === 'spi';
-      var nextIdx = 0;
-      if (isSpi) {
-        _dbgBoards.forEach(function (b) {
-          var d = BOARD_DEFS[b.type];
-          if (d && d.btype === 'spi' && b.boardIdx >= nextIdx) nextIdx = b.boardIdx + 1;
-        });
-        if (nextIdx < 1) nextIdx = 1;
-      }
-      _dbgBoards.push({ id: 'b' + Date.now(), type: type, boardIdx: nextIdx });
-      dbgSaveBoards();
-      document.getElementById('dbg-add-panel').style.display = 'none';
-      renderDebugBoards();
-    }
-
-    function removeBoard(id) {
-      _dbgBoards = _dbgBoards.filter(function (b) { return b.id !== id; });
-      dbgSaveBoards();
-      renderDebugBoards();
-    }
-
-    // Sync _dbgBoards with what config.json declares:
-    // - always keep (or add) the ESP32 GPIO board (boardIdx 0)
-    // - add/remove SPI boards to match top-level "boards" array
-    function syncBoardsFromConfig(cfg) {
-      if (!cfg) return;
-
-      // Ensure ESP32 board exists
-      var hasGpio = _dbgBoards.some(function (b) {
-        return BOARD_DEFS[b.type] && BOARD_DEFS[b.type].btype === 'gpio';
-      });
-      if (!hasGpio) {
-        _dbgBoards.unshift({ id: 'b_gpio', type: 'esp32devkitc', boardIdx: 0 });
-      }
-
-      // Sync boards from config: add missing, remove stale
-      var cfgBoards = cfg.boards || [];
-      cfgBoards.forEach(function (bd, i) {
-        var boardIdx = i + 1;
-        var already = _dbgBoards.some(function (b) {
-          return BOARD_DEFS[b.type] && BOARD_DEFS[b.type].btype === 'spi' && b.boardIdx === boardIdx;
-        });
-        if (!already) {
-          var btype = 'shiftreg16';
-          if (bd.type === 'HC595' && (bd.pin_count || 0) > 16) btype = 'mrj_spi';
-          _dbgBoards.push({ id: 'cfg_spi_' + boardIdx, type: btype, boardIdx: boardIdx, label: bd.name || bd.id });
+      var buses = cfg.buses || {};
+      Object.keys(buses).forEach(function (key) {
+        var bus = buses[key];
+        if (bus.type === 'dcc' && bus.pin >= 0) _dbgSysPins[bus.pin] = 'DCC';
+        if (bus.type === 'spi_master_only') {
+          if (bus.mosi >= 0) _dbgSysPins[bus.mosi] = 'MOSI';
+          if (bus.sclk >= 0) _dbgSysPins[bus.sclk] = 'SCLK';
+          if (bus.latch >= 0) _dbgSysPins[bus.latch] = 'LATCH';
+        }
+        if (bus.type === 'uart') {
+          var shortName = key.replace('uart', 'U').toUpperCase();
+          if (bus.tx >= 0) _dbgSysPins[bus.tx] = shortName + '\u00b7TX';
+          if (bus.rx >= 0) _dbgSysPins[bus.rx] = shortName + '\u00b7RX';
         }
       });
-      // Remove SPI boards whose boardIdx exceeds what config declares
-      var configBoardCount = cfgBoards.length;
-      _dbgBoards = _dbgBoards.filter(function (b) {
-        var d = BOARD_DEFS[b.type];
-        if (!d || d.btype !== 'spi') return true;
-        return b.boardIdx >= 1 && b.boardIdx <= configBoardCount;
-      });
-
-      dbgSaveBoards();
     }
 
     function loadDebug() {
-      dbgLoadBoards();
       var pDevs = fetch('/api/devices')
         .then(function (r) { if (!r.ok) throw r; return r.json(); })
         .then(function (devs) { _dbgDevs = devs; })
         .catch(function () { });
+      var pTypes = fetch('/api/board-types')
+        .then(function (r) { if (!r.ok) throw r; return r.json(); })
+        .then(function (bt) { _boardTypes = bt; })
+        .catch(function () { });
+      var pBoards = fetch('/api/boards')
+        .then(function (r) { if (!r.ok) throw r; return r.json(); })
+        .then(function (boards) { _dbgBoards = boards; })
+        .catch(function () { });
       var pCfg = fetch('/api/config')
         .then(function (r) { if (!r.ok) throw r; return r.json(); })
-        .then(function (cfg) { loadSystemPins(cfg); syncBoardsFromConfig(cfg); })
+        .then(function (cfg) { loadSystemPins(cfg); })
         .catch(function () { });
-      Promise.all([pDevs, pCfg]).then(function () { renderDebugBoards(); });
+      Promise.all([pDevs, pTypes, pBoards, pCfg]).then(function () { renderDebugBoards(); });
     }
 
     function refreshDebug() { loadDebug(); }
 
-    // Find a device by board index and pin/channel number
-    function dbgFindDev(boardIdx, num) {
+    // Find a device by board API index (0-based) and wiring number.
+    // Firmware stores board as 1-based index, so boardApiIdx+1 is used for matching.
+    function dbgFindDev(boardApiIdx, wiring) {
+      var boardFwIdx = boardApiIdx + 1;
       for (var i = 0; i < _dbgDevs.length; i++) {
-        if (_dbgDevs[i].board === boardIdx && _dbgDevs[i].pin === num) return _dbgDevs[i];
+        if (_dbgDevs[i].board === boardFwIdx && _dbgDevs[i].pin === wiring) return _dbgDevs[i];
       }
       return null;
     }
@@ -2046,86 +2003,67 @@
     // ── Rendering ────────────────────────────────────────────────────────
 
     function renderDebugBoards() {
-      var html = _dbgBoards.map(renderDbgBoard).join('');
+      var html = _dbgBoards.map(function (b, i) { return renderDbgBoard(b, i); }).join('');
       document.getElementById('dbg-boards').innerHTML =
         html || '<div class="prm-info">' + t('dbg.no_boards') + '</div>';
     }
 
-    function renderDbgBoard(board) {
-      var def = BOARD_DEFS[board.type];
-      if (!def) return '';
-      var isSpi = def.btype === 'spi';
-      var badge = isSpi
-        ? ' <span class="dbg-idx-badge">board\u00a0' + board.boardIdx + '</span>'
+    // board  — entry from /api/boards: { id, type, bus, pinCount, spiRank }
+    // boardApiIdx — 0-based index in _dbgBoards (firmware uses boardApiIdx+1 for matching)
+    function renderDbgBoard(board, boardApiIdx) {
+      var def = _boardTypes[board.type];
+      var badge = board.spiRank > 0
+        ? ' <span class="dbg-idx-badge">board\u00a0' + board.spiRank + '</span>'
         : ' <span class="dbg-idx-badge">GPIO</span>';
+      var name = (def && def.label) ? def.label : board.type;
 
       return '<div class="dbg-board">'
         + '<div class="dbg-board-hdr">'
-        + '<span class="dbg-board-name">' + def.name + badge + '</span>'
+        + '<span class="dbg-board-name">' + name + badge + '</span>'
         + '<div class="dbg-board-actions">'
-        + '<button class="dbg-hbtn on"  onclick="dbgAll(\'' + board.id + '\',1)">' + t('dbg.all_on') + '</button>'
-        + '<button class="dbg-hbtn off" onclick="dbgAll(\'' + board.id + '\',0)">' + t('dbg.all_off') + '</button>'
-        + '<button class="dbg-hbtn rm"  onclick="removeBoard(\'' + board.id + '\')">\u2715</button>'
+        + '<button class="dbg-hbtn on"  onclick="dbgAll(' + boardApiIdx + ',1)">' + t('dbg.all_on') + '</button>'
+        + '<button class="dbg-hbtn off" onclick="dbgAll(' + boardApiIdx + ',0)">' + t('dbg.all_off') + '</button>'
         + '</div></div>'
-        + (def.flat ? renderFlatPcb(board, def) : renderDipPcb(board, def))
+        + (def ? renderDipPcb(board, boardApiIdx, def) : '')
         + '</div>';
     }
 
-    function renderDipPcb(board, def) {
-      var extra = '';
-      if (def.extra) {
-        extra = '<div class="dbg-extra-row">'
-          + def.extra.map(function (p) { return renderPin(board, def, p); }).join('')
-          + '</div>';
+    // Render a board using its pins[] array from board_types.json.
+    // Boards with rows=0 (UART chains, I²C modules…) show description only.
+    function renderDipPcb(board, boardApiIdx, def) {
+      if (!def.rows || def.rows === 0) {
+        return '<div class="dbg-pcb"><div class="dbg-info">' + (def.description || '') + '</div></div>';
       }
-      var leftCols = (def.left || []).map(function (p) { return renderPin(board, def, p); }).join('');
-      var rightCols = (def.right || []).map(function (p) { return renderPin(board, def, p); }).join('');
+      var leftPins = (def.pins || []).filter(function (p) { return p.side === 'left'; })
+        .sort(function (a, b) { return a.row - b.row; });
+      var rightPins = (def.pins || []).filter(function (p) { return p.side === 'right'; })
+        .sort(function (a, b) { return a.row - b.row; });
+      var leftCols = leftPins.map(function (p) { return renderPin(board, boardApiIdx, p); }).join('');
+      var rightCols = rightPins.map(function (p) { return renderPin(board, boardApiIdx, p); }).join('');
+      var shortLabel = (def.label || board.type).split(/[\s\u00d7]/)[0];
       return '<div class="dbg-pcb">'
-        + extra
         + '<div class="dbg-dip">'
         + '<div class="dbg-col">' + leftCols + '</div>'
-        + '<div class="dbg-chip">' + def.short + '</div>'
+        + '<div class="dbg-chip">' + shortLabel + '</div>'
         + '<div class="dbg-col">' + rightCols + '</div>'
         + '</div></div>';
     }
 
-    function renderFlatPcb(board, def) {
-      var n = def.channels || 16;
-      var pins = '';
-      for (var i = 1; i <= n; i++) {
-        if (i === n / 2 + 1) pins += '<div class="dbg-flat-sep"></div>';
-        pins += renderPin(board, def, i);
-      }
-      return '<div class="dbg-pcb"><div class="dbg-flat">' + pins + '</div></div>';
-    }
+    // pin — entry from board_types.json pins[]: { wiring?, label, side, row, capabilities[] }
+    // Pins without wiring are non-clickable (power, GND, EN, etc.)
+    function renderPin(board, boardApiIdx, pin) {
+      var caps = pin.capabilities || [];
 
-    function renderPin(board, def, spec) {
-      var isSpi = def.btype === 'spi';
-
-      // Legacy string labels (GND, 3V3, etc.) — kept for mrj_esp32 extra row
-      if (typeof spec === 'string') {
-        var sc = spec === 'GND' ? 'gnd' : 'pwr';
-        return '<div class="dbg-pin ' + sc + '">' + spec + '</div>';
+      if (pin.wiring === undefined) {
+        var sc = caps.indexOf('gnd') >= 0 ? 'gnd' : caps.indexOf('power') >= 0 ? 'pwr' : 'nc';
+        return '<div class="dbg-pin ' + sc + '">' + pin.label + '</div>';
       }
 
-      // Object spec with no GPIO (pure label: GND, 3V3, 5V, EN, flash pins, etc.)
-      if (typeof spec === 'object' && typeof spec.g !== 'number') {
-        var lbl = spec.lbl || '?';
-        var sc2 = spec.gnd ? 'gnd' : spec.pwr ? 'pwr' : spec.flash ? 'flash' : spec.sys ? 'sys' : 'nc';
-        return '<div class="dbg-pin ' + sc2 + '">' + lbl + '</div>';
-      }
+      var num = pin.wiring;
+      var isSpi = board.spiRank > 0;
+      var dev = dbgFindDev(boardApiIdx, num);
+      var cls = '', onclick = '', inner = '', ledBtn = '';
 
-      // Numeric spec (legacy SPI channels or mrj_esp32 GPIO numbers)
-      var num = (typeof spec === 'number') ? spec : spec.g;
-
-      var dev = isSpi ? dbgFindDev(board.boardIdx, num) : dbgFindDev(0, num);
-      var cls = '';
-      var onclick = '';
-      var inner = '';
-
-      var ledBtn = '';  // raw GPIO test sub-button — only for GPIO (not SPI) pins
-
-      // Helper: build the LED sub-button for direct GPIO toggle
       function mkLedBtn(gpio) {
         var ts = _dbgTest['g' + gpio] ? 1 : 0;
         return '<button class="dbg-led-btn ' + (ts ? 'on' : 'off') + '"'
@@ -2133,7 +2071,6 @@
           + ' title="GPIO\u00a0' + gpio + ' direct">' + LED_ICO + '</button>';
       }
 
-      // Helper: build the LED sub-button for direct SPI channel toggle (unassigned)
       function mkSpiLedBtn(card, ch) {
         var key = 'c' + card + '_p' + ch;
         var ts = _dbgTestSpi[key] ? 1 : 0;
@@ -2149,52 +2086,34 @@
         var ico = ICONS[dev.type] || ICONS['_'];
         inner = '<div class="dbg-pin-ico">' + ico + '</div>'
           + '<span class="dbg-pin-num">' + num + '</span>';
-        if (!isSpi) {
-          // GPIO: sub-button for raw GPIO test (bypasses device state machine)
-          ledBtn = mkLedBtn(num);
-        } else {
-          // SPI: sub-button for raw SPI channel test (bypasses device state machine)
-          ledBtn = mkSpiLedBtn(board.boardIdx, num);
-        }
+        ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
       } else if (!isSpi) {
-        // Determine pin category from spec flags
-        var specObj = (typeof spec === 'object') ? spec : {};
-        if (specObj.jtag) {
-          cls = 'jtag';
-          inner = '<span class="dbg-pin-num">' + num + '</span>'
-            + '<span class="dbg-pin-sys">JTAG</span>';
-        } else if (specObj.boot) {
+        var sysLbl = _dbgSysPins[num] || '';
+        if (caps.indexOf('strapping') >= 0 && !sysLbl) {
           cls = 'boot';
           inner = '<span class="dbg-pin-num">' + num + '</span>'
-            + '<span class="dbg-pin-sys">BOOT</span>';
-        } else if (specObj.ro) {
+            + '<span class="dbg-pin-sys">STRAP</span>';
+        } else if (caps.length === 1 && caps[0] === 'input') {
           cls = 'ro';
-          var roLbl = specObj.sys || '';
+          inner = '<span class="dbg-pin-num">' + num + '</span>';
+        } else if (sysLbl) {
+          cls = 'sys';
           inner = '<span class="dbg-pin-num">' + num + '</span>'
-            + (roLbl ? '<span class="dbg-pin-sys">' + roLbl + '</span>' : '');
+            + '<span class="dbg-pin-sys">' + sysLbl + '</span>';
         } else {
-          var sysLbl = _dbgSysPins[num] || (specObj.sys || '');
-          if (sysLbl) {
-            cls = 'sys';
-            inner = '<span class="dbg-pin-num">' + num + '</span>'
-              + '<span class="dbg-pin-sys">' + sysLbl + '</span>';
-          } else {
-            // Free GPIO: just the number + LED sub-button (no big icon in main area)
-            var ts = _dbgTest['g' + num] ? 1 : 0;
-            cls = ts ? 'test-on' : '';
-            onclick = ' onclick="dbgTestGpio(' + num + ',' + (1 - ts) + ')"';
-            inner = '<span class="dbg-pin-num">' + num + '</span>';
-            ledBtn = mkLedBtn(num);
-          }
+          var ts2 = _dbgTest['g' + num] ? 1 : 0;
+          cls = ts2 ? 'test-on' : '';
+          onclick = ' onclick="dbgTestGpio(' + num + ',' + (1 - ts2) + ')"';
+          inner = '<span class="dbg-pin-num">' + num + '</span>';
+          ledBtn = mkLedBtn(num);
         }
       } else {
-        // Unassigned SPI channel: visible box + LED direct-test sub-button (like free GPIO)
-        var spiKey = 'c' + board.boardIdx + '_p' + num;
+        var spiKey = 'c' + board.spiRank + '_p' + num;
         var spiTs = _dbgTestSpi[spiKey] ? 1 : 0;
         cls = spiTs ? 'test-on' : '';
-        onclick = ' onclick="dbgTestSpi(' + board.boardIdx + ',' + num + ',' + (1 - spiTs) + ')"';
+        onclick = ' onclick="dbgTestSpi(' + board.spiRank + ',' + num + ',' + (1 - spiTs) + ')"';
         inner = '<span class="dbg-pin-num">' + num + '</span>';
-        ledBtn = mkSpiLedBtn(board.boardIdx, num);
+        ledBtn = mkSpiLedBtn(board.spiRank, num);
       }
 
       return '<div class="dbg-pin' + (cls ? ' ' + cls : '') + '"' + onclick + '>' + inner + ledBtn + '</div>';
@@ -2206,6 +2125,16 @@
       post('/api/device', { id: id, state: state })
         .then(function () { loadDebug(); })
         .catch(function (e) { console.error('dbgToggleDev', e); });
+    }
+
+    function setTheme(name) {
+      document.body.classList.remove('th-amber', 'th-signal');
+      if (name !== 'night') document.body.classList.add('th-' + name);
+      localStorage.setItem('mrj-theme', name);
+      document.querySelectorAll('.theme-dot').forEach(function (b) {
+        var match = b.classList.contains('theme-dot-' + name);
+        b.classList.toggle('active', match);
+      });
     }
 
     function dbgTestGpio(pin, state) {
@@ -2235,30 +2164,19 @@
     }
 
     // Sequential all-on/off to avoid overwhelming ESP32 web server
-    function dbgAll(boardId, state) {
-      var board = null;
-      for (var i = 0; i < _dbgBoards.length; i++) {
-        if (_dbgBoards[i].id === boardId) { board = _dbgBoards[i]; break; }
-      }
+    function dbgAll(boardApiIdx, state) {
+      var board = _dbgBoards[boardApiIdx];
       if (!board) return;
-      var def = BOARD_DEFS[board.type];
-      if (!def) return;
-      var isSpi = def.btype === 'spi';
-      var pins = [];
-      if (def.flat) {
-        for (var j = 1; j <= (def.channels || 16); j++) pins.push(j);
-      } else {
-        var allSpecs = (def.left || []).concat(def.right || []).concat(def.extra || []);
-        allSpecs.forEach(function (p) { var g = pinGpio(p); if (g !== null) pins.push(g); });
-      }
-      // Deduplicate (extra may overlap left/right)
-      var seen = {};
-      pins = pins.filter(function (p) { if (seen[p]) return false; seen[p] = true; return true; });
+      var def = _boardTypes[board.type];
+      var isSpi = board.spiRank > 0;
+      var pins = (def && def.pins || [])
+        .filter(function (p) { return p.wiring !== undefined; })
+        .map(function (p) { return p.wiring; });
 
       function doNext(idx) {
         if (idx >= pins.length) { loadDebug(); return; }
         var num = pins[idx];
-        var dev = isSpi ? dbgFindDev(board.boardIdx, num) : dbgFindDev(0, num);
+        var dev = dbgFindDev(boardApiIdx, num);
         var p;
         if (dev) {
           p = post('/api/device', { id: dev.id, state: state });
@@ -2269,14 +2187,13 @@
             body: JSON.stringify({ pin: num, state: state })
           }).then(function () { _dbgTest['g' + num] = state; });
         } else {
-          // Unassigned SPI channel — direct raw test
           (function (c, ch, s) {
             p = fetch('/api/test/spi', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ card: c, channel: ch, state: s })
             }).then(function () { _dbgTestSpi['c' + c + '_p' + ch] = s; });
-          })(board.boardIdx, num, state);
+          })(board.spiRank, num, state);
         }
         p.then(function () { doNext(idx + 1); }).catch(function () { doNext(idx + 1); });
       }
@@ -2753,6 +2670,11 @@
       if (stored >= 500) POLL = stored;
       document.getElementById('prm-poll').value = POLL;
     })();
+    var _th = localStorage.getItem('mrj-theme') || 'night';
+    if (_th !== 'night') document.body.classList.add('th-' + _th);
+    document.querySelectorAll('.theme-dot').forEach(function (b) {
+      b.classList.toggle('active', b.classList.contains('theme-dot-' + _th));
+    });
     applyLang();
     poll();
     _pollTimer = setInterval(poll, POLL);

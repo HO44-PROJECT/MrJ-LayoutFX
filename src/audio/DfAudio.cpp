@@ -1,12 +1,10 @@
 /**
- * @file SerialServoMotorMode.cpp
- * @brief Implements the `SerialServoMotor` class for controlling an LX-16A servo in motor mode.
+ * @file DfAudio.cpp
+ * @brief Implements the DfAudio class for controlling a DFPlayer Mini (or compatible) audio module.
  *
- * This file contains the implementation of the constructor for the `SerialServoMotor` class, which initializes
- * the serial bus and the LX-16A servo object for continuous rotation (motor mode) using the lx16a-servo library.
- * The class is designed for railway signaling applications, supporting speed transitions managed through coroutines.
- * Positive states (e.g., non-zero speed settings) are interruptible, while negative states (if defined) are
- * non-stable and uninterruptible, adhering to project conventions.
+ * Initializes the SoftwareSerial link to the module and implements the command protocol
+ * (7-byte frames: 0x7E <cmd> <ack> <len> <param_hi> <param_lo> 0xEF) for playback control,
+ * volume adjustment, playback modes, and power management in railway sound effect applications.
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
@@ -18,18 +16,15 @@
 #include "audio/DfAudio.h"
 
 /**
- * @brief Constructs a `SerialServoMotor` instance for controlling an LX-16A servo.
+ * @brief Constructs a DfAudio instance and initializes the SoftwareSerial link.
  *
- * Initializes the serial bus and servo object for communication over a serial bus (TX, RX, and optional direction pin).
- * If no existing bus is provided (servoBus is nullptr), a new LX16ABus object is created using the specified TX pin
- * and direction pin (if provided). The serial communication is configured at the baud rate defined by LX16A_BAUD_RATE.
- * The servo is set to motor mode with an initial speed of 0. The calling program is responsible for
- * ensuring that the RX pin (if required) and the servo power supply are properly configured.
+ * If no existing SoftwareSerial is provided (serial is nullptr), a new one is created on
+ * rxPin/txPin and started at the given baud rate.
  *
- * @param servoBus Pointer to an existing LX16ABus object (nullptr if tXpin is used to create a new bus).
- * @param tXpin TX pin for serial communication (default: NO_PIN, indicating no pin assigned).
- * @param TXFlagGPIO Direction pin for 3-pin bus configuration (default: NO_PIN, set to -1 if unused).
- * @param servoID ID of the servo for bus communication (range: 0-253, default: LX16A_SERVO_ID).
+ * @param serial  Pointer to an existing SoftwareSerial, or nullptr to allocate a new one.
+ * @param rxPin   RX pin (connected to module TX).
+ * @param txPin   TX pin (connected to module RX).
+ * @param speed   Baud rate (default: 9600).
  */
 DfAudio::DfAudio(SoftwareSerial *serial, PIN_ID rxPin, PIN_ID txPin, int speed)
 {
@@ -39,7 +34,7 @@ DfAudio::DfAudio(SoftwareSerial *serial, PIN_ID rxPin, PIN_ID txPin, int speed)
         // Serial.println("New SoftwareSerial");
         // Serial.println(rxPin);
         // Serial.println(txPin);
-        serial = new SoftwareSerial(rxPin, txPin);
+        serial = new SoftwareSerial(pinId(rxPin), pinId(txPin));
         serial->begin(speed);
     }
     this->serial = serial;

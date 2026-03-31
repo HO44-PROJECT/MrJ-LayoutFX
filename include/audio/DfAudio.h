@@ -1,12 +1,11 @@
 /**
- * @file SerialServoMotorMode.h
- * @brief Defines the SerialServoMotor class for controlling an LX-16A servo in motor mode.
+ * @file DfAudio.h
+ * @brief Defines the DfAudio class for controlling a DFPlayer Mini (or compatible) audio module.
  *
- * This class inherits from MultiplePinDevice to manage a LewanSoul/Hiwonder LX-16A servo in
- * continuous rotation (motor mode) using the lx16a-servo library. It supports speed control,
- * stopping, starting, and reversing via a serial bus, with coroutine-based state transitions
- * for railway signaling applications. Positive states (e.g., speed settings) are interruptible,
- * while negative states (if defined) are non-stable and uninterruptible, per project conventions.
+ * This class inherits from MultiplePinDevice to manage a DFPlayer Mini audio module via a
+ * SoftwareSerial UART link. It supports playback control (play, pause, stop, next, previous),
+ * volume control, playback modes (repeat, random, folder/file), and power management, using
+ * a simple 7-byte frame protocol (0x7E ... 0xEF) for railway sound effect applications.
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
@@ -27,15 +26,12 @@
 typedef uint8_t DFAUDIO_VOLUME;
 
 /**
- * @class SerialServoMotor
- * @brief Manages an LX-16A servo in motor mode for continuous rotation and speed control.
+ * @class DfAudio
+ * @brief Manages a DFPlayer Mini (or compatible) audio module via SoftwareSerial.
  *
- * Extends MultiplePinDevice to control an LX-16A servo via a serial bus (TX, RX, direction).
- * Supports setting rotation speed, stopping, starting, and reversing the servo, using a coroutine
- * for asynchronous state transitions in railway signaling applications. Positive states (e.g., speed settings)
- * are interruptible, while negative states (if defined) are non-stable and uninterruptible.
- *
- * @tparam SERIAL_SERVO_PIN_COUNT Number of pins for serial communication (e.g., TX, RX, direction).
+ * Extends MultiplePinDevice to control a DFPlayer Mini audio module connected on RX/TX pins.
+ * Supports playback control, volume adjustment, and playback modes using a coroutine for
+ * asynchronous operation in railway sound effect applications.
  */
 class DfAudio : public MultiplePinDevice<DFAUDIO_PIN_COUNT>
 {
@@ -43,38 +39,31 @@ public:
     using MultiplePinDevice::MultiplePinDevice;
 
     /**
-     * @brief Constructs a SerialServoMotor with a TX pin and direction pin for 3-pin mode.
+     * @brief Constructs a DfAudio with explicit RX and TX pins, creating a new SoftwareSerial.
      *
-     * Delegates to the main constructor, allowing explicit specification of TX and direction pins.
-     *
-     * @param tXpin TX pin for serial communication (default: NO_PIN).
-     * @param TXFlagGPIO Direction pin for 3-pin bus configuration (default: NO_PIN).
-     * @param servoID Servo ID for bus communication (range: 0-253, default: LX16A_SERVO_ID).
+     * @param rxPin RX pin connected to the module TX.
+     * @param txPin TX pin connected to the module RX.
+     * @param speed Baud rate for serial communication (default: 9600).
      */
     DfAudio(SoftwareSerial *serial, PIN_ID rxPin, PIN_ID txPin, int speed = 9600);
 
     DfAudio(PIN_ID rxPin, PIN_ID txPin) : DfAudio(nullptr, rxPin, txPin, 9600)
     {
-        setPins(DFAUDIO_PIN_COUNT, rxPin, txPin);
+        setPin(0, rxPin);
+        setPin(1, txPin);
     }
 
     /**
-     * @brief Executes the coroutine for asynchronous speed transitions.
+     * @brief Coroutine entry point (placeholder, not used for this device).
      *
-     * Manages servo speed changes (e.g., setting new speeds or stopping) using a coroutine,
-     * ensuring smooth transitions for railway signaling applications. Requires initialization
-     * of the servo bus before execution. Currently a placeholder; implement as needed using AceRoutine.
-     *
-     * @return 0 on success, per AceRoutine coroutine state definitions.
+     * @return 0 always.
      */
     virtual int runCoroutine() { return 0; }
 
     /**
-     * @brief Retrieves the device name for identification.
+     * @brief Returns the device name for identification and logging.
      *
-     * Returns a constant string identifying the device, used for debugging or logging purposes.
-     *
-     * @return C-string "Servo" stored in PROGMEM.
+     * @return F("DfAudio") stored in PROGMEM.
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
@@ -82,13 +71,9 @@ public:
     }
 
     /**
-     * @brief Sets the DCC speed for the servo in motor mode.
+     * @brief Sets the audio volume from a DCC speed command.
      *
-     * Updates the servo speed based on a DCC speed command, delegating to setSpeed to apply
-     * the speed within the valid range [SERVO_SPEED_MIN, SERVO_SPEED_MAX]. Used to integrate
-     * with DCC control systems for railway applications.
-     *
-     * @param Speed Target speed from DCC command (mapped to servo range).
+     * @param Speed Volume level from DCC command (mapped to [0, 30]).
      */
     virtual void setDccSpeed(int16_t Speed)
     {
@@ -98,24 +83,19 @@ public:
 
 public:
     /**
-     * @brief Stops the servo by setting the speed to 0.
-     *
-     * Calls setSpeed with a speed of 0 to stop the servo's rotation, updating the state to OFF_STATE.
+     * @brief Mutes the audio module by setting volume to 0.
      */
     inline virtual void stop()
     {
-        setVolume(0); // Stop the servo
+        setVolume(0);
     }
 
     /**
-     * @brief Starts the servo at the last known speed.
-     *
-     * Restores the servo to the previously set speed stored in the speed member variable.
-     * If the servo is not initialized, the state is set to OFF_STATE.
+     * @brief Restores the audio module to the last known volume level.
      */
     inline virtual void start()
     {
-        setVolume(volume); // Restore the last known speed
+        setVolume(volume);
     }
 
 public:
@@ -170,8 +150,8 @@ public:
      */
     void sendCommand(const uint8_t command[], size_t length);
 
-    SoftwareSerial *serial = nullptr;         ///<
-    DFAUDIO_VOLUME volume = 0; ///< Current speed of the servo, initialized to stopped state.
+    SoftwareSerial *serial = nullptr;    ///< SoftwareSerial link to the DFPlayer Mini module.
+    DFAUDIO_VOLUME volume = 0;           ///< Current volume level (0–30).
 };
 
 #endif // __DFAUDIO_H__

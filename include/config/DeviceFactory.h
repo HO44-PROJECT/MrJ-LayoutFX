@@ -3,43 +3,48 @@
  *
  * @brief Creates Device instances from a JSON configuration document (ESP32 only).
  *
- * @objective Read the JSON schema agreed for MrJ-ArduinoRailwayFX, instantiate the
- *            correct Device subclass for every entry in "devices", open the UART ports
- *            described in "serial_ports", set the DCC address, and set the label.
+ * @objective Read the JSON config, instantiate the correct Device subclass for every
+ *            entry in "devices", open the buses described in "buses", set the DCC
+ *            address, and set the label.
  *
  *            JSON schema summary
  *            -------------------
  *            {
- *              "system":       { "dcc_pin": <gpio> },
- *              "serial_ports": {
- *                "<name>": { "tx": <gpio>, "rx": <gpio>, "baud": <int> }
+ *              "buses": {
+ *                "<key>": { "type": "dcc",             "pin": <gpio> },
+ *                "<key>": { "type": "spi_master_only", "mosi": <gpio>, "sclk": <gpio>, "latch": <gpio> },
+ *                "<key>": { "type": "uart",             "tx": <gpio>, "rx": <gpio>, "baud": <int> },
+ *                "<key>": { "type": "i2c",              "sda": <gpio>, "scl": <gpio> }
  *              },
+ *              "boards": [
+ *                { "id": "<str>", "type": "<str>" },
+ *                { "id": "<str>", "type": "<str>", "bus": "<key>", "pin_count": <int> }
+ *              ],
  *              "devices": [
  *                { "id": "<str>", "type": "<ClassName>",
- *                  "label":   "<char>",           // optional, 1 character
- *                  "wiring":  <gpio> | [<gpio>…], // GPIO pin(s) OR servo-bus ID
- *                  "port":    "<name>",            // uart key for serial devices
- *                  "address":       <int>,         // DCC address (0 = not registered)
- *                  "default_state": "on"|"off"    // initial state at boot (default: off)
+ *                  "board":         "<board-id>",
+ *                  "wiring":        <int> | [<int>…],
+ *                  "label":         "<char>",
+ *                  "address":       <int>,
+ *                  "default_state": "on"|"off"
  *                }
  *              ]
  *            }
  *
- *            Supported types
- *            ---------------
- *            Static      : StaticLow (1-4 pins OUTPUT LOW — suppresses boot pull-ups)
- *            Single-pin  : Beacon, CampFire, DefectLamp, ElectricLamp, GasLamp, NeonSign,
- *                          OilLamp, RailwayCrossingLights, SignalFlare, SolderLamp, Storm,
- *                          Torch, TrainHeadLamp, TurnSignal
- *            Two-pin     : DoubleBeacon
- *            3-pin signal: MrJDBEntrySignal, MrJDBExitSignal, TrafficLight3Phase
- *            2-pin signal: MrJDBBlocSignal
- *            4-pin signal: TrafficLight4Phase
- *            Serial servo: SerialServo  (requires LOBOT build flag)
- *            Serial audio: DfAudio
+ *            Wiring semantics — derived from the bus type of the board:
+ *            -----------------------------------------------------------
+ *            board with no bus (root MCU)      → wiring = GPIO pin number
+ *            board on spi_master_only bus       → wiring = output bit (1-based in chain)
+ *            board on uart bus (LobotChain)     → wiring = servo ID
+ *            board on uart bus (DfPlayerMini)   → no wiring (rx/tx from bus)
+ *
+ *            The "type" field of a board entry is a free string used by the
+ *            frontend to look up the visual definition in board_types.json.
+ *            The firmware never interprets it.
  *
  * @note Requires ArduinoJson (>= 6) in lib_deps.
  *       For SerialServo, also requires the LOBOT build flag.
+ *       UART bus keys must match the hardware serial name (uart0, uart1, uart2).
  *
  * @project MrJ-ArduinoRailwayFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
@@ -55,152 +60,150 @@
 
 static constexpr uint8_t FACTORY_MAX_DEVICES = 24;
 static constexpr uint8_t FACTORY_MAX_PORTS   =  4;
+static constexpr uint8_t FACTORY_MAX_BOARDS  = 12;
+static constexpr uint8_t FACTORY_MAX_BUSES   =  8;
 
 class DeviceFactory {
 public:
 
-  /**
-   * @brief Configuration for one serial port entry from "serial_ports".
-   */
-  struct PortCfg {
-    char             name[8];   ///< Key from JSON, e.g. "uart2".
-    HardwareSerial*  serial;    ///< Pointer to the matching ESP32 global (Serial1/2).
-    int              tx;        ///< TX GPIO, or -1 if unspecified.
-    int              rx;        ///< RX GPIO, or -1 if unspecified.
-    int              baud;      ///< Baud rate.
+  // ---------------------------------------------------------------------------
+  // Enums
+  // ---------------------------------------------------------------------------
+
+  /** @brief Protocol type of a bus entry — resolved at parse time, drives wiring semantics. */
+  enum BusType : uint8_t {
+    BUS_NONE       = 0,  ///< No bus — root MCU board, wiring = GPIO.
+    BUS_SPI_MASTER = 1,  ///< spi_master_only — wiring = output bit (1-based in daisy-chain).
+    BUS_SPI_FULL   = 2,  ///< spi_full_duplex — reserved.
+    BUS_UART       = 3,  ///< uart — wiring = servo ID (LobotChain) or no wiring (DfPlayerMini).
+    BUS_I2C        = 4,  ///< i2c — reserved.
+    BUS_DCC        = 5,  ///< dcc — input only, no boards attached.
   };
 
-  /**
-   * @brief Parse a JSON config string, open serial ports, and create all devices.
-   *
-   * @param json  NUL-terminated UTF-8 JSON string (e.g., read from LittleFS).
-   * @return true on success; false if JSON cannot be parsed.
-   */
-  bool load(const char* json);
+  /** @brief Hardware type of one SPI slot — used only for Spi595Bus::init(). */
+  enum SpiCardType : uint8_t {
+    SPI_CARD_UNKNOWN = 0,
+    SPI_CARD_HC595   = 1,
+  };
 
-  /** @brief SPI bus shared by all HC595 daughter cards in daisy-chain. */
+  // ---------------------------------------------------------------------------
+  // Structs
+  // ---------------------------------------------------------------------------
+
+  /** @brief Configuration for one serial port (populated from buses[type=uart]). */
+  struct PortCfg {
+    char            name[32];  ///< Bus key, e.g. "uart2".
+    HardwareSerial* serial;    ///< Matching ESP32 global (Serial/Serial1/Serial2).
+    int             tx;
+    int             rx;
+    int             baud;
+  };
+
+  /** @brief SPI physical bus config (populated from buses[type=spi_master_only]). */
   struct SpiBusCfg {
-    int mosi  = -1;  ///< MOSI GPIO pin (data into first register).
-    int sclk  = -1;  ///< SCLK GPIO pin (shared clock).
-    int latch = -1;  ///< Latch GPIO pin (ST_CP, shared — pulses once for the full chain).
-
+    int mosi  = -1;
+    int sclk  = -1;
+    int latch = -1;
     bool configured() const { return mosi >= 0 && sclk >= 0 && latch >= 0; }
   };
 
-  /** @brief Hardware type of one daughter card slot. */
-  enum SpiCardType : uint8_t {
-    SPI_CARD_UNKNOWN = 0,
-    SPI_CARD_HC595   = 1,  ///< 74HC595 shift register — output only (H/L).
-  };
-
-  /** @brief Configuration for one HC595 daughter card slot (one entry in spi_cards[]). */
+  /** @brief Minimal config for one SPI slot — used to call Spi595Bus::init(). */
   struct SpiCardCfg {
     SpiCardType type     = SPI_CARD_UNKNOWN;
-    uint8_t     pinCount = 0;  ///< Number of output pins on this card (multiple of 8).
-
-    bool configured() const { return type != SPI_CARD_UNKNOWN && pinCount > 0; }
-  };
-
-  /** @brief Configuration for one named board (from top-level "boards" array). */
-  struct BoardCfg {
-    char        id[32]   = {};  ///< Unique board identifier, e.g. "spi1".
-    char        name[48] = {};  ///< Optional human-readable label.
-    SpiCardType type     = SPI_CARD_UNKNOWN;
     uint8_t     pinCount = 0;
-
     bool configured() const { return type != SPI_CARD_UNKNOWN && pinCount > 0; }
   };
 
-  /** @brief Number of successfully created devices. */
-  size_t  count()              const { return _count; }
-
-  /** @brief Device at index i, or nullptr if i >= count(). */
-  Device* device(size_t i)     const { return (i < _count) ? _devices[i] : nullptr; }
-
-  /** @brief Id of device at index i (from JSON "id" field), or "" if i >= count(). */
-  const char* deviceId(size_t i) const { return (i < _count) ? _ids[i] : ""; }
-
   /**
-   * @brief Daughter SPI card index for device i (1-based), or 0 for main ESP32 GPIO.
-   *        Parsed from the optional JSON "board" field.
-   */
-  uint8_t deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
-
-  /** @brief SPI physical bus config from system.spi_bus, or unconfigured if absent. */
-  const SpiBusCfg&  spiBus()                    const { return _spiBus; }
-
-  /** @brief Number of configured boards. */
-  uint8_t           boardCount()                const { return _spiCardCount; }
-
-  /** @brief Config for board at 1-based index i, or unconfigured if out of range. */
-  const BoardCfg&   board(uint8_t i)            const {
-      static const BoardCfg empty;
-      return (i >= 1 && i <= _spiCardCount) ? _boards_cfg[i - 1] : empty;
-  }
-
-  /** @brief Config for daughter card at 1-based index i (alias kept for compatibility). */
-  const SpiCardCfg& spiCard(uint8_t i)          const {
-      static const SpiCardCfg empty;
-      return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
-  }
-
-  /** @brief DCC input pin from system.dcc_pin, or -1 if not configured. */
-  int     dccPin()          const { return _dccPin; }
-
-  /**
-   * @brief Call initPins() on every created device.
+   * @brief Configuration for one board entry.
    *
-   * Invoke once in setup(), after DccDrivable::init().
-   * Devices that configure their pins internally (e.g., DfAudio) can safely
-   * ignore the call because their initPins() is a no-op or overridden.
+   * The "type" string (typeStr) is stored as-is for logging and API responses.
+   * The firmware never interprets it — wiring semantics are derived from busType.
    */
+  struct BoardCfg {
+    char    id[32]      = {};  ///< Unique board identifier.
+    char    label[48]   = {};  ///< Optional human-readable label.
+    char    typeStr[32] = {};  ///< Board type string (frontend only, e.g. "HC595").
+    char    busKey[32]  = {};  ///< Key of the bus this board is on (empty = root board).
+    BusType busType     = BUS_NONE;  ///< Resolved bus protocol at parse time.
+    uint8_t pinCount    = 0;   ///< Number of output pins (SPI boards only).
+    uint8_t spiRank     = 0;   ///< 1-based daisy-chain rank (SPI boards only).
+
+    bool isRoot() const { return busType == BUS_NONE; }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Public API
+  // ---------------------------------------------------------------------------
+
+  bool load(const char* json);
   void initAll();
+
+  size_t      count()               const { return _count; }
+  Device*     device(size_t i)      const { return (i < _count) ? _devices[i] : nullptr; }
+  const char* deviceId(size_t i)    const { return (i < _count) ? _ids[i] : ""; }
+  uint8_t     deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
+
+  const SpiBusCfg& spiBus()        const { return _spiBus; }
+  uint8_t          boardCount()    const { return _boardCount; }
+  uint8_t          spiCardCount()  const { return _spiCardCount; }
+  int              dccPin()        const { return _dccPin; }
+
+  const BoardCfg& board(uint8_t i) const {
+    static const BoardCfg empty;
+    return (i >= 1 && i <= _boardCount) ? _boards_cfg[i - 1] : empty;
+  }
+
+  const SpiCardCfg& spiCard(uint8_t i) const {
+    static const SpiCardCfg empty;
+    return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
+  }
 
 private:
   static constexpr uint8_t FACTORY_MAX_SPI_CARDS = 8;
 
   Device*    _devices[FACTORY_MAX_DEVICES];
   char       _ids[FACTORY_MAX_DEVICES][32];
-  uint8_t    _boards[FACTORY_MAX_DEVICES];        ///< Daughter card index per device (0 = main ESP32).
-  size_t     _count         = 0;
-  int        _dccPin        = -1;                 ///< From system.dcc_pin, -1 if absent.
-  SpiBusCfg  _spiBus;                             ///< From system.spi_bus.
-  BoardCfg   _boards_cfg[FACTORY_MAX_SPI_CARDS];  ///< From top-level "boards" array.
-  SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];    ///< Mirrors _boards_cfg for Spi595Bus init.
-  uint8_t    _spiCardCount  = 0;                  ///< Number of entries parsed in "boards".
+  uint8_t    _boards[FACTORY_MAX_DEVICES];
+  size_t     _count        = 0;
 
-  uint8_t    _resolveBoardId(const char* id) const;  ///< board id string → 1-based index, 0 if not found.
-  uint8_t    _resolveBoardIdx(JsonVariant v) const;  ///< string id (new) or integer (legacy) → 1-based index.
+  int        _dccPin       = -1;
+  SpiBusCfg  _spiBus;
+
+  BoardCfg   _boards_cfg[FACTORY_MAX_BOARDS];
+  uint8_t    _boardCount   = 0;
+
+  SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];
+  uint8_t    _spiCardCount = 0;
 
   PortCfg  _ports[FACTORY_MAX_PORTS];
   size_t   _portCount = 0;
 
+  /** @brief Bus key → BusType catalog, populated during _parseBuses(). */
+  struct BusEntry {
+    char    key[32] = {};
+    BusType type    = BUS_NONE;
+  };
+  BusEntry _busEntries[FACTORY_MAX_BUSES];
+  uint8_t  _busCount = 0;
+
 #ifdef LOBOT
-  // LobotServo objects owned by the factory (SerialServoMotor holds a pointer, not ownership)
   ace_routine::Coroutine* _lobotServos[FACTORY_MAX_DEVICES];
   size_t                  _lobotCount = 0;
 #endif
 
-  bool    _parsePorts(JsonObject ports);
+  bool    _parseBuses(JsonObject buses);
+  BusType _resolveBusType(const char* busKey) const;
+  uint8_t _resolveBoardId (const char* id)    const;
+  uint8_t _resolveBoardIdx(JsonVariant v)     const;
+
+  PortCfg*        _findPort  (const char* busKey);
+  HardwareSerial* _findSerial(const char* busKey);
+
+  PIN_ID _pin (JsonVariant v, uint8_t boardIdx = 0);
+  size_t _pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t boardIdx = 0);
+
   Device* _createDevice(JsonObject obj);
-
-  PortCfg* _findPort(const char* portName);
-  HardwareSerial* _findSerial(const char* portName);
-
-  /**
-   * @brief Extract a PIN_ID from a JsonVariant, incorporating the board field.
-   *
-   * @param v      "wiring" JSON value (scalar or array — only first element used).
-   * @param board  "board" JSON value (0 = native GPIO, 1-N = SPI daughter card).
-   *               When SPI_CARDS is defined and board > 0, returns PIN_ID::spi(board, bit).
-   *               Otherwise returns the raw wiring value as a GPIO pin.
-   *               Without SPI_CARDS, board > 0 logs a warning and returns NO_PIN.
-   */
-  static PIN_ID  _pin (JsonVariant v, uint8_t board = 0);
-
-  /** Fill pins[] from a JsonVariant (scalar → pins[0]; array → pins[0..N-1]).
-   *  board is always 0 for multi-pin devices (CharliePlexing — native GPIO only). */
-  static size_t  _pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t board = 0);
 };
 
 #endif  // ESP32

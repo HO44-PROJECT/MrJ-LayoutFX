@@ -44,11 +44,13 @@ void WebUI::init(const DeviceFactory& factory) {
     ApiServer::on("/api/device",  HTTP_POST, _onPostDevice);
     ApiServer::on("/api/all",     HTTP_POST, _onAllDevices);
     ApiServer::on("/api/group",   HTTP_POST, _onGroupDevices);
-    ApiServer::on("/api/config",  HTTP_GET,  _onGetConfig);
-    ApiServer::on("/api/config",  HTTP_POST, _onPostConfig);
-    ApiServer::on("/api/status",  HTTP_GET,  _onGetStatus);
-    ApiServer::on("/api/test/gpio", HTTP_POST, _onTestGpio);
-    ApiServer::on("/api/test/spi",  HTTP_POST, _onTestSpi);
+    ApiServer::on("/api/config",      HTTP_GET,  _onGetConfig);
+    ApiServer::on("/api/config",      HTTP_POST, _onPostConfig);
+    ApiServer::on("/api/status",      HTTP_GET,  _onGetStatus);
+    ApiServer::on("/api/boards",      HTTP_GET,  _onGetBoards);
+    ApiServer::on("/api/board-types", HTTP_GET,  _onGetBoardTypes);
+    ApiServer::on("/api/test/gpio",   HTTP_POST, _onTestGpio);
+    ApiServer::on("/api/test/spi",    HTTP_POST, _onTestSpi);
 }
 
 // ---------------------------------------------------------------------------
@@ -256,6 +258,40 @@ void WebUI::_onGetStatus() {
     String json;
     serializeJson(doc, json);
     ApiServer::server().send(200, "application/json", json);
+}
+
+// ---------------------------------------------------------------------------
+// Boards — configured boards from the factory
+// ---------------------------------------------------------------------------
+
+void WebUI::_onGetBoards() {
+    String json = "[";
+    for (uint8_t i = 1; i <= _factory->boardCount(); i++) {
+        const DeviceFactory::BoardCfg& b = _factory->board(i);
+        if (i > 1) json += ",";
+        json += F("{\"id\":\"");    json += b.id;
+        json += F("\",\"type\":\""); json += b.typeStr;
+        json += F("\",\"bus\":\"");  json += b.busKey;
+        json += F("\",\"pinCount\":"); json += (int)b.pinCount;
+        json += F(",\"spiRank\":");   json += (int)b.spiRank;
+        json += F("}");
+    }
+    json += "]";
+    ApiServer::server().send(200, "application/json", json);
+}
+
+// ---------------------------------------------------------------------------
+// Board types — visual definitions from LittleFS (/board_types.json)
+// ---------------------------------------------------------------------------
+
+void WebUI::_onGetBoardTypes() {
+    if (!LittleFS.exists("/board_types.json")) {
+        ApiServer::server().send(404, "application/json", F("{\"error\":\"board_types.json not found\"}"));
+        return;
+    }
+    File f = LittleFS.open("/board_types.json", "r");
+    ApiServer::server().streamFile(f, "application/json");
+    f.close();
 }
 
 // ---------------------------------------------------------------------------

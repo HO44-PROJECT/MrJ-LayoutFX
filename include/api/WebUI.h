@@ -4,14 +4,16 @@
  * @brief Web interface for live device monitoring and on/off control (ESP32 / WEBUI only).
  *
  * Registers routes on ApiServer:
- *   GET  /ui          → serve the control panel HTML page
- *   GET  /api/devices → JSON array of all devices with current state
- *   POST /api/device  → body {"id":"<id>","state":<0|1>} — toggle a device
- *   POST /api/all     → body {"state":<0|1>} — control all non-static devices
- *   POST /api/group   → body {"type":"<DeviceName>","state":<0|1>} — control a type
- *   GET  /api/config  → download /config.json from LittleFS
- *   POST /api/config  → body <raw JSON> — overwrite /config.json then reboot
- *   GET  /api/status  → JSON object with firmware version and ESP32 metrics
+ *   GET  /ui                → serve the control panel HTML page
+ *   GET  /api/devices       → JSON array of all devices with current state
+ *   POST /api/device        → body {"id":"<id>","state":<0|1>} — toggle a device
+ *   POST /api/all           → body {"state":<0|1>} — control all non-static devices
+ *   POST /api/group         → body {"type":"<DeviceName>","state":<0|1>} — control a type
+ *   GET  /api/config        → download /config.json from LittleFS
+ *   POST /api/config        → body <raw JSON> — overwrite /config.json then reboot
+ *   GET  /api/status        → JSON object with firmware version and ESP32 metrics
+ *   GET  /api/boards        → JSON array of configured boards (id, type, bus, pinCount, spiRank)
+ *   GET  /api/board-types   → stream /board_types.json from LittleFS (visual definitions)
  *
  * Must be called after ConfigManager::init() and before ApiServer::init().
  *
@@ -53,6 +55,8 @@ private:
     static void _onGetConfig();
     static void _onPostConfig();
     static void _onGetStatus();
+    static void _onGetBoards();
+    static void _onGetBoardTypes();
     static void _onTestGpio();
     static void _onTestSpi();
 };

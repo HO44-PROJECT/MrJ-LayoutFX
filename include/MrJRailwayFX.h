@@ -15,8 +15,6 @@
 #ifndef __MRJ_RAILWAY_FX_H__
 #define __MRJ_RAILWAY_FX_H__
 
-#include <core/Core.h>
-
 #include <audio/DfAudio.h>
 
 #include "dcc/DccCallbacks.h"
@@ -27,6 +25,7 @@
 #include "devices/StaticUp.h"
 
 #include "led_fx/Beacon.h"
+#include "led_fx/Led.h"
 #include "led_fx/CampFire.h"
 #include "led_fx/DefectLamp.h"
 #include "led_fx/DoubleBeacon.h"

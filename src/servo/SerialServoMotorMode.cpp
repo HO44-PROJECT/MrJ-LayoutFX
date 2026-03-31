@@ -94,12 +94,12 @@ SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFla
     // Optional: Configure single-pin or direction pin
     if (tXpin != NO_PIN)
     {
-        pinMode(tXpin, OUTPUT); // Set TX pin for writes
+        pinMode(pinId(tXpin), OUTPUT); // Set TX pin for writes
     }
     if (TXFlagGPIO != NO_PIN)
     {
-        pinMode(TXFlagGPIO, OUTPUT);
-        digitalWrite(TXFlagGPIO, LOW); // Default state
+        pinMode(pinId(TXFlagGPIO), OUTPUT);
+        pinWrite(TXFlagGPIO, LOW); // Default state
     }
 
     // Set to motor mode with speed 0 (stopped)
@@ -126,35 +126,15 @@ int SerialServoMotor::runCoroutine()
         DEBUG_PRINTLN(getState());
         DEBUG_PRINTLN(getTargetState());
 
-        if (getState() == INIT_STATE)
+        if (servo != nullptr)
         {
-
-            if (servo != nullptr)
-            {
-                // Clamp speed to valid range [SERVO_SPEED_MIN, SERVO_SPEED_MAX] and send to servo
-
-                servo->motor_mode(speed);
-
-                if (speed != SERVO_SPEED_STOP)
-                {
-                    // New desired state
-                    setState(getTargetState());
-                }
-                else
-                {
-                    setState(OFF_STATE);
-                }
-            }
-            else
-            {
-                // Servo not initialized, ensure stopped state
-                this->speed = SERVO_SPEED_STOP;
-                setState(OFF_STATE);
-            }
+            servo->motor_mode(speed);
+            setState(speed != SERVO_SPEED_STOP ? getTargetState() : OFF_STATE);
         }
         else
         {
-            COROUTINE_DELAY_MILLIS(timerStart, 3000);
+            this->speed = SERVO_SPEED_STOP;
+            setState(OFF_STATE);
         }
     }
 
