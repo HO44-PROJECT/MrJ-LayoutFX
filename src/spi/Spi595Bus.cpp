@@ -76,6 +76,9 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value)
   uint8_t byteIdx = _totalBytes - 1 - (globalBit / 8);
   uint8_t bitIdx = globalBit % 8;
 
+  // if (byteIdx != 0 and byteIdx != 1)
+  //   Serial.println(byteIdx);
+
   if (value)
   {
     _buf[byteIdx] |= (1u << bitIdx);
@@ -84,8 +87,6 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value)
   {
     _buf[byteIdx] &= ~(1u << bitIdx);
   }
-
-  flush();
 }
 
 // ---------------------------------------------------------------------------
