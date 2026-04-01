@@ -15,6 +15,16 @@
 
 // #define GASLAMP_OLD_LOGIC
 
+static uint8_t extinctionStep(uint8_t bright)
+{
+    long v = (long)bright
+        - (GASLAMP_MAX_INTENSITY * GASLAMP_EXTINCTION_STEP_MS) / GASLAMP_EXTINCTION_DURATION_MS
+        + random(GASLAMP_EXTINCTION_FLICKER_MIN_VARIATION, GASLAMP_EXTINCTION_FLICKER_MAX_VARIATION);
+    if (v < 0) return 0;
+    if (v > bright) return bright;
+    return (uint8_t)v;
+}
+
 /**
  * @brief Runs the coroutine for the gas lamp effect.
  *
@@ -120,13 +130,7 @@ int GasLamp::runCoroutine()
 
             if (currentTime - startTime >= GASLAMP_EXTINCTION_STEP_MS)
             {
-                // Cast to int before arithmetic: prevents uint8_t underflow wrap-around
-                // (brightness near 0 minus decrement would silently wrap to ~255 otherwise).
-                brightness = (uint8_t)constrain(
-                    (int)brightness
-                    - (GASLAMP_MAX_INTENSITY * GASLAMP_EXTINCTION_STEP_MS) / GASLAMP_EXTINCTION_DURATION_MS
-                    + random(GASLAMP_EXTINCTION_FLICKER_MIN_VARIATION, GASLAMP_EXTINCTION_FLICKER_MAX_VARIATION),
-                    0, GASLAMP_MAX_INTENSITY);
+                brightness = extinctionStep(brightness);
                 startTime = currentTime;
             }
             if (brightness <= GASLAMP_BRIGHTENING_OFF_THRESHOLD)

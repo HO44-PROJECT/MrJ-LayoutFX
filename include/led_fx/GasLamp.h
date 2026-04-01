@@ -70,7 +70,6 @@ public:
 protected:
     uint32_t startTime = 0;  ///< Timestamp (ms) for tracking phase transitions.
     uint8_t brightness = 0;  ///< Current LED brightness level (0-255).
-
     uint16_t delayMs = 0; // Delay for COROUTINE_DELAY
     uint32_t currentTime = millis();
 
