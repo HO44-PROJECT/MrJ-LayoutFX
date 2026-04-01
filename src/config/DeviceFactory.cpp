@@ -36,7 +36,29 @@ static HardwareSerial* serialFromBusKey(const char* key) {
 // Public API
 // ---------------------------------------------------------------------------
 
-bool DeviceFactory::load(const char* json) {
+bool DeviceFactory::load(const char* json, const char* boardTypesJson) {
+  // Pre-index pin counts from board_types.json (count pins with a wiring field).
+  // Stored in parallel arrays to avoid dynamic allocation on embedded targets.
+  char    _btTypeNames [FACTORY_MAX_BOARD_TYPES][32] = {};
+  uint8_t _btPinCounts [FACTORY_MAX_BOARD_TYPES]     = {};
+  uint8_t _btCount = 0;
+
+  if (boardTypesJson) {
+    JsonDocument btDoc;
+    if (deserializeJson(btDoc, boardTypesJson) == DeserializationError::Ok) {
+      for (JsonPair kv : btDoc.as<JsonObject>()) {
+        if (_btCount >= FACTORY_MAX_BOARD_TYPES) break;
+        strncpy(_btTypeNames[_btCount], kv.key().c_str(), sizeof(_btTypeNames[0]) - 1);
+        uint8_t cnt = 0;
+        for (JsonObject p : kv.value()["pins"].as<JsonArray>()) {
+          if (!p["wiring"].isNull()) cnt++;
+        }
+        _btPinCounts[_btCount] = cnt;
+        _btCount++;
+      }
+    }
+  }
+
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, json);
   if (err) {
@@ -74,7 +96,12 @@ bool DeviceFactory::load(const char* json) {
           _boardCount++;
           continue;
         }
-        bcfg.pinCount = (uint8_t)(bd["pin_count"] | 0);
+        // Derive pin count from board_types.json definition; pin_count in JSON overrides.
+        uint8_t structural = 0;
+        for (uint8_t t = 0; t < _btCount; t++) {
+          if (strcmp(_btTypeNames[t], bcfg.typeStr) == 0) { structural = _btPinCounts[t]; break; }
+        }
+        bcfg.pinCount = (uint8_t)(bd["pin_count"] | (int)structural);
         bcfg.spiRank  = _spiCardCount + 1;
 
         _spiCards[_spiCardCount].type     = SPI_CARD_HC595;

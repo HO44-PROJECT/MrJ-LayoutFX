@@ -58,10 +58,11 @@
 #include <ArduinoJson.h>
 #include "devices/Device.h"
 
-static constexpr uint8_t FACTORY_MAX_DEVICES = 24;
-static constexpr uint8_t FACTORY_MAX_PORTS   =  4;
-static constexpr uint8_t FACTORY_MAX_BOARDS  = 12;
-static constexpr uint8_t FACTORY_MAX_BUSES   =  8;
+static constexpr uint8_t FACTORY_MAX_DEVICES    = 24;
+static constexpr uint8_t FACTORY_MAX_PORTS      =  4;
+static constexpr uint8_t FACTORY_MAX_BOARDS     = 12;
+static constexpr uint8_t FACTORY_MAX_BUSES      =  8;
+static constexpr uint8_t FACTORY_MAX_BOARD_TYPES = 16;  ///< Max entries from board_types.json.
 
 class DeviceFactory {
 public:
@@ -136,7 +137,7 @@ public:
   // Public API
   // ---------------------------------------------------------------------------
 
-  bool load(const char* json);
+  bool load(const char* json, const char* boardTypesJson = nullptr);
   void initAll();
 
   size_t      count()               const { return _count; }

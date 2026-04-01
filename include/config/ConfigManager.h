@@ -43,6 +43,7 @@ private:
     static void _onGetStatus();
 
     // LittleFS helpers
+    static String _readFile  (const char* path);
     static String _readConfig();
     static bool   _writeConfig(const String& json);
 };

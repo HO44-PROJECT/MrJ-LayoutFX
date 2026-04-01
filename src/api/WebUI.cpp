@@ -58,11 +58,13 @@ void WebUI::init(const DeviceFactory& factory) {
 // ---------------------------------------------------------------------------
 
 void WebUI::_onGetUi() {
+    Serial.println(F("WebUI: GET /ui"));
     ApiServer::server().sendHeader("Content-Encoding", "gzip");
     ApiServer::server().send_P(200, "text/html", (const char*)WEBUI_HTML_GZ, WEBUI_HTML_GZ_LEN);
 }
 
 void WebUI::_onGetDevices() {
+    Serial.println(F("WebUI: GET /api/devices"));
     String json = "[";
     for (size_t i = 0; i < _factory->count(); i++) {
         Device*  d     = _factory->device(i);
@@ -147,11 +149,15 @@ void WebUI::_onAllDevices() {
         return;
     }
     int state = doc["state"].as<int>();
+    int board = doc["board"] | 0;   // 0 = all boards
 
     Serial.print(F("WebUI: all → state "));
-    Serial.println(state);
+    Serial.print(state);
+    if (board > 0) { Serial.print(F(" board=")); Serial.print(board); }
+    Serial.println();
 
     for (size_t i = 0; i < _factory->count(); i++) {
+        if (board > 0 && _factory->deviceBoard(i) != (uint8_t)board) continue;
         Device* d = _factory->device(i);
         if (strcmp("StaticLow", (const char*)d->getDeviceName()) != 0) {
             d->newState((STATE_TYPE)state);
@@ -194,6 +200,7 @@ void WebUI::_onGroupDevices() {
 // ---------------------------------------------------------------------------
 
 void WebUI::_onGetConfig() {
+    Serial.println(F("WebUI: GET /api/config"));
     if (!LittleFS.exists("/config.json")) {
         ApiServer::server().send(404, "application/json", F("{\"error\":\"config not found\"}"));
         return;
@@ -206,6 +213,7 @@ void WebUI::_onGetConfig() {
 }
 
 void WebUI::_onPostConfig() {
+    Serial.println(F("WebUI: POST /api/config"));
     if (!ApiServer::server().hasArg("plain")) {
         ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
         return;
@@ -227,6 +235,7 @@ void WebUI::_onPostConfig() {
 // ---------------------------------------------------------------------------
 
 void WebUI::_onGetStatus() {
+    Serial.println(F("WebUI: GET /api/status"));
     JsonDocument doc;
 
     // Firmware
@@ -265,6 +274,7 @@ void WebUI::_onGetStatus() {
 // ---------------------------------------------------------------------------
 
 void WebUI::_onGetBoards() {
+    Serial.println(F("WebUI: GET /api/boards"));
     String json = "[";
     for (uint8_t i = 1; i <= _factory->boardCount(); i++) {
         const DeviceFactory::BoardCfg& b = _factory->board(i);
@@ -285,6 +295,7 @@ void WebUI::_onGetBoards() {
 // ---------------------------------------------------------------------------
 
 void WebUI::_onGetBoardTypes() {
+    Serial.println(F("WebUI: GET /api/board-types"));
     if (!LittleFS.exists("/board_types.json")) {
         ApiServer::server().send(404, "application/json", F("{\"error\":\"board_types.json not found\"}"));
         return;
@@ -313,6 +324,11 @@ void WebUI::_onTestGpio() {
     int state = doc["state"] | 0;
     if (pin < 0 || pin > 39) {
         ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid pin\"}"));
+        return;
+    }
+    // Protect UART0 pins (TX=1, RX=3): driving them crashes the ESP32 serial port.
+    if (pin == 1 || pin == 3) {
+        ApiServer::server().send(403, "application/json", F("{\"error\":\"reserved UART pin\"}"));
         return;
     }
     pinMode(pin, OUTPUT);
@@ -347,7 +363,7 @@ void WebUI::_onTestSpi() {
         ApiServer::server().send(503, "application/json", F("{\"error\":\"SPI not ready\"}"));
         return;
     }
-    Spi595Bus::testPin((uint8_t)card, (uint8_t)channel, (uint8_t)(state ? 1 : 0));
+    Spi595Bus::setPin((uint8_t)card, (uint8_t)channel, (uint8_t)(state ? 1 : 0));
     Serial.print(F("WebUI test: SPI card="));
     Serial.print(card);
     Serial.print(F(" ch="));

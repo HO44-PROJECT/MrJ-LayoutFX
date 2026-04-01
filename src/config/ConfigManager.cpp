@@ -36,10 +36,11 @@ void ConfigManager::init(const char* configPath) {
     }
 
     // --- DeviceFactory — init pins before WiFi delay ---
+    String boardTypes = _readFile("/board_types.json");
     String json = _readConfig();
     if (!json.isEmpty()) {
         Serial.println(F("[Factory] loading config..."));
-        if (_factory.load(json.c_str())) {
+        if (_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
             _factory.initAll();
             Serial.print(F("[Factory] "));
             Serial.print(_factory.count());
@@ -65,12 +66,16 @@ void ConfigManager::init(const char* configPath) {
 // Private — LittleFS helpers
 // ---------------------------------------------------------------------------
 
-String ConfigManager::_readConfig() {
-    File f = LittleFS.open(_configPath, "r");
+String ConfigManager::_readFile(const char* path) {
+    File f = LittleFS.open(path, "r");
     if (!f) return String();
     String s = f.readString();
     f.close();
     return s;
+}
+
+String ConfigManager::_readConfig() {
+    return _readFile(_configPath);
 }
 
 bool ConfigManager::_writeConfig(const String& json) {
