@@ -13,6 +13,8 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
+#ifdef AUDIO
+
 #include "audio/DfAudio.h"
 
 /**
@@ -47,20 +49,26 @@ void DfAudio::sendCommand(const uint8_t command[], size_t length)
         serial->write(command[i]);
     }
 
-    if ((length > 3 && command[2] == 0x01)) {
+    if ((length > 3 && command[2] == 0x01))
+    {
         waitForAck();
     }
 }
 
-bool DfAudio::waitForAck(unsigned long timeout) {
+bool DfAudio::waitForAck(unsigned long timeout)
+{
     unsigned long start = millis();
-    while (millis() - start < timeout) {
-        if (serial->available()) {
+    while (millis() - start < timeout)
+    {
+        if (serial->available())
+        {
             int b = serial->read();
-            if (b == 0x7E) {
+            if (b == 0x7E)
+            {
                 // début de trame, on pourrait lire le reste
                 // pour l’instant on se contente d’un ACK simple
-                while (serial->available()) serial->read(); // vider le buffer
+                while (serial->available())
+                    serial->read(); // vider le buffer
                 // Serial.println("ack ok");
                 return true;
             }
@@ -178,3 +186,5 @@ void DfAudio::enterLowPowerMode()
     uint8_t command[] = {0x7E, 0x0A, 0x00, 0x02, 0x00, 0x01, 0xEF};
     sendCommand(command, sizeof(command));
 }
+
+#endif // AUDIO

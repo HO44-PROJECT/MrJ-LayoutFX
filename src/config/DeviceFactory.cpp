@@ -401,6 +401,7 @@ Device* DeviceFactory::_createDevice(JsonObject obj) {
   // DfAudio — rx/tx come from the board's uart bus
   // ------------------------------------------------------------------
   else if (strcmp(type, "DfAudio") == 0) {
+#ifdef AUDIO
     if (boardIdx == 0 || boardIdx > _boardCount) {
       Serial.println(F("DeviceFactory: DfAudio — board not found"));
       return nullptr;
@@ -422,6 +423,8 @@ Device* DeviceFactory::_createDevice(JsonObject obj) {
 #else
     d = new DfAudio((PIN_ID)(uint8_t)cfg->rx, (PIN_ID)(uint8_t)cfg->tx);
 #endif
+
+#endif // AUDIO
   }
 
   // ------------------------------------------------------------------

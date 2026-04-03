@@ -5,10 +5,9 @@
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
-#ifdef ESP32
+#ifdef WEBUI
 
 #include "api/ApiServer.h"
-#include "dcc/DccDrivable.h"
 #include <WiFi.h>
 
 // ---------------------------------------------------------------------------
@@ -71,7 +70,6 @@ void ApiServer::init(const char* ssid, const char* password, uint16_t port) {
         [](void*) {
             for (;;) {
                 _server->handleClient();
-                DccDrivable::loop();
                 vTaskDelay(1);   // yield 1 tick (1 ms) to WiFi stack
             }
         },
@@ -80,4 +78,4 @@ void ApiServer::init(const char* ssid, const char* password, uint16_t port) {
 
 }
 
-#endif  // ESP32
+#endif  // WEBUI

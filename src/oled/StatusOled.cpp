@@ -15,6 +15,8 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
+#ifdef OLED
+
 #include "oled/StatusOled.h"
 
 /**
@@ -213,3 +215,5 @@ void StatusOled::refreshDisplay()
     // Update the display
     oled.display();
 }
+
+#endif // OLED
