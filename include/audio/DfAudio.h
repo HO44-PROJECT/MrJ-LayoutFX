@@ -14,8 +14,11 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __DFAUDIO_H__
-#define __DFAUDIO_H__
+#pragma once
+
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_AUDIO_ENABLED
 
 #include "devices/MultiplePinDevice.h"
 #include "devices/PinState.h"
@@ -154,4 +157,4 @@ public:
     DFAUDIO_VOLUME volume = 0;           ///< Current volume level (0–30).
 };
 
-#endif // __DFAUDIO_H__
+#endif // MRJFX_AUDIO_ENABLED
