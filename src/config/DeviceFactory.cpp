@@ -433,10 +433,6 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 3, boardIdx);
     d = new MrJDBEntrySignal(pins);
-  } else if (strcmp(type, "MrJDBExitSignal") == 0) {
-    PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
-    _pins(wiring, pins, 3, boardIdx);
-    d = new MrJDBExitSignal(pins);
   } else if (strcmp(type, "TrafficLight3Phase") == 0) {
     PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 3, boardIdx);
@@ -445,6 +441,15 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 3, boardIdx);
     d = new TrafficLight4Phases(pins);
+  }
+
+  // ------------------------------------------------------------------
+  // 4-pin signals
+  // ------------------------------------------------------------------
+  else if (strcmp(type, "MrJDBExitSignal") == 0) {
+    PIN_ID pins[4] = {NO_PIN, NO_PIN, NO_PIN, NO_PIN};
+    _pins(wiring, pins, 4, boardIdx);
+    d = new MrJDBExitSignal(pins);
   }
 
   // ------------------------------------------------------------------

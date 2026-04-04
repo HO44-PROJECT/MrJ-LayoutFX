@@ -19,6 +19,5 @@
 #ifdef MRJFX_SPI_CARDS_ENABLED
   #include "devices/PinStateSPI.h"
 #else
-  #error "unattended"
   #include "devices/PinStateGPIO.h"
 #endif

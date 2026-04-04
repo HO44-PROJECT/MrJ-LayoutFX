@@ -68,14 +68,8 @@ void WebUI::_onGetDevices() {
   for (size_t i = 0; i < _factory->count(); i++) {
     Device *d = _factory->device(i);
     uint8_t board = _factory->deviceBoard(i);
-    uint8_t pin = 0;
-    if (d->getPinCount() > 0) {
-    #ifdef MRJFX_SPI_CARDS_ENABLED
-      pin = d->getPin(0).pin;
-    #else
-      pin = (uint8_t)d->getPin(0);
-    #endif
-    }
+    size_t pc = d->getPinCount();
+
     if (i > 0)
       json += ",";
     json += F("{\"id\":\"");
@@ -90,9 +84,20 @@ void WebUI::_onGetDevices() {
     json += (int)d->getDccAddress();
     json += F(",\"board\":");
     json += (int)board;
-    json += F(",\"pin\":");
-    json += (int)pin;
-    json += F("}");
+    json += F(",\"stateCount\":");
+    json += (int)d->getStateCount();
+    json += F(",\"pinCount\":");
+    json += (int)pc;
+    json += F(",\"pins\":[");
+    for (size_t j = 0; j < pc; j++) {
+      if (j > 0) json += ",";
+    #ifdef MRJFX_SPI_CARDS_ENABLED
+      json += (int)d->getPin(j).pin;
+    #else
+      json += (int)d->getPin(j);
+    #endif
+    }
+    json += F("]}");
   }
   json += "]";
   ApiServer::server().send(200, "application/json", json);

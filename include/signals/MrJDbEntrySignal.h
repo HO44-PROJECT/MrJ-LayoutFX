@@ -36,6 +36,9 @@ class MrJDBEntrySignal : public CharliePlexingSignal<MrJDBEntrySignalState_PIN_C
 public:
     using CharliePlexingSignal::CharliePlexingSignal; ///< Inherit base class constructors.
 
+    virtual const __FlashStringHelper *getDeviceName() const override { return F("DB Entry Signal"); }
+    virtual uint8_t getStateCount() const override { return 4; } ///< OFF · HP0 · HP1 · HP2
+
     static const STATE_TYPE OFF_STATE = 0; ///< Signal is off (no light).
     static const STATE_TYPE HP0_STATE = 1; ///< Stop signal (red light).
     static const STATE_TYPE HP1_STATE = 2; ///< Proceed at full speed (green light).

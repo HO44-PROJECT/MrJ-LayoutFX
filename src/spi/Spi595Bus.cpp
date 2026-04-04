@@ -88,6 +88,8 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value) {
 // ---------------------------------------------------------------------------
 
 void Spi595Bus::flush() {
+  if (!ready())
+    return;
   static const SPISettings settings(CLOCK_HZ, MSBFIRST, SPI_MODE0);
   SPI.beginTransaction(settings);
   digitalWrite(_latch, LOW);

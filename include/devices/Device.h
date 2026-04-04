@@ -104,6 +104,16 @@ public:
   }
 
   /**
+   * @brief Returns the number of distinct named states (including OFF).
+   *
+   * Used by the WebUI to decide whether to show a toggle (2 states) or
+   * labelled state buttons (> 2 states). Override in multi-state devices.
+   *
+   * @return uint8_t Number of valid states, counting from 0 (OFF).
+   */
+  virtual uint8_t getStateCount() const { return 2; }
+
+  /**
    * @brief Constructs a `Device` instance.
    *
    * Initializes the device with default states (OFF_STATE). Subclasses should extend

@@ -597,6 +597,16 @@
       color: #fff
     }
 
+    .tbtn.t-slow {
+      background: #d4a017;
+      color: #fff
+    }
+
+    .tbtn.t-sh1 {
+      background: #6c3483;
+      color: #fff
+    }
+
     /* ── Config view ─────────────────────────────────────────────────────── */
     .cfg-panel {
       padding: 1.5rem;
@@ -1520,6 +1530,12 @@
     var POLL = 3000;
     var STATIC_TYPES = ['StaticLow'];
     var TRAFFIC_TYPES = ['Traffic Light 3ph', 'Traffic Light 4ph'];
+    // Signal state definitions: v = state int sent to /api/device, l = label, c = CSS class
+    var SIGNAL_STATES = {
+      'DB Bloc Signal':  [{v:0,l:'OFF',c:'t-off'},{v:1,l:'HP0',c:'t-stop'},{v:2,l:'HP1',c:'t-go'}],
+      'DB Entry Signal': [{v:0,l:'OFF',c:'t-off'},{v:1,l:'HP0',c:'t-stop'},{v:2,l:'HP1',c:'t-go'},{v:3,l:'HP2',c:'t-slow'}],
+      'DB Exit Signal':  [{v:0,l:'OFF',c:'t-off'},{v:1,l:'HP00',c:'t-stop'},{v:2,l:'HP1',c:'t-go'},{v:3,l:'HP2',c:'t-slow'},{v:4,l:'HP0+Sh1',c:'t-sh1'}]
+    };
 
     /* ── Navigation ─────────────────────────────────────────────────────── */
 
@@ -1791,8 +1807,9 @@
     function meta(d) {
       var t = '<div class="meta">';
       if (d.addr > 0) t += '<span class="mtag">DCC ' + d.addr + '</span>';
-      if (d.board > 0) t += '<span class="mtag">Carte ' + d.board + ' · pin ' + d.pin + '</span>';
-      else if (d.pin > 0 || d.board === 0) t += '<span class="mtag">GPIO ' + d.pin + '</span>';
+      var pinStr = (d.pins && d.pins.length > 0) ? d.pins.join(',') : null;
+      if (d.board > 0) t += '<span class="mtag">Carte ' + d.board + ' · pin ' + (pinStr || '?') + '</span>';
+      else if (pinStr) t += '<span class="mtag">GPIO ' + pinStr + '</span>';
       return t + '</div>';
     }
 
@@ -1815,8 +1832,29 @@
         + '</div>';
     }
 
+    function cardSignal(d) {
+      var states = SIGNAL_STATES[d.type];
+      var c = d.state < 0 ? 'busy' : (d.desired > 0 ? 'on' : 'off');
+      var busy = d.state < 0;
+      var dis = busy ? 'disabled' : '';
+      var ico = ICONS[d.type] || ICONS['_'];
+      function sbtn(s) {
+        var act = (d.desired === s.v && !busy) ? 'active' : '';
+        return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + s.v + ')" ' + dis + '>' + s.l + '</button>';
+      }
+      return '<div class="card ' + c + '">'
+        + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+        + '<span class="dot ' + c + '"></span></div>'
+        + '<div class="icon">' + ico + '</div>'
+        + '<span class="badge">' + d.type + '</span>'
+        + meta(d)
+        + '<div class="tbtns">' + states.map(sbtn).join('') + '</div>'
+        + '</div>';
+    }
+
     function card(d) {
       if (TRAFFIC_TYPES.indexOf(d.type) >= 0) return cardTraffic(d);
+      if (SIGNAL_STATES[d.type]) return cardSignal(d);
       var c = cls(d);
       var dis = (c === 'busy' || c === 'static') ? 'disabled' : '';
       var ico = ICONS[d.type] || ICONS['_'];
@@ -1841,13 +1879,21 @@
       order.forEach(function (type) {
         var list = groups[type];
         var isStatic = STATIC_TYPES.indexOf(type) >= 0;
+        var isSig = !!SIGNAL_STATES[type];
         html += '<div class="group">';
         html += '<div class="ghdr"><span class="gname">' + type + ' <span class="gcnt">(' + list.length + ')</span></span>';
         if (!isStatic) {
-          html += '<div class="gbtns">'
-            + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
-            + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
-            + '</div>';
+          if (isSig) {
+            html += '<div class="gbtns">'
+              + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',2)">HP1</button>'
+              + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
+              + '</div>';
+          } else {
+            html += '<div class="gbtns">'
+              + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
+              + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
+              + '</div>';
+          }
         }
         html += '</div>';
         html += '<div class="gcards">' + list.map(card).join('') + '</div>';
@@ -1877,6 +1923,10 @@
     }
 
     function setTraffic(id, state) {
+      post('/api/device', { id: id, state: state }).then(poll).catch(showErr);
+    }
+
+    function setSig(id, state) {
       post('/api/device', { id: id, state: state }).then(poll).catch(showErr);
     }
 
@@ -2015,7 +2065,10 @@
     function dbgFindDev(boardApiIdx, wiring) {
       var boardFwIdx = boardApiIdx + 1;
       for (var i = 0; i < _dbgDevs.length; i++) {
-        if (_dbgDevs[i].board === boardFwIdx && _dbgDevs[i].pin === wiring) return _dbgDevs[i];
+        var d = _dbgDevs[i];
+        if (d.board !== boardFwIdx) continue;
+        var pins = d.pins && d.pins.length > 0 ? d.pins : [];
+        if (pins.indexOf(wiring) >= 0) return d;
       }
       return null;
     }
