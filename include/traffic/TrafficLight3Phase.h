@@ -43,7 +43,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Traffic Light 3ph");
+        return F("TrafficLight3ph");
     }
 
     // Primary state identifiers

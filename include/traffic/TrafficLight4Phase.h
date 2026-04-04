@@ -42,7 +42,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Traffic Light 4ph");
+        return F("TrafficLight4ph");
     }
 
 protected:
