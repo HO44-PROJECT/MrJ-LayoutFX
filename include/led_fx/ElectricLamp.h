@@ -61,7 +61,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Electric Lamp");
+        return F("ElectricLamp");
     }
 
     /**

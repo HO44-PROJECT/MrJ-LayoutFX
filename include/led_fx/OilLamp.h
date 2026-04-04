@@ -39,7 +39,7 @@ class OilLamp : public LedEffect
 public:
     using LedEffect::LedEffect; ///< Inherits constructors from the base `LedEffect` class.
 
-    virtual const __FlashStringHelper *getDeviceName() const override { return F("Oil Lamp"); }
+    virtual const __FlashStringHelper *getDeviceName() const override { return F("OilLamp"); }
 
     /**
      * @brief Executes the coroutine for the oil lamp flicker effect.

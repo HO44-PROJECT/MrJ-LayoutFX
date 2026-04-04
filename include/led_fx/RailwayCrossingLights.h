@@ -53,7 +53,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Railway Crossing Lights");
+        return F("RailwayCrossingLights");
     }
 
     /**

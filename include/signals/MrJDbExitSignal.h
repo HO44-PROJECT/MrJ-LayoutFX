@@ -36,7 +36,7 @@ class MrJDBExitSignal : public CharliePlexingSignal<MrJDBExitSignalState_PIN_COU
 public:
     using CharliePlexingSignal::CharliePlexingSignal; ///< Inherit base class constructors.
 
-    virtual const __FlashStringHelper *getDeviceName() const override { return F("DB Exit Signal"); }
+    virtual const __FlashStringHelper *getDeviceName() const override { return F("DBExitSignal"); }
     virtual uint8_t getStateCount() const override { return 5; } ///< OFF · HP00 · HP1 · HP2 · HP0_SH1
     inline virtual void switchOn() override { newState(HP00_STATE); }
 

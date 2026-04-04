@@ -43,7 +43,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Turn Signal");
+        return F("TurnSignal");
     }
 
     /**

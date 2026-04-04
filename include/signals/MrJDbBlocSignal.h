@@ -38,7 +38,7 @@ public:
 
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("DB Bloc Signal");
+        return F("DBBlocSignal");
     }
     virtual uint8_t getStateCount() const override { return 3; } ///< OFF · HP0 · HP1
     inline virtual void switchOn() override { newState(HP0_STATE); }

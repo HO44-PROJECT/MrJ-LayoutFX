@@ -57,7 +57,7 @@ public:
      */
     virtual const __FlashStringHelper *getDeviceName() const override
     {
-        return F("Neon Sign");
+        return F("NeonSign");
     }
 
     /**
