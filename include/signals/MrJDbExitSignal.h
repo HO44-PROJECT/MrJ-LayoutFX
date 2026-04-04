@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __MRJDBEXITSIGNAL_H__
-#define __MRJDBEXITSIGNAL_H__
+#pragma once
 
 #include "signals/CharliePlexingSignal.h"
 
@@ -65,5 +64,3 @@ protected:
     static const PIN_STATE PIN_STATE_HP2[MrJDBExitSignalState_PIN_COUNT];
     static const PIN_STATE PIN_STATE_HP0_SH1[MrJDBExitSignalState_PIN_COUNT];
 };
-
-#endif // __MRJDBEXITSIGNAL_H__

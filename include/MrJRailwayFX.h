@@ -28,19 +28,9 @@
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
-#ifndef __MRJ_RAILWAY_FX_H__
-#define __MRJ_RAILWAY_FX_H__
+#pragma once
 
-// ── Audio ────────────────────────────────────────────────────────────────────
-#ifdef AUDIO
-#include <audio/DfAudio.h>
-#endif
-
-// ── DCC ──────────────────────────────────────────────────────────────────────
-#ifdef DCC_PIN
-#include "dcc/DccCallbacks.h"
-#include "dcc/DccDrivable.h"
-#endif
+#include <MrJRailwayFX_define.h>
 
 // ── Devices ──────────────────────────────────────────────────────────────────
 #include "devices/StaticLow.h"
@@ -66,13 +56,13 @@
 #include "led_fx/TurnSignal.h"
 
 // ── OLED ─────────────────────────────────────────────────────────────────────
-#ifdef OLED
-#include "oled/StatusOled.h"
+#ifdef MRJFX_OLED_ENABLED
+  #include "oled/StatusOled.h"
 #endif
 
 // ── Servo ────────────────────────────────────────────────────────────────────
-#ifdef SERIAL_SERVO
-#include "servo/SerialServoMotorMode.h"
+#ifdef MRJFX_SERIAL_SERVO_ENABLED
+  #include "servo/SerialServoMotorMode.h"
 #endif
 
 // ── Railway signals ──────────────────────────────────────────────────────────
@@ -88,28 +78,22 @@
 #include "utils/utils.h"
 
 // ── ESP32 networking & config (conditionally compiled) ───────────────────────
-#ifdef WEBUI
-#include "api/ApiServer.h"
-#include "api/WebUI.h"
-#endif
-#ifdef CONFIG
-#include "config/ConfigManager.h"
-#endif
+#ifdef MRJFX_WEBUI_ENABLED
+  #include "api/ApiServer.h"
+  #include "api/WebUI.h"
+#endif // End WEBUI includes
+
+#ifdef MRJFX_CONFIG_ENABLED
+  #include "config/ConfigManager.h"
+#endif // End MRJFX_CONFIG_ENABLED includes
 
 // ── Coroutine scheduler (AceRoutine — all platforms) ─────────────────────────
 #include <AceRoutine.h>
 
 // ── SPI shift-register bus (optional — requires #define SPI_CARDS) ───────────
-#ifdef SPI_CARDS
-#include "spi/Spi595Bus.h"
-#endif
-
-// ── HTTP port default (user may override in config.h) ────────────────────────
-#ifdef ESP32
-#ifndef HTTP_PORT
-#define HTTP_PORT 80
-#endif
-#endif
+#ifdef MRJFX_SPI_CARDS_ENABLED
+  #include "spi/Spi595Bus.h"
+#endif // End MRJFX_SPI_CARDS_ENABLED includes
 
 // ── MrJFX — single-call init/loop ────────────────────────────────────────────
 /**
@@ -122,59 +106,61 @@
  *   void setup() { MrJFX::init(); }
  *   void loop()  { MrJFX::loop(); }
  */
-class MrJFX
-{
+class MrJFX {
 public:
-        /**
-         * @brief Initialise all active subsystems in the correct order:
-         *          1. Serial
-         *          2. ConfigManager  (if CONFIG is defined — ESP32 only)
-         *          3. WebUI          (if WEBUI is defined  — ESP32 only)
-         *          4. CoroutineScheduler
-         *          5. ApiServer/WiFi (if WIFI_SSID and WIFI_PASSWORD are defined)
-         */
-        static void init()
-        {
-                Serial.begin(115200);
+  /**
+   * @brief Initialise all active subsystems in the correct order:
+   *          1. Serial
+   *          2. ConfigManager  (if CONFIG is defined — ESP32 only)
+   *          3. WebUI          (if WEBUI is defined  — ESP32 only)
+   *          4. CoroutineScheduler
+   *          5. ApiServer/WiFi (if WIFI_SSID and WIFI_PASSWORD are defined)
+   */
+  static void init() {
+    Serial.begin(115200);
 
-#ifdef CONFIG
-                // CONFIG holds the filename (without '/') — prepend it for LittleFS.
-                ConfigManager::init("/" CONFIG);
+#ifdef MRJFX_CONFIG_ENABLED
+    // CONFIG holds the filename (without '/') — prepend it for LittleFS.
+    ConfigManager::init("/" CONFIG);
+    Serial.println("ConfigManager initialized with file: "
+                   "/" CONFIG);
 #endif
 
-#ifdef WEBUI
-                // WebUI must be registered before ApiServer starts the HTTP server.
-                WebUI::init(ConfigManager::factory());
+#ifdef MRJFX_WEBUI_ENABLED
+    // WebUI must be registered before ApiServer starts the HTTP server.
+    Serial.println("WebUI initialization in progress.");
+    WebUI::init(ConfigManager::factory());
+    Serial.println("WebUI initialized.");
+
 #endif
 
-                // Must be called after all coroutines are declared (setup() phase).
-                ace_routine::CoroutineScheduler::setup();
+    // Must be called after all coroutines are declared (setup() phase).
+    ace_routine::CoroutineScheduler::setup();
+    Serial.println("CoroutineScheduler setup complete.");
 
-#if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
-                // ApiServer connects WiFi and starts the HTTP server on Core 0.
-                ApiServer::init(WIFI_SSID, WIFI_PASSWORD, HTTP_PORT);
+#if MRJFX_WIFI_ENABLED
+    // ApiServer connects WiFi and starts the HTTP server on Core 0.
+    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, HTTP_PORT);
+    Serial.println("ApiServer initialized.");
 #endif
-        }
+  }
 
-        /**
-         * @brief Drive all active subsystems each iteration of the Arduino loop:
-         *          1. CoroutineScheduler  (all platforms)
-         *          2. Spi595Bus::flush()  (if SPI_CARDS is defined)
-         */
-        static void loop()
-        {
-                ace_routine::CoroutineScheduler::loop();
+  /**
+   * @brief Drive all active subsystems each iteration of the Arduino loop:
+   *          1. CoroutineScheduler  (all platforms)
+   *          2. Spi595Bus::flush()  (if MRJFX_SPI_CARDS_ENABLED is defined)
+   */
+  static void loop() {
+    ace_routine::CoroutineScheduler::loop();
 
-#ifdef SPI_CARDS
-                // Flush the SPI shift-register output image to hardware.
-                Spi595Bus::flush();
+#ifdef MRJFX_SPI_CARDS_ENABLED
+    // Flush the SPI shift-register output image to hardware.
+    Spi595Bus::flush();
 #endif
 
-#ifdef DCC_PIN
-                // Drive the DCC decoder state machine and callbacks.
-                DccDrivable::loop();
+#if MRJFX_DCC_ENABLED
+    // Drive the DCC decoder state machine and callbacks.
+    DccDrivable::loop();
 #endif
-        }
+  }
 };
-
-#endif // __MRJ_RAILWAY_FX_H__

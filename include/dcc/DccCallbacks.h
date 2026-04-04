@@ -1,5 +1,9 @@
 #pragma once
 
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_DCC_ENABLED
+
 #include <Arduino.h>
 #include <NmraDcc.h>
 #include "dcc/DccDrivable.h"
@@ -27,3 +31,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+#endif  // MRJFX_DCC_ENABLED

@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __OILLAMP_H__
-#define __OILLAMP_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -51,5 +50,3 @@ public:
 protected:
     int16_t intensity = 0; ///< Current intensity of the oil lamp flicker (0–255).
 };
-
-#endif // __OILLAMP_H__

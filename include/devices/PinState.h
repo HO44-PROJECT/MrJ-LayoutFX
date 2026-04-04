@@ -5,8 +5,8 @@
  * All code should include this file. Never include PinStateGPIO.h or PinStateSPI.h
  * directly.
  *
- *   SPI_CARDS undefined  →  PinStateGPIO.h  (PIN_ID = uint8_t, Nano-safe)
- *   SPI_CARDS defined    →  PinStateSPI.h   (PIN_ID = struct{pin, card}, ESP32 + 74HC595)
+ *   MRJFX_SPI_CARDS_ENABLED undefined  →  PinStateGPIO.h  (PIN_ID = uint8_t, Nano-safe)
+ *   MRJFX_SPI_CARDS_ENABLED defined    →  PinStateSPI.h   (PIN_ID = struct{pin, card}, ESP32 + 74HC595)
  *
  * @project MrJ-ArduinoRailwayFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
@@ -14,8 +14,11 @@
 
 #pragma once
 
-#ifdef SPI_CARDS
-#  include "devices/PinStateSPI.h"
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_SPI_CARDS_ENABLED
+  #include "devices/PinStateSPI.h"
 #else
-#  include "devices/PinStateGPIO.h"
+  #error "unattended"
+  #include "devices/PinStateGPIO.h"
 #endif

@@ -14,8 +14,7 @@
  * @license MIT License
  */
 
-#ifndef __STATICLOW_H__
-#define __STATICLOW_H__
+#pragma once
 
 #include "VariablePinDevice.h"
 
@@ -61,5 +60,3 @@ public:
 protected:
     PIN_STATE inactive_state = L; ///< Defines the default state for inactive pins (OUTPUT LOW).
 };
-
-#endif // __STATICLOW_H__

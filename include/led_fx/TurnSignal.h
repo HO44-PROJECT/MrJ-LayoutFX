@@ -14,8 +14,7 @@
  * @license MIT License
  */
 
-#ifndef __TURNSIGNAL_H__
-#define __TURNSIGNAL_H__
+#pragma once
 
 #include "LedEffect.h" // Base class for non-perpetual light effects.
 
@@ -61,5 +60,3 @@ protected:
     uint8_t brightness = 0; ///< Current brightness level (0-255, 8-bit PWM).
     bool increasing = true; ///< Fade direction: true = increasing, false = decreasing.
 };
-
-#endif // __TURNSIGNAL_H__

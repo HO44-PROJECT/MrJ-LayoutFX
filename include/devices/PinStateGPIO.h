@@ -3,7 +3,7 @@
  * @brief PIN_ID as a plain uint8_t — for GPIO-only platforms (Arduino Nano, Uno, Mega…).
  *
  * Do not include directly. Include devices/PinState.h which routes to this file
- * or to PinStateSPI.h depending on the SPI_CARDS build flag.
+ * or to PinStateSPI.h depending on the MRJFX_SPI_CARDS_ENABLED build flag.
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
@@ -11,8 +11,7 @@
  * @license MIT License
  */
 
-#ifndef __PIN_STATE_GPIO_H__
-#define __PIN_STATE_GPIO_H__
+#pragma once
 
 #include <Arduino.h>
 #include "utils/ArduinoBoard.h"
@@ -48,5 +47,3 @@ extern const PIN_STATE L;   ///< OUTPUT LOW.
 extern const PIN_STATE H;   ///< OUTPUT HIGH.
 extern const PIN_STATE I;   ///< Ignore (no mode, no value).
 extern const PIN_STATE SH;  ///< Stay HIGH.
-
-#endif // __PIN_STATE_GPIO_H__

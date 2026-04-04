@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __MRJDBENTRYSIGNAL_H__
-#define __MRJDBENTRYSIGNAL_H__
+#pragma once
 
 #include "CharliePlexingSignal.h"
 
@@ -63,5 +62,3 @@ protected:
     static const PIN_STATE PIN_STATE_HP1[MrJDBEntrySignalState_PIN_COUNT];
     static const PIN_STATE PIN_STATE_HP2[MrJDBEntrySignalState_PIN_COUNT];
 };
-
-#endif // __MRJDBENTRYSIGNAL_H__

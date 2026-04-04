@@ -14,8 +14,7 @@
  * @license MIT License
  */
 
-#ifndef __STATICUP_H__
-#define __STATICUP_H__
+#pragma once
 
 #include "VariablePinDevice.h"
 
@@ -34,5 +33,3 @@ class StaticUp : public VariablePinDevice
 protected:
     PIN_STATE inactive_state = H; ///< Defines the default state for inactive pins (OUTPUT HIGH).
 };
-
-#endif // __STATICUP_H__

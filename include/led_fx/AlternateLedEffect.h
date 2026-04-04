@@ -16,8 +16,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __ALTERNATELEDEFFECT_H__
-#define __ALTERNATELEDEFFECT_H__
+#pragma once
 
 #include "devices/MultiplePinDevice.h"
 #include "devices/Pov.h"
@@ -79,5 +78,3 @@ public:
 protected:
     PIN_ID working_pin;
 };
-
-#endif // __ALTERNATELEDEFFECT_H__

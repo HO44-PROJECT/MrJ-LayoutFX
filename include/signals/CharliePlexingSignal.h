@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __CHARLIEPLEXINGSIGNAL_H__
-#define __CHARLIEPLEXINGSIGNAL_H__
+#pragma once
 
 #include "devices/MultiplePinDevice.h"
 #include "devices/PinState.h"
@@ -121,5 +120,3 @@ protected:
 
 // Include the template function definitions
 #include "signals/CharliePlexingSignal.tpp"
-
-#endif // __CHARLIEPLEXINGSIGNAL_H__

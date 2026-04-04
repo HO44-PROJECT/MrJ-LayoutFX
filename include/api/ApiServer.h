@@ -21,7 +21,9 @@
 
 #pragma once
 
-#ifdef ESP32
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_API_SERVER_ENABLED
 
 #include <Arduino.h>
 #include <WebServer.h>

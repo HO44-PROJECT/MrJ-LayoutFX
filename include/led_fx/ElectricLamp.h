@@ -14,8 +14,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __ELECTRICLAMP_H__
-#define __ELECTRICLAMP_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -76,5 +75,3 @@ protected:
     uint32_t timerStart = 0; ///< Timestamp for coroutine delay management (ms).
     int16_t brightness = 0;  ///< Current brightness level (0–255).
 };
-
-#endif // __ELECTRICLAMP_H__

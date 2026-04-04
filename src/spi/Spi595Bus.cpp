@@ -4,9 +4,11 @@
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
-#ifdef SPI_CARDS
+#include <MrJRailwayFX_define.h>
 
-#include "spi/Spi595Bus.h"
+#ifdef MRJFX_SPI_CARDS_ENABLED
+
+  #include "spi/Spi595Bus.h"
 
 // ---------------------------------------------------------------------------
 // Static member definitions
@@ -22,14 +24,12 @@ uint8_t Spi595Bus::_buf[Spi595Bus::MAX_BYTES] = {};
 // ---------------------------------------------------------------------------
 
 void Spi595Bus::init(int mosi, int sclk, int latch,
-                     const uint8_t *cardPinCounts, uint8_t cardCount)
-{
+                     const uint8_t *cardPinCounts, uint8_t cardCount) {
   _latch = latch;
   _cardCount = (cardCount < MAX_CARDS) ? cardCount : MAX_CARDS;
   _totalBytes = 0;
 
-  for (uint8_t i = 0; i < _cardCount; i++)
-  {
+  for (uint8_t i = 0; i < _cardCount; i++) {
     _cardBitOffset[i] = _totalBytes * 8;
     _cardPinCount[i] = cardPinCounts[i];
     _totalBytes += cardPinCounts[i] / 8;
@@ -57,8 +57,7 @@ void Spi595Bus::init(int mosi, int sclk, int latch,
 
 // ---------------------------------------------------------------------------
 
-void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value)
-{
+void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value) {
   if (!ready())
     return;
   if (card1based == 0 || card1based > _cardCount)
@@ -79,25 +78,20 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value)
   // if (byteIdx != 0 and byteIdx != 1)
   //   Serial.println(byteIdx);
 
-  if (value)
-  {
+  if (value) {
     _buf[byteIdx] |= (1u << bitIdx);
-  }
-  else
-  {
+  } else {
     _buf[byteIdx] &= ~(1u << bitIdx);
   }
 }
 
 // ---------------------------------------------------------------------------
 
-void Spi595Bus::flush()
-{
+void Spi595Bus::flush() {
   static const SPISettings settings(CLOCK_HZ, MSBFIRST, SPI_MODE0);
   SPI.beginTransaction(settings);
   digitalWrite(_latch, LOW);
-  for (uint8_t i = 0; i < _totalBytes; i++)
-  {
+  for (uint8_t i = 0; i < _totalBytes; i++) {
     SPI.transfer(_buf[i]);
   }
   digitalWrite(_latch, HIGH);
@@ -106,8 +100,7 @@ void Spi595Bus::flush()
 
 // ---------------------------------------------------------------------------
 
-void Spi595Bus::testPin(uint8_t card1based, uint8_t bit, uint8_t value)
-{
+void Spi595Bus::testPin(uint8_t card1based, uint8_t bit, uint8_t value) {
   if (!ready())
     return;
   if (card1based == 0 || card1based > _cardCount)
@@ -130,12 +123,11 @@ void Spi595Bus::testPin(uint8_t card1based, uint8_t bit, uint8_t value)
   static const SPISettings settings(CLOCK_HZ, MSBFIRST, SPI_MODE0);
   SPI.beginTransaction(settings);
   digitalWrite(_latch, LOW);
-  for (uint8_t i = 0; i < _totalBytes; i++)
-  {
+  for (uint8_t i = 0; i < _totalBytes; i++) {
     SPI.transfer(tmp[i]);
   }
   digitalWrite(_latch, HIGH);
   SPI.endTransaction();
 }
 
-#endif // SPI_CARDS
+#endif // MRJFX_SPI_CARDS_ENABLED

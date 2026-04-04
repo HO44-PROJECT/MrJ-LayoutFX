@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __DEFECTLAMP_H__
-#define __DEFECTLAMP_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -68,5 +67,3 @@ protected:
     unsigned long offDuration = 0;                                               ///< Duration of the current outage (ms).
     uint8_t intensity = DEFECT_LAMP_STABLE_INTENSITY;                            ///< Current intensity of the lamp (0–255).
 };
-
-#endif // __DEFECTLAMP_H__

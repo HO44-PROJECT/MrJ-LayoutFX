@@ -13,8 +13,7 @@
  * @license MIT License
  */
 
-#ifndef __STATICOPEN_H__
-#define __STATICOPEN_H__
+#pragma once
 
 #include "VariablePinDevice.h"
 
@@ -38,5 +37,3 @@ protected:
      */
     PIN_STATE inactive_state = Z;
 };
-
-#endif // __STATICOPEN_H__

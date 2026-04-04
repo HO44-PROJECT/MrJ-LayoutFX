@@ -13,9 +13,9 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifdef AUDIO
-
 #include "audio/DfAudio.h"
+
+#ifdef MRJFX_AUDIO_ENABLED
 
 /**
  * @brief Constructs a DfAudio instance and initializes the SoftwareSerial link.
@@ -187,4 +187,4 @@ void DfAudio::enterLowPowerMode()
     sendCommand(command, sizeof(command));
 }
 
-#endif // AUDIO
+#endif // MRJFX_AUDIO_ENABLED

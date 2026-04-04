@@ -15,8 +15,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __LEDEFFECT_H__
-#define __LEDEFFECT_H__
+#pragma once
 
 #include <devices/Device.h>
 #include <devices/Pov.h>
@@ -197,5 +196,3 @@ protected:
     PIN_ID _pin; ///< The output pin identifier used for the flickering effect.
     bool _pwm = false;
 };
-
-#endif // __LEDEFFECT_H__

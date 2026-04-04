@@ -12,8 +12,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __LED_H__
-#define __LED_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -53,5 +52,3 @@ public:
      */
     virtual int runCoroutine() override;
 };
-
-#endif // __LED_H__

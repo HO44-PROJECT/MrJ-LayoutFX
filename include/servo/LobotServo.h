@@ -29,8 +29,11 @@
  * @license MIT License.
  */
 
-#ifndef __LOBOTSERVO_H__
-#define __LOBOTSERVO_H__
+#pragma once
+
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_LOBOT_SERVO_ENABLED
 
 #include <Arduino.h>
 #include <AceRoutine.h> // For coroutine support
@@ -550,4 +553,4 @@ public:
     }
 };
 
-#endif // __LOBOTSERVO_H__
+#endif // MRJFX_LOBOT_SERVO_ENABLED

@@ -17,8 +17,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __TRAFFICLIGHT3PHASE_H__
-#define __TRAFFICLIGHT3PHASE_H__
+#pragma once
 
 #include "signals/CharliePlexingSignal.h"
 
@@ -141,5 +140,3 @@ protected:
 private:
     uint32_t timerStart = 0; ///< Millisecond timestamp reference for delays
 };
-
-#endif // __TRAFFICLIGHT3PHASE_H__

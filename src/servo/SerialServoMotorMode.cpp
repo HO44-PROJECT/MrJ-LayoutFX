@@ -17,7 +17,9 @@
 
 #include "servo/SerialServoMotorMode.h"
 
-#ifdef LX16A
+#ifdef MRJFX_SERIAL_SERVO_ENABLED
+
+  #ifdef MRJFX_LX16A_SERVO_ENABLED
 /**
  * @brief Constructs a `SerialServoMotor` instance for controlling an LX-16A servo.
  *
@@ -32,38 +34,35 @@
  * @param TXFlagGPIO Direction pin for 3-pin bus configuration (default: NO_PIN, set to -1 if unused).
  * @param servoID ID of the servo for bus communication (range: 0-253, default: LX16A_SERVO_ID).
  */
-SerialServoMotor::SerialServoMotor(LX16ABus *servoBus, PIN_ID tXpin, PIN_ID TXFlagGPIO, int servoID)
-{
-    // Check if an existing servo bus is provided; otherwise, allocate a new one
-    if (servoBus == nullptr)
-    {
-        servoBus = new LX16ABus(); // Create a new LX16ABus object for serial communication
-    }
-    // Assign the servo bus pointer to the class instance
-    this->servoBus = servoBus;
+SerialServoMotor::SerialServoMotor(LX16ABus *servoBus, PIN_ID tXpin, PIN_ID TXFlagGPIO, int servoID) {
+  // Check if an existing servo bus is provided; otherwise, allocate a new one
+  if (servoBus == nullptr) {
+    servoBus = new LX16ABus(); // Create a new LX16ABus object for serial communication
+  }
+  // Assign the servo bus pointer to the class instance
+  this->servoBus = servoBus;
 
-    // Proceed with initialization only if the servo bus is valid
-    if (servoBus != nullptr)
-    {
-        // Allocate a new LX16AServo object linked to the bus and specified servo ID
-        servo = new LX16AServo(this->servoBus, servoID);
+  // Proceed with initialization only if the servo bus is valid
+  if (servoBus != nullptr) {
+    // Allocate a new LX16AServo object linked to the bus and specified servo ID
+    servo = new LX16AServo(this->servoBus, servoID);
 
-        // Configure the serial bus with the TX pin and direction pin (use -1 for direction if NO_PIN is provided)
-        servoBus->begin(&Serial, tXpin, TXFlagGPIO == NO_PIN ? -1 : TXFlagGPIO);
+    // Configure the serial bus with the TX pin and direction pin (use -1 for direction if NO_PIN is provided)
+    servoBus->begin(&Serial, tXpin, TXFlagGPIO == NO_PIN ? -1 : TXFlagGPIO);
 
-        // Clear the serial buffer to prevent stale data from interfering with communication
-        Serial.flush();
+    // Clear the serial buffer to prevent stale data from interfering with communication
+    Serial.flush();
 
-        // Initialize serial communication at the predefined baud rate (LX16A_BAUD_RATE)
-        Serial.begin(LX16A_BAUD_RATE);
+    // Initialize serial communication at the predefined baud rate (LX16A_BAUD_RATE)
+    Serial.begin(LX16A_BAUD_RATE);
 
-        // Set the servo to motor mode with an initial speed of stopped (SERVO_SPEED_STOP)
-        stop();
-    }
+    // Set the servo to motor mode with an initial speed of stopped (SERVO_SPEED_STOP)
+    stop();
+  }
 }
-#endif
+  #endif
 
-#ifdef LOBOT
+  #ifdef MRJFX_LOBOT_SERVO_ENABLED
 /**
  * @brief Constructs a SerialServoMotor instance for Nano.
  *
@@ -77,37 +76,31 @@ SerialServoMotor::SerialServoMotor(LX16ABus *servoBus, PIN_ID tXpin, PIN_ID TXFl
  * @param TXFlagGPIO Direction pin (optional, default NO_PIN).
  * @param servoID Servo ID (0-253, default 1).
  */
-SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFlagGPIO, int servoID)
-{
-    if (servo == nullptr)
-    {
-        // Initialize Serial for Nano (pins 0/1)
-        Serial.begin(115200);
-        Serial.flush();
-        this->servo = new LobotServo(Serial, servoID);
-    }
-    else
-    {
-        this->servo = servo;
-    }
+SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFlagGPIO, int servoID) {
+  if (servo == nullptr) {
+    // Initialize Serial for Nano (pins 0/1)
+    Serial.begin(115200);
+    Serial.flush();
+    this->servo = new LobotServo(Serial, servoID);
+  } else {
+    this->servo = servo;
+  }
 
-    // Optional: Configure single-pin or direction pin
-    if (tXpin != NO_PIN)
-    {
-        pinMode(pinId(tXpin), OUTPUT); // Set TX pin for writes
-    }
-    if (TXFlagGPIO != NO_PIN)
-    {
-        pinMode(pinId(TXFlagGPIO), OUTPUT);
-        pinWrite(TXFlagGPIO, LOW); // Default state
-    }
+  // Optional: Configure single-pin or direction pin
+  if (tXpin != NO_PIN) {
+    pinMode(pinId(tXpin), OUTPUT); // Set TX pin for writes
+  }
+  if (TXFlagGPIO != NO_PIN) {
+    pinMode(pinId(TXFlagGPIO), OUTPUT);
+    pinWrite(TXFlagGPIO, LOW); // Default state
+  }
 
-    // Set to motor mode with speed 0 (stopped)
-    stop();
+  // Set to motor mode with speed 0 (stopped)
+  stop();
 }
-#endif
+  #endif
 
-#if defined(LOBOT) || defined (LX16A)
+  #if defined(MRJFX_LOBOT_SERVO_ENABLED) || defined(MRJFX_LX16A_SERVO_ENABLED)
 /**
  * @brief Runs the coroutine for the gas lamp effect.
  *
@@ -115,29 +108,26 @@ SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFla
  * Uses non-blocking delays and random variations for realism with a single PWM and delay call per loop.
  * @return 0 on success (AceRoutine coroutine state).
  */
-int SerialServoMotor::runCoroutine()
-{
-    COROUTINE_LOOP()
-    {
-        // Wait for a state change (ON_STATE or OFF_STATE).
-        DEVICE_WAIT_STATE_CHANGE(getTargetState());
+int SerialServoMotor::runCoroutine() {
+  COROUTINE_LOOP() {
+    // Wait for a state change (ON_STATE or OFF_STATE).
+    DEVICE_WAIT_STATE_CHANGE(getTargetState());
 
-        DEBUG_PRINTLN(F("feu"));
-        DEBUG_PRINTLN(getState());
-        DEBUG_PRINTLN(getTargetState());
+    DEBUG_PRINTLN(F("feu"));
+    DEBUG_PRINTLN(getState());
+    DEBUG_PRINTLN(getTargetState());
 
-        if (servo != nullptr)
-        {
-            servo->motor_mode(speed);
-            setState(speed != SERVO_SPEED_STOP ? getTargetState() : OFF_STATE);
-        }
-        else
-        {
-            this->speed = SERVO_SPEED_STOP;
-            setState(OFF_STATE);
-        }
+    if (servo != nullptr) {
+      servo->motor_mode(speed);
+      setState(speed != SERVO_SPEED_STOP ? getTargetState() : OFF_STATE);
+    } else {
+      this->speed = SERVO_SPEED_STOP;
+      setState(OFF_STATE);
     }
+  }
 
-    return 0; // Success
+  return 0; // Success
 }
-#endif
+  #endif // End of SerialServoMotor implementation
+
+#endif // MRJFX_SERIAL_SERVO_ENABLED

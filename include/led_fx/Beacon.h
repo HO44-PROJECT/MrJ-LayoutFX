@@ -14,8 +14,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __BEACON_H__
-#define __BEACON_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -47,5 +46,3 @@ private:
     /// @brief Timestamp for tracking delays in the flash pattern (milliseconds).
     uint32_t timerStart;
 };
-
-#endif // __BEACON_H__

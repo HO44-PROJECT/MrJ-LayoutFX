@@ -12,8 +12,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __GASLAMP_H__
-#define __GASLAMP_H__
+ #pragma once
 
 #include "LedEffect.h"
 
@@ -75,5 +74,3 @@ protected:
 
     uint16_t flickerInterval = 0;
 };
-
-#endif // __GASLAMP_H__

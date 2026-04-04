@@ -1,5 +1,4 @@
-#ifndef __ARDUINO_BOARD_CONFIG_H__
-#define __ARDUINO_BOARD_CONFIG_H__
+#pragma once
 
 // -----------------------------------------------------------------------------
 // Définitions des macros pour les plateformes Arduino
@@ -43,5 +42,3 @@
     #define ARDUINO_BOARD_NAME "Unknown"
     #define MAX_PIN_NUMBER 0
 #endif
-
-#endif // __ARDUINO_BOARD_CONFIG_H__

@@ -14,11 +14,10 @@
  * @license MIT License
  */
 
-#ifndef __POV_H__
-#define __POV_H__
+#pragma once
 
 #include <AceRoutine.h>
-#ifdef SPI_CARDS
+#ifdef MRJFX_SPI_CARDS_ENABLED
 #  include "spi/Spi595Bus.h"
 #endif
 using namespace ace_routine;
@@ -111,5 +110,3 @@ using namespace ace_routine;
       COROUTINE_DELAY_MICROS((uint32_t)(intensity) * (period) / 255);         \
     }                                                                         \
   } while (0)
-
-#endif // __POV_H__

@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __MULTIPLEPINDEVICE_H__
-#define __MULTIPLEPINDEVICE_H__
+#pragma once
 
 #include "devices/Device.h"
 #include "devices/PinState.h"
@@ -96,5 +95,3 @@ public:
 protected:
     PIN_ID _pins[PinCount]; ///< Array of pin identifiers managed by the device.
 };
-
-#endif // __MULTIPLEPINDEVICE_H__

@@ -14,8 +14,7 @@
  * @license MIT License
  */
 
-#ifndef __SOLDERLAMP_H__
-#define __SOLDERLAMP_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -78,5 +77,3 @@ protected:
     uint16_t currentDurationMs = 0; ///< The duration of the current flash or pause in milliseconds.
     unsigned long offStartTime = 0; ///< The timestamp when the OFF_STATE state started.
 };
-
-#endif // __SOLDERLAMP_H__

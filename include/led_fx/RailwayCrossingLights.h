@@ -12,8 +12,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __RAILWAYCROSSLIGHTS_H__
-#define __RAILWAYCROSSLIGHTS_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -70,5 +69,3 @@ protected:
     int16_t brightness = 0;                                                                         ///< Current LED brightness level (0 to 255).
     bool isFlashOn = false;                                                                         ///< Tracks whether the LED is in ON or OFF state during flashing phase.
 };
-
-#endif // __RAILWAYCROSSLIGHTS_H__

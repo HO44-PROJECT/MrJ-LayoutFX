@@ -43,7 +43,7 @@
  *            The firmware never interprets it.
  *
  * @note Requires ArduinoJson (>= 6) in lib_deps.
- *       For SerialServo, also requires the LOBOT build flag.
+ *       For SerialServo, also requires the MRJFX_LOBOT_SERVO_ENABLED build flag.
  *       UART bus keys must match the hardware serial name (uart0, uart1, uart2).
  *
  * @project MrJ-ArduinoRailwayFX
@@ -52,7 +52,9 @@
 
 #pragma once
 
-#ifdef ESP32
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_CONFIG_ENABLED
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -188,7 +190,7 @@ private:
   BusEntry _busEntries[FACTORY_MAX_BUSES];
   uint8_t  _busCount = 0;
 
-#ifdef LOBOT
+#ifdef MRJFX_LOBOT_SERVO_ENABLED
   ace_routine::Coroutine* _lobotServos[FACTORY_MAX_DEVICES];
   size_t                  _lobotCount = 0;
 #endif
@@ -207,4 +209,4 @@ private:
   Device* _createDevice(JsonObject obj);
 };
 
-#endif  // ESP32
+#endif  // MRJFX_CONFIG_ENABLED

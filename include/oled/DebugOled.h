@@ -12,8 +12,7 @@
  * @license MIT License
  */
 
-#ifndef __DEBUGOLED_H__
-#define __DEBUGOLED_H__
+#pragma once
 
 #include "utils/utils.h"
 
@@ -84,4 +83,3 @@ void oled_println(const __FlashStringHelper *fmt, ...);
 void oled_printf(const __FlashStringHelper *fmt, ...);
 
 #endif // DEBUG_OLED
-#endif // __DEBUGOLED_H__

@@ -3,7 +3,7 @@
  * @brief PIN_ID as a two-byte struct — for ESP32 with SPI daughter-card expansion.
  *
  * Do not include directly. Include devices/PinState.h which routes to this file
- * or to PinStateGPIO.h depending on the SPI_CARDS build flag.
+ * or to PinStateGPIO.h depending on the MRJFX_SPI_CARDS_ENABLED build flag.
  *
  * PIN_ID encodes either a native GPIO pin or a bit on a 74HC595 daughter card:
  *
@@ -17,8 +17,7 @@
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
-#ifndef __PIN_STATE_SPI_H__
-#define __PIN_STATE_SPI_H__
+#pragma once
 
 #include <Arduino.h>
 #include "utils/ArduinoBoard.h"
@@ -89,5 +88,3 @@ static constexpr PIN_ID NO_PIN = {255, 0};
 inline uint8_t pinId(PIN_ID p) {
   return p.isSpi() ? (uint8_t)(p.card * 32 + p.pin) : p.pin;
 }
-
-#endif // __PIN_STATE_SPI_H__

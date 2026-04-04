@@ -13,8 +13,7 @@
  * @license MIT License
  */
 
-#ifndef __VARIABLEPINDEVICE_H__
-#define __VARIABLEPINDEVICE_H__
+#pragma once
 
 #include "Device.h"
 
@@ -89,5 +88,3 @@ protected:
     size_t pin_count; ///< The number of pins in the `_pins` array.
     PIN_ID *_pins;    ///< A dynamically allocated array of output pins.
 };
-
-#endif // __VARIABLEPINDEVICE_H__

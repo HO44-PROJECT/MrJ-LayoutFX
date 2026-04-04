@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __MRJDBBLOCSIGNAL_H__
-#define __MRJDBBLOCSIGNAL_H__
+#pragma once
 
 #include "CharliePlexingSignal.h"
 
@@ -45,6 +44,7 @@ public:
     static const STATE_TYPE OFF_STATE = 0; ///< Signal is off (no light).
     static const STATE_TYPE HP0_STATE = 1; ///< Stop signal (red light).
     static const STATE_TYPE HP1_STATE = 2; ///< Proceed at full speed (green light).
+    static const STATE_TYPE TEST_STATE = 9; ///< Test state for demonstration purposes.
 
 #ifdef DEMO
     void demo(uint32_t *lastSwitchTime, uint16_t delay = 5000)
@@ -84,5 +84,3 @@ protected:
     static const PIN_STATE PIN_STATE_HP0[MrJDBBlocSignalState_PIN_COUNT];
     static const PIN_STATE PIN_STATE_HP1[MrJDBBlocSignalState_PIN_COUNT];
 };
-
-#endif // __MRJDBBLOCSIGNAL_H__

@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __NEONSIGN_H__
-#define __NEONSIGN_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -74,5 +73,3 @@ protected:
 private:
     uint32_t timerStart = 0; ///< Timer for coroutine delay management in milliseconds.
 };
-
-#endif // __NEONSIGN_H__

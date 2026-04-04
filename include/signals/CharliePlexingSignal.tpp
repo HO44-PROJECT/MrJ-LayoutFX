@@ -14,8 +14,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __CHARLIEPLEXINGSIGNAL_TPP__
-#define __CHARLIEPLEXINGSIGNAL_TPP__
+#pragma once
 
 #include "CharliePlexingSignal.h"
 
@@ -79,6 +78,12 @@ int CharliePlexingSignal<PinCount>::runCoroutine()
             // Prepare to turn off all worker pins for OFF_STATE.
             _lighting_up = false;
             break;
+
+        // case this->DEMO_STATE:
+        //     // For demo state, we can implement a specific effect or simply light up the signal.
+        //     this->setState(this->RUN_TRANSIT_STATE);
+        //     return 0;
+        //     break;
 
         default:
             // Initialize worker pins for lighting up a signal state.
@@ -162,5 +167,3 @@ void CharliePlexingSignal<PinCount>::initPins(STATE_TYPE state, bool lighting_up
         }
     }
 }
-
-#endif // __CHARLIEPLEXINGSIGNAL_TPP__

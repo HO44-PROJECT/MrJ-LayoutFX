@@ -16,8 +16,7 @@
  * @license MIT License
  */
 
-#ifndef __TRAFFICLIGHT4PHASE_H__
-#define __TRAFFICLIGHT4PHASE_H__
+#pragma once
 
 #include "traffic/TrafficLight3Phase.h"
 
@@ -100,5 +99,3 @@ protected:
 private:
     uint32_t timerStart = 0; ///< Timestamp for enforcing uninterruptible states (CAUTION/PREPARE).
 };
-
-#endif // __TRAFFICLIGHT4PHASE_H__

@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __CAMPFIRE_H__
-#define __CAMPFIRE_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -46,5 +45,3 @@ protected:
     /// @brief Current intensity of the campfire flicker (0-255, 8-bit PWM).
     int16_t intensity = CAMPFIRE_BASE_INTENSITY;
 };
-
-#endif // __CAMPFIRE_H__

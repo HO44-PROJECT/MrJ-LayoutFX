@@ -16,10 +16,12 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __DCCDRIVABLE_H__
-#define __DCCDRIVABLE_H__
+#pragma once
 
-#include "MrJRailwayFX_configure.h"
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_DCC_ENABLED
+
 #include <assert.h>
 #include "utils/ArduinoBoard.h"
 #include <NmraDcc.h>
@@ -193,4 +195,4 @@ private:
     static uint8_t DccDrivableDeviceNumber;
 };
 
-#endif // __DCCDRIVABLE_H__
+#endif // MRJFX_DCC_ENABLED

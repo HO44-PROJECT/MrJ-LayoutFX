@@ -1,7 +1,7 @@
 /**
  * @file ConfigManager.h
  *
- * @brief LittleFS config loader + HTTP /config /status endpoints (ESP32 / CONFIG only).
+ * @brief LittleFS config loader + HTTP /config /status endpoints (ESP32 / MRJFX_CONFIG_ENABLED only).
  *
  * Loads the JSON config from LittleFS, runs DeviceFactory, initialises DCC if
  * dcc_pin is present, and registers the /config and /status routes on ApiServer.
@@ -14,8 +14,9 @@
 
 #pragma once
 
-#ifdef CONFIG
-#ifdef ESP32
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_CONFIG_ENABLED
 
 #include <Arduino.h>
 #include "config/DeviceFactory.h"
@@ -48,5 +49,4 @@ private:
     static bool   _writeConfig(const String& json);
 };
 
-#endif  // ESP32
-#endif  // CONFIG
+#endif  // MRJFX_CONFIG_ENABLED

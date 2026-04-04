@@ -15,8 +15,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef STATUS_OLED_H
-#define STATUS_OLED_H
+#pragma once
 
 #include <U8g2lib.h>
 #include <Wire.h>
@@ -60,5 +59,3 @@ public:
     /// Refresh lines 1 and 2 with current status
     void refreshDisplay();
 };
-
-#endif

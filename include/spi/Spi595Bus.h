@@ -21,7 +21,7 @@
  * Per-tick usage (called by Device::pin_it / outputActive / simulatePWM_spi):
  *   Spi595Bus::setPin(card1based, bit, HIGH);  // updates image + flushes SPI
  *
- * @note Only compiled when SPI_CARDS is defined.
+ * @note Only compiled when MRJFX_SPI_CARDS_ENABLED is defined.
  *
  * @project MrJ-ArduinoRailwayFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
@@ -29,10 +29,13 @@
 
 #pragma once
 
-#ifdef SPI_CARDS
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_SPI_CARDS_ENABLED
 
 #include <Arduino.h>
 #include <SPI.h>
+#include "devices/PinStateSPI.h"
 
 class Spi595Bus {
 public:
@@ -101,10 +104,13 @@ private:
  * Defined here (after the full Spi595Bus class) so it is available wherever
  * Spi595Bus.h is included (Device.h, Pov.h and transitively all led_fx units).
  */
-#include "devices/PinStateSPI.h"
 inline void pinWrite(PIN_ID p, uint8_t value) {
   if (p.isSpi()) { Spi595Bus::setPin(p.card, p.pin, value); return; }
   digitalWrite(p.pin, value);
 }
 
-#endif // SPI_CARDS
+#else
+
+#error "Spi595Bus.h included but MRJFX_SPI_CARDS_ENABLED is not defined"
+
+#endif // MRJFX_SPI_CARDS_ENABLED

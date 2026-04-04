@@ -14,8 +14,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __DOUBLEBEACON_H__
-#define __DOUBLEBEACON_H__
+#pragma once
 
 #include "led_fx/AlternateLedEffect.h"
 
@@ -56,5 +55,3 @@ protected:
 private:
     uint32_t timerStart = 0; ///< Timestamp for tracking delays in the flash pattern (ms).
 };
-
-#endif // __DOUBLEBEACON_H__

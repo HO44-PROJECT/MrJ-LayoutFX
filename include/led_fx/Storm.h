@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __STORM_H__
-#define __STORM_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -74,5 +73,3 @@ protected:
     uint16_t currentDuration = 0;    ///< Duration of the current flash or pause in milliseconds.
     unsigned long calmStartTime = 0; ///< Timestamp (ms) for tracking calm blackout periods.
 };
-
-#endif // __STORM_H__

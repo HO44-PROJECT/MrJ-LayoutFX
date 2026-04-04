@@ -14,8 +14,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __TORCH_H__
-#define __TORCH_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -77,5 +76,3 @@ protected:
     uint8_t extinctionCyclesRemaining = 0; ///< Number of extinction cycles remaining.
     unsigned long waitStartTime = 0;       ///< Timestamp for the start of a wait period in milliseconds.
 };
-
-#endif // __TORCH_H__

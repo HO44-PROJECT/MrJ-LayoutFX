@@ -15,26 +15,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __MRJRAILWAYFX_DEFAULT_H__
-#define __MRJRAILWAYFX_DEFAULT_H__
-
-// Define this to enable DCC message decoding and specify the Arduino pin ID
-// #define DCC_PIN 2
-
-// Define this to enable status display on an SSD1306 OLED
-// #define OLED_STATUS
-
-// Define this to enable debug messages when no other devices are using the serial line
-// #define DEBUG
-
-// Define this to enable support for LOBOT or LX16A servos
-// #define LOBOT
-// #define LX16A
-
-// Demo mode
-// #define DEMO
-
-// #define DCC_AUDIT
+#pragma once
 
 // Effects parameters
 
@@ -43,6 +24,7 @@
 #define DB_SIGNAL_ASPECT_ID_HP1 1U     ///< Signal state HP1 (Green)
 #define DB_SIGNAL_ASPECT_ID_HP2 2U     ///< Signal state HP2 (Moon)
 #define DB_SIGNAL_ASPECT_ID_HP0_SH1 3U ///< Signal state HP0 + SH1 (Moon)
+#define DB_SIGNAL_ASPECT_ID_UNLIT 9U   ///< Unlit state for signals (demo mode)
 
 // JMRI constants for Lamp states
 #define LAMP_ASPECT_ID_OFF 0U ///< Lamp off state
@@ -129,5 +111,3 @@
 
 // Audio device constants
 #define DFAUDIO_BAUD_RATE 8600 ///< Serial baud rate for audio device communication
-
-#endif // __MRJRAILWAYFX_DEFAULT_H__

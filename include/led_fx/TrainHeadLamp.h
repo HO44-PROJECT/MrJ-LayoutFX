@@ -13,8 +13,7 @@
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 
-#ifndef __TRAINHEADLAMP_H__
-#define __TRAINHEADLAMP_H__
+#pragma once
 
 #include "LedEffect.h"
 
@@ -72,5 +71,3 @@ protected:
 private:
     uint32_t timerStart = 0; ///< Timer for coroutine delay management (ms).
 };
-
-#endif // __TRAINHEADLAMP_H__

@@ -1,7 +1,7 @@
 /**
  * @file WebUI.h
  *
- * @brief Web interface for live device monitoring and on/off control (ESP32 / WEBUI only).
+ * @brief Web interface for live device monitoring and on/off control (ESP32 / MRJFX_WEBUI_ENABLED only).
  *
  * Registers routes on ApiServer:
  *   GET  /ui                → serve the control panel HTML page
@@ -29,8 +29,9 @@
 
 #pragma once
 
-#ifdef WEBUI
-#ifdef ESP32
+#include <MrJRailwayFX_define.h>
+
+#ifdef MRJFX_WEBUI_ENABLED
 
 #include "config/DeviceFactory.h"
 
@@ -61,5 +62,4 @@ private:
     static void _onTestSpi();
 };
 
-#endif  // ESP32
-#endif  // WEBUI
+#endif  // MRJFX_WEBUI_ENABLED
