@@ -51,6 +51,7 @@ private:
     static void _onGetUi();
     static void _onGetDevices();
     static void _onPostDevice();
+    static void _onSwitch();
     static void _onAllDevices();
     static void _onGroupDevices();
     static void _onGetConfig();

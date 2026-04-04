@@ -41,6 +41,7 @@ void WebUI::init(const DeviceFactory &factory) {
   ApiServer::on("/ui", HTTP_GET, _onGetUi);
   ApiServer::on("/api/devices", HTTP_GET, _onGetDevices);
   ApiServer::on("/api/device", HTTP_POST, _onPostDevice);
+  ApiServer::on("/api/switch", HTTP_POST, _onSwitch);
   ApiServer::on("/api/all", HTTP_POST, _onAllDevices);
   ApiServer::on("/api/group", HTTP_POST, _onGroupDevices);
   ApiServer::on("/api/config", HTTP_GET, _onGetConfig);
@@ -138,6 +139,31 @@ void WebUI::_onPostDevice() {
 
   Serial.print(F("WebUI: device not found: "));
   Serial.println(id);
+  ApiServer::server().send(404, "application/json", F("{\"error\":\"device not found\"}"));
+}
+
+void WebUI::_onSwitch() {
+  if (!ApiServer::server().hasArg("plain")) {
+    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    return;
+  }
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, ApiServer::server().arg("plain"));
+  if (err || !doc["on"].is<bool>()) {
+    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    return;
+  }
+  const char *id = doc["id"] | "";
+  bool on = doc["on"].as<bool>();
+
+  for (size_t i = 0; i < _factory->count(); i++) {
+    if (strcmp(_factory->deviceId(i), id) == 0) {
+      if (on) _factory->device(i)->switchOn();
+      else    _factory->device(i)->switchOff();
+      ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+      return;
+    }
+  }
   ApiServer::server().send(404, "application/json", F("{\"error\":\"device not found\"}"));
 }
 

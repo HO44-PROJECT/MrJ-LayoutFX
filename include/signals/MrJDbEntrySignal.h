@@ -38,6 +38,7 @@ public:
 
     virtual const __FlashStringHelper *getDeviceName() const override { return F("DB Entry Signal"); }
     virtual uint8_t getStateCount() const override { return 4; } ///< OFF · HP0 · HP1 · HP2
+    inline virtual void switchOn() override { newState(HP0_STATE); }
 
     static const STATE_TYPE OFF_STATE = 0; ///< Signal is off (no light).
     static const STATE_TYPE HP0_STATE = 1; ///< Stop signal (red light).

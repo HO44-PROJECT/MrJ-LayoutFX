@@ -41,6 +41,7 @@ public:
         return F("DB Bloc Signal");
     }
     virtual uint8_t getStateCount() const override { return 3; } ///< OFF · HP0 · HP1
+    inline virtual void switchOn() override { newState(HP0_STATE); }
 
     static const STATE_TYPE OFF_STATE = 0; ///< Signal is off (no light).
     static const STATE_TYPE HP0_STATE = 1; ///< Stop signal (red light).

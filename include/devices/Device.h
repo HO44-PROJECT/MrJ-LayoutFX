@@ -135,16 +135,19 @@ public:
   }
 
   /**
+   * @brief Requests the device to switch to its default active state.
+   *
+   * No-op by default. Each subclass overrides to define what "on" means
+   * (e.g. ON_STATE for LEDs, HP0_STATE for DB signals).
+   */
+  inline virtual void switchOn() {}
+
+  /**
    * @brief Requests the device to switch to the OFF_STATE.
    *
    * Calls `trigger(OFF_STATE)` to deactivate the device asynchronously.
    */
-  inline virtual void switchOff() {
-    // static const char MSG_SPEED_OFF[] PROGMEM = "%S: switch off"; // Déclarer en PROGMEM
-    // DEBUG_PRINTLN(MSG_SPEED_OFF, getDeviceName());
-
-    newState(OFF_STATE);
-  }
+  inline virtual void switchOff() { newState(OFF_STATE); }
 
   /**
    * @brief Checks if the device is in a non-interruptible state transition.
