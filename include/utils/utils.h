@@ -13,11 +13,10 @@
  * @license MIT License
  */
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#pragma once
 
+#include <MrJRailwayFX_define.h>
 #include <Arduino.h>
-#include "MrJRailwayFX_configure.h"
 
 #ifdef DEBUG_OLED
 #include "DebugOled.h"
@@ -150,5 +149,3 @@ extern "C"
 #endif
 
 uint8_t getPseudoRandom(uint8_t min, uint8_t max);
-
-#endif // __UTILS_H__

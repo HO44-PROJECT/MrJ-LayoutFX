@@ -95,6 +95,17 @@
   #include "spi/Spi595Bus.h"
 #endif // End MRJFX_SPI_CARDS_ENABLED includes
 
+// ── Audio ────────────────────────────────────────────────────────────────────
+#ifdef MRJFX_AUDIO_ENABLED
+  #include <audio/DfAudio.h>
+#endif // End of MRJFX_AUDIO_ENABLED includes
+
+// ── DCC support (conditionally compiled) ─────────────────────────────────
+#ifdef MRJFX_DCC_ENABLED // DCC support is enabled if DCC_PIN is defined.
+  #include "dcc/DccCallbacks.h"
+  #include "dcc/DccDrivable.h"
+#endif // End DCC check
+
 // ── MrJFX — single-call init/loop ────────────────────────────────────────────
 /**
  * @class MrJFX
