@@ -1,27 +1,15 @@
 /**
  * @file WebUI.h
  *
- * @brief Web interface for live device monitoring and on/off control (ESP32 / MRJFX_WEBUI_ENABLED only).
+ * @brief Browser interface — serves the control panel HTML page (ESP32 / MRJFX_WEBUI_ENABLED only).
  *
- * Registers routes on ApiServer:
- *   GET  /ui                → serve the control panel HTML page
- *   GET  /api/devices       → JSON array of all devices with current state
- *   POST /api/device        → body {"id":"<id>","state":<0|1>} — toggle a device
- *   POST /api/all           → body {"state":<0|1>} — control all non-static devices
- *   POST /api/group         → body {"type":"<DeviceName>","state":<0|1>} — control a type
- *   GET  /api/config        → download /config.json from LittleFS
- *   POST /api/config        → body <raw JSON> — overwrite /config.json then reboot
- *   GET  /api/status        → JSON object with firmware version and ESP32 metrics
- *   GET  /api/boards        → JSON array of configured boards (id, type, bus, pinCount, spiRank)
- *   GET  /api/board-types   → stream /board_types.json from LittleFS (visual definitions)
+ * Registers a single route:
+ *   GET /ui   → gzipped HTML page (built from src/web/webui.html by tools/build_webui.py)
  *
- * Must be called after ConfigManager::init() and before ApiServer::init().
+ * The page communicates with the device through the /api/* routes provided by
+ * DeviceApi. WebUI has no knowledge of devices or config — it only serves HTML.
  *
- * Typical usage
- * -------------
- *   ConfigManager::init(CONFIG_PATH);
- *   WebUI::init(ConfigManager::factory());
- *   ApiServer::init(WIFI_SSID, WIFI_PASSWORD);
+ * Must be called after DeviceApi::init() and before ApiServer::init().
  *
  * @project MrJ-ArduinoRailwayFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
@@ -33,34 +21,13 @@
 
 #ifdef MRJFX_WEBUI_ENABLED
 
-#include "config/DeviceFactory.h"
-
 class WebUI {
 public:
-    /**
-     * @brief Register /ui, /api/devices, /api/device routes on ApiServer.
-     *
-     * @param factory  Read-only reference to the populated DeviceFactory.
-     *                 (Device pointers inside are non-const so newState() works.)
-     */
-    static void init(const DeviceFactory& factory);
+    /** @brief Register GET /ui on ApiServer. */
+    static void init();
 
 private:
-    static const DeviceFactory* _factory;
-
     static void _onGetUi();
-    static void _onGetDevices();
-    static void _onPostDevice();
-    static void _onSwitch();
-    static void _onAllDevices();
-    static void _onGroupDevices();
-    static void _onGetConfig();
-    static void _onPostConfig();
-    static void _onGetStatus();
-    static void _onGetBoards();
-    static void _onGetBoardTypes();
-    static void _onTestGpio();
-    static void _onTestSpi();
 };
 
 #endif  // MRJFX_WEBUI_ENABLED

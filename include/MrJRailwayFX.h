@@ -78,14 +78,18 @@
 #include "utils/utils.h"
 
 // ── ESP32 networking & config (conditionally compiled) ───────────────────────
-#ifdef MRJFX_WEBUI_ENABLED
-  #include "api/ApiServer.h"
-  #include "api/WebUI.h"
-#endif // End WEBUI includes
-
 #ifdef MRJFX_CONFIG_ENABLED
   #include "config/ConfigManager.h"
-#endif // End MRJFX_CONFIG_ENABLED includes
+#endif
+
+#ifdef MRJFX_API_SERVER_ENABLED
+  #include "api/ApiServer.h"
+  #include "api/DeviceApi.h"
+#endif
+
+#ifdef MRJFX_WEBUI_ENABLED
+  #include "api/WebUI.h"
+#endif
 
 // ── Coroutine scheduler (AceRoutine — all platforms) ─────────────────────────
 #include <AceRoutine.h>
@@ -130,29 +134,27 @@ public:
   static void init() {
     Serial.begin(115200);
 
+    // 1. Load config from LittleFS and init devices.
 #ifdef MRJFX_CONFIG_ENABLED
-    // CONFIG holds the filename (without '/') — prepend it for LittleFS.
     ConfigManager::init("/" CONFIG);
-    Serial.println("ConfigManager initialized with file: "
-                   "/" CONFIG);
 #endif
 
+    // 2. Register /api/* routes (requires config to be loaded first).
+#ifdef MRJFX_API_SERVER_ENABLED
+    DeviceApi::init(ConfigManager::factory());
+#endif
+
+    // 3. Register /ui route (HTML page — requires DeviceApi routes to be up).
 #ifdef MRJFX_WEBUI_ENABLED
-    // WebUI must be registered before ApiServer starts the HTTP server.
-    Serial.println("WebUI initialization in progress.");
-    WebUI::init(ConfigManager::factory());
-    Serial.println("WebUI initialized.");
-
+    WebUI::init();
 #endif
 
-    // Must be called after all coroutines are declared (setup() phase).
+    // 4. Start coroutine scheduler (after all devices are registered).
     ace_routine::CoroutineScheduler::setup();
-    Serial.println("CoroutineScheduler setup complete.");
 
+    // 5. Connect WiFi and start HTTP server on Core 0.
 #if MRJFX_WIFI_ENABLED
-    // ApiServer connects WiFi and starts the HTTP server on Core 0.
     ApiServer::init(WIFI_SSID, WIFI_PASSWORD, HTTP_PORT);
-    Serial.println("ApiServer initialized.");
 #endif
   }
 

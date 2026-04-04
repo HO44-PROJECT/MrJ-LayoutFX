@@ -1,10 +1,11 @@
 /**
  * @file ConfigManager.h
  *
- * @brief LittleFS config loader + HTTP /config /status endpoints (ESP32 / MRJFX_CONFIG_ENABLED only).
+ * @brief LittleFS config loader (ESP32 / MRJFX_CONFIG_ENABLED only).
  *
- * Loads the JSON config from LittleFS, runs DeviceFactory, initialises DCC if
- * dcc_pin is present, and registers the /config and /status routes on ApiServer.
+ * Single responsibility: mount LittleFS, parse the JSON config, initialise
+ * the DeviceFactory and DCC. No HTTP concerns — routes are registered by
+ * WebUI or any other API layer via the public helpers below.
  *
  * Must be called before ApiServer::init().
  *
@@ -24,7 +25,7 @@
 class ConfigManager {
 public:
     /**
-     * @brief Mount LittleFS, load config, init devices and DCC, register HTTP endpoints.
+     * @brief Mount LittleFS, load config, init devices and DCC.
      *
      * @param configPath  LittleFS path to the JSON config file (e.g. "/config.json").
      */
@@ -33,20 +34,26 @@ public:
     /** @brief Read-only access to the device factory (for WebUI and other modules). */
     static const DeviceFactory& factory() { return _factory; }
 
+    /** @brief Read the config file from LittleFS. Returns empty String if absent. */
+    static String readConfig();
+
+    /** @brief Write (overwrite) the config file on LittleFS. Returns false on error. */
+    static bool writeConfig(const String& json);
+
+    /** @brief Delete the config file from LittleFS. */
+    static void deleteConfig();
+
+    /** @brief True if the config file exists on LittleFS. */
+    static bool configExists();
+
+    /** @brief LittleFS path passed to init(). */
+    static const char* configPath() { return _configPath; }
+
 private:
     static DeviceFactory _factory;
     static const char*   _configPath;
 
-    // HTTP handlers (registered on ApiServer)
-    static void _onGetConfig();
-    static void _onPostConfig();
-    static void _onDeleteConfig();
-    static void _onGetStatus();
-
-    // LittleFS helpers
-    static String _readFile  (const char* path);
-    static String _readConfig();
-    static bool   _writeConfig(const String& json);
+    static String _readFile(const char* path);
 };
 
 #endif  // MRJFX_CONFIG_ENABLED

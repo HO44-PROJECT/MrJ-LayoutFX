@@ -1532,9 +1532,9 @@
     var TRAFFIC_TYPES = ['Traffic Light 3ph', 'Traffic Light 4ph'];
     // Signal state definitions: v = state int sent to /api/device, l = label, c = CSS class
     var SIGNAL_STATES = {
-      'DB Bloc Signal':  [{v:0,l:'OFF',c:'t-off'},{v:1,l:'HP0',c:'t-stop'},{v:2,l:'HP1',c:'t-go'}],
-      'DB Entry Signal': [{v:0,l:'OFF',c:'t-off'},{v:1,l:'HP0',c:'t-stop'},{v:2,l:'HP1',c:'t-go'},{v:3,l:'HP2',c:'t-slow'}],
-      'DB Exit Signal':  [{v:0,l:'OFF',c:'t-off'},{v:1,l:'HP00',c:'t-stop'},{v:2,l:'HP1',c:'t-go'},{v:3,l:'HP2',c:'t-slow'},{v:4,l:'HP0+Sh1',c:'t-sh1'}]
+      'DB Bloc Signal': [{ v: 0, l: 'OFF', c: 't-off' }, { v: 1, l: 'HP0', c: 't-stop' }, { v: 2, l: 'HP1', c: 't-go' }],
+      'DB Entry Signal': [{ v: 0, l: 'OFF', c: 't-off' }, { v: 1, l: 'HP0', c: 't-stop' }, { v: 2, l: 'HP1', c: 't-go' }, { v: 3, l: 'HP2', c: 't-slow' }],
+      'DB Exit Signal': [{ v: 0, l: 'OFF', c: 't-off' }, { v: 1, l: 'HP00', c: 't-stop' }, { v: 2, l: 'HP1', c: 't-go' }, { v: 3, l: 'HP2', c: 't-slow' }, { v: 4, l: 'HP0+Sh1', c: 't-sh1' }]
     };
 
     /* ── Navigation ─────────────────────────────────────────────────────── */
@@ -1713,27 +1713,43 @@
         + '<line x1="10" y1="18" x2="14" y2="18"/>'
         + E,
 
+      // DB Block Signal - exactement comme sur ton image
       'DB Bloc Signal': S
-        + '<line x1="12" y1="22" x2="12" y2="4"/>'
-        + '<circle cx="12" cy="7" r="2.5"/>'
-        + '<circle cx="12" cy="15" r="2.5"/>'
-        + '<line x1="12" y1="9" x2="19" y2="6"/>'
+        // Mât
+        + '<line x1="12" y1="26" x2="12" y2="14.5" stroke="#2c2c2c" stroke-width="2.8" stroke-linecap="round"/>'
+
+        // Boîtier gris, étroit, haut arrondi
+        + '<rect x="6.5" y="3.5" width="11" height="13.5" rx="2.8" ry="2" fill="#b8b8b8" stroke="#1f1f1f" stroke-width="1.8"/>'
+
+        // Deux feux à la même hauteur, côte à côte, non colorés (gris foncé par défaut)
+        + '<circle cx="9.2" cy="10.2" r="1.65" fill="#2c2c2c" stroke="#1f1f1f" stroke-width="0.7"/>'
+        + '<circle cx="14.8" cy="10.2" r="1.65" fill="#2c2c2c" stroke="#1f1f1f" stroke-width="0.7"/>'
+
         + E,
 
+      // DB Entry Signal (Einfahrsignal)
       'DB Entry Signal': S
-        + '<line x1="12" y1="22" x2="12" y2="2"/>'
-        + '<circle cx="12" cy="5" r="2"/>'
-        + '<circle cx="12" cy="11" r="2"/>'
-        + '<circle cx="12" cy="17" r="2"/>'
-        + '<line x1="12" y1="13" x2="19" y2="10"/>'
+        + '<line x1="12" y1="25" x2="12" y2="12" stroke="#333" stroke-width="3"/>'
+        + '<rect x="6.5" y="3" rx="1.5" ry="2" width="11" height="15" fill="#c0c0c0" stroke="#222" stroke-width="1.5"/>'
+        // 1 LED haut droite (rouge)
+        + '<circle cx="15" cy="7" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
+        // 2 LEDs en bas (vert gauche + jaune droite)
+        + '<circle cx="9.5" cy="13.5" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
+        + '<circle cx="14.8" cy="13.8" r="1.75" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
         + E,
 
+      // DB Exit Signal (Ausfahrsignal) - configuration la plus proche de ton image
       'DB Exit Signal': S
-        + '<line x1="12" y1="22" x2="12" y2="2"/>'
-        + '<circle cx="12" cy="5" r="2"/>'
-        + '<circle cx="12" cy="11" r="2"/>'
-        + '<circle cx="12" cy="17" r="2"/>'
-        + '<line x1="12" y1="13" x2="5" y2="10"/>'
+        + '<line x1="12" y1="25" x2="12" y2="11" stroke="#333" stroke-width="3"/>'
+        + '<rect x="6.5" y="2" rx="1.5" ry="2" width="11" height="17.5" fill="#c0c0c0" stroke="#222" stroke-width="1.5"/>'
+        // Haut gauche : rouge
+        + '<circle cx="9.5" cy="6" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
+        // Seconde rangée (milieu) : 2 ronds (rouge gauche + gris/noir droite)
+        + '<circle cx="9.5" cy="10.5" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
+        + '<circle cx="14.8" cy="10.5" r="1.75" fill="#555" stroke="#222" stroke-width="0.6"/>'   // gris/noir
+        // Bas : vert gauche + jaune bas-droite (effet diagonal)
+        + '<circle cx="9.5" cy="15" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
+        + '<circle cx="15" cy="16.2" r="1.7" fill="currentColor" stroke="#222" stroke-width="0.6"/>' // jaune un peu plus bas et à droite
         + E,
 
       'Traffic Light 3ph': S
@@ -1885,7 +1901,7 @@
         if (!isStatic) {
           if (isSig) {
             html += '<div class="gbtns">'
-              + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',2)">HP1</button>'
+              + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
               + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
               + '</div>';
           } else {
@@ -2016,15 +2032,15 @@
         var bus = buses[key];
         if (bus.type === 'dcc' && bus.pin >= 0) _dbgSysPins[bus.pin] = 'DCC';
         if (bus.type === 'spi_master_only') {
-          if (bus.mosi  >= 0) _dbgSysPins[bus.mosi]  = 'MOSI';
-          if (bus.sclk  >= 0) _dbgSysPins[bus.sclk]  = 'SCLK';
-          if (bus.latch >= 0) _dbgSysPins[bus.latch]  = 'LATCH';
+          if (bus.mosi >= 0) _dbgSysPins[bus.mosi] = 'MOSI';
+          if (bus.sclk >= 0) _dbgSysPins[bus.sclk] = 'SCLK';
+          if (bus.latch >= 0) _dbgSysPins[bus.latch] = 'LATCH';
         }
         if (bus.type === 'spi_full_duplex') {
           if (bus.mosi >= 0) _dbgSysPins[bus.mosi] = 'MOSI';
           if (bus.miso >= 0) _dbgSysPins[bus.miso] = 'MISO';
           if (bus.sclk >= 0) _dbgSysPins[bus.sclk] = 'SCLK';
-          if (bus.cs   >= 0) _dbgSysPins[bus.cs]   = 'CS';
+          if (bus.cs >= 0) _dbgSysPins[bus.cs] = 'CS';
         }
         if (bus.type === 'i2c') {
           if (bus.sda >= 0) _dbgSysPins[bus.sda] = 'SDA';
@@ -2194,8 +2210,8 @@
 
     // ── Actions ──────────────────────────────────────────────────────────
 
-    function dbgToggleDev(id, state) {
-      post('/api/device', { id: id, state: state })
+    function dbgToggleDev(id, on) {
+      post('/api/switch', { id: id, on: !!on })
         .then(function () { loadDebug(); })
         .catch(function (e) { console.error('dbgToggleDev', e); });
     }
