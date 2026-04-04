@@ -18,6 +18,9 @@
   #ifdef MRJFX_SPI_CARDS_ENABLED
     #include "spi/Spi595Bus.h"
   #endif
+  #ifdef MRJFX_OLED_ENABLED
+    #include "oled/OledDisplay.h"
+  #endif
 
   #define FIRMWARE_VERSION "v1"
 
@@ -108,7 +111,11 @@ void DeviceApi::_onPostDevice() {
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
-      _factory->device(i)->newState((STATE_TYPE)state);
+      Device* d = _factory->device(i);
+      d->newState((STATE_TYPE)state);
+#ifdef MRJFX_OLED_ENABLED
+      OledDisplay::notify(String(d->getDeviceName()).c_str(), id, state);
+#endif
       ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
       return;
     }
@@ -131,8 +138,12 @@ void DeviceApi::_onSwitch() {
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
-      if (on) _factory->device(i)->switchOn();
-      else    _factory->device(i)->switchOff();
+      Device* d = _factory->device(i);
+      if (on) d->switchOn();
+      else    d->switchOff();
+#ifdef MRJFX_OLED_ENABLED
+      OledDisplay::notify(String(d->getDeviceName()).c_str(), id, on ? 1 : 0);
+#endif
       ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
       return;
     }

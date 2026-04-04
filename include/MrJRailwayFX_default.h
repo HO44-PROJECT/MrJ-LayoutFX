@@ -111,3 +111,17 @@
 
 // Audio device constants
 #define DFAUDIO_BAUD_RATE 8600 ///< Serial baud rate for audio device communication
+
+// OLED display defaults (overridable in config.h)
+#ifndef OLED_SDA
+  #define OLED_SDA 21           ///< Default SDA pin for I²C OLED (ESP32 hardware default).
+#endif
+#ifndef OLED_SCL
+  #define OLED_SCL 22           ///< Default SCL pin for I²C OLED (ESP32 hardware default).
+#endif
+#ifndef OLED_HEIGHT
+  #define OLED_HEIGHT 64        ///< Display height in pixels — 64 (SSD1306 0.96") or 32 (SSD1306 0.91").
+#endif
+#ifndef OLED_EVENT_MS
+  #define OLED_EVENT_MS 3000    ///< Duration (ms) the event screen is shown before returning to idle.
+#endif

@@ -57,7 +57,7 @@
 
 // ── OLED ─────────────────────────────────────────────────────────────────────
 #ifdef MRJFX_OLED_ENABLED
-  #include "oled/StatusOled.h"
+  #include "oled/OledDisplay.h"
 #endif
 
 // ── Servo ────────────────────────────────────────────────────────────────────
@@ -133,6 +133,11 @@ public:
    */
   static void init() {
     Serial.begin(115200);
+
+    // 0. Start OLED display early (shows boot context).
+#ifdef MRJFX_OLED_ENABLED
+    OledDisplay::init();
+#endif
 
     // 1. Load config from LittleFS and init devices.
 #ifdef MRJFX_CONFIG_ENABLED
