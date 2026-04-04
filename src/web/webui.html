@@ -1713,43 +1713,44 @@
         + '<line x1="10" y1="18" x2="14" y2="18"/>'
         + E,
 
-      // DB Block Signal - exactement comme sur ton image
       'DB Bloc Signal': S
         // Mât
-        + '<line x1="12" y1="26" x2="12" y2="14.5" stroke="#2c2c2c" stroke-width="2.8" stroke-linecap="round"/>'
-
-        // Boîtier gris, étroit, haut arrondi
-        + '<rect x="6.5" y="3.5" width="11" height="13.5" rx="2.8" ry="2" fill="#b8b8b8" stroke="#1f1f1f" stroke-width="1.8"/>'
-
-        // Deux feux à la même hauteur, côte à côte, non colorés (gris foncé par défaut)
-        + '<circle cx="9.2" cy="10.2" r="1.65" fill="#2c2c2c" stroke="#1f1f1f" stroke-width="0.7"/>'
-        + '<circle cx="14.8" cy="10.2" r="1.65" fill="#2c2c2c" stroke="#1f1f1f" stroke-width="0.7"/>'
-
+        + '<line x1="12" y1="22" x2="12" y2="21"/>'
+        // Boîtier commun aux 3 signaux : x=8 w=8 h=20 rx=2
+        + '<rect x="8" y="1" width="8" height="20" rx="2"/>'
+        // 2 LEDs côte à côte dans la moitié basse
+        + '<circle cx="10" cy="15" r="1.5" fill="currentColor" stroke="none"/>'
+        + '<circle cx="14" cy="15" r="1.5" fill="currentColor" stroke="none"/>'
         + E,
 
-      // DB Entry Signal (Einfahrsignal)
       'DB Entry Signal': S
-        + '<line x1="12" y1="25" x2="12" y2="12" stroke="#333" stroke-width="3"/>'
-        + '<rect x="6.5" y="3" rx="1.5" ry="2" width="11" height="15" fill="#c0c0c0" stroke="#222" stroke-width="1.5"/>'
-        // 1 LED haut droite (rouge)
-        + '<circle cx="15" cy="7" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
-        // 2 LEDs en bas (vert gauche + jaune droite)
-        + '<circle cx="9.5" cy="13.5" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
-        + '<circle cx="14.8" cy="13.8" r="1.75" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
+        // Mât
+        + '<line x1="12" y1="22" x2="12" y2="21"/>'
+        // Boîtier commun aux 3 signaux : x=8 w=8 h=20 rx=2
+        + '<rect x="8" y="1" width="8" height="20" rx="2"/>'
+        // 1 LED en haut à droite
+        + '<circle cx="14" cy="6" r="1.5" fill="currentColor" stroke="none"/>'
+        // 2 LEDs en bas côte à côte
+        + '<circle cx="10" cy="15" r="1.5" fill="currentColor" stroke="none"/>'
+        + '<circle cx="14" cy="15" r="1.5" fill="currentColor" stroke="none"/>'
         + E,
 
-      // DB Exit Signal (Ausfahrsignal) - configuration la plus proche de ton image
       'DB Exit Signal': S
-        + '<line x1="12" y1="25" x2="12" y2="11" stroke="#333" stroke-width="3"/>'
-        + '<rect x="6.5" y="2" rx="1.5" ry="2" width="11" height="17.5" fill="#c0c0c0" stroke="#222" stroke-width="1.5"/>'
-        // Haut gauche : rouge
-        + '<circle cx="9.5" cy="6" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
-        // Seconde rangée (milieu) : 2 ronds (rouge gauche + gris/noir droite)
-        + '<circle cx="9.5" cy="10.5" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
-        + '<circle cx="14.8" cy="10.5" r="1.75" fill="#555" stroke="#222" stroke-width="0.6"/>'   // gris/noir
-        // Bas : vert gauche + jaune bas-droite (effet diagonal)
-        + '<circle cx="9.5" cy="15" r="1.85" fill="currentColor" stroke="#222" stroke-width="0.6"/>'
-        + '<circle cx="15" cy="16.2" r="1.7" fill="currentColor" stroke="#222" stroke-width="0.6"/>' // jaune un peu plus bas et à droite
+        // Mât
+        + '<line x1="12" y1="22" x2="12" y2="21"/>'
+        // Boîtier commun aux 3 signaux : x=8 w=8 h=20 rx=2
+        + '<rect x="8" y="1" width="8" height="20" rx="2"/>'
+        // Rangée 1 : 1 LED gauche
+        + '<circle cx="10" cy="4.5" r="1.5" fill="currentColor" stroke="none"/>'
+        // Rangée 2 : 2 LEDs gauche + droite
+        + '<circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/>'
+        + '<circle cx="14" cy="8" r="1.5" fill="currentColor" stroke="none"/>'
+        // Rangée 3 : 1 petite LED droite
+        + '<circle cx="14" cy="11.5" r="1.1" fill="currentColor" stroke="none"/>'
+        // Rangée 4 : 1 petite LED gauche
+        + '<circle cx="10" cy="15" r="1.1" fill="currentColor" stroke="none"/>'
+        // Rangée 5 : 1 LED gauche
+        + '<circle cx="10" cy="18.5" r="1.5" fill="currentColor" stroke="none"/>'
         + E,
 
       'Traffic Light 3ph': S
