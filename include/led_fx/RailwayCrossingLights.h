@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "LedEffect.h"
+#include "led_fx/AlternateLedEffect.h"
 
 // Railway crossing light effect configuration constants
 #define RAILWAYCROSSLIGHTS_PWM_PERIOD_US 10000                  ///< PWM period in microseconds (100Hz) for brightness control.
@@ -39,10 +39,10 @@
  *
  * Extends LedPerpetualEffect to manage a single LED pin using a coroutine-based state machine.
  */
-class RailwayCrossingLights : public LedEffect
+class RailwayCrossingLights : public AlternateLedEffect
 {
 public:
-    using LedEffect::LedEffect; ///< Inherit base class constructors.
+    using AlternateLedEffect::AlternateLedEffect; ///< Inherit base class constructors.
 
     static const STATE_TYPE STARTUP = NEXT_NON_STABLE; ///< Initial flickers simulating power surge.
     static const STATE_TYPE FLASHING = NEXT_STABLE; ///< Alternating ON/OFF with subtle brightness variations.

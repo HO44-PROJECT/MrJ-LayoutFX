@@ -37,27 +37,41 @@ int OilLamp::runCoroutine()
             // Handle transition from OFF to ON.
             if (getState() == INIT_STATE)
             {
-                // Initialize the output pin and handle potential failures.
                 if (!handlePinInitFailure())
                     continue;
-                setState(RUN_STABLE_STATE); // Mark device as busy in stable operation.
+                setState(RUN_STABLE_STATE);
+                stablePhase = true;
+                phaseStart = millis();
+                phaseDuration = random(OIL_LAMP_STABLE_MIN_MS, OIL_LAMP_STABLE_MAX_MS);
             }
 
-            // Set random baseline intensity for flicker (30–70).
-            intensity = random(OIL_LAMP_MIN_INTENSITY, OIL_LAMP_MAX_INTENSITY + 1);
-
-            // Apply occasional bright surge with 4% probability.
-            if (random(OIL_LAMP_SURGE_PROBABILITY) < OIL_LAMP_SURGE_CHANCE)
+            // Switch phase when duration elapsed.
+            if (millis() - phaseStart >= phaseDuration)
             {
-                // Increase intensity by 30, capped at 255 for a surge effect.
-                intensity = min(OIL_LAMP_MAX_PWM, intensity + (int)random(OIL_LAMP_SURGE_BOOST));
+                stablePhase = !stablePhase;
+                phaseStart = millis();
+                phaseDuration = stablePhase
+                    ? random(OIL_LAMP_STABLE_MIN_MS, OIL_LAMP_STABLE_MAX_MS)
+                    : random(OIL_LAMP_FLICKER_MIN_MS, OIL_LAMP_FLICKER_MAX_MS);
             }
 
-            // Output PWM signal with current intensity at 50 Hz.
-            simulatePWM(_pin, intensity, OIL_LAMP_PWM_PERIOD_US);
-
-            // Pause for 80ms to create a slow, breathing rhythm.
-            COROUTINE_DELAY(OIL_LAMP_BASE_DELAY_MS);
+            if (stablePhase)
+            {
+                // Stable: near-constant brightness with tiny variation.
+                intensity = OIL_LAMP_STABLE_INTENSITY + random(-OIL_LAMP_STABLE_VARIATION, OIL_LAMP_STABLE_VARIATION + 1);
+                intensity = constrain(intensity, 0, OIL_LAMP_MAX_PWM);
+                simulatePWM(_pin, intensity, OIL_LAMP_PWM_PERIOD_US);
+                COROUTINE_DELAY(OIL_LAMP_STABLE_STEP_MS);
+            }
+            else
+            {
+                // Flicker: rapid random oscillation with occasional surge.
+                intensity = random(OIL_LAMP_MIN_INTENSITY, OIL_LAMP_MAX_INTENSITY + 1);
+                if (random(OIL_LAMP_SURGE_PROBABILITY) < OIL_LAMP_SURGE_CHANCE)
+                    intensity = min(OIL_LAMP_MAX_PWM, intensity + (int)random(OIL_LAMP_SURGE_BOOST));
+                simulatePWM(_pin, intensity, OIL_LAMP_PWM_PERIOD_US);
+                COROUTINE_DELAY(OIL_LAMP_BASE_DELAY_MS);
+            }
 
             break;
 

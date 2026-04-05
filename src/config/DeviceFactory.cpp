@@ -384,8 +384,6 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     d = new NeonSign(_pin(wiring, boardIdx));
   else if (strcmp(type, "OilLamp") == 0)
     d = new OilLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "RailwayCrossingLights") == 0)
-    d = new RailwayCrossingLights(_pin(wiring, boardIdx));
   else if (strcmp(type, "SignalFlare") == 0)
     d = new SignalFlare(_pin(wiring, boardIdx));
   else if (strcmp(type, "SolderLamp") == 0)
@@ -415,6 +413,11 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     PIN_ID pins[2] = {NO_PIN, NO_PIN};
     _pins(wiring, pins, 2, boardIdx);
     d = new DoubleBeacon(pins[0], pins[1]);
+  }
+  else if (strcmp(type, "RailwayCrossingLights") == 0) {
+    PIN_ID pins[2] = {NO_PIN, NO_PIN};
+    _pins(wiring, pins, 2, boardIdx);
+    d = new RailwayCrossingLights(pins[0], pins[1]);
   }
 
   // ------------------------------------------------------------------

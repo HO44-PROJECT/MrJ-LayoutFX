@@ -56,9 +56,10 @@ int RailwayCrossingLights::runCoroutine()
             switch (getState())
             {
             case STARTUP:
-                // Simulate brief, irregular flickers during power surge.
+                // Simulate brief, irregular flickers on pin 0 during power surge; pin 1 stays off.
                 brightness = random(RAILWAYCROSSLIGHTS_STARTUP_MIN_BRIGHTNESS, RAILWAYCROSSLIGHTS_STARTUP_MAX_BRIGHTNESS);
-                simulatePWM(_pin, brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+                simulatePWM(getPin(0), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+                outputInactive(getPin(1));
                 COROUTINE_DELAY(random(RAILWAYCROSSLIGHTS_STARTUP_FLICKER_MIN_DELAY_MS, RAILWAYCROSSLIGHTS_STARTUP_FLICKER_MAX_DELAY_MS));
                 // Transition to FLASHING after startup duration.
                 if (millis() - startTime > RAILWAYCROSSLIGHTS_STARTUP_DURATION_MS)
@@ -70,7 +71,7 @@ int RailwayCrossingLights::runCoroutine()
                 break;
 
             case FLASHING:
-                // Alternate between ON and OFF periods with subtle flicker during ON.
+                // Alternate between the two pins: one ON while the other is OFF.
                 if (isFlashOn)
                 {
                     brightness = RAILWAYCROSSLIGHTS_MAX_INTENSITY;
@@ -79,7 +80,8 @@ int RailwayCrossingLights::runCoroutine()
                         brightness += random(RAILWAYCROSSLIGHTS_FLASH_FLICKER_MIN_VARIATION, RAILWAYCROSSLIGHTS_FLASH_FLICKER_MAX_VARIATION);
                         brightness = constrain(brightness, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
                     }
-                    simulatePWM(_pin, brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+                    simulatePWM(getPin(0), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+                    outputInactive(getPin(1));
                     if (millis() - startTime > RAILWAYCROSSLIGHTS_FLASH_ON_MS)
                     {
                         isFlashOn = false;
@@ -88,8 +90,14 @@ int RailwayCrossingLights::runCoroutine()
                 }
                 else
                 {
-                    brightness = 0;
-                    simulatePWM(_pin, brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+                    brightness = RAILWAYCROSSLIGHTS_MAX_INTENSITY;
+                    if (random(0, 10) < 2)
+                    { // 20% chance of flicker
+                        brightness += random(RAILWAYCROSSLIGHTS_FLASH_FLICKER_MIN_VARIATION, RAILWAYCROSSLIGHTS_FLASH_FLICKER_MAX_VARIATION);
+                        brightness = constrain(brightness, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
+                    }
+                    outputInactive(getPin(0));
+                    simulatePWM(getPin(1), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
                     if (millis() - startTime > RAILWAYCROSSLIGHTS_FLASH_OFF_MS)
                     {
                         isFlashOn = true;
@@ -116,11 +124,13 @@ int RailwayCrossingLights::runCoroutine()
                 brightness = constrain(brightness, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
                 startTime = millis();
             }
-            simulatePWM(_pin, brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+            simulatePWM(getPin(0), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
+            simulatePWM(getPin(1), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
             // Transition to OFF_STATE when brightness reaches zero.
             if (brightness <= 0)
             {
-                outputInactive(_pin);
+                outputInactive(getPin(0));
+                outputInactive(getPin(1));
                 setState(OFF_STATE);
             }
             break;
