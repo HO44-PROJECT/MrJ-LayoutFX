@@ -1931,7 +1931,11 @@
     function poll() {
       fetch('/api/devices')
         .then(function (r) { if (!r.ok) throw r; return r.json(); })
-        .then(function (d) { document.getElementById('err').style.display = 'none'; render(d); })
+        .then(function (d) {
+          document.getElementById('err').style.display = 'none';
+          render(d);
+          if (_currentView === 'debug') { _dbgDevs = d; renderDebugBoards(); }
+        })
         .catch(showErr);
     }
 
