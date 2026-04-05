@@ -1,93 +1,54 @@
 """
 @file    build_webui.py
-@brief   PlatformIO pre-build script: gzip-compress the WebUI HTML page and
-         emit a PROGMEM byte-array header ready for inclusion in WebUI.cpp.
+@brief   PlatformIO pre-build script: bundle CSS + JS sources into a single
+         HTML page, gzip-compress it, and emit a PROGMEM byte-array header.
 
 @details
-  This script is executed automatically by SCons/PlatformIO *before* any C++
-  compilation when the ``extra_scripts`` key references it in platformio.ini:
+  Source layout:
+    src/web/webui.html   — HTML skeleton with %%STYLE%%, %%I18N%%, %%ICONS%%, %%APP%% markers
+    src/web/style.css    — all CSS
+    src/web/i18n.js      — translations (TOOLTIPS, TRANSLATIONS, _lang, t(), setLang(), applyLang())
+    src/web/icons.js     — SVG icon map (ICONS)
+    src/web/app.js       — application JS logic
 
-      extra_scripts = pre:lib/MrJ-RailwayFX.local/tools/build_webui.py
-
-  Execution flow
-  --------------
-  1. Read  ``src/web/webui.html``  (the human-editable source).
-  2. Compress it with gzip at maximum level (9).
-  3. Write ``include/api/webui_html.h`` containing two PROGMEM symbols:
-
-       static const size_t   WEBUI_HTML_GZ_LEN  -- compressed size in bytes
-       static const uint8_t  WEBUI_HTML_GZ[]    -- raw gzip payload
-
-  WebUI.cpp includes this header and serves the payload with the HTTP header
-  ``Content-Encoding: gzip`` so the browser decompresses it transparently.
-
-  Why gzip in PROGMEM?
-  --------------------
-  Storing the page as raw text in PROGMEM works but wastes flash.  Gzip
-  typically cuts HTML+JS+CSS to 30-40 % of its original size, which matters
-  on ESP32 where flash is plentiful but IRAM/DRAM for large strings is not.
-  Unlike LittleFS, everything stays in a single firmware binary with no
-  separate filesystem upload step.
-
-  SCons context
-  -------------
-  ``Import("env")`` is *not* standard Python.  It is a SCons built-in that
-  injects the current SConstruct environment object into this script's global
-  namespace.  ``env.subst("$PROJECT_DIR")`` expands to the absolute path of
-  the PlatformIO project root, which is the only reliable way to build
-  absolute paths inside a pre-build script (``__file__`` is undefined in the
-  SCons execution context).
+  Output:
+    include/api/webui_html.h — PROGMEM gzip payload for WebUI.cpp
 
 @project MrJ-ArduinoRailwayFX
-@repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
-@author  MrJ
-@date    2026-03-29
-@license MIT License. See the LICENSE file in the project root for details.
+@license MIT License — Copyright (c) 2026 HO44 PROJECT
 """
 
-# SCons injects `env` via Import() before executing this script.
-# The # noqa comment suppresses the static-analysis "undefined name" warning
-# that Python linters raise because they cannot see the SCons runtime context.
 Import("env")  # noqa: F821
 
 import gzip
 import os
 
-# ---------------------------------------------------------------------------
-# Paths — all derived from $PROJECT_DIR so the script works regardless of
-# where PlatformIO is invoked from.
-# ---------------------------------------------------------------------------
+_LIB   = os.path.join(env.subst("$PROJECT_DIR"), "lib", "MrJ-RailwayFX.local")  # noqa: F821
+_WEB   = os.path.join(_LIB, "src", "web")
+_HDR   = os.path.join(_LIB, "include", "api", "webui_html.h")
 
-# Root of the MrJ-RailwayFX library inside the project tree.
-_LIB = os.path.join(env.subst("$PROJECT_DIR"), "lib", "MrJ-RailwayFX.local")  # noqa: F821
+def read(name):
+    with open(os.path.join(_WEB, name), "r", encoding="utf-8") as f:
+        return f.read()
 
-# Source HTML file edited by developers.
-_HTML_IN = os.path.join(_LIB, "src", "web", "webui.html")
+html   = read("webui.html")
+css    = read("style.css")
+i18n   = read("i18n.js")
+icons  = read("icons.js")
+app    = read("app.js")
 
-# Generated header included by WebUI.cpp.  Listed in .gitignore.
-_HDR_OUT = os.path.join(_LIB, "include", "api", "webui_html.h")
+html = html.replace("%%STYLE%%",  css)
+html = html.replace("%%I18N%%",   i18n)
+html = html.replace("%%ICONS%%",  icons)
+html = html.replace("%%APP%%",    app)
 
-# ---------------------------------------------------------------------------
-# Compress
-# ---------------------------------------------------------------------------
+raw = html.encode("utf-8")
+gz  = gzip.compress(raw, compresslevel=9)
 
-with open(_HTML_IN, "rb") as f:
-    raw = f.read()
-
-# compresslevel=9 gives the smallest output at the cost of slightly longer
-# build time — acceptable since this runs once per build, not per file.
-gz = gzip.compress(raw, compresslevel=9)
-
-# ---------------------------------------------------------------------------
-# Emit header
-# ---------------------------------------------------------------------------
-
-# Format the compressed bytes as a C hex literal, 16 values per line for
-# readability (matches the style used by xxd -i).
 hex_list = [f"0x{b:02x}" for b in gz]
-rows = ["  " + ", ".join(hex_list[i:i + 16]) for i in range(0, len(hex_list), 16)]
+rows = ["  " + ", ".join(hex_list[i:i+16]) for i in range(0, len(hex_list), 16)]
 
-with open(_HDR_OUT, "w") as f:
+with open(_HDR, "w") as f:
     f.write("// Auto-generated by tools/build_webui.py — DO NOT EDIT\n")
     f.write("// Re-generated automatically on every PlatformIO build.\n")
     f.write("#pragma once\n")
@@ -97,9 +58,5 @@ with open(_HDR_OUT, "w") as f:
     f.write(",\n".join(rows))
     f.write("\n};\n")
 
-# ---------------------------------------------------------------------------
-# Build log
-# ---------------------------------------------------------------------------
-
 gain = 100 - 100 * len(gz) // len(raw)
-print(f"[build_webui] {len(raw)} B  ->  gzip {len(gz)} B  (-{gain}%)")
+print(f"[build_webui] {len(raw)} B -> gzip {len(gz)} B (-{gain}%)")
