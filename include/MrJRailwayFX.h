@@ -158,7 +158,7 @@ public:
     ace_routine::CoroutineScheduler::setup();
 
     // 5. Connect WiFi and start HTTP server on Core 0.
-#if MRJFX_WIFI_ENABLED
+#ifdef MRJFX_API_SERVER_ENABLED
     ApiServer::init(WIFI_SSID, WIFI_PASSWORD, HTTP_PORT);
 #endif
   }
