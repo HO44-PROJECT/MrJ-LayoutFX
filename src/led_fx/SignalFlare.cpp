@@ -83,8 +83,7 @@ int SignalFlare::runCoroutine()
                 if (brightness <= SIGNALFLARE_OFF_THRESHOLD)
                 {
                     outputInactive(_pin);
-                    desiredState = OFF_STATE; // Ensure target state is OFF.
-                    setState(OFF_STATE);
+                    switchOff(); // BURNOUT is non-busy (positive state), so activateNewTarget() runs immediately.
                 }
                 break;
             }
