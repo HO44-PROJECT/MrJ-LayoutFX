@@ -83,7 +83,8 @@ int SignalFlare::runCoroutine()
                 if (brightness <= SIGNALFLARE_OFF_THRESHOLD)
                 {
                     outputInactive(_pin);
-                    setState(desiredState);
+                    desiredState = OFF_STATE; // Ensure target state is OFF.
+                    setState(OFF_STATE);
                 }
                 break;
             }
