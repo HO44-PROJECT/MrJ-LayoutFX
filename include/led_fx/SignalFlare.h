@@ -37,31 +37,29 @@
  *
  * This class extends `LedPerpetualEffect` to manage a single LED pin using a coroutine-based state machine, implementing ignition, burning, and burnout phases with automatic transition to OFF state.
  */
-class SignalFlare : public LedEffect
-{
+class SignalFlare : public LedEffect {
 public:
-    using LedEffect::LedEffect; ///< Inherits constructors from the base `LedEffect` class.
+  using LedEffect::LedEffect; ///< Inherits constructors from the base `LedEffect` class.
 
-    static const STATE_TYPE IGNITION = NEXT_NON_STABLE;    ///< Fast, bright flickers to simulate flare ignition.
-    static const STATE_TYPE BURNING = NEXT_NON_STABLE - 1; ///< Intense flickering to mimic chemical burning.
-    static const STATE_TYPE BURNOUT = NEXT_NON_STABLE - 2; ///< Rapid decrease to simulate dying embers.
-    /**
-     * @brief Retrieves the device name for identification.
-     * @return The C-string "SignalFlare".
-     */
-    virtual const __FlashStringHelper *getDeviceName() const override
-    {
-        return F("SignalFlare");
-    }
+  static const STATE_TYPE IGNITION = NEXT_NON_STABLE;    ///< Fast, bright flickers to simulate flare ignition.
+  static const STATE_TYPE BURNING = NEXT_NON_STABLE - 1; ///< Intense flickering to mimic chemical burning.
+  static const STATE_TYPE BURNOUT = NEXT_STABLE + 1;     ///< Rapid decrease to simulate dying embers.
+  /**
+   * @brief Retrieves the device name for identification.
+   * @return The C-string "SignalFlare".
+   */
+  virtual const __FlashStringHelper *getDeviceName() const override {
+    return F("SignalFlare");
+  }
 
-    /**
-     * @brief Executes the coroutine for the signal flare effect.
-     * @return 0 on success, per AceRoutine coroutine state definitions.
-     */
-    virtual int runCoroutine() override;
+  /**
+   * @brief Executes the coroutine for the signal flare effect.
+   * @return 0 on success, per AceRoutine coroutine state definitions.
+   */
+  virtual int runCoroutine() override;
 
 protected:
-    uint32_t startTime = 0;  ///< Timestamp for phase transitions (ms).
-    uint32_t timerStart = 0; ///< Timestamp for coroutine delay management (ms).
-    int16_t brightness = 0;  ///< Current brightness level (0–255).
+  uint32_t startTime = 0;  ///< Timestamp for phase transitions (ms).
+  uint32_t timerStart = 0; ///< Timestamp for coroutine delay management (ms).
+  int16_t brightness = 0;  ///< Current brightness level (0–255).
 };
