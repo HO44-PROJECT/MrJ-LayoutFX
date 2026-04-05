@@ -1199,6 +1199,125 @@
       color: #5a3030
     }
 
+    /* ── Device editor modal ────────────────────────────────────────────── */
+    #de-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 200
+    }
+    #de-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 201;
+      background: var(--d1);
+      border: 1px solid var(--d2);
+      border-radius: 10px;
+      width: min(430px, 93vw);
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6)
+    }
+    .de-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--d2);
+      font-weight: 700;
+      font-size: .92rem
+    }
+    .de-close {
+      background: none;
+      border: none;
+      color: var(--t3);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: .1rem .4rem;
+      border-radius: 4px
+    }
+    .de-close:hover { color: var(--t1) }
+    .de-body {
+      padding: .75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      max-height: 58vh;
+      overflow-y: auto
+    }
+    .de-field { display: flex; flex-direction: column; gap: .18rem }
+    .de-field label {
+      font-size: .68rem;
+      color: var(--t3);
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+    .de-field input, .de-field select {
+      background: var(--d0);
+      border: 1px solid var(--d2);
+      border-radius: 5px;
+      color: var(--t1);
+      padding: .32rem .5rem;
+      font-size: .83rem;
+      width: 100%;
+      box-sizing: border-box
+    }
+    .de-wiring-row { display: flex; gap: .35rem }
+    .de-wiring-row input { flex: 1 }
+    .de-footer {
+      display: flex;
+      gap: .45rem;
+      align-items: center;
+      padding: .65rem 1rem;
+      border-top: 1px solid var(--d2)
+    }
+    .de-btn {
+      padding: .32rem .85rem;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: .8rem;
+      font-weight: 600
+    }
+    .de-btn.cancel { background: var(--d2); color: var(--t2) }
+    .de-btn.save   { background: #27ae60; color: #fff; margin-left: auto }
+    .de-btn.del    { background: #c0392b; color: #fff }
+    .de-btn:disabled { opacity: .5; cursor: default }
+    .de-status {
+      padding: .28rem .6rem;
+      border-radius: 4px;
+      font-size: .78rem;
+      display: none
+    }
+    .de-status.ok  { background: #1e3a2a; color: #7ddf9b }
+    .de-status.err { background: #3a1e1e; color: #df7d7d }
+    .dbg-edit-btn {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid var(--d2);
+      background: var(--d0);
+      color: var(--t3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: .58rem;
+      line-height: 1;
+      z-index: 2;
+      padding: 0;
+      opacity: 0;
+      transition: opacity .12s
+    }
+    .dbg-pin:hover .dbg-edit-btn { opacity: 1 }
+    .dbg-edit-btn:hover { border-color: #5588cc; color: #88aaee; background: #101828 }
+
     /* ── About view ─────────────────────────────────────────────────────── */
     .abt-panel {
       padding: 1.5rem;
@@ -1415,6 +1534,7 @@
       <div class="dbg-top">
         <div class="abt-title" data-i18n="nav.debug">Vue technique</div>
         <div style="display:flex;gap:.4rem">
+          <button class="abt-refresh" onclick="openDevEditor(0,undefined,null)" data-i18n="de.add_btn">+ Ajouter</button>
           <button class="abt-refresh" onclick="refreshDebug()" data-i18n="abt.refresh">Actualiser</button>
         </div>
       </div>
@@ -1584,30 +1704,58 @@
       + '<line x1="9" y1="21" x2="15" y2="21"/><line x1="12" y1="15" x2="12" y2="21"/>'
       + E;
     var TOOLTIPS = {
-      'Beacon':                 'Balise lumineuse tournante',
-      'CampFire':               'Feu de camp',
-      'DefectLamp':             'Lampe défectueuse / vacillante',
-      'DfAudio':                'Lecteur audio DFPlayer',
-      'DoubleBeacon':           'Double balise lumineuse',
-      'ElectricLamp':           'Lampe électrique',
-      'GasLamp':                'Lampe à gaz',
-      'MrJDBBlocSignal':        'Signal de bloc DB (HP0/HP1)',
-      'MrJDBEntrySignal':       'Signal d\'entrée DB (HP0/HP1/HP2)',
-      'MrJDBExitSignal':        'Signal de sortie DB (HP00/HP1/HP2/Sh1)',
-      'NeonSign':               'Enseigne néon (allumage progressif)',
-      'OilLamp':                'Lampe à huile (flamme stable)',
-      'RailwayCrossingLights':  'Feux de passage à niveau (alternés)',
-      'SerialServo':            'Servo moteur série (Lobot)',
-      'SignalFlare':            'Fusée de détresse ferroviaire',
-      'SolderLamp':             'Lampe à souder / forge',
-      'StaticLow':              'Sortie statique basse (fixe)',
-      'Storm':                  'Orage / éclairs',
-      'Torch':                  'Torche / flamme vive',
-      'TrafficLight3Phase':     'Feux tricolores 3 phases',
-      'TrafficLight4Phase':     'Feux tricolores 4 phases',
-      'TrainHeadLamp':          'Phare de locomotive',
-      'TurnSignal':             'Clignotant (indicateur de direction)'
+      fr: {
+        'Beacon':                 'Balise lumineuse tournante',
+        'CampFire':               'Feu de camp',
+        'DefectLamp':             'Lampe défectueuse / vacillante',
+        'DfAudio':                'Lecteur audio DFPlayer',
+        'DoubleBeacon':           'Double balise lumineuse',
+        'ElectricLamp':           'Lampe électrique',
+        'GasLamp':                'Lampe à gaz',
+        'MrJDBBlocSignal':        'Signal de bloc DB (HP0/HP1)',
+        'MrJDBEntrySignal':       'Signal d\'entrée DB (HP0/HP1/HP2)',
+        'MrJDBExitSignal':        'Signal de sortie DB (HP00/HP1/HP2/Sh1)',
+        'NeonSign':               'Enseigne néon (allumage progressif)',
+        'OilLamp':                'Lampe à huile (flamme stable)',
+        'RailwayCrossingLights':  'Feux de passage à niveau (alternés)',
+        'SerialServo':            'Servo moteur série (Lobot)',
+        'SignalFlare':            'Fusée de détresse ferroviaire',
+        'SolderLamp':             'Lampe à souder / forge',
+        'StaticLow':              'Sortie statique basse (fixe)',
+        'Storm':                  'Orage / éclairs',
+        'Torch':                  'Torche / flamme vive',
+        'TrafficLight3Phase':     'Feux tricolores 3 phases',
+        'TrafficLight4Phase':     'Feux tricolores 4 phases',
+        'TrainHeadLamp':          'Phare de locomotive',
+        'TurnSignal':             'Clignotant (indicateur de direction)'
+      },
+      en: {
+        'Beacon':                 'Rotating beacon light',
+        'CampFire':               'Camp fire',
+        'DefectLamp':             'Defective / flickering lamp',
+        'DfAudio':                'DFPlayer audio module',
+        'DoubleBeacon':           'Double rotating beacon',
+        'ElectricLamp':           'Electric lamp',
+        'GasLamp':                'Gas lamp',
+        'MrJDBBlocSignal':        'DB block signal (HP0/HP1)',
+        'MrJDBEntrySignal':       'DB entry signal (HP0/HP1/HP2)',
+        'MrJDBExitSignal':        'DB exit signal (HP00/HP1/HP2/Sh1)',
+        'NeonSign':               'Neon sign (progressive ignition)',
+        'OilLamp':                'Oil lamp (steady flame)',
+        'RailwayCrossingLights':  'Railway crossing lights (alternating)',
+        'SerialServo':            'Serial servo motor (Lobot)',
+        'SignalFlare':            'Railway signal flare',
+        'SolderLamp':             'Soldering / forge lamp',
+        'StaticLow':              'Static low output (fixed)',
+        'Storm':                  'Storm / lightning',
+        'Torch':                  'Torch / open flame',
+        'TrafficLight3Phase':     '3-phase traffic light',
+        'TrafficLight4Phase':     '4-phase traffic light',
+        'TrainHeadLamp':          'Locomotive headlamp',
+        'TurnSignal':             'Turn signal (direction indicator)'
+      }
     };
+    function tooltip(type) { return (TOOLTIPS[_lang] || TOOLTIPS.fr)[type] || type; }
 
     var ICONS = {
       'Beacon': S
@@ -1857,7 +2005,7 @@
       var busy = d.state < 0;
       var dis = busy ? 'disabled' : '';
       var ico = ICONS[d.type] || ICONS['_'];
-      var tip = TOOLTIPS[d.type] || d.type;
+      var tip = tooltip(d.type);
       function tbtn(label, cls, st) {
         var act = (d.desired === st && !busy) ? 'active' : '';
         return '<button class="tbtn t-' + cls + ' ' + act + '" onclick="setTraffic(\'' + d.id + '\',' + st + ')" ' + dis + '>' + label + '</button>';
@@ -1878,7 +2026,7 @@
       var busy = d.state < 0;
       var dis = busy ? 'disabled' : '';
       var ico = ICONS[d.type] || ICONS['_'];
-      var tip = TOOLTIPS[d.type] || d.type;
+      var tip = tooltip(d.type);
       function sbtn(s) {
         var act = (d.desired === s.v && !busy) ? 'active' : '';
         return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + s.v + ')" ' + dis + '>' + s.l + '</button>';
@@ -1899,7 +2047,7 @@
       var c = cls(d);
       var dis = (c === 'busy' || c === 'static') ? 'disabled' : '';
       var ico = ICONS[d.type] || ICONS['_'];
-      var tip = TOOLTIPS[d.type] || d.type;
+      var tip = tooltip(d.type);
       return '<div class="card ' + c + '">'
         + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
         + '<span class="dot ' + c + '"></span></div>'
@@ -2181,7 +2329,7 @@
       var num = pin.wiring;
       var isSpi = board.spiRank > 0;
       var dev = dbgFindDev(boardApiIdx, num);
-      var cls = '', onclick = '', inner = '', ledBtn = '';
+      var cls = '', onclick = '', inner = '', ledBtn = '', editBtn = '';
 
       function mkLedBtn(gpio) {
         var ts = _dbgTest['g' + gpio] ? 1 : 0;
@@ -2203,10 +2351,11 @@
         var ns = dev.desired > 0 ? 0 : 1;
         onclick = ' onclick="dbgToggleDev(\'' + dev.id + '\',' + ns + ')"';
         var ico = ICONS[dev.type] || ICONS['_'];
-        var tip = TOOLTIPS[dev.type] || dev.type;
+        var tip = tooltip(dev.type);
         inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
           + '<span class="dbg-pin-num">' + num + '</span>';
         ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
+        editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + ')">✎</button>';
       } else if (!isSpi) {
         var sysLbl = _dbgSysPins[num] || '';
         if (sysLbl) {
@@ -2226,6 +2375,7 @@
           onclick = ' onclick="dbgTestGpio(' + num + ',' + (1 - ts2) + ')"';
           inner = '<span class="dbg-pin-num">' + num + '</span>';
           ledBtn = mkLedBtn(num);
+          editBtn = '<button class="dbg-edit-btn" title="' + t('de.add_tip') + '" onclick="event.stopPropagation();openDevEditor(' + boardApiIdx + ',' + num + ',null)">+</button>';
         }
       } else {
         var spiKey = 'c' + board.spiRank + '_p' + num;
@@ -2234,9 +2384,10 @@
         onclick = ' onclick="dbgTestSpi(' + board.spiRank + ',' + num + ',' + (1 - spiTs) + ')"';
         inner = '<span class="dbg-pin-num">' + num + '</span>';
         ledBtn = mkSpiLedBtn(board.spiRank, num);
+        editBtn = '<button class="dbg-edit-btn" title="' + t('de.add_tip') + '" onclick="event.stopPropagation();openDevEditor(' + boardApiIdx + ',' + num + ',null)">+</button>';
       }
 
-      return '<div class="dbg-pin' + (cls ? ' ' + cls : '') + '"' + onclick + '>' + inner + ledBtn + '</div>';
+      return '<div class="dbg-pin' + (cls ? ' ' + cls : '') + '"' + onclick + '>' + inner + ledBtn + editBtn + '</div>';
     }
 
     // ── Actions ──────────────────────────────────────────────────────────
@@ -2460,6 +2611,31 @@
         'dbg.all_on': 'Tout ON',
         'dbg.all_off': 'Tout OFF',
         'dbg.no_boards': 'Aucune carte. Cliquez sur \u00ab\u00a0+\u00a0Carte\u00a0\u00bb pour commencer.',
+        // device editor
+        'de.add_btn': '+ Ajouter',
+        'de.new': 'Nouveau device',
+        'de.edit_prefix': 'Modifier \u2014 ',
+        'de.lbl_id': 'ID',
+        'de.lbl_type': 'Type',
+        'de.lbl_board': 'Board',
+        'de.lbl_wiring': 'Wiring',
+        'de.lbl_addr': 'Adresse DCC',
+        'de.lbl_addr_hint': '(optionnel, 1\u201310239)',
+        'de.lbl_defstate': '\u00c9tat par d\u00e9faut',
+        'de.del': 'Supprimer',
+        'de.cancel': 'Annuler',
+        'de.save': 'Sauvegarder',
+        'de.edit_tip': 'Modifier',
+        'de.add_tip': 'Ajouter un device',
+        'de.saving': 'Sauvegarde\u2026',
+        'de.saved': 'Sauvegard\u00e9 \u2014 red\u00e9marrage en cours\u2026',
+        'de.deleted': 'Supprim\u00e9 \u2014 red\u00e9marrage\u2026',
+        'de.del_confirm': 'Supprimer le device "{id}"\u00a0?',
+        'de.err_id': 'ID requis.',
+        'de.err_wiring': 'Wiring invalide (0\u2013253).',
+        'de.err_board': 'Board invalide.',
+        'de.err_dup': 'ID d\u00e9j\u00e0 utilis\u00e9.',
+        'de.err_prefix': 'Erreur\u00a0: ',
         // about view
         'nav.about': '\u00c0 propos',
         'abt.refresh': 'Actualiser',
@@ -2532,6 +2708,31 @@
         'dbg.all_on': 'All ON',
         'dbg.all_off': 'All OFF',
         'dbg.no_boards': 'No boards. Click \u00ab\u00a0+\u00a0Board\u00a0\u00bb to start.',
+        // device editor
+        'de.add_btn': '+ Add',
+        'de.new': 'New device',
+        'de.edit_prefix': 'Edit \u2014 ',
+        'de.lbl_id': 'ID',
+        'de.lbl_type': 'Type',
+        'de.lbl_board': 'Board',
+        'de.lbl_wiring': 'Wiring',
+        'de.lbl_addr': 'DCC address',
+        'de.lbl_addr_hint': '(optional, 1\u201310239)',
+        'de.lbl_defstate': 'Default state',
+        'de.del': 'Delete',
+        'de.cancel': 'Cancel',
+        'de.save': 'Save',
+        'de.edit_tip': 'Edit',
+        'de.add_tip': 'Add device',
+        'de.saving': 'Saving\u2026',
+        'de.saved': 'Saved \u2014 rebooting\u2026',
+        'de.deleted': 'Deleted \u2014 rebooting\u2026',
+        'de.del_confirm': 'Delete device "{id}"\u00a0?',
+        'de.err_id': 'ID required.',
+        'de.err_wiring': 'Invalid wiring (0\u2013253).',
+        'de.err_board': 'Invalid board.',
+        'de.err_dup': 'ID already used.',
+        'de.err_prefix': 'Error: ',
         // about view
         'nav.about': 'About',
         'abt.refresh': 'Refresh',
@@ -2753,6 +2954,182 @@
       el.textContent = msg;
     }
 
+    /* ── Device editor ──────────────────────────────────────────────────── */
+
+    var DEV_TYPES = [
+      'Beacon','CampFire','DefectLamp','DfAudio','DoubleBeacon','ElectricLamp',
+      'GasLamp','MrJDBBlocSignal','MrJDBEntrySignal','MrJDBExitSignal','NeonSign','OilLamp',
+      'RailwayCrossingLights','SerialServo','SignalFlare','SolderLamp','StaticLow','Storm',
+      'Torch','TrafficLight3Phase','TrafficLight4Phase','TrainHeadLamp','TurnSignal'
+    ];
+
+    var DE_WIRING = {
+      'DoubleBeacon':2, 'RailwayCrossingLights':2, 'MrJDBBlocSignal':2,
+      'MrJDBEntrySignal':3, 'TrafficLight3Phase':3, 'TrafficLight4Phase':3,
+      'MrJDBExitSignal':4, 'DfAudio':0
+    };
+
+    var _deEditId = null;
+
+    function openDevEditorById(id, boardApiIdx, pin) {
+      for (var i = 0; i < _dbgDevs.length; i++) {
+        if (_dbgDevs[i].id === id) { openDevEditor(boardApiIdx, pin, _dbgDevs[i]); return; }
+      }
+      openDevEditor(boardApiIdx, pin, null);
+    }
+
+    function openDevEditor(boardApiIdx, prefillPin, dev) {
+      _deEditId = dev ? dev.id : null;
+
+      // Type select
+      var typeEl = document.getElementById('de-type');
+      typeEl.innerHTML = DEV_TYPES.map(function (tp) {
+        return '<option value="' + tp + '">' + tp + ' — ' + tooltip(tp) + '</option>';
+      }).join('');
+
+      // Board select
+      var boardEl = document.getElementById('de-board');
+      boardEl.innerHTML = _dbgBoards.map(function (b, i) {
+        var badge = b.spiRank > 0 ? 'SPI board\u00a0' + b.spiRank : 'GPIO';
+        return '<option value="' + i + '">' + b.id + ' (' + badge + ')</option>';
+      }).join('');
+
+      if (dev) {
+        document.getElementById('de-title').textContent = t('de.edit_prefix') + dev.id;
+        document.getElementById('de-id').value = dev.id;
+        typeEl.value = dev.type;
+        boardEl.value = dev.board - 1;
+        document.getElementById('de-addr').value = dev.addr > 0 ? dev.addr : '';
+        document.getElementById('de-defstate').value = dev.desired > 0 ? 'on' : '';
+        document.getElementById('de-del-btn').style.display = '';
+      } else {
+        document.getElementById('de-title').textContent = t('de.new');
+        document.getElementById('de-id').value = '';
+        if (boardApiIdx !== undefined) boardEl.value = boardApiIdx;
+        document.getElementById('de-addr').value = '';
+        document.getElementById('de-defstate').value = '';
+        document.getElementById('de-del-btn').style.display = 'none';
+      }
+
+      deUpdateWiring(prefillPin, dev);
+      deStatus('', '');
+      document.getElementById('de-save-btn').disabled = false;
+
+      document.getElementById('de-overlay').style.display = 'block';
+      document.getElementById('de-modal').style.display = 'flex';
+      applyLang();
+    }
+
+    function closeDevEditor() {
+      document.getElementById('de-overlay').style.display = 'none';
+      document.getElementById('de-modal').style.display = 'none';
+    }
+
+    function deUpdateWiring(prefillPin, dev) {
+      var type = document.getElementById('de-type').value;
+      var count = DE_WIRING[type] !== undefined ? DE_WIRING[type] : 1;
+      var grp = document.getElementById('de-wiring-grp');
+      if (count === 0) { grp.innerHTML = ''; return; }
+      var pins = dev ? (dev.pins || []) : (prefillPin !== undefined ? [prefillPin] : []);
+      var html = '<div class="de-field"><label>' + t('de.lbl_wiring') + '</label><div class="de-wiring-row">';
+      for (var i = 0; i < count; i++) {
+        html += '<input type="number" class="de-w" min="0" max="253" placeholder="pin' + (count > 1 ? '\u00a0' + (i + 1) : '') + '" value="' + (pins[i] !== undefined ? pins[i] : '') + '">';
+      }
+      html += '</div></div>';
+      grp.innerHTML = html;
+    }
+
+    function deStatus(msg, cls) {
+      var el = document.getElementById('de-status');
+      el.style.display = msg ? '' : 'none';
+      el.className = 'de-status ' + cls;
+      el.textContent = msg;
+    }
+
+    function saveDevEditor() {
+      var id = (document.getElementById('de-id').value || '').trim();
+      var type = document.getElementById('de-type').value;
+      var boardIdx = parseInt(document.getElementById('de-board').value, 10);
+      var addrStr = (document.getElementById('de-addr').value || '').trim();
+      var defState = document.getElementById('de-defstate').value;
+      var count = DE_WIRING[type] !== undefined ? DE_WIRING[type] : 1;
+
+      if (!id) { deStatus(t('de.err_id'), 'err'); return; }
+
+      var wiring = [];
+      if (count > 0) {
+        var wInputs = document.querySelectorAll('.de-w');
+        for (var i = 0; i < wInputs.length; i++) {
+          var v = parseInt(wInputs[i].value, 10);
+          if (isNaN(v) || v < 0 || v > 253) { deStatus(t('de.err_wiring'), 'err'); return; }
+          wiring.push(v);
+        }
+      }
+
+      var board = _dbgBoards[boardIdx];
+      if (!board) { deStatus(t('de.err_board'), 'err'); return; }
+
+      var dev = { id: id, type: type, board: board.id };
+      if (count === 1) dev.wiring = wiring[0];
+      else if (count > 1) dev.wiring = wiring;
+      if (addrStr) { var addr = parseInt(addrStr, 10); if (addr >= 1 && addr <= 10239) dev.address = addr; }
+      if (defState) dev.default_state = defState;
+
+      document.getElementById('de-save-btn').disabled = true;
+      deStatus(t('de.saving'), 'ok');
+
+      fetch('/api/config')
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (cfg) {
+          if (_deEditId) {
+            var replaced = false;
+            for (var i = 0; i < cfg.devices.length; i++) {
+              if (cfg.devices[i].id === _deEditId) { cfg.devices[i] = dev; replaced = true; break; }
+            }
+            if (!replaced) cfg.devices.push(dev);
+          } else {
+            for (var j = 0; j < cfg.devices.length; j++) {
+              if (cfg.devices[j].id === id) {
+                deStatus(t('de.err_dup'), 'err');
+                document.getElementById('de-save-btn').disabled = false;
+                return Promise.reject(null);
+              }
+            }
+            cfg.devices.push(dev);
+          }
+          return fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+          });
+        })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function () {
+          deStatus(t('de.saved'), 'ok');
+          setTimeout(closeDevEditor, 3000);
+        })
+        .catch(function (e) {
+          if (e) { deStatus(t('de.err_prefix') + e.message, 'err'); document.getElementById('de-save-btn').disabled = false; }
+        });
+    }
+
+    function deleteDevEditor() {
+      if (!_deEditId || !confirm(t('de.del_confirm', { id: _deEditId }))) return;
+      fetch('/api/config')
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (cfg) {
+          cfg.devices = cfg.devices.filter(function (d) { return d.id !== _deEditId; });
+          return fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+          });
+        })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function () { deStatus(t('de.deleted'), 'ok'); setTimeout(closeDevEditor, 2000); })
+        .catch(function (e) { deStatus(t('de.err_prefix') + e.message, 'err'); });
+    }
+
     /* ── Boot ───────────────────────────────────────────────────────────── */
     (function () {
       var stored = parseInt(localStorage.getItem('poll') || '0', 10);
@@ -2769,6 +3146,47 @@
     _pollTimer = setInterval(poll, POLL);
 
   </script>
+  <!-- ── Device editor modal ──────────────────────────────────────────── -->
+  <div id="de-overlay" onclick="closeDevEditor()"></div>
+  <div id="de-modal">
+    <div class="de-hdr">
+      <span id="de-title">Nouveau device</span>
+      <button class="de-close" onclick="closeDevEditor()">✕</button>
+    </div>
+    <div class="de-body">
+      <div class="de-field">
+        <label data-i18n="de.lbl_id">ID</label>
+        <input type="text" id="de-id" placeholder="ex: lamp01" autocomplete="off">
+      </div>
+      <div class="de-field">
+        <label data-i18n="de.lbl_type">Type</label>
+        <select id="de-type" onchange="deUpdateWiring()"></select>
+      </div>
+      <div class="de-field">
+        <label data-i18n="de.lbl_board">Board</label>
+        <select id="de-board"></select>
+      </div>
+      <div id="de-wiring-grp"></div>
+      <div class="de-field">
+        <label><span data-i18n="de.lbl_addr">Adresse DCC</span> <span data-i18n="de.lbl_addr_hint" style="font-weight:400;text-transform:none;font-size:.9em">(optionnel, 1–10239)</span></label>
+        <input type="number" id="de-addr" min="1" max="10239" placeholder="—">
+      </div>
+      <div class="de-field">
+        <label data-i18n="de.lbl_defstate">État par défaut</label>
+        <select id="de-defstate">
+          <option value="">off</option>
+          <option value="on">on</option>
+        </select>
+      </div>
+      <div id="de-status" class="de-status"></div>
+    </div>
+    <div class="de-footer">
+      <button class="de-btn del" id="de-del-btn" onclick="deleteDevEditor()" data-i18n="de.del">Supprimer</button>
+      <button class="de-btn cancel" onclick="closeDevEditor()" data-i18n="de.cancel">Annuler</button>
+      <button class="de-btn save" id="de-save-btn" onclick="saveDevEditor()" data-i18n="de.save">Sauvegarder</button>
+    </div>
+  </div>
+
 </body>
 
 </html>
