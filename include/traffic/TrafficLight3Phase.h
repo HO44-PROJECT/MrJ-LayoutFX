@@ -54,6 +54,13 @@ public:
 
     virtual bool activateNewTarget() override;
 
+    virtual uint8_t getStateCount() const override { return 4; } ///< OFF · STOP · GO · FLASHING
+
+    /**
+     * @brief Switches on to the default STOP (red) state.
+     */
+    inline virtual void switchOn() override { newState(STOP_STATE); }
+
     /**
      * @brief Provides a single-char status code for external monitoring/debug.
      * @return 'S','G','o','W','F','t', depending on current state.

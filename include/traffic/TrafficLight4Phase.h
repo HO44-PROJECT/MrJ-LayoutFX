@@ -45,6 +45,8 @@ public:
         return F("TrafficLight4ph");
     }
 
+    virtual uint8_t getStateCount() const override { return 4; } ///< OFF · STOP · GO · FLASHING
+
 protected:
     // New state constant (extends FSM from base class)
     static const STATE_TYPE PREPARE_STATE = NEXT_NON_STABLE - 2; ///< PREPARE = red+yellow before GO.
