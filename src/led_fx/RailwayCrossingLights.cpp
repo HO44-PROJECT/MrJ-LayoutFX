@@ -41,35 +41,20 @@ int RailwayCrossingLights::runCoroutine()
             // Handle transition from OFF to ON.
             if (getState() == INIT_STATE)
             {
-                // Initialize the output pin.
+                // Initialize the output pins.
                 if (!handlePinInitFailure())
                     continue;
 
-                // Start the startup phase.
-                setState(STARTUP);
+                // Start flashing immediately (no asymmetric startup phase).
+                setState(FLASHING);
                 startTime = millis();
-                brightness = 0;
-                isFlashOn = false;
+                brightness = RAILWAYCROSSLIGHTS_MAX_INTENSITY;
+                isFlashOn = true;
             }
 
             // Process the internal state machine for ON_STATE.
             switch (getState())
             {
-            case STARTUP:
-                // Simulate brief, irregular flickers on pin 0 during power surge; pin 1 stays off.
-                brightness = random(RAILWAYCROSSLIGHTS_STARTUP_MIN_BRIGHTNESS, RAILWAYCROSSLIGHTS_STARTUP_MAX_BRIGHTNESS);
-                simulatePWM(getPin(0), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
-                outputInactive(getPin(1));
-                COROUTINE_DELAY(random(RAILWAYCROSSLIGHTS_STARTUP_FLICKER_MIN_DELAY_MS, RAILWAYCROSSLIGHTS_STARTUP_FLICKER_MAX_DELAY_MS));
-                // Transition to FLASHING after startup duration.
-                if (millis() - startTime > RAILWAYCROSSLIGHTS_STARTUP_DURATION_MS)
-                {
-                    setState(FLASHING);
-                    startTime = millis();
-                    isFlashOn = true;
-                }
-                break;
-
             case FLASHING:
                 // Alternate between the two pins: one ON while the other is OFF.
                 if (isFlashOn)
@@ -111,10 +96,12 @@ int RailwayCrossingLights::runCoroutine()
             break;
 
         case OFF_STATE:
-            // Gradually decrease brightness with 20% chance of skipping steps for stuttering effect.
+            // Gradually decrease brightness on both pins simultaneously.
             if (getState() == INIT_STATE)
             {
                 setState(RUN_TRANSIT_STATE);
+                brightness = RAILWAYCROSSLIGHTS_MAX_INTENSITY;
+                startTime  = millis();
             }
             // Gradually decrease brightness to zero with subtle flicker.
             if (millis() - startTime > RAILWAYCROSSLIGHTS_EXTINCTION_STEP_MS)
@@ -124,14 +111,22 @@ int RailwayCrossingLights::runCoroutine()
                 brightness = constrain(brightness, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
                 startTime = millis();
             }
-            simulatePWM(getPin(0), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
-            simulatePWM(getPin(1), brightness, RAILWAYCROSSLIGHTS_PWM_PERIOD_US);
             // Transition to OFF_STATE when brightness reaches zero.
             if (brightness <= 0)
             {
                 outputInactive(getPin(0));
                 outputInactive(getPin(1));
                 setState(OFF_STATE);
+            }
+            else
+            {
+                // Drive both pins simultaneously to avoid alternating flicker.
+                outputActive(getPin(0));
+                outputActive(getPin(1));
+                delayMicroseconds((uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
+                outputInactive(getPin(0));
+                outputInactive(getPin(1));
+                delayMicroseconds(RAILWAYCROSSLIGHTS_PWM_PERIOD_US - (uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
             }
             break;
         }
