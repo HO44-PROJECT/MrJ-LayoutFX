@@ -30,25 +30,24 @@
 
 #ifdef MRJFX_OLED_ENABLED
 
-#include <AceRoutine.h>
 #include <U8g2lib.h>
 
 /**
  * @class OledDisplay
- * @brief Singleton AceRoutine coroutine managing the structural OLED display.
+ * @brief Singleton managing the structural OLED display on a dedicated Core 0 task.
  *
- * Instantiated once as a global in OledDisplay.cpp. The coroutine registers
- * itself with AceRoutine at construction and is driven by CoroutineScheduler.
+ * Instantiated once as a global in OledDisplay.cpp. init() starts a FreeRTOS
+ * task pinned to Core 0 that handles all blocking I²C transfers (sendBuffer),
+ * keeping Core 1 (CoroutineScheduler + PWM effects) unaffected.
  *
  * External code only needs two calls:
  *   OledDisplay::init();                         // in MrJFX::init()
  *   OledDisplay::notify(type, id, state);        // in DeviceApi handlers
  */
-class OledDisplay : public ace_routine::Coroutine {
+class OledDisplay {
 public:
     /**
-     * @brief Construct the display and register the coroutine with AceRoutine.
-     * Does NOT initialise Wire or U8g2 — call init() for that.
+     * @brief Construct the display instance (does NOT initialise Wire or U8g2).
      */
     OledDisplay();
 
@@ -68,15 +67,13 @@ public:
      */
     static void notify(const char* type, const char* id, int state);
 
-    /** @brief AceRoutine entry point — managed by CoroutineScheduler. */
-    int runCoroutine() override;
-
 private:
     void _begin();
     void _drawIdle();
     void _drawEvent();
     void _drawIcon(const char* type, uint8_t ox, uint8_t oy);
     static const char* _stateName(const char* type, int state);
+    static void _task(void*);
 
     // Event state — shared through the single global instance via static storage.
     static char          _evtType[24];

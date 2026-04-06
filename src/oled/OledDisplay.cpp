@@ -16,8 +16,6 @@
   #include <WiFi.h>
 #endif
 
-using namespace ace_routine;
-
 // ---------------------------------------------------------------------------
 // Static members
 // ---------------------------------------------------------------------------
@@ -44,6 +42,7 @@ OledDisplay::OledDisplay()
 
 void OledDisplay::init() {
     oledDisplay._begin();
+    xTaskCreatePinnedToCore(_task, "oled", 4096, nullptr, 1, nullptr, 0); // Core 0
 }
 
 void OledDisplay::_begin() {
@@ -73,15 +72,15 @@ void OledDisplay::notify(const char* type, const char* id, int state) {
 // Coroutine body
 // ---------------------------------------------------------------------------
 
-int OledDisplay::runCoroutine() {
-    COROUTINE_LOOP() {
+void OledDisplay::_task(void*) {
+    for (;;) {
         if (_hasEvent) {
-            _drawEvent();
+            oledDisplay._drawEvent();
             _hasEvent = false;
-            COROUTINE_DELAY(OLED_EVENT_MS);
+            vTaskDelay(pdMS_TO_TICKS(OLED_EVENT_MS));
         } else {
-            _drawIdle();
-            COROUTINE_DELAY(500);   // poll for events every 500 ms while idle
+            oledDisplay._drawIdle();
+            vTaskDelay(pdMS_TO_TICKS(500));
         }
     }
 }
