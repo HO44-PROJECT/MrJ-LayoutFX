@@ -42,40 +42,33 @@ int DoubleBeacon::runCoroutine()
                 if (!handlePinInitFailure())
                     continue;
 
-                setState(RUN_FIRST);
+                _firstPinNext = true;
+                setState(RUN_STABLE_STATE);
             }
 
-            switch (getState())
-            {
-            case RUN_FIRST:
-                working_pin = getPin(0);
-                setState(RUN_SECOND);
-                break;
-
-            case RUN_SECOND:
-                working_pin = getPin(1);
-                setState(RUN_FIRST);
-                break;
-            }
+            // Alternate between pin 0 and pin 1 each cycle.
+            // No setState() here to avoid blocking OLED I2C transfers on every cycle.
+            working_pin = _firstPinNext ? getPin(0) : getPin(1);
+            _firstPinNext = !_firstPinNext;
 
             // First flash (on).
             outputActive(working_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_ON_DURATION_1);
+            COROUTINE_DELAY(BEACON_FLASH_ON_DURATION_1);
 
             // First pause (off).
             outputInactive(working_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_OFF_DURATION_1);
+            COROUTINE_DELAY(BEACON_FLASH_OFF_DURATION_1);
 
             // Second flash (on).
             outputActive(working_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_ON_DURATION_2);
+            COROUTINE_DELAY(BEACON_FLASH_ON_DURATION_2);
 
             // Long pause (off).
             outputInactive(working_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_OFF_DURATION_2);
+            COROUTINE_DELAY(BEACON_FLASH_OFF_DURATION_2);
 
             // Short pause before repeating the sequence.
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_SHORT_PAUSE);
+            COROUTINE_DELAY(BEACON_SHORT_PAUSE);
 
             break;
 

@@ -31,9 +31,6 @@ class DoubleBeacon : public AlternateLedEffect
 public:
     using AlternateLedEffect::AlternateLedEffect;
 
-    static const STATE_TYPE RUN_FIRST = NEXT_STABLE;  ///< First flash on the first pin.
-    static const STATE_TYPE RUN_SECOND = NEXT_STABLE +1; ///< Second flash on the second pin.
-
     /**
      * @brief Retrieves the device name for identification.
      * @return The C-string "DoubleBeacon".
@@ -51,7 +48,6 @@ public:
 
 protected:
     PIN_ID working_pin = NO_PIN; ///< Current active pin for flashing (first or second pin).
+    bool _firstPinNext = true;   ///< Alternation flag: true = next flash on pin 0, false = pin 1.
 
-private:
-    uint32_t timerStart = 0; ///< Timestamp for tracking delays in the flash pattern (ms).
 };
