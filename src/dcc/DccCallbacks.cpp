@@ -15,6 +15,8 @@
 
 #include "dcc/DccCallbacks.h"
 
+#ifdef MRJFX_DCC_ENABLED
+
 /**
  * @brief Handles DCC speed commands for registered devices.
  *
@@ -198,4 +200,7 @@ void notifyDccMsg(DCC_MSG *Msg)
     }
 }
 
+#endif
+
 void forceLinkDccCallbacks() {}
+
