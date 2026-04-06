@@ -1,7 +1,7 @@
 /**
  * @file DeviceApi.h
  *
- * @brief Device REST API — all /api/* routes (ESP32 / MRJFX_API_SERVER_ENABLED only).
+ * @brief Device REST API — all /api/ routes (ESP32 / MRJFX_API_SERVER_ENABLED only).
  *
  * Registers and handles the JSON endpoints for device control and system
  * introspection. No HTML — use WebUI for the browser interface.
@@ -38,7 +38,7 @@
 class DeviceApi {
 public:
     /**
-     * @brief Register all /api/* routes on ApiServer.
+     * @brief Register all /api/ routes on ApiServer.
      *
      * @param factory  Read-only reference to the populated DeviceFactory.
      */

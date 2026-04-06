@@ -15,7 +15,7 @@
  *
  *   CONFIG   "file.json"  Load device config from LittleFS (ESP32 only).
  *                         The value is the filename without leading '/'.
- *   WEBUI                 Enable the web control panel (/ui, /api/*).
+ *   WEBUI                 Enable the web control panel (/ui, /api/).
  *   WIFI_SSID  "…"  \
  *   WIFI_PASSWORD  "…"   Connect to WiFi and start the HTTP server.
  *   HTTP_PORT  <n>        HTTP port — defaults to 80 if not defined.

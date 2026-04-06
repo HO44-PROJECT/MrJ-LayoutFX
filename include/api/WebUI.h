@@ -6,7 +6,7 @@
  * Registers a single route:
  *   GET /ui   → gzipped HTML page (built from src/web/webui.html by tools/build_webui.py)
  *
- * The page communicates with the device through the /api/* routes provided by
+ * The page communicates with the device through the /api/ routes provided by
  * DeviceApi. WebUI has no knowledge of devices or config — it only serves HTML.
  *
  * Must be called after DeviceApi::init() and before ApiServer::init().
