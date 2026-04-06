@@ -39,20 +39,20 @@ int Beacon::runCoroutine()
 
             // First flash: turn on LED.
             outputActive(_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_ON_DURATION_1);
+            COROUTINE_DELAY(BEACON_FLASH_ON_DURATION_1);
             // Turn off LED after first flash.
             outputInactive(_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_OFF_DURATION_1);
+            COROUTINE_DELAY(BEACON_FLASH_OFF_DURATION_1);
 
             // Second flash: turn on LED.
             outputActive(_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_ON_DURATION_2);
+            COROUTINE_DELAY(BEACON_FLASH_ON_DURATION_2);
             // Turn off LED after second flash.
             outputInactive(_pin);
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_FLASH_OFF_DURATION_2);
+            COROUTINE_DELAY(BEACON_FLASH_OFF_DURATION_2);
 
             // Short pause before restarting the cycle.
-            COROUTINE_DELAY_MILLIS(timerStart, BEACON_SHORT_PAUSE);
+            COROUTINE_DELAY(BEACON_SHORT_PAUSE);
             break;
 
         case OFF_STATE:

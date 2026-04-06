@@ -43,6 +43,4 @@ public:
     virtual int runCoroutine() override;
 
 private:
-    /// @brief Timestamp for tracking delays in the flash pattern (milliseconds).
-    uint32_t timerStart;
 };
