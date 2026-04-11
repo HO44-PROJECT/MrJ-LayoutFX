@@ -351,6 +351,52 @@ public:
     }
 
     /**
+     * @brief Confirms the servo is alive by reading its motor mode (blocking).
+     *
+     * Sends LOBOT_SERVO_OR_MOTOR_MODE_READ (cmd 30), discards the half-duplex echo,
+     * then reads and validates the 10-byte response. Called from healthCheck();
+     * safe to call while the control coroutine is parked.
+     *
+     * @param timeoutMs Maximum wait time per phase (default 20 ms).
+     * @return 0 = OK, 1 = no response (timeout), 2 = bad response (frame/checksum).
+     */
+    int healthCheckBlocking(uint16_t timeoutMs = 20) {
+        _receiveState = IDLE; // ensure async SM is not mid-frame
+        // Build and send the query (6 bytes)
+        _cmdBuf[0] = _cmdBuf[1] = LOBOT_SERVO_FRAME_HEADER;
+        _cmdBuf[2] = _id;
+        _cmdBuf[3] = 3;
+        _cmdBuf[4] = LOBOT_SERVO_OR_MOTOR_MODE_READ;
+        _cmdBuf[5] = checkSum(_cmdBuf);
+        _bus.write(_cmdBuf, 6);
+        _bus.flush();
+
+        // Discard 6-byte half-duplex echo
+        uint32_t t = millis();
+        uint8_t n = 0;
+        while (n < 6 && (millis() - t) < timeoutMs) {
+            if (_bus.available()) { _bus.read(); n++; }
+        }
+        if (n < 6) return 1;
+
+        // Read 10-byte response: 0x55 0x55 id 0x07 cmd mode 0x00 speedL speedH chk
+        uint8_t resp[10];
+        n = 0;
+        t = millis();
+        while (n < 10 && (millis() - t) < timeoutMs) {
+            if (_bus.available()) resp[n++] = _bus.read();
+        }
+        if (n < 10) return 1;
+
+        // Validate frame header and checksum
+        if (resp[0] != LOBOT_SERVO_FRAME_HEADER || resp[1] != LOBOT_SERVO_FRAME_HEADER)
+            return 2;
+        if (checkSum(resp) != resp[9]) return 2;
+
+        return 0;
+    }
+
+    /**
      * @brief Initiates reading the servo ID.
      *
      * Starts a non-blocking read; call runCoroutine() to process the response.

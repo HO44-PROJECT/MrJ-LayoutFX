@@ -13,11 +13,14 @@
  *   POST /api/all            — body {"state":<n>[,"board":<n>]} — all non-static devices
  *   POST /api/group          — body {"type":"<name>","state":<n>} — all of one type
  *   GET  /api/config         — download /config.json from LittleFS
- *   POST /api/config         — body <raw JSON> — overwrite /config.json then reboot
+ *   POST /api/config         — body <raw JSON> — overwrite /config.json (no reboot)
  *   DELETE /api/config       — delete /config.json then reboot
+ *   POST /api/restart        — body {} — immediate ESP32 restart
+ *   POST /api/servo          — body {"id":"<id>","speed":<-1000..1000>} — set motor speed
  *   GET  /api/status         — firmware version, IP, heap, LittleFS metrics
  *   GET  /api/boards         — configured boards (id, type, bus, pinCount, spiRank)
  *   GET  /api/board-types    — stream /board_types.json from LittleFS
+ *   GET  /api/health         — hardware health check for each device (servo ACK, etc.)
  *   POST /api/test/gpio      — body {"pin":<n>,"state":<0|1>} — raw GPIO toggle
  *   POST /api/test/spi       — body {"card":<n>,"channel":<n>,"state":<0|1>} — raw SPI
  *
@@ -58,8 +61,11 @@ private:
     static void _onGetStatus();
     static void _onGetBoards();
     static void _onGetBoardTypes();
+    static void _onGetHealth();
     static void _onTestGpio();
     static void _onTestSpi();
+    static void _onRestart();
+    static void _onServo();
 };
 
 #endif  // MRJFX_API_SERVER_ENABLED

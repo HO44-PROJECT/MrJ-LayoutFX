@@ -56,7 +56,6 @@ typedef int16_t SERVO_SPEED;
 class SerialServoMotor : public MultiplePinDevice<SERIAL_SERVO_PIN_COUNT> {
 public:
   static const STATE_TYPE RUN_STATE = NEXT_STABLE;
-  static const STATE_TYPE SPEED_CHANGE_STATE = NEXT_STABLE + 1;
 
   #ifdef MRJFX_LX16A_SERVO_ENABLED
 
@@ -163,32 +162,39 @@ public:
    *
    * @param Speed Target speed from DCC command (mapped to servo range).
    */
-  virtual void setDccSpeed(int16_t Speed) {
-    Speed = max(min(Speed, SERVO_SPEED_MAX), SERVO_SPEED_MIN);
-
-    if (speed != Speed) {
-      speed = Speed;
-      targetState = SPEED_CHANGE_STATE;
-      newState(speed == 0 ? OFF_STATE : RUN_STATE);
-    }
-  }
+  virtual void setDccSpeed(int16_t Speed) { setSpeed((SERVO_SPEED)Speed); }
 
 public:
   /**
-   * @brief Sets the servo speed in motor mode.
+   * @brief Sets the servo speed [-1000…+1000]. Triggers the coroutine.
    *
-   * Sets the target speed for the LX-16A servo in motor mode, clamping it to the valid range
-   * [SERVO_SPEED_MIN, SERVO_SPEED_MAX]. Updates the device state to RUN_STABLE_STATE if the
-   * speed is non-zero, or OFF_STATE if the speed is zero. If the servo is not initialized,
-   * the speed is set to 0 and the state is set to OFF_STATE.
-   *
-   * @param speed Target speed (SERVO_SPEED_MIN for full reverse, SERVO_SPEED_STOP for stop,
-   *              SERVO_SPEED_MAX for full forward).
+   * Clamps to [SERVO_SPEED_MIN, SERVO_SPEED_MAX], updates the speed member and
+   * calls newState() to wake the coroutine. 0 → OFF_STATE, non-zero → RUN_STATE.
    */
-  inline virtual void setSpeed(SERVO_SPEED speed) {
-    // static const char MSG_SPEED_SET[] PROGMEM = "%S: speed set to %d"; // Store in PROGMEM
-    // static const char MSG_STOP[] PROGMEM = "%S: stop"; // Store in PROGMEM
+  inline virtual void setSpeed(SERVO_SPEED newSpeed) {
+    newSpeed = max(min(newSpeed, SERVO_SPEED_MAX), SERVO_SPEED_MIN);
+    speed = newSpeed;  // Coroutine picks it up immediately via COROUTINE_AWAIT / next cycle.
+    // Keep desiredState consistent for the UI (/api/devices "desired" field).
+    desiredState = (speed == SERVO_SPEED_STOP) ? OFF_STATE : RUN_STATE;
   }
+
+  /**
+   * @brief Set motor speed from the web API (speed in [-1000, +1000]).
+   *
+   * Called by /api/servo endpoint. Delegates to setSpeed().
+   */
+  inline virtual void setMotorSpeed(int16_t s) override { setSpeed((SERVO_SPEED)s); }
+
+  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  /**
+   * @brief Hardware health check: confirms the servo responds on the bus.
+   * @return 0 = OK, 1 = no response, 2 = bad response, -1 = not initialised.
+   */
+  inline virtual int healthCheck() override {
+    if (servo == nullptr) return -1;
+    return servo->healthCheckBlocking();
+  }
+  #endif
 
   /**
    * @brief Stops the servo by setting the speed to SERVO_SPEED_STOP (0).
@@ -240,7 +246,8 @@ protected:
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
   LobotServo *servo = nullptr; ///< Pointer to LobotServo object
   #endif
-  SERVO_SPEED speed = SERVO_SPEED_STOP; ///< Current speed of the servo, initialized to stopped state.
+  SERVO_SPEED speed     = SERVO_SPEED_STOP; ///< Requested speed (set by setSpeed / API).
+  SERVO_SPEED lastSpeed = SERVO_SPEED_STOP; ///< Last speed sent to the servo hardware (coroutine use only).
 
 private:
   uint32_t timerStart;

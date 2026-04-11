@@ -150,6 +150,24 @@ public:
   inline virtual void switchOff() { newState(OFF_STATE); }
 
   /**
+   * @brief Set motor speed — no-op for non-motor devices.
+   *
+   * Overridden by motor/servo subclasses (e.g. SerialServoMotor) to apply a
+   * speed value in [-1000, +1000] and trigger the coroutine.
+   */
+  inline virtual void setMotorSpeed(int16_t /*speed*/) {}
+
+  /**
+   * @brief Optional hardware health check.
+   *
+   * Devices that support bus read-back (e.g. serial servo) override this to
+   * confirm the hardware actually responded. Called from GET /api/health.
+   *
+   * @return -1 = not supported, 0 = OK, 1 = no response (timeout), 2 = bad response.
+   */
+  inline virtual int healthCheck() { return -1; }
+
+  /**
    * @brief Checks if the device is in a non-interruptible state transition.
    *
    * Returns `true` if the device is in a non-interruptible transition state (RUN_TRANSIT_STATE or internal working state).

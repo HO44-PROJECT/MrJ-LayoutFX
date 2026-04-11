@@ -110,23 +110,20 @@ SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFla
  */
 int SerialServoMotor::runCoroutine() {
   COROUTINE_LOOP() {
-    // Wait for a state change (ON_STATE or OFF_STATE).
-    DEVICE_WAIT_STATE_CHANGE(getTargetState());
+    // Wait for a state change (OFF↔RUN) OR a speed change while running.
+    COROUTINE_AWAIT(getState() != getTargetState() || speed != lastSpeed);
 
-    DEBUG_PRINTLN(F("feu"));
-    DEBUG_PRINTLN(getState());
-    DEBUG_PRINTLN(getTargetState());
-
-    if (servo != nullptr) {
-      servo->motor_mode(speed);
-      setState(speed != SERVO_SPEED_STOP ? getTargetState() : OFF_STATE);
-    } else {
-      this->speed = SERVO_SPEED_STOP;
+    lastSpeed = speed;
+    if (getTargetState() == OFF_STATE) {
+      if (servo != nullptr) servo->motor_mode(SERVO_SPEED_STOP);
       setState(OFF_STATE);
+    } else {
+      if (servo != nullptr) servo->motor_mode(speed);
+      setState(RUN_STATE);
     }
   }
 
-  return 0; // Success
+  return 0;
 }
   #endif // End of SerialServoMotor implementation
 

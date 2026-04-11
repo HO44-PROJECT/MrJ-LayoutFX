@@ -48,8 +48,11 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/status",     HTTP_GET,    _onGetStatus);
   ApiServer::on("/api/boards",     HTTP_GET,    _onGetBoards);
   ApiServer::on("/api/board-types",HTTP_GET,    _onGetBoardTypes);
+  ApiServer::on("/api/health",     HTTP_GET,    _onGetHealth);
   ApiServer::on("/api/test/gpio",  HTTP_POST,   _onTestGpio);
   ApiServer::on("/api/test/spi",   HTTP_POST,   _onTestSpi);
+  ApiServer::on("/api/restart",    HTTP_POST,   _onRestart);
+  ApiServer::on("/api/servo",      HTTP_POST,   _onServo);
 }
 
 // ---------------------------------------------------------------------------
@@ -220,13 +223,42 @@ void DeviceApi::_onPostConfig() {
     return;
   }
   ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
-  delay(300);
-  ESP.restart();
 }
 
 void DeviceApi::_onDeleteConfig() {
   Serial.println(F("API: DELETE /api/config"));
   ConfigManager::deleteConfig();
+  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  delay(200);
+  ESP.restart();
+}
+
+void DeviceApi::_onServo() {
+  Serial.println(F("API: POST /api/servo"));
+  if (!ApiServer::server().hasArg("plain")) {
+    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    return;
+  }
+  JsonDocument doc;
+  if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["speed"].is<int>()) {
+    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    return;
+  }
+  const char *id = doc["id"] | "";
+  int speed = doc["speed"].as<int>();
+
+  for (size_t i = 0; i < _factory->count(); i++) {
+    if (strcmp(_factory->deviceId(i), id) == 0) {
+      _factory->device(i)->setMotorSpeed((int16_t)speed);
+      ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+      return;
+    }
+  }
+  ApiServer::server().send(404, "application/json", F("{\"error\":\"device not found\"}"));
+}
+
+void DeviceApi::_onRestart() {
+  Serial.println(F("API: POST /api/restart"));
   ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
   delay(200);
   ESP.restart();
@@ -293,6 +325,39 @@ void DeviceApi::_onGetBoardTypes() {
   File f = LittleFS.open("/board_types.json", "r");
   ApiServer::server().streamFile(f, "application/json");
   f.close();
+}
+
+// ---------------------------------------------------------------------------
+// Raw hardware tests
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Health check
+// ---------------------------------------------------------------------------
+
+void DeviceApi::_onGetHealth() {
+  Serial.println(F("API: GET /api/health"));
+  String json = "[";
+  for (size_t i = 0; i < _factory->count(); i++) {
+    int result = _factory->device(i)->healthCheck();
+    if (i > 0) json += ",";
+    json += F("{\"id\":\"");
+    json += _factory->deviceId(i);
+    json += F("\",");
+    if (result == -1) {
+      json += F("\"supported\":false");
+    } else {
+      json += F("\"supported\":true,\"ok\":");
+      json += (result == 0) ? F("true") : F("false");
+      if (result > 0) {
+        json += F(",\"error\":");
+        json += result;
+      }
+    }
+    json += "}";
+  }
+  json += "]";
+  ApiServer::server().send(200, "application/json", json);
 }
 
 // ---------------------------------------------------------------------------
