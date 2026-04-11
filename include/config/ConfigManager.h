@@ -49,6 +49,22 @@ public:
     /** @brief LittleFS path passed to init(). */
     static const char* configPath() { return _configPath; }
 
+    /**
+     * @brief List all *.json files in LittleFS root (excluding board_types.json).
+     *
+     * @return Comma-separated JSON array string, e.g.
+     *         ["config.json","config_2_ext.json"]
+     */
+    static String listConfigs();
+
+    /**
+     * @brief Copy srcFile to configPath (overwrites active config).
+     *
+     * @param srcFile  LittleFS path of the source file (e.g. "/config_2_ext.json").
+     * @return true on success.
+     */
+    static bool activateConfig(const char* srcFile);
+
 private:
     static DeviceFactory _factory;
     static const char*   _configPath;

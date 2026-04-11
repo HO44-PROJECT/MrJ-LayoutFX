@@ -58,6 +58,8 @@ private:
     static void _onGetConfig();
     static void _onPostConfig();
     static void _onDeleteConfig();
+    static void _onGetConfigs();
+    static void _onActivateConfig();
     static void _onGetStatus();
     static void _onGetBoards();
     static void _onGetBoardTypes();

@@ -53,7 +53,7 @@
       closeDrawer();
       if (name === 'params') loadParams();
       if (name === 'about') loadAbout();
-      if (name === 'debug') { loadDebug(); cfgStatus('', ''); }
+      if (name === 'debug') { loadDebug(); loadConfigs(); cfgStatus('', ''); }
     }
 
 
@@ -244,6 +244,63 @@
 
     function groupDevices(type, state) {
       post('/api/group', { type: type, state: state }).then(poll).catch(showErr);
+    }
+
+    /* ── Config file switcher ───────────────────────────────────────────── */
+
+    var CFG_LS_KEY = 'mrjfx_last_cfg';
+
+    function loadConfigs() {
+      fetch('/api/configs')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var last = localStorage.getItem(CFG_LS_KEY);
+          var el = document.getElementById('cfg-filelist');
+          el.innerHTML = data.files.map(function (f) {
+            var isActive = (f === data.active);
+            var isLast   = (!isActive && f === last);
+            var cls = 'cfg-fileitem' + (isActive ? ' active' : '') + (isLast ? ' last' : '');
+            var onclick = isActive ? '' : ' onclick="activateCfgFile(\'' + f + '\')"';
+            var badge = isActive ? ' <span class="cfg-filebadge">actif</span>'
+                      : isLast  ? ' <span class="cfg-filebadge last">dernier</span>'
+                      : '';
+            return '<div class="' + cls + '"' + onclick + '>'
+              + '<span class="cfg-filedot"></span>'
+              + '<span>' + f + '</span>'
+              + badge
+              + '</div>';
+          }).join('');
+        })
+        .catch(function () {
+          document.getElementById('cfg-filelist').textContent = '—';
+        });
+    }
+
+    var _cfgPendingFile = null;
+
+    function activateCfgFile(filename) {
+      _cfgPendingFile = filename;
+      document.getElementById('cfgmodal-filename').textContent = filename;
+      document.getElementById('cfgmodal-overlay').style.display = 'flex';
+    }
+
+    function closeCfgModal() {
+      _cfgPendingFile = null;
+      document.getElementById('cfgmodal-overlay').style.display = 'none';
+    }
+
+    function confirmActivateCfg() {
+      if (!_cfgPendingFile) return;
+      var filename = _cfgPendingFile;
+      closeCfgModal();
+      cfgStatus('Activation de ' + filename + '…', 'ok');
+      post('/api/config/activate', { file: filename })
+        .then(function () {
+          localStorage.setItem(CFG_LS_KEY, filename);
+          loadConfigs();
+          applyEsp32(); // activate + restart immediately
+        })
+        .catch(function (e) { cfgStatus('Erreur : ' + e.message, 'err'); });
     }
 
     /* ── Config management ──────────────────────────────────────────────── */

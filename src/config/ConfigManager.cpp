@@ -73,6 +73,36 @@ bool ConfigManager::configExists() {
   return LittleFS.exists(_configPath);
 }
 
+String ConfigManager::listConfigs() {
+  String out = "[";
+  bool first = true;
+  File root = LittleFS.open("/");
+  File f = root.openNextFile();
+  while (f) {
+    String name = f.name(); // e.g. "config.json"
+    if (name.endsWith(".json") && name != "board_types.json") {
+      if (!first) out += ",";
+      out += "\"";
+      out += name;
+      out += "\"";
+      first = false;
+    }
+    f = root.openNextFile();
+  }
+  out += "]";
+  return out;
+}
+
+bool ConfigManager::activateConfig(const char *srcFile) {
+  String content = _readFile(srcFile);
+  if (content.isEmpty()) return false;
+  if (!writeConfig(content)) return false;
+  // Remember which source file is active
+  File f = LittleFS.open("/config_source.txt", "w");
+  if (f) { f.print(srcFile); f.close(); }
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // Private — LittleFS helpers
 // ---------------------------------------------------------------------------

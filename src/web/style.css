@@ -657,6 +657,121 @@
       margin-top: .25rem
     }
 
+    .cfg-filelist {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      margin-top: .4rem;
+    }
+
+    .cfg-fileitem {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .5rem .8rem;
+      border-radius: 6px;
+      border: 2px solid var(--bd);
+      background: var(--bg2);
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--t1);
+      transition: border-color .15s, background .15s, color .15s
+    }
+
+    .cfg-fileitem:hover:not(.active) {
+      border-color: #3d85c8;
+      background: #253a52;
+      color: #fff
+    }
+
+    .cfg-fileitem.active {
+      border-color: #27ae60;
+      background: #1a3a2a;
+      color: #27ae60;
+      font-weight: 700;
+      cursor: default
+    }
+
+    .cfg-fileitem .cfg-filedot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      border: 2px solid var(--bd);
+      flex-shrink: 0;
+      transition: background .15s, border-color .15s
+    }
+
+    .cfg-fileitem:hover:not(.active) .cfg-filedot {
+      border-color: #3d85c8
+    }
+
+    .cfg-fileitem.active .cfg-filedot {
+      background: #27ae60;
+      border-color: #27ae60
+    }
+
+    .cfg-fileitem.last {
+      border-color: #d4a017
+    }
+
+    .cfg-fileitem.last .cfg-filedot {
+      border-color: #d4a017
+    }
+
+    .cfg-filebadge {
+      margin-left: auto;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .1rem .35rem;
+      border-radius: 4px;
+      background: #1a3a2a;
+      color: #27ae60;
+      letter-spacing: .5px
+    }
+
+    .cfg-filebadge.last {
+      background: #2a2200;
+      color: #d4a017
+    }
+
+    /* ── Confirm modal ───────────────────────────────────────────────────── */
+    .cfgmodal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200
+    }
+
+    .cfgmodal {
+      background: var(--bg1);
+      border: 2px solid var(--bd);
+      border-radius: 10px;
+      padding: 1.5rem;
+      min-width: 260px;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .cfgmodal-title {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--t0)
+    }
+
+    .cfgmodal-body {
+      font-size: .82rem;
+      color: var(--t2);
+      word-break: break-all
+    }
+
+    .cfgmodal-actions {
+      display: flex;
+      gap: .6rem;
+      justify-content: flex-end
+    }
+
     .cfg-btn {
       flex: 1;
       padding: .45rem .5rem;

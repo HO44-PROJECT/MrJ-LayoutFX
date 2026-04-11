@@ -81,6 +81,16 @@
       <!-- Board cards -->
       <div id="dbg-boards"></div>
 
+      <!-- Configs disponibles sur LittleFS -->
+      <div class="cfg-panel" style="padding:0;max-width:none;margin-bottom:.8rem">
+        <div class="cfg-card" style="flex:1;min-width:220px">
+          <div class="cfg-card-icon">📂</div>
+          <div class="cfg-card-title" data-i18n="cfg.switch.title">Configs disponibles</div>
+          <div class="cfg-card-desc" data-i18n="cfg.switch.desc">Sélectionnez un fichier pour l'activer, puis redémarrez.</div>
+          <div id="cfg-filelist" class="cfg-filelist">…</div>
+        </div>
+      </div>
+
       <!-- Download / Upload config -->
       <div class="cfg-panel" style="padding:0;max-width:none">
 
@@ -178,6 +188,18 @@
   <script>%%I18N%%
 %%ICONS%%
 %%APP%%  </script>
+  <!-- ── Config activate confirm modal ────────────────────────────────── -->
+  <div id="cfgmodal-overlay" class="cfgmodal-overlay" style="display:none" onclick="closeCfgModal()">
+    <div class="cfgmodal" onclick="event.stopPropagation()">
+      <div class="cfgmodal-title">Activer cette configuration ?</div>
+      <div class="cfgmodal-body" id="cfgmodal-filename"></div>
+      <div class="cfgmodal-actions">
+        <button class="cfg-btn secondary" style="flex:0;padding:.4rem .9rem" onclick="closeCfgModal()">Annuler</button>
+        <button class="cfg-btn" style="flex:0;padding:.4rem .9rem;background:#e67e22" onclick="confirmActivateCfg()">Appliquer &amp; redémarrer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Device editor modal ──────────────────────────────────────────── -->
   <div id="de-overlay" onclick="closeDevEditor()"></div>
   <div id="de-modal">

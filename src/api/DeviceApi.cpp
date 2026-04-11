@@ -42,9 +42,11 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/switch",     HTTP_POST,   _onSwitch);
   ApiServer::on("/api/all",        HTTP_POST,   _onAllDevices);
   ApiServer::on("/api/group",      HTTP_POST,   _onGroupDevices);
-  ApiServer::on("/api/config",     HTTP_GET,    _onGetConfig);
-  ApiServer::on("/api/config",     HTTP_POST,   _onPostConfig);
-  ApiServer::on("/api/config",     HTTP_DELETE, _onDeleteConfig);
+  ApiServer::on("/api/config",          HTTP_GET,    _onGetConfig);
+  ApiServer::on("/api/config",          HTTP_POST,   _onPostConfig);
+  ApiServer::on("/api/config",          HTTP_DELETE, _onDeleteConfig);
+  ApiServer::on("/api/configs",         HTTP_GET,    _onGetConfigs);
+  ApiServer::on("/api/config/activate", HTTP_POST,   _onActivateConfig);
   ApiServer::on("/api/status",     HTTP_GET,    _onGetStatus);
   ApiServer::on("/api/boards",     HTTP_GET,    _onGetBoards);
   ApiServer::on("/api/board-types",HTTP_GET,    _onGetBoardTypes);
@@ -220,6 +222,53 @@ void DeviceApi::_onPostConfig() {
   }
   if (!ConfigManager::writeConfig(ApiServer::server().arg("plain"))) {
     ApiServer::sendJson(500, F("{\"error\":\"write failed\"}"));
+    return;
+  }
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
+}
+
+void DeviceApi::_onGetConfigs() {
+  Serial.println(F("API: GET /api/configs"));
+  // Read the source file used for the last activation (written by activateConfig)
+  String activeName;
+  File src = LittleFS.open("/config_source.txt", "r");
+  if (src) {
+    activeName = src.readString();
+    src.close();
+    if (activeName.startsWith("/")) activeName = activeName.substring(1);
+  }
+  // Fallback: if no source file recorded yet, show config.json as active
+  if (activeName.isEmpty()) {
+    activeName = String(ConfigManager::configPath());
+    if (activeName.startsWith("/")) activeName = activeName.substring(1);
+  }
+  String json = F("{\"active\":\"");
+  json += activeName;
+  json += F("\",\"files\":");
+  json += ConfigManager::listConfigs();
+  json += "}";
+  ApiServer::sendJson(200, json);
+}
+
+void DeviceApi::_onActivateConfig() {
+  Serial.println(F("API: POST /api/config/activate"));
+  if (!ApiServer::server().hasArg("plain")) {
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
+    return;
+  }
+  JsonDocument doc;
+  if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["file"].is<const char*>()) {
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
+    return;
+  }
+  String file = "/";
+  file += doc["file"].as<const char*>();
+  if (!LittleFS.exists(file.c_str())) {
+    ApiServer::sendJson(404, F("{\"error\":\"file not found\"}"));
+    return;
+  }
+  if (!ConfigManager::activateConfig(file.c_str())) {
+    ApiServer::sendJson(500, F("{\"error\":\"copy failed\"}"));
     return;
   }
   ApiServer::sendJson(200, F("{\"ok\":true}"));
