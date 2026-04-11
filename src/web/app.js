@@ -3,6 +3,15 @@
     var POLL = 3000;
     var STATIC_TYPES = ['StaticLow'];
     var TRAFFIC_TYPES = ['TrafficLight3ph', 'TrafficLight4ph'];
+    var SERVO_TYPES = ['SerialServo'];
+    // Servo presets: v = speed sent to /api/servo (-1000…+1000), l = label, c = CSS class
+    var SERVO_STATES = [
+      { v:    0,    l: 'STOP', c: 't-stop' },
+      { v:  300,    l: 'SLOW', c: 't-slow' },
+      { v:  600,    l: 'MID',  c: 't-go'   },
+      { v: 1000,    l: 'FAST', c: 't-flash'},
+      { v: 'REV',   l: 'REV',  c: 't-sh1'  }
+    ];
     // Signal state definitions: v = state int sent to /api/device, l = label, c = CSS class
     var SIGNAL_STATES = {
       'DBBlocSignal': [{ v: 0, l: 'OFF', c: 't-off' }, { v: 1, l: 'HP0', c: 't-stop' }, { v: 2, l: 'HP1', c: 't-go' }],
@@ -44,7 +53,7 @@
       closeDrawer();
       if (name === 'params') loadParams();
       if (name === 'about') loadAbout();
-      if (name === 'debug') loadDebug();
+      if (name === 'debug') { loadDebug(); cfgStatus('', ''); }
     }
 
 
@@ -121,8 +130,33 @@
         + '</div>';
     }
 
+    function cardServo(d) {
+      var busy = d.state < 0;
+      var dis = busy ? 'disabled' : '';
+      var ico = ICONS[d.type] || ICONS['_'];
+      var tip = tooltip(d.type);
+      var c = busy ? 'busy' : (d.desired > 0 ? 'on' : 'off');
+      // active = STOP button when off, no active highlight for speed buttons (speed not in /api/devices response)
+      function sbtn(s) {
+        var act = (s.v === 0 && d.desired === 0 && !busy) ? 'active' : '';
+        var onclick = s.v === 'REV'
+          ? 'revServo(\'' + d.id + '\')'
+          : 'setServo(\'' + d.id + '\',' + s.v + ')';
+        return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="' + onclick + '" ' + dis + '>' + s.l + '</button>';
+      }
+      return '<div class="card ' + c + '">'
+        + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+        + '<span class="dot ' + c + '"></span></div>'
+        + '<div class="icon" title="' + tip + '">' + ico + '</div>'
+        + '<span class="badge">' + d.type + '</span>'
+        + meta(d)
+        + '<div class="tbtns">' + SERVO_STATES.map(sbtn).join('') + '</div>'
+        + '</div>';
+    }
+
     function card(d) {
       if (TRAFFIC_TYPES.indexOf(d.type) >= 0) return cardTraffic(d);
+      if (SERVO_TYPES.indexOf(d.type) >= 0) return cardServo(d);
       if (SIGNAL_STATES[d.type]) return cardSignal(d);
       var c = cls(d);
       var dis = (c === 'busy' || c === 'static') ? 'disabled' : '';
@@ -149,21 +183,13 @@
       order.forEach(function (type) {
         var list = groups[type];
         var isStatic = STATIC_TYPES.indexOf(type) >= 0;
-        var isSig = !!SIGNAL_STATES[type];
         html += '<div class="group">';
         html += '<div class="ghdr"><span class="gname">' + type + ' <span class="gcnt">(' + list.length + ')</span></span>';
         if (!isStatic) {
-          if (isSig) {
-            html += '<div class="gbtns">'
-              + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
-              + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
-              + '</div>';
-          } else {
-            html += '<div class="gbtns">'
-              + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
-              + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
-              + '</div>';
-          }
+          html += '<div class="gbtns">'
+            + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
+            + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
+            + '</div>';
         }
         html += '</div>';
         html += '<div class="gcards">' + list.map(card).join('') + '</div>';
@@ -202,6 +228,14 @@
 
     function setSig(id, state) {
       post('/api/device', { id: id, state: state }).then(poll).catch(showErr);
+    }
+
+    function setServo(id, speed) {
+      post('/api/servo', { id: id, speed: speed }).then(poll).catch(showErr);
+    }
+
+    function revServo(id) {
+      post('/api/servo', { id: id, action: 'reverse' }).then(poll).catch(showErr);
     }
 
     function allDevices(state) {
@@ -249,14 +283,21 @@
           body: e.target.result
         })
           .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-          .then(function () { startRebootCountdown(); })
-          .catch(function (err) { cfgStatus('Erreur : ' + err.message, 'err'); });
+          .then(function () { cfgStatus(t('cfg.saved'), 'ok'); document.getElementById('cfg-upload-btn').disabled = false; })
+          .catch(function (err) { cfgStatus(t('de.err_prefix') + err.message, 'err'); });
       };
       reader.readAsText(file);
     }
 
+    function applyEsp32() {
+      cfgStatus(t('cfg.applying'), 'ok');
+      fetch('/api/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+        .then(function () { startRebootCountdown(); })
+        .catch(function () { startRebootCountdown(); }); // ESP restarts, connection drops
+    }
+
     function startRebootCountdown() {
-      var n = 5;
+      var n = 10;
       function tick() {
         cfgStatus(t('cfg.rebooting', { n: n }), 'ok');
         if (n-- > 0) setTimeout(tick, 1000);
@@ -639,7 +680,6 @@
     }
 
     /* ── Params ─────────────────────────────────────────────────────────── */
-    var _cfgData = null;
     var _pollTimer = null;
 
     function savePollInterval() {
@@ -653,162 +693,9 @@
     }
 
     function loadParams() {
-      // Only reload if no data yet, or force reload each time view is opened
-      var flds = document.getElementById('prm-system-fields');
-      flds.className = 'prm-info';
-      flds.innerHTML = t('prm.loading');
-      document.getElementById('prm-save-btn').disabled = true;
-      prmStatus('', '');
-
-      fetch('/api/config')
-        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function (cfg) {
-          _cfgData = cfg;
-          renderSystemFields(cfg);
-          document.getElementById('prm-save-btn').disabled = false;
-        })
-        .catch(function (err) {
-          flds.className = 'prm-info';
-          flds.textContent = t('prm.load_err') + ': ' + err.message;
-        });
+      // Nothing to load from server anymore — only local UI settings
     }
 
-    function frow(label, inputHtml) {
-      return '<div class="prm-row">'
-        + '<span class="prm-label">' + label + '</span>'
-        + '<div class="prm-field">' + inputHtml + '</div>'
-        + '</div>';
-    }
-
-    function gpioInput(id, val) {
-      return '<input type="number" id="' + id + '" value="' + (val !== undefined ? val : '') + '"'
-        + ' min="0" max="39" class="prm-input prm-input-sm">';
-    }
-
-    function baudSelect(id, val) {
-      var bauds = [9600, 19200, 38400, 57600, 115200];
-      return '<select id="' + id + '" class="prm-select">'
-        + bauds.map(function (b) {
-          return '<option value="' + b + '"' + (b === val ? ' selected' : '') + '>' + b + '</option>';
-        }).join('')
-        + '</select>';
-    }
-
-    function pinCountSelect(id, val) {
-      var counts = [8, 16, 24, 32];
-      return '<select id="' + id + '" class="prm-select">'
-        + counts.map(function (c) {
-          return '<option value="' + c + '"' + (c === val ? ' selected' : '') + '>' + c + '</option>';
-        }).join('')
-        + '</select>';
-    }
-
-    function renderSystemFields(cfg) {
-      var sys = cfg.system || {};
-      var sp = sys.serial_ports || {};
-      var html = '';
-
-      if (sys.dcc_pin !== undefined) {
-        html += frow(t('prm.dcc_pin'), gpioInput('pf-dcc_pin', sys.dcc_pin));
-      }
-      if (sys.oled) {
-        html += frow(t('prm.oled.sda'), gpioInput('pf-oled_sda', sys.oled.sda));
-        html += frow(t('prm.oled.scl'), gpioInput('pf-oled_scl', sys.oled.scl));
-      }
-      if (sys.spi_bus) {
-        html += frow(t('prm.spi.mosi'), gpioInput('pf-spi_mosi', sys.spi_bus.mosi));
-        html += frow(t('prm.spi.sclk'), gpioInput('pf-spi_sclk', sys.spi_bus.sclk));
-        html += frow(t('prm.spi.latch'), gpioInput('pf-spi_latch', sys.spi_bus.latch));
-      }
-      if (cfg.boards && cfg.boards.length) {
-        cfg.boards.forEach(function (bd, i) {
-          var lbl = (bd.name || bd.id) + ' \u00b7 ' + t('prm.pin_count');
-          html += frow(lbl, pinCountSelect('pf-board_' + i + '_pins', bd.pin_count));
-        });
-      }
-      Object.keys(sp).forEach(function (uartKey) {
-        var u = sp[uartKey];
-        var pfx = uartKey.toUpperCase() + ' \u00b7 ';
-        html += frow(pfx + t('prm.tx'), gpioInput('pf-' + uartKey + '_tx', u.tx));
-        html += frow(pfx + t('prm.rx'), gpioInput('pf-' + uartKey + '_rx', u.rx));
-        html += frow(pfx + t('prm.baud'), baudSelect('pf-' + uartKey + '_baud', u.baud));
-      });
-
-      var flds = document.getElementById('prm-system-fields');
-      flds.className = '';
-      flds.innerHTML = html || '<div class="prm-info">' + t('prm.load_err') + '</div>';
-    }
-
-    function saveParams() {
-      if (!_cfgData) return;
-      var cfg = JSON.parse(JSON.stringify(_cfgData));
-      var sys = cfg.system || {};
-      var sp = sys.serial_ports || {};
-
-      function getInt(id) {
-        var el = document.getElementById(id);
-        return el ? parseInt(el.value, 10) : undefined;
-      }
-
-      if (sys.dcc_pin !== undefined && document.getElementById('pf-dcc_pin')) {
-        sys.dcc_pin = getInt('pf-dcc_pin');
-      }
-      if (sys.oled) {
-        if (document.getElementById('pf-oled_sda')) sys.oled.sda = getInt('pf-oled_sda');
-        if (document.getElementById('pf-oled_scl')) sys.oled.scl = getInt('pf-oled_scl');
-      }
-      if (sys.spi_bus) {
-        if (document.getElementById('pf-spi_mosi')) sys.spi_bus.mosi = getInt('pf-spi_mosi');
-        if (document.getElementById('pf-spi_sclk')) sys.spi_bus.sclk = getInt('pf-spi_sclk');
-        if (document.getElementById('pf-spi_latch')) sys.spi_bus.latch = getInt('pf-spi_latch');
-      }
-      if (cfg.boards) {
-        cfg.boards.forEach(function (bd, i) {
-          var el = document.getElementById('pf-board_' + i + '_pins');
-          if (el) bd.pin_count = parseInt(el.value, 10);
-        });
-      }
-      Object.keys(sp).forEach(function (uartKey) {
-        var u = sp[uartKey];
-        var tx = document.getElementById('pf-' + uartKey + '_tx');
-        var rx = document.getElementById('pf-' + uartKey + '_rx');
-        var bd = document.getElementById('pf-' + uartKey + '_baud');
-        if (tx) u.tx = parseInt(tx.value, 10);
-        if (rx) u.rx = parseInt(rx.value, 10);
-        if (bd) u.baud = parseInt(bd.value, 10);
-      });
-      sys.serial_ports = sp;
-      cfg.system = sys;
-
-      document.getElementById('prm-save-btn').disabled = true;
-      prmStatus('', '');
-
-      fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cfg)
-      })
-        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function () {
-          var n = 5;
-          function tick() {
-            prmStatus(t('prm.saved', { n: n }), 'ok');
-            if (n-- > 0) setTimeout(tick, 1000);
-          }
-          tick();
-        })
-        .catch(function (err) {
-          document.getElementById('prm-save-btn').disabled = false;
-          prmStatus(t('prm.save_err', { msg: err.message }), 'err');
-        });
-    }
-
-    function prmStatus(msg, cls) {
-      var el = document.getElementById('prm-status');
-      el.style.display = msg ? '' : 'none';
-      el.className = 'prm-status ' + cls;
-      el.textContent = msg;
-    }
 
     /* ── Device editor ──────────────────────────────────────────────────── */
 
@@ -816,12 +703,12 @@
       'Beacon','CampFire','DefectLamp','DfAudio','DoubleBeacon','ElectricLamp',
       'GasLamp','MrJDBBlocSignal','MrJDBEntrySignal','MrJDBExitSignal','NeonSign','OilLamp',
       'RailwayCrossingLights','SerialServo','SignalFlare','SolderLamp','StaticLow','Storm',
-      'Torch','TrafficLight3Phase','TrafficLight4Phase','TrainHeadLamp','TurnSignal'
+      'Torch','TrafficLight3ph','TrafficLight4ph','TrainHeadLamp','TurnSignal'
     ];
 
     var DE_WIRING = {
       'DoubleBeacon':2, 'RailwayCrossingLights':2, 'MrJDBBlocSignal':2,
-      'MrJDBEntrySignal':3, 'TrafficLight3Phase':3, 'TrafficLight4Phase':3,
+      'MrJDBEntrySignal':3, 'TrafficLight3ph':3, 'TrafficLight4ph':3,
       'MrJDBExitSignal':4, 'DfAudio':0
     };
 
@@ -870,6 +757,7 @@
       deUpdateWiring(prefillPin, dev);
       deStatus('', '');
       document.getElementById('de-save-btn').disabled = false;
+      document.getElementById('de-apply-btn').style.display = 'none';
 
       document.getElementById('de-overlay').style.display = 'block';
       document.getElementById('de-modal').style.display = 'flex';
@@ -886,10 +774,51 @@
       var count = DE_WIRING[type] !== undefined ? DE_WIRING[type] : 1;
       var grp = document.getElementById('de-wiring-grp');
       if (count === 0) { grp.innerHTML = ''; return; }
-      var pins = dev ? (dev.pins || []) : (prefillPin !== undefined ? [prefillPin] : []);
-      var html = '<div class="de-field"><label>' + t('de.lbl_wiring') + '</label><div class="de-wiring-row">';
+
+      // Preserve currently displayed values when called from onchange (no args)
+      var existingInputs = grp.querySelectorAll('.de-w');
+      var existingVals = [];
+      existingInputs.forEach(function(inp) {
+        var v = parseInt(inp.value, 10);
+        if (!isNaN(v)) existingVals.push(v);
+      });
+
+      var pins;
+      if (dev) {
+        pins = dev.pins || [];
+      } else if (prefillPin !== undefined) {
+        pins = [prefillPin];
+      } else {
+        pins = existingVals; // preserve on type change
+      }
+
+      // Build wiring datalist from available wirings on selected board
+      var boardIdx = parseInt(document.getElementById('de-board').value, 10);
+      var board = _dbgBoards[boardIdx];
+      var dlId = 'de-wiring-list';
+      var dlHtml = '<datalist id="' + dlId + '">';
+      if (board) {
+        var bt = _boardTypes[board.type];
+        var usedPins = {};
+        _dbgDevs.forEach(function(d) {
+          if (d.board === boardIdx + 1 && d.id !== _deEditId)
+            (d.pins || []).forEach(function(p) { usedPins[p] = true; });
+        });
+        if (bt && bt.pins) {
+          bt.pins.forEach(function(p) {
+            if (p.wiring !== undefined && !usedPins[p.wiring]) {
+              dlHtml += '<option value="' + p.wiring + '">';
+            }
+          });
+        }
+      }
+      dlHtml += '</datalist>';
+
+      var html = dlHtml + '<div class="de-field"><label>' + t('de.lbl_wiring') + '</label><div class="de-wiring-row">';
       for (var i = 0; i < count; i++) {
-        html += '<input type="number" class="de-w" min="0" max="253" placeholder="pin' + (count > 1 ? '\u00a0' + (i + 1) : '') + '" value="' + (pins[i] !== undefined ? pins[i] : '') + '">';
+        html += '<input type="number" class="de-w" list="' + dlId + '" min="0" max="253"'
+          + ' placeholder="pin' + (count > 1 ? '\u00a0' + (i + 1) : '') + '"'
+          + ' value="' + (pins[i] !== undefined ? pins[i] : '') + '">';
       }
       html += '</div></div>';
       grp.innerHTML = html;
@@ -962,7 +891,8 @@
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function () {
           deStatus(t('de.saved'), 'ok');
-          setTimeout(closeDevEditor, 3000);
+          document.getElementById('de-save-btn').disabled = false;
+          document.getElementById('de-apply-btn').style.display = '';
         })
         .catch(function (e) {
           if (e) { deStatus(t('de.err_prefix') + e.message, 'err'); document.getElementById('de-save-btn').disabled = false; }
@@ -982,7 +912,10 @@
           });
         })
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function () { deStatus(t('de.deleted'), 'ok'); setTimeout(closeDevEditor, 2000); })
+        .then(function () {
+          deStatus(t('de.deleted'), 'ok');
+          document.getElementById('de-apply-btn').style.display = '';
+        })
         .catch(function (e) { deStatus(t('de.err_prefix') + e.message, 'err'); });
     }
 

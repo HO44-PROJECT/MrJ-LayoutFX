@@ -116,6 +116,8 @@ private:
     uint32_t _timeoutStart = 0;        ///< Timeout start time (ms)
     int _lastReadResult = -2048;       ///< Last read result (-2048 = not ready)
     uint8_t _lastReadCmd = 0;          ///< Last command sent for read operation
+    uint8_t _healthMode  = 0;          ///< Mode read by last healthCheckBlocking (0=pos, 1=motor)
+    int16_t _healthSpeed = 0;          ///< Speed read by last healthCheckBlocking
 
     /**
      * @brief Computes the checksum for a command buffer.
@@ -172,7 +174,9 @@ public:
      * @param bus Reference to HardwareSerial (e.g., Serial).
      * @param id Servo ID (0-253, or 254 for broadcast).
      */
-    LobotServo(HardwareSerial &bus, uint8_t id) : _bus(bus), _id(id) {}
+    LobotServo(HardwareSerial &bus, uint8_t id) : _bus(bus), _id(id) {
+        _bus.setTimeout(5); // 5 ms — enough for echo at 115200 baud (10 bytes ≈ 0.87 ms)
+    }
 
     /**
      * @brief Coroutine to process non-blocking read responses.
@@ -308,7 +312,10 @@ public:
         _cmdBuf[8] = GET_HIGH_BYTE((uint16_t)speed);
         _cmdBuf[9] = checkSum(_cmdBuf);
         _bus.write(_cmdBuf, 10);
-        _bus.flush();
+        _bus.flush(); // wait for TX complete before reading echo
+        // Discard the 10-byte half-duplex echo (TX mirrored on RX)
+        uint8_t echo[10];
+        _bus.readBytes(echo, 10);
     }
 
     /**
@@ -362,6 +369,10 @@ public:
      */
     int healthCheckBlocking(uint16_t timeoutMs = 20) {
         _receiveState = IDLE; // ensure async SM is not mid-frame
+
+        // Drain any leftover bytes in RX (e.g. undiscarded echo from motor_mode).
+        while (_bus.available()) _bus.read();
+
         // Build and send the query (6 bytes)
         _cmdBuf[0] = _cmdBuf[1] = LOBOT_SERVO_FRAME_HEADER;
         _cmdBuf[2] = _id;
@@ -393,8 +404,14 @@ public:
             return 2;
         if (checkSum(resp) != resp[9]) return 2;
 
+        // resp layout: 0x55 0x55 id len cmd mode 0x00 speedL speedH chk
+        _healthMode  = resp[5];
+        _healthSpeed = (int16_t)((uint16_t)resp[7] | ((uint16_t)resp[8] << 8));
         return 0;
     }
+
+    uint8_t getHealthMode()  const { return _healthMode;  }
+    int16_t getHealthSpeed() const { return _healthSpeed; }
 
     /**
      * @brief Initiates reading the servo ID.

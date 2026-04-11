@@ -43,6 +43,12 @@ public:
     static WebServer& server();
 
     /**
+     * @brief Send a JSON response with CORS headers guaranteed.
+     */
+    static void sendJson(int code, const String& body);
+    static void sendJson(int code, const __FlashStringHelper* body);
+
+    /**
      * @brief Connect WiFi, start HTTP server, launch Core-0 system task,
      *        then call CoroutineScheduler::setup().
      *
@@ -57,6 +63,9 @@ private:
 
     /** Lazily create the WebServer with the given port (no-op if already created). */
     static WebServer& _get(uint16_t port = 80);
+
+    /** Preflight response for CORS — registered automatically on every route. */
+    static void _onOptions();
 };
 
 #endif  // ESP32

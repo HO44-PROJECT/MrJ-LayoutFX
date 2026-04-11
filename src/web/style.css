@@ -325,21 +325,21 @@
       display: block
     }
 
-    /* ── Cockpit view (existing card layout) ────────────────────────────── */
+    /* ── Cockpit view ───────────────────────────────────────────────────── */
     #grid {
-      padding: 1.5rem;
+      padding: 1rem;
       display: flex;
       flex-direction: column;
-      gap: 1.8rem
+      gap: 1rem
     }
 
     .ghdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: .8rem;
+      margin-bottom: .5rem;
       border-bottom: 1px solid var(--bd);
-      padding-bottom: .5rem
+      padding-bottom: .35rem
     }
 
     .gname {
@@ -363,18 +363,18 @@
 
     .gcards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 1rem
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: .6rem
     }
 
     .card {
       background: var(--bg1);
       border-radius: 8px;
       border: 2px solid var(--bd);
-      padding: 1rem;
+      padding: .7rem;
       display: flex;
       flex-direction: column;
-      gap: .6rem;
+      gap: .4rem;
       transition: border-color .4s
     }
 
@@ -454,7 +454,7 @@
     }
 
     .icon {
-      height: 44px;
+      height: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -462,8 +462,8 @@
     }
 
     .icon svg {
-      width: 40px;
-      height: 40px;
+      width: 30px;
+      height: 30px;
       transition: color .4s
     }
 
@@ -541,25 +541,27 @@
 
     .tbtns {
       display: flex;
+      flex-wrap: wrap;
       gap: 3px
     }
 
     .tbtn {
-      flex: 1;
-      padding: .35rem .05rem;
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: .3rem .15rem;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      font-size: .64rem;
+      font-size: .58rem;
       font-weight: 700;
-      letter-spacing: .3px;
-      opacity: .55;
+      letter-spacing: 0;
+      white-space: nowrap;
+      opacity: 1;
       transition: opacity .15s
     }
 
     .tbtn.active {
-      opacity: 1;
-      box-shadow: 0 0 0 2px rgba(255,255,255,.35)
+      box-shadow: 0 0 0 2px rgba(255,255,255,.55)
     }
 
     .tbtn:not(.active):not([disabled]):hover {
@@ -567,6 +569,7 @@
     }
 
     .tbtn[disabled] {
+      opacity: .35;
       cursor: default
     }
 
@@ -1275,6 +1278,7 @@
       font-weight: 600
     }
     .de-btn.cancel { background: var(--d2); color: var(--t2) }
+    .de-btn.apply  { background: #e67e22; color: #fff }
     .de-btn.save   { background: #27ae60; color: #fff; margin-left: auto }
     .de-btn.del    { background: #c0392b; color: #fff }
     .de-btn:disabled { opacity: .5; cursor: default }

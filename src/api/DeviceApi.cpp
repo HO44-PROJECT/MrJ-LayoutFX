@@ -96,17 +96,17 @@ void DeviceApi::_onGetDevices() {
     json += F("]}");
   }
   json += "]";
-  ApiServer::server().send(200, "application/json", json);
+  ApiServer::sendJson(200, json);
 }
 
 void DeviceApi::_onPostDevice() {
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
   if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["state"].is<int>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   const char *id = doc["id"] | "";
@@ -119,21 +119,21 @@ void DeviceApi::_onPostDevice() {
 #ifdef MRJFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, state);
 #endif
-      ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+      ApiServer::sendJson(200, F("{\"ok\":true}"));
       return;
     }
   }
-  ApiServer::server().send(404, "application/json", F("{\"error\":\"device not found\"}"));
+  ApiServer::sendJson(404, F("{\"error\":\"device not found\"}"));
 }
 
 void DeviceApi::_onSwitch() {
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
   if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["on"].is<bool>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   const char *id = doc["id"] | "";
@@ -147,21 +147,21 @@ void DeviceApi::_onSwitch() {
 #ifdef MRJFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, on ? 1 : 0);
 #endif
-      ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+      ApiServer::sendJson(200, F("{\"ok\":true}"));
       return;
     }
   }
-  ApiServer::server().send(404, "application/json", F("{\"error\":\"device not found\"}"));
+  ApiServer::sendJson(404, F("{\"error\":\"device not found\"}"));
 }
 
 void DeviceApi::_onAllDevices() {
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
   if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["state"].is<int>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   int state = doc["state"].as<int>();
@@ -174,17 +174,17 @@ void DeviceApi::_onAllDevices() {
     if (strcmp("StaticLow", (const char *)d->getDeviceName()) != 0)
       d->newState((STATE_TYPE)state);
   }
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
 }
 
 void DeviceApi::_onGroupDevices() {
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
   if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["state"].is<int>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   int state = doc["state"].as<int>();
@@ -195,7 +195,7 @@ void DeviceApi::_onGroupDevices() {
     if (strcmp(type, (const char *)d->getDeviceName()) == 0)
       d->newState((STATE_TYPE)state);
   }
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
 }
 
 // ---------------------------------------------------------------------------
@@ -205,30 +205,30 @@ void DeviceApi::_onGroupDevices() {
 void DeviceApi::_onGetConfig() {
   Serial.println(F("API: GET /api/config"));
   if (!ConfigManager::configExists()) {
-    ApiServer::server().send(404, "application/json", F("{\"error\":\"config not found\"}"));
+    ApiServer::sendJson(404, F("{\"error\":\"config not found\"}"));
     return;
   }
   ApiServer::server().sendHeader("Content-Disposition", "attachment; filename=\"config.json\"");
-  ApiServer::server().send(200, "application/json", ConfigManager::readConfig());
+  ApiServer::sendJson(200, ConfigManager::readConfig());
 }
 
 void DeviceApi::_onPostConfig() {
   Serial.println(F("API: POST /api/config"));
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   if (!ConfigManager::writeConfig(ApiServer::server().arg("plain"))) {
-    ApiServer::server().send(500, "application/json", F("{\"error\":\"write failed\"}"));
+    ApiServer::sendJson(500, F("{\"error\":\"write failed\"}"));
     return;
   }
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
 }
 
 void DeviceApi::_onDeleteConfig() {
   Serial.println(F("API: DELETE /api/config"));
   ConfigManager::deleteConfig();
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
   delay(200);
   ESP.restart();
 }
@@ -236,30 +236,38 @@ void DeviceApi::_onDeleteConfig() {
 void DeviceApi::_onServo() {
   Serial.println(F("API: POST /api/servo"));
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
-  if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["speed"].is<int>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+  if (deserializeJson(doc, ApiServer::server().arg("plain"))) {
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   const char *id = doc["id"] | "";
-  int speed = doc["speed"].as<int>();
+  const char *action = doc["action"] | "";
+  bool isReverse = strcmp(action, "reverse") == 0;
+  if (!isReverse && !doc["speed"].is<int>()) {
+    ApiServer::sendJson(400, F("{\"error\":\"speed or action required\"}"));
+    return;
+  }
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
-      _factory->device(i)->setMotorSpeed((int16_t)speed);
-      ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+      if (isReverse)
+        _factory->device(i)->reverseMotor();
+      else
+        _factory->device(i)->setMotorSpeed((int16_t)doc["speed"].as<int>());
+      ApiServer::sendJson(200, F("{\"ok\":true}"));
       return;
     }
   }
-  ApiServer::server().send(404, "application/json", F("{\"error\":\"device not found\"}"));
+  ApiServer::sendJson(404, F("{\"error\":\"device not found\"}"));
 }
 
 void DeviceApi::_onRestart() {
   Serial.println(F("API: POST /api/restart"));
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
   delay(200);
   ESP.restart();
 }
@@ -292,7 +300,7 @@ void DeviceApi::_onGetStatus() {
 
   String json;
   serializeJson(doc, json);
-  ApiServer::server().send(200, "application/json", json);
+  ApiServer::sendJson(200, json);
 }
 
 // ---------------------------------------------------------------------------
@@ -313,13 +321,13 @@ void DeviceApi::_onGetBoards() {
     json += F("}");
   }
   json += "]";
-  ApiServer::server().send(200, "application/json", json);
+  ApiServer::sendJson(200, json);
 }
 
 void DeviceApi::_onGetBoardTypes() {
   Serial.println(F("API: GET /api/board-types"));
   if (!LittleFS.exists("/board_types.json")) {
-    ApiServer::server().send(404, "application/json", F("{\"error\":\"board_types.json not found\"}"));
+    ApiServer::sendJson(404, F("{\"error\":\"board_types.json not found\"}"));
     return;
   }
   File f = LittleFS.open("/board_types.json", "r");
@@ -339,7 +347,8 @@ void DeviceApi::_onGetHealth() {
   Serial.println(F("API: GET /api/health"));
   String json = "[";
   for (size_t i = 0; i < _factory->count(); i++) {
-    int result = _factory->device(i)->healthCheck();
+    Device *d = _factory->device(i);
+    int result = d->healthCheck();
     if (i > 0) json += ",";
     json += F("{\"id\":\"");
     json += _factory->deviceId(i);
@@ -350,14 +359,15 @@ void DeviceApi::_onGetHealth() {
       json += F("\"supported\":true,\"ok\":");
       json += (result == 0) ? F("true") : F("false");
       if (result > 0) {
-        json += F(",\"error\":");
-        json += result;
+        json += F(",\"error\":"); json += result;
+      } else {
+        d->appendHealthJson(json);
       }
     }
     json += "}";
   }
   json += "]";
-  ApiServer::server().send(200, "application/json", json);
+  ApiServer::sendJson(200, json);
 }
 
 // ---------------------------------------------------------------------------
@@ -366,38 +376,38 @@ void DeviceApi::_onGetHealth() {
 
 void DeviceApi::_onTestGpio() {
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
   if (deserializeJson(doc, ApiServer::server().arg("plain")) || !doc["pin"].is<int>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   int pin   = doc["pin"].as<int>();
   int state = doc["state"] | 0;
   if (pin < 0 || pin > 39) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid pin\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid pin\"}"));
     return;
   }
   if (pin == 1 || pin == 3) {
-    ApiServer::server().send(403, "application/json", F("{\"error\":\"reserved UART pin\"}"));
+    ApiServer::sendJson(403, F("{\"error\":\"reserved UART pin\"}"));
     return;
   }
   pinMode(pin, OUTPUT);
   digitalWrite(pin, state ? HIGH : LOW);
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
 }
 
 void DeviceApi::_onTestSpi() {
   if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"body required\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
   }
   JsonDocument doc;
   if (deserializeJson(doc, ApiServer::server().arg("plain"))
       || !doc["card"].is<int>() || !doc["channel"].is<int>()) {
-    ApiServer::server().send(400, "application/json", F("{\"error\":\"invalid JSON\"}"));
+    ApiServer::sendJson(400, F("{\"error\":\"invalid JSON\"}"));
     return;
   }
   int card    = doc["card"].as<int>();
@@ -405,14 +415,14 @@ void DeviceApi::_onTestSpi() {
   int state   = doc["state"] | 0;
   #ifdef MRJFX_SPI_CARDS_ENABLED
   if (!Spi595Bus::ready()) {
-    ApiServer::server().send(503, "application/json", F("{\"error\":\"SPI not ready\"}"));
+    ApiServer::sendJson(503, F("{\"error\":\"SPI not ready\"}"));
     return;
   }
   Spi595Bus::setPin((uint8_t)card, (uint8_t)channel, (uint8_t)(state ? 1 : 0));
-  ApiServer::server().send(200, "application/json", F("{\"ok\":true}"));
+  ApiServer::sendJson(200, F("{\"ok\":true}"));
   #else
   (void)card; (void)channel;
-  ApiServer::server().send(501, "application/json", F("{\"error\":\"SPI not enabled\"}"));
+  ApiServer::sendJson(501, F("{\"error\":\"SPI not enabled\"}"));
   #endif
 }
 

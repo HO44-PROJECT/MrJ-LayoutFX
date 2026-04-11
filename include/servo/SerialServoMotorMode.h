@@ -184,6 +184,7 @@ public:
    * Called by /api/servo endpoint. Delegates to setSpeed().
    */
   inline virtual void setMotorSpeed(int16_t s) override { setSpeed((SERVO_SPEED)s); }
+  inline virtual void reverseMotor() override { reverse(); }
 
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
   /**
@@ -193,6 +194,15 @@ public:
   inline virtual int healthCheck() override {
     if (servo == nullptr) return -1;
     return servo->healthCheckBlocking();
+  }
+
+  /**
+   * @brief Append mode and speed read from the servo to the health JSON.
+   */
+  inline virtual void appendHealthJson(String& json) override {
+    if (servo == nullptr) return;
+    json += F(",\"hw_mode\":");  json += servo->getHealthMode();
+    json += F(",\"hw_speed\":"); json += servo->getHealthSpeed();
   }
   #endif
 

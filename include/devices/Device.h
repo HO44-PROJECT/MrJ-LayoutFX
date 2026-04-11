@@ -156,6 +156,7 @@ public:
    * speed value in [-1000, +1000] and trigger the coroutine.
    */
   inline virtual void setMotorSpeed(int16_t /*speed*/) {}
+  inline virtual void reverseMotor() {}
 
   /**
    * @brief Optional hardware health check.
@@ -166,6 +167,15 @@ public:
    * @return -1 = not supported, 0 = OK, 1 = no response (timeout), 2 = bad response.
    */
   inline virtual int healthCheck() { return -1; }
+
+  /**
+   * @brief Append device-specific fields to the health JSON object.
+   *
+   * Called after healthCheck() succeeds (result == 0). Subclasses append
+   * comma-prefixed key:value pairs, e.g. `,\"mode\":1,\"speed\":300`.
+   * Default: no extra fields.
+   */
+  inline virtual void appendHealthJson(String& /*json*/) {}
 
   /**
    * @brief Checks if the device is in a non-interruptible state transition.

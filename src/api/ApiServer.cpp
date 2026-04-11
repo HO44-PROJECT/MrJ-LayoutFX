@@ -31,13 +31,31 @@ WebServer &ApiServer::server() {
   return _get();
 }
 
+void ApiServer::sendJson(int code, const String &body) {
+  _server->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  _server->send(code, "application/json", body);
+}
+
+void ApiServer::sendJson(int code, const __FlashStringHelper *body) {
+  _server->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  _server->send(code, "application/json", body);
+}
+
 // ---------------------------------------------------------------------------
 // Public
 // ---------------------------------------------------------------------------
 
+void ApiServer::_onOptions() {
+  _server->sendHeader(F("Access-Control-Allow-Origin"),  F("*"));
+  _server->sendHeader(F("Access-Control-Allow-Methods"), F("GET,POST,DELETE,OPTIONS"));
+  _server->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type,Accept"));
+  _server->send(204);
+}
+
 void ApiServer::on(const char *path, HTTPMethod method,
                    WebServer::THandlerFunction handler) {
   _get().on(path, method, handler);
+  _get().on(path, HTTP_OPTIONS, _onOptions);
 }
 
 void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
@@ -60,6 +78,18 @@ void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
   } else {
     Serial.println(F("[WiFi] not connected"));
   }
+
+  // --- Preflight handler for CORS (OPTIONS) ---
+  _server->onNotFound([]() {
+    if (_server->method() == HTTP_OPTIONS) {
+      _server->sendHeader(F("Access-Control-Allow-Origin"),  F("*"));
+      _server->sendHeader(F("Access-Control-Allow-Methods"), F("GET,POST,DELETE,OPTIONS"));
+      _server->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type,Accept"));
+      _server->send(204);
+    } else {
+      _server->send(404, "application/json", F("{\"error\":\"not found\"}"));
+    }
+  });
 
   // --- Start HTTP server ---
   _server->begin();
