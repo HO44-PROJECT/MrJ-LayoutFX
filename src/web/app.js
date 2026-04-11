@@ -50,6 +50,7 @@
       document.getElementById('sb').style.display = isCockpit ? '' : 'none';
 
       _currentView = name;
+      location.hash = name;
       closeDrawer();
       if (name === 'params') loadParams();
       if (name === 'about') loadAbout();
@@ -354,12 +355,31 @@
     }
 
     function startRebootCountdown() {
-      var n = 10;
+      var n = 8;
       function tick() {
-        cfgStatus(t('cfg.rebooting', { n: n }), 'ok');
-        if (n-- > 0) setTimeout(tick, 1000);
+        if (n > 0) {
+          cfgStatus(t('cfg.rebooting', { n: n }), 'ok');
+          n--;
+          setTimeout(tick, 1000);
+        } else {
+          cfgStatus('Reconnexion…', 'ok');
+          tryReconnect();
+        }
       }
       tick();
+    }
+
+    function tryReconnect() {
+      fetch('/api/status')
+        .then(function (r) {
+          if (r.ok) {
+            history.replaceState(null, '', location.pathname + '#debug');
+            location.reload();
+          } else {
+            setTimeout(tryReconnect, 1000);
+          }
+        })
+        .catch(function () { setTimeout(tryReconnect, 1000); });
     }
 
     function cfgStatus(msg, cls) {
@@ -988,6 +1008,15 @@
       b.classList.toggle('active', b.classList.contains('theme-dot-' + _th));
     });
     applyLang();
+    (function () {
+      var h = location.hash.slice(1);
+      var valid = ['cockpit', 'canvas', 'params', 'debug', 'about'];
+      if (h && valid.indexOf(h) >= 0) switchView(h);
+    })();
+    window.addEventListener('hashchange', function () {
+      var h = location.hash.slice(1);
+      if (h && h !== _currentView && document.getElementById('view-' + h)) switchView(h);
+    });
     poll();
     _pollTimer = setInterval(poll, POLL);
 
