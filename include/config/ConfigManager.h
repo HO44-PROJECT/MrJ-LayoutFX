@@ -65,6 +65,9 @@ public:
      */
     static bool activateConfig(const char* srcFile);
 
+    /** @brief Read any file from LittleFS by path. Returns empty String if absent. */
+    static String readFile(const char* path);
+
 private:
     static DeviceFactory _factory;
     static const char*   _configPath;

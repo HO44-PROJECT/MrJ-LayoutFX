@@ -64,7 +64,7 @@
         'err.conn': 'Connexion perdue \u2014 reconnexion en cours\u2026',
         'cfg.dl.title': 'T\u00e9l\u00e9charger',
         'cfg.dl.desc': "R\u00e9cup\u00e8re la configuration active de l'ESP32.",
-        'cfg.dl.btn': 'T\u00e9l\u00e9charger config.json',
+        'cfg.dl.btn': 'T\u00e9l\u00e9charger',
         'cfg.ul.title': 'Uploader',
         'cfg.ul.desc': "Envoie un nouveau fichier JSON \u2014 l'ESP32 red\u00e9marre pour l'appliquer.",
         'cfg.ul.nofile': 'Aucun fichier s\u00e9lectionn\u00e9',
@@ -78,6 +78,14 @@
         'cfg.apply.title': 'Appliquer',
         'cfg.apply.desc': 'Relance l\u2019ESP32 pour appliquer la configuration sauvegard\u00e9e.',
         'cfg.apply.btn': 'Red\u00e9marrer',
+        'cfg.choose_btn': 'Choisir',
+        'cfg.save.btn': 'Sauvegarder',
+        'cfg.rename.btn': 'Renommer',
+        'cfg.destroy.btn': 'D\u00e9truire',
+        'cfg.destroy.confirm': 'Supprimer d\u00e9finitivement\u00a0?',
+        'cfg.destroy.yes': 'Supprimer',
+        'cfg.cancel': 'Annuler',
+        'cfg.dirty.msg': 'Configuration modifi\u00e9e \u2014 un red\u00e9marrage est n\u00e9cessaire pour appliquer les changements.',
         'prm.interface': 'Interface',
         'prm.language': 'Langue',
         'prm.poll_interval': 'Rafra\u00eechissement',
@@ -104,6 +112,21 @@
         'ck.busy': '\u2026',
         'ck.grp_on': 'ALLUMER',
         'ck.grp_off': '\u00c9TEINDRE',
+        // board type labels & descriptions (fallback = English from board_types.json)
+        'bt.ESP32DevkitC.label':      'ESP32 DevKit C',
+        'bt.ESP32DevkitC.desc':       'Espressif ESP32-WROOM-32 Development Kit V4 \u2014 38 broches (2\u00d719), USB en haut',
+        'bt.HC595x2_uniface.label':   'HC595 \u00d72 \u2014 16 sorties unifaces',
+        'bt.HC595x2_uniface.desc':    '2\u00d774HC595 en daisy-chain \u2014 16 sorties sur un seul c\u00f4t\u00e9, Q1\u2026Q16 de haut en bas',
+        'bt.HC595.label':             'HC595 \u2014 8 sorties',
+        'bt.HC595.desc':              'Carte fille 74HC595 \u2014 8 sorties sur un c\u00f4t\u00e9',
+        'bt.HC595x2_biface.label':    'HC595 \u00d72 \u2014 16 sorties bifaces',
+        'bt.HC595x2_biface.desc':     'PCB custom \u2014 2\u00d774HC595 en daisy-chain, 8 sorties \u00e0 gauche + 8 sorties \u00e0 droite',
+        'bt.LobotChain.label':        'Cha\u00eene servo Lobot',
+        'bt.LobotChain.desc':         'Contr\u00f4leur LX-16A en bus UART \u2014 adressage par ID servo, pas de repr\u00e9sentation physique de pins',
+        'bt.DfPlayerMini.label':      'DFPlayer Mini',
+        'bt.DfPlayerMini.desc':       'Module audio MP3 UART \u2014 rx/tx issus du bus, pas de repr\u00e9sentation physique de pins',
+        'bt.SSD1306.label':           'OLED SSD1306 128\u00d764',
+        'bt.SSD1306.desc':            '\u00c9cran OLED I\u00b2C \u2014 pilot\u00e9 par le driver SSD1306, pas de repr\u00e9sentation physique de pins',
         // debug / config view
         'nav.debug': 'Configuration',
         'dbg.add_board': '+ Carte',
@@ -111,6 +134,7 @@
         'dbg.select_type': 'Type de carte',
         'dbg.all_on': 'Tout ON',
         'dbg.all_off': 'Tout OFF',
+        'dbg.all_test': 'Tout TEST',
         'dbg.no_boards': 'Aucune carte. Cliquez sur \u00ab\u00a0+\u00a0Carte\u00a0\u00bb pour commencer.',
         // device editor
         'de.add_btn': '+ Ajouter',
@@ -169,7 +193,7 @@
         'err.conn': 'Connection lost \u2014 reconnecting\u2026',
         'cfg.dl.title': 'Download',
         'cfg.dl.desc': 'Get the active configuration from the ESP32.',
-        'cfg.dl.btn': 'Download config.json',
+        'cfg.dl.btn': 'Download',
         'cfg.ul.title': 'Upload',
         'cfg.ul.desc': 'Send a new JSON file \u2014 the ESP32 reboots to apply it.',
         'cfg.ul.nofile': 'No file selected',
@@ -183,6 +207,15 @@
         'cfg.apply.title': 'Apply',
         'cfg.apply.desc': 'Restart the ESP32 to apply the saved configuration.',
         'cfg.apply.btn': 'Restart',
+        'cfg.choose_btn': 'Choose',
+        'cfg.dup.btn': 'Duplicate',
+        'cfg.save.btn': 'Save snapshot',
+        'cfg.rename.btn': 'Rename',
+        'cfg.destroy.btn': 'Delete',
+        'cfg.destroy.confirm': 'Permanently delete this file?',
+        'cfg.destroy.yes': 'Delete',
+        'cfg.cancel': 'Cancel',
+        'cfg.dirty.msg': 'Configuration changed \u2014 a restart is required to apply the changes.',
         'prm.interface': 'Interface',
         'prm.language': 'Language',
         'prm.poll_interval': 'Refresh interval',
@@ -216,6 +249,7 @@
         'dbg.select_type': 'Board type',
         'dbg.all_on': 'All ON',
         'dbg.all_off': 'All OFF',
+        'dbg.all_test': 'All TEST',
         'dbg.no_boards': 'No boards. Click \u00ab\u00a0+\u00a0Board\u00a0\u00bb to start.',
         // device editor
         'de.add_btn': '+ Add',
@@ -272,6 +306,13 @@
       var s = (TRANSLATIONS[_lang] || TRANSLATIONS['fr'])[key] || key;
       if (vars) Object.keys(vars).forEach(function (k) { s = s.replace('{' + k + '}', vars[k]); });
       return s;
+    }
+
+    // Board-type translation with fallback to the English value from board_types.json.
+    function tbt(type, field, fallback) {
+      var key = 'bt.' + type + '.' + field;
+      var dict = TRANSLATIONS[_lang] || TRANSLATIONS['fr'];
+      return dict[key] || fallback;
     }
 
     function setLang(lang) {

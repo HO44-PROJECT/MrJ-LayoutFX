@@ -59,6 +59,10 @@ private:
     static void _onPostConfig();
     static void _onDeleteConfig();
     static void _onGetConfigs();
+    static void _onPostNamedConfig();
+    static void _onDeleteNamedConfig();
+    static void _onCopyConfig();
+    static void _onRenameConfig();
     static void _onActivateConfig();
     static void _onGetStatus();
     static void _onGetBoards();

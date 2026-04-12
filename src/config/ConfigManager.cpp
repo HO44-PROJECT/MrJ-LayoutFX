@@ -57,10 +57,19 @@ String ConfigManager::readConfig() {
 }
 
 bool ConfigManager::writeConfig(const String &json) {
-  File f = LittleFS.open(_configPath, "w");
+  File f = LittleFS.open(_configPath, "w", true); // create=true required on arduino-esp32 3.x
   if (!f)
     return false;
-  f.print(json);
+  const uint8_t *buf = (const uint8_t *)json.c_str();
+  size_t total = json.length();
+  size_t offset = 0;
+  const size_t CHUNK = 512;
+  while (offset < total) {
+    size_t toWrite = min(total - offset, CHUNK);
+    size_t w = f.write(buf + offset, toWrite);
+    if (w == 0) { f.close(); return false; }
+    offset += w;
+  }
   f.close();
   return true;
 }
@@ -79,7 +88,8 @@ String ConfigManager::listConfigs() {
   File root = LittleFS.open("/");
   File f = root.openNextFile();
   while (f) {
-    String name = f.name(); // e.g. "config.json"
+    String name = f.name();
+    if (name.startsWith("/")) name = name.substring(1); // strip leading slash (ESP32 LittleFS quirk)
     if (name.endsWith(".json") && name != "board_types.json") {
       if (!first) out += ",";
       out += "\"";
@@ -98,14 +108,18 @@ bool ConfigManager::activateConfig(const char *srcFile) {
   if (content.isEmpty()) return false;
   if (!writeConfig(content)) return false;
   // Remember which source file is active
-  File f = LittleFS.open("/config_source.txt", "w");
+  File f = LittleFS.open("/config_source.txt", "w", true); // create=true required on arduino-esp32 3.x
   if (f) { f.print(srcFile); f.close(); }
   return true;
 }
 
 // ---------------------------------------------------------------------------
-// Private — LittleFS helpers
+// LittleFS helpers
 // ---------------------------------------------------------------------------
+
+String ConfigManager::readFile(const char *path) {
+  return _readFile(path);
+}
 
 String ConfigManager::_readFile(const char *path) {
   File f = LittleFS.open(path, "r");

@@ -603,58 +603,136 @@
       color: #fff
     }
 
-    /* ── Config view ─────────────────────────────────────────────────────── */
-    .cfg-panel {
-      padding: 1.5rem;
+    /* ── Config management section ──────────────────────────────────────── */
+    .cfgmgr {
+      border-top: 1px solid var(--bd);
+      margin-top: .5rem;
       display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      max-width: 640px
+      flex-direction: column
     }
 
-    .cfg-card {
-      background: var(--bg1);
-      border: 2px solid var(--bd);
-      border-radius: 8px;
-      padding: 1.25rem;
+    .cfgmgr-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: .9rem 1rem;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .cfgmgr-row-label {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      min-width: 130px;
+      max-width: 130px;
+      padding-top: .1rem;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--t1);
+      letter-spacing: .5px;
+      flex-shrink: 0
+    }
+
+    .cfgmgr-icon {
+      font-size: .95rem;
+      flex-shrink: 0
+    }
+
+    .cfgmgr-row-body {
       flex: 1;
-      min-width: 220px;
       display: flex;
       flex-direction: column;
-      gap: .6rem
+      gap: .5rem;
+      min-width: 0
     }
 
-    .cfg-card-icon {
-      font-size: 2rem
-    }
-
-    .cfg-card-title {
-      font-size: .9rem;
-      font-weight: 700;
-      color: var(--t0);
-      letter-spacing: 1px
-    }
-
-    .cfg-card-desc {
+    .cfgmgr-row-desc {
       font-size: .75rem;
-      color: var(--t2)
+      color: var(--t3)
     }
 
-    .cfg-filename {
+    .cfgmgr-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .cfgmgr-upload-row {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem
+    }
+
+    .cfgmgr-filename {
       font-size: .72rem;
       color: var(--t3);
-      background: var(--bg3);
-      padding: .3rem .6rem;
+      background: var(--bg2);
+      padding: .25rem .6rem;
       border-radius: 4px;
+      border: 1px solid var(--bd);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis
     }
 
-    .cfg-actions {
+    .cfgmgr-btn {
+      padding: .38rem .85rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+      background: var(--acc);
+      color: #fff;
+      transition: opacity .15s
+    }
+
+    .cfgmgr-btn:active { opacity: .7 }
+
+    .cfgmgr-btn:disabled {
+      background: var(--bg3);
+      color: var(--t3);
+      cursor: default
+    }
+
+    .cfgmgr-btn.secondary {
+      background: var(--bg3);
+      color: var(--t1);
+      border: 1px solid var(--bd)
+    }
+
+    .cfgmgr-btn.secondary:hover { background: var(--bd) }
+
+    .cfgmgr-btn.danger {
+      background: #e67e22;
+      color: #fff
+    }
+
+    .cfgmgr-btn.danger:hover { background: #d35400 }
+
+    .cfgmgr-input-row {
       display: flex;
+      align-items: center;
       gap: .5rem;
-      margin-top: .25rem
+      flex-wrap: wrap;
+      padding: .4rem 0
+    }
+
+    .cfgmgr-input {
+      flex: 1;
+      min-width: 140px;
+      padding: .35rem .7rem;
+      border-radius: 5px;
+      border: 1px solid var(--bd);
+      background: var(--bg2);
+      color: var(--t1);
+      font-size: .78rem
+    }
+
+    .cfgmgr-confirm-msg {
+      font-size: .78rem;
+      color: var(--t2)
     }
 
     .cfg-filelist {
@@ -679,18 +757,27 @@
       transition: border-color .15s, background .15s, color .15s
     }
 
-    .cfg-fileitem:hover:not(.active) {
-      border-color: #3d85c8;
-      background: #253a52;
-      color: #fff
+    .cfg-fileitem:hover:not(.active):not(.pending):not(.selected) {
+      border-color: var(--acc);
+      background: var(--bg3);
+    }
+
+    .cfg-fileitem.selected {
+      border-color: var(--acc);
+      background: var(--bg2)
     }
 
     .cfg-fileitem.active {
       border-color: #27ae60;
-      background: #1a3a2a;
-      color: #27ae60;
+      background: var(--bg1);
+      color: var(--t0);
       font-weight: 700;
       cursor: default
+    }
+
+    .cfg-fileitem.pending {
+      border-color: #e67e22;
+      background: var(--bg1)
     }
 
     .cfg-fileitem .cfg-filedot {
@@ -701,8 +788,8 @@
       transition: background .15s, border-color .15s
     }
 
-    .cfg-fileitem:hover:not(.active) .cfg-filedot {
-      border-color: #3d85c8
+    .cfg-fileitem:hover:not(.active):not(.pending) .cfg-filedot {
+      border-color: var(--acc)
     }
 
     .cfg-fileitem.active .cfg-filedot {
@@ -710,12 +797,14 @@
       border-color: #27ae60
     }
 
-    .cfg-fileitem.last {
-      border-color: #d4a017
+    .cfg-fileitem.pending .cfg-filedot {
+      background: #e67e22;
+      border-color: #e67e22
     }
 
-    .cfg-fileitem.last .cfg-filedot {
-      border-color: #d4a017
+    .cfg-fileitem.selected .cfg-filedot {
+      background: var(--acc);
+      border-color: var(--acc)
     }
 
     .cfg-filebadge {
@@ -729,47 +818,9 @@
       letter-spacing: .5px
     }
 
-    .cfg-filebadge.last {
-      background: #2a2200;
-      color: #d4a017
-    }
-
-    /* ── Confirm modal ───────────────────────────────────────────────────── */
-    .cfgmodal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.6);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 200
-    }
-
-    .cfgmodal {
-      background: var(--bg1);
-      border: 2px solid var(--bd);
-      border-radius: 10px;
-      padding: 1.5rem;
-      min-width: 260px;
-      max-width: 340px;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem
-    }
-
-    .cfgmodal-title {
-      font-size: .95rem;
-      font-weight: 700;
-      color: var(--t0)
-    }
-
-    .cfgmodal-body {
-      font-size: .82rem;
-      color: var(--t2);
-      word-break: break-all
-    }
-
-    .cfgmodal-actions {
-      display: flex;
-      gap: .6rem;
-      justify-content: flex-end
+    .cfg-filebadge.pending {
+      background: #3a2200;
+      color: #e67e22
     }
 
     .cfg-btn {
@@ -825,6 +876,44 @@
       background: #3a1a1a;
       color: #c0392b;
       border: 1px solid #c0392b
+    }
+
+    /* ── Dirty banner ───────────────────────────────────────────────────── */
+    #dirty-banner {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      background: #3a2800;
+      color: #f0a500;
+      border-bottom: 2px solid #f0a500;
+      padding: .7rem 1.2rem;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .dirty-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    #dirty-banner span[data-i18n] {
+      flex: 1;
+    }
+
+    .dirty-btn {
+      background: #f0a500;
+      color: #1a1200;
+      border: none;
+      border-radius: 5px;
+      padding: .35rem .9rem;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .dirty-btn:hover {
+      background: #ffc200;
     }
 
     /* ── Params view ────────────────────────────────────────────────────── */
@@ -1060,6 +1149,11 @@
       color: #fff
     }
 
+    .dbg-hbtn.test {
+      background: #8e44ad;
+      color: #fff
+    }
+
     .dbg-hbtn.rm {
       background: #1a2a3a;
       color: var(--t3)
@@ -1088,7 +1182,7 @@
     }
 
     .dbg-dip {
-      display: flex;
+      display: inline-flex;
       flex-direction: column;
       gap: .3rem
     }
@@ -1113,7 +1207,11 @@
       letter-spacing: 1px;
       padding: .4rem .75rem;
       line-height: 1.5;
-      min-height: 28px
+      min-height: 28px;
+      min-width: 0;
+      overflow: hidden;
+      word-break: break-word;
+      overflow-wrap: anywhere
     }
 
     .dbg-flat {
@@ -1274,9 +1372,9 @@
       width: 14px;
       height: 14px;
       border-radius: 3px;
-      border: 1px solid #1a5a2a;
-      background: #071510;
-      color: #2a6a3a;
+      border: 1px solid var(--bd);
+      background: var(--bg2);
+      color: var(--t3);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1292,21 +1390,22 @@
     }
 
     .dbg-led-btn:hover {
-      border-color: #27ae60;
-      color: #4CAF50
+      border-color: var(--d3);
+      background: var(--d1);
+      color: var(--d3)
     }
 
     .dbg-led-btn.on {
-      border-color: #27ae60;
-      background: #0d2a14;
-      color: #27ae60;
-      box-shadow: 0 0 4px rgba(39, 174, 96, .4)
+      border-color: var(--d3);
+      background: var(--d1);
+      color: var(--d3);
+      box-shadow: 0 0 4px rgba(39, 174, 96, .35)
     }
 
     .dbg-led-btn.off {
-      border-color: #4a1f1f;
-      background: #100808;
-      color: #5a3030
+      border-color: var(--bd);
+      background: var(--bg2);
+      color: var(--t4)
     }
 
     /* ── Device editor modal ────────────────────────────────────────────── */
@@ -1412,9 +1511,9 @@
       width: 14px;
       height: 14px;
       border-radius: 3px;
-      border: 1px solid var(--d2);
-      background: var(--d0);
-      color: var(--t3);
+      border: 1px solid var(--bd);
+      background: var(--bg2);
+      color: var(--t2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1427,7 +1526,7 @@
       transition: opacity .12s
     }
     .dbg-pin:hover .dbg-edit-btn { opacity: 1 }
-    .dbg-edit-btn:hover { border-color: #5588cc; color: #88aaee; background: #101828 }
+    .dbg-edit-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }
 
     /* ── About view ─────────────────────────────────────────────────────── */
     .abt-panel {

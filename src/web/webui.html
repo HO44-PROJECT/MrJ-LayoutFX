@@ -45,7 +45,7 @@
       <div class="nav-item" data-view="params" onclick="switchView('params')">
         <span class="nav-icon">⚙</span> <span data-i18n="nav.params">Paramètres</span>
       </div>
-      <div class="nav-item" data-view="debug" onclick="switchView('debug')">
+      <div class="nav-item" data-view="config" onclick="switchView('config')">
         <span class="nav-icon">📁</span> <span data-i18n="nav.debug">Configuration</span>
       </div>
       <div class="nav-item" data-view="about" onclick="switchView('about')">
@@ -66,8 +66,14 @@
     <div id="grid"></div>
   </div>
 
-  <!-- ── View: Configuration (ex-Debug) ─────────────────────────────── -->
-  <div id="view-debug" class="view">
+  <!-- ── View: Configuration ─────────────────────────────────────────── -->
+  <div id="view-config" class="view">
+    <!-- Dirty state banner -->
+    <div id="dirty-banner" style="display:none">
+      <span class="dirty-icon">⚠</span>
+      <span data-i18n="cfg.dirty.msg">Configuration modifiée — un redémarrage est nécessaire pour appliquer les changements.</span>
+      <button class="dirty-btn" onclick="applyEsp32()" data-i18n="cfg.apply.btn">Redémarrer</button>
+    </div>
     <div class="dbg-panel">
 
       <div class="dbg-top">
@@ -81,53 +87,64 @@
       <!-- Board cards -->
       <div id="dbg-boards"></div>
 
-      <!-- Configs disponibles sur LittleFS -->
-      <div class="cfg-panel" style="padding:0;max-width:none;margin-bottom:.8rem">
-        <div class="cfg-card" style="flex:1;min-width:220px">
-          <div class="cfg-card-icon">📂</div>
-          <div class="cfg-card-title" data-i18n="cfg.switch.title">Configs disponibles</div>
-          <div class="cfg-card-desc" data-i18n="cfg.switch.desc">Sélectionnez un fichier pour l'activer, puis redémarrez.</div>
-          <div id="cfg-filelist" class="cfg-filelist">…</div>
+      <!-- Config management -->
+      <div class="cfgmgr">
+
+        <!-- Available configs + download/apply -->
+        <div class="cfgmgr-row">
+          <div class="cfgmgr-row-label">
+            <span class="cfgmgr-icon">📂</span>
+            <span data-i18n="cfg.switch.title">Configs disponibles</span>
+          </div>
+          <div class="cfgmgr-row-body">
+            <div class="cfgmgr-row-desc" data-i18n="cfg.switch.desc">Cliquez pour sélectionner une configuration.</div>
+            <div id="cfg-filelist" class="cfg-filelist">…</div>
+            <div class="cfgmgr-btns">
+              <button class="cfgmgr-btn secondary" onclick="downloadConfig()" data-i18n="cfg.dl.btn">⬇ Télécharger</button>
+            </div>
+            <!-- Selection-dependent actions -->
+            <div id="cfg-sel-actions" class="cfgmgr-btns" style="display:none">
+              <button id="cfg-choose-btn" class="cfgmgr-btn" onclick="chooseCfgFile()" style="display:none">✓ Choisir</button>
+              <button class="cfgmgr-btn secondary" onclick="saveCfgWithTimestamp()" data-i18n="cfg.save.btn">Sauvegarder</button>
+              <button class="cfgmgr-btn secondary" onclick="showRenameCfg()" data-i18n="cfg.rename.btn">Renommer</button>
+              <button class="cfgmgr-btn danger" onclick="showDestroyCfg()" data-i18n="cfg.destroy.btn">Détruire</button>
+            </div>
+            <!-- Rename input row -->
+            <div id="cfg-rename-row" class="cfgmgr-input-row" style="display:none">
+              <input id="cfg-rename-input" class="cfgmgr-input" type="text" placeholder="nouveau-nom" maxlength="27">
+              <button class="cfgmgr-btn" onclick="confirmRenameCfg()">✓</button>
+              <button class="cfgmgr-btn secondary" onclick="cancelRenameCfg()">✕</button>
+            </div>
+            <!-- Destroy confirm row -->
+            <div id="cfg-destroy-row" class="cfgmgr-input-row" style="display:none">
+              <span class="cfgmgr-confirm-msg" data-i18n="cfg.destroy.confirm">Supprimer définitivement ?</span>
+              <button class="cfgmgr-btn danger" onclick="confirmDestroyCfg()" data-i18n="cfg.destroy.yes">Supprimer</button>
+              <button class="cfgmgr-btn secondary" onclick="cancelDestroyCfg()" data-i18n="cfg.cancel">Annuler</button>
+            </div>
+          </div>
         </div>
+
+        <!-- Upload -->
+        <div class="cfgmgr-row">
+          <div class="cfgmgr-row-label">
+            <span class="cfgmgr-icon">⬆</span>
+            <span data-i18n="cfg.ul.title">Uploader</span>
+          </div>
+          <div class="cfgmgr-row-body">
+            <div class="cfgmgr-row-desc" data-i18n="cfg.ul.desc">Ajoute un fichier JSON au LittleFS.</div>
+            <input type="file" id="cfg-file" accept=".json" onchange="onCfgFileSelect(this)" style="display:none">
+            <div class="cfgmgr-upload-row">
+              <span id="cfg-filename" class="cfgmgr-filename" data-i18n="cfg.ul.nofile">Aucun fichier sélectionné</span>
+              <div class="cfgmgr-btns">
+                <button class="cfgmgr-btn secondary" onclick="document.getElementById('cfg-file').click()" data-i18n="cfg.ul.choose">Choisir…</button>
+                <button class="cfgmgr-btn" id="cfg-upload-btn" onclick="uploadConfig()" disabled data-i18n="cfg.ul.upload">Uploader</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cfg-status" style="display:none"></div>
       </div>
-
-      <!-- Download / Upload config -->
-      <div class="cfg-panel" style="padding:0;max-width:none">
-
-        <div class="cfg-card">
-          <div class="cfg-card-icon">⬇</div>
-          <div class="cfg-card-title" data-i18n="cfg.dl.title">Télécharger</div>
-          <div class="cfg-card-desc" data-i18n="cfg.dl.desc">Récupère la configuration active de l'ESP32.</div>
-          <div class="cfg-actions">
-            <button class="cfg-btn" onclick="downloadConfig()" data-i18n="cfg.dl.btn">Télécharger config.json</button>
-          </div>
-        </div>
-
-        <div class="cfg-card">
-          <div class="cfg-card-icon">⬆</div>
-          <div class="cfg-card-title" data-i18n="cfg.ul.title">Uploader</div>
-          <div class="cfg-card-desc" data-i18n="cfg.ul.desc">Envoie un nouveau fichier JSON.</div>
-          <div id="cfg-filename" class="cfg-filename">Aucun fichier sélectionné</div>
-          <input type="file" id="cfg-file" accept=".json" onchange="onCfgFileSelect(this)" style="display:none">
-          <div class="cfg-actions">
-            <button class="cfg-btn secondary" onclick="document.getElementById('cfg-file').click()"
-              data-i18n="cfg.ul.choose">Choisir…</button>
-            <button class="cfg-btn" id="cfg-upload-btn" onclick="uploadConfig()" disabled
-              data-i18n="cfg.ul.upload">Uploader</button>
-          </div>
-        </div>
-
-        <div class="cfg-card" style="min-width:180px;max-width:220px">
-          <div class="cfg-card-icon">🔄</div>
-          <div class="cfg-card-title" data-i18n="cfg.apply.title">Appliquer</div>
-          <div class="cfg-card-desc" data-i18n="cfg.apply.desc">Relance l'ESP32 pour appliquer la configuration sauvegardée.</div>
-          <div class="cfg-actions">
-            <button class="cfg-btn" style="background:#e67e22" onclick="applyEsp32()" data-i18n="cfg.apply.btn">Redémarrer</button>
-          </div>
-        </div>
-
-      </div>
-      <div id="cfg-status" style="display:none"></div>
 
     </div>
   </div>
@@ -188,18 +205,6 @@
   <script>%%I18N%%
 %%ICONS%%
 %%APP%%  </script>
-  <!-- ── Config activate confirm modal ────────────────────────────────── -->
-  <div id="cfgmodal-overlay" class="cfgmodal-overlay" style="display:none" onclick="closeCfgModal()">
-    <div class="cfgmodal" onclick="event.stopPropagation()">
-      <div class="cfgmodal-title">Activer cette configuration ?</div>
-      <div class="cfgmodal-body" id="cfgmodal-filename"></div>
-      <div class="cfgmodal-actions">
-        <button class="cfg-btn secondary" style="flex:0;padding:.4rem .9rem" onclick="closeCfgModal()">Annuler</button>
-        <button class="cfg-btn" style="flex:0;padding:.4rem .9rem;background:#e67e22" onclick="confirmActivateCfg()">Appliquer &amp; redémarrer</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ── Device editor modal ──────────────────────────────────────────── -->
   <div id="de-overlay" onclick="closeDevEditor()"></div>
   <div id="de-modal">
@@ -237,7 +242,6 @@
     <div class="de-footer">
       <button class="de-btn del" id="de-del-btn" onclick="deleteDevEditor()" data-i18n="de.del">Supprimer</button>
       <button class="de-btn cancel" onclick="closeDevEditor()" data-i18n="de.cancel">Annuler</button>
-      <button class="de-btn apply" id="de-apply-btn" onclick="applyEsp32()" data-i18n="de.apply" style="display:none">Appliquer</button>
       <button class="de-btn save" id="de-save-btn" onclick="saveDevEditor()" data-i18n="de.save">Sauvegarder</button>
     </div>
   </div>

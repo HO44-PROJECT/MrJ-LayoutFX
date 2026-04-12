@@ -54,7 +54,7 @@
       closeDrawer();
       if (name === 'params') loadParams();
       if (name === 'about') loadAbout();
-      if (name === 'debug') { loadDebug(); loadConfigs(); cfgStatus('', ''); }
+      if (name === 'config') { loadDebug(); loadConfigs(); cfgStatus('', ''); renderDirtyBanner(); }
     }
 
 
@@ -206,6 +206,13 @@
       return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     }
 
+    function deleteJson(url, body) {
+      return fetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }
+
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
     function showErr() { document.getElementById('err').style.display = 'block'; }
 
     function poll() {
@@ -214,7 +221,7 @@
         .then(function (d) {
           document.getElementById('err').style.display = 'none';
           render(d);
-          if (_currentView === 'debug') { _dbgDevs = d; renderDebugBoards(); }
+          if (_currentView === 'config') { _dbgDevs = d; renderDebugBoards(); }
         })
         .catch(showErr);
     }
@@ -249,21 +256,26 @@
 
     /* ── Config file switcher ───────────────────────────────────────────── */
 
-    var CFG_LS_KEY = 'mrjfx_last_cfg';
+    var CFG_PENDING_KEY = 'mrjfx_pending_cfg';  // confirmed as future active (persisted)
+    var _cfgSelected = null;                     // highlighted in UI only (in-memory)
 
     function loadConfigs() {
       fetch('/api/configs')
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          var last = localStorage.getItem(CFG_LS_KEY);
+          var pending = localStorage.getItem(CFG_PENDING_KEY);
           var el = document.getElementById('cfg-filelist');
           el.innerHTML = data.files.map(function (f) {
-            var isActive = (f === data.active);
-            var isLast   = (!isActive && f === last);
-            var cls = 'cfg-fileitem' + (isActive ? ' active' : '') + (isLast ? ' last' : '');
-            var onclick = isActive ? '' : ' onclick="activateCfgFile(\'' + f + '\')"';
-            var badge = isActive ? ' <span class="cfg-filebadge">actif</span>'
-                      : isLast  ? ' <span class="cfg-filebadge last">dernier</span>'
+            var isActive   = (f === data.active);
+            var isPending  = (!isActive && f === pending);
+            var isSelected = (!isActive && !isPending && f === _cfgSelected);
+            var cls = 'cfg-fileitem'
+              + (isActive   ? ' active'   : '')
+              + (isPending  ? ' pending'  : '')
+              + (isSelected ? ' selected' : '');
+            var onclick = isActive ? '' : ' onclick="highlightCfgFile(\'' + f + '\')"';
+            var badge = isActive   ? ' <span class="cfg-filebadge">actif</span>'
+                      : isPending  ? ' <span class="cfg-filebadge pending">en attente</span>'
                       : '';
             return '<div class="' + cls + '"' + onclick + '>'
               + '<span class="cfg-filedot"></span>'
@@ -271,37 +283,115 @@
               + badge
               + '</div>';
           }).join('');
+          renderCfgChooseBtn();
+          renderCfgSelActions();
         })
         .catch(function () {
           document.getElementById('cfg-filelist').textContent = '—';
         });
     }
 
-    var _cfgPendingFile = null;
-
-    function activateCfgFile(filename) {
-      _cfgPendingFile = filename;
-      document.getElementById('cfgmodal-filename').textContent = filename;
-      document.getElementById('cfgmodal-overlay').style.display = 'flex';
+    // Step 1 — highlight a file in the list (no state change yet)
+    function highlightCfgFile(filename) {
+      _cfgSelected = filename;
+      loadConfigs();
     }
 
-    function closeCfgModal() {
-      _cfgPendingFile = null;
-      document.getElementById('cfgmodal-overlay').style.display = 'none';
+    // Step 2 — confirm the highlighted file as pending (triggers dirty)
+    function chooseCfgFile() {
+      if (!_cfgSelected) return;
+      localStorage.setItem(CFG_PENDING_KEY, _cfgSelected);
+      _cfgSelected = null;
+      loadConfigs();
+      markDirty();
     }
 
-    function confirmActivateCfg() {
-      if (!_cfgPendingFile) return;
-      var filename = _cfgPendingFile;
-      closeCfgModal();
-      cfgStatus('Activation de ' + filename + '…', 'ok');
-      post('/api/config/activate', { file: filename })
+    function renderCfgChooseBtn() {
+      var el = document.getElementById('cfg-choose-btn');
+      if (!el) return;
+      // Show only when something is highlighted and not already pending
+      var pending = localStorage.getItem(CFG_PENDING_KEY);
+      var show = !!_cfgSelected && _cfgSelected !== pending;
+      el.style.display = show ? '' : 'none';
+      if (show) el.textContent = '✓ ' + t('cfg.choose_btn');
+    }
+
+    function renderCfgSelActions() {
+      var el = document.getElementById('cfg-sel-actions');
+      if (!el) return;
+      el.style.display = _cfgSelected ? '' : 'none';
+      // Hide sub-rows when deselecting
+      if (!_cfgSelected) {
+        document.getElementById('cfg-rename-row').style.display = 'none';
+        document.getElementById('cfg-destroy-row').style.display = 'none';
+      }
+    }
+
+    /* ── File management actions ────────────────────────────────────────── */
+
+    function saveCfgWithTimestamp() {
+      if (!_cfgSelected) return;
+      var now = new Date();
+      var ts = now.getFullYear() + pad2(now.getMonth() + 1) + pad2(now.getDate())
+             + '_' + pad2(now.getHours()) + pad2(now.getMinutes());
+      var base = _cfgSelected.replace(/\.json$/, '').substring(0, 13); // 13 + '_' + 13chars_ts + '.json' = 32 = LFS_NAME_MAX
+      var toName = base + '_' + ts + '.json';
+      post('/api/config/copy', { from: _cfgSelected, to: toName })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function () { cfgStatus('Sauvegardé → ' + toName, 'ok'); loadConfigs(); })
+        .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
+    }
+
+    function showRenameCfg() {
+      document.getElementById('cfg-destroy-row').style.display = 'none';
+      var row = document.getElementById('cfg-rename-row');
+      row.style.display = '';
+      var input = document.getElementById('cfg-rename-input');
+      input.value = _cfgSelected.replace(/\.json$/, '');
+      input.focus();
+      input.select();
+    }
+
+    function cancelRenameCfg() {
+      document.getElementById('cfg-rename-row').style.display = 'none';
+    }
+
+    function confirmRenameCfg() {
+      if (!_cfgSelected) return;
+      var newName = document.getElementById('cfg-rename-input').value.trim();
+      if (!newName) return;
+      if (!newName.endsWith('.json')) newName += '.json';
+      var oldName = _cfgSelected;
+      post('/api/config/rename', { from: oldName, to: newName })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function () {
-          localStorage.setItem(CFG_LS_KEY, filename);
+          document.getElementById('cfg-rename-row').style.display = 'none';
+          _cfgSelected = newName;
+          cfgStatus('Renommé → ' + newName, 'ok');
           loadConfigs();
-          applyEsp32(); // activate + restart immediately
         })
-        .catch(function (e) { cfgStatus('Erreur : ' + e.message, 'err'); });
+        .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
+    }
+
+    function showDestroyCfg() {
+      document.getElementById('cfg-rename-row').style.display = 'none';
+      document.getElementById('cfg-destroy-row').style.display = '';
+    }
+
+    function cancelDestroyCfg() {
+      document.getElementById('cfg-destroy-row').style.display = 'none';
+    }
+
+    function confirmDestroyCfg() {
+      if (!_cfgSelected) return;
+      deleteJson('/api/configs', { file: _cfgSelected })
+        .then(function () {
+          document.getElementById('cfg-destroy-row').style.display = 'none';
+          _cfgSelected = null;
+          cfgStatus('Fichier supprimé.', 'ok');
+          loadConfigs();
+        })
+        .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
     }
 
     /* ── Config management ──────────────────────────────────────────────── */
@@ -335,13 +425,16 @@
         document.getElementById('cfg-upload-btn').disabled = true;
         cfgStatus('Envoi en cours…', 'ok');
 
-        fetch('/api/config', {
+        // Wrap in {_name, content} so the server can extract the filename
+        // without needing query params (broken with JSON body) or custom headers
+        var payload = JSON.stringify({ _name: file.name, content: e.target.result });
+        fetch('/api/configs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: e.target.result
+          body: payload
         })
           .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-          .then(function () { cfgStatus(t('cfg.saved'), 'ok'); document.getElementById('cfg-upload-btn').disabled = false; })
+          .then(function () { cfgStatus(t('cfg.saved'), 'ok'); document.getElementById('cfg-upload-btn').disabled = false; loadConfigs(); })
           .catch(function (err) { cfgStatus(t('de.err_prefix') + err.message, 'err'); });
       };
       reader.readAsText(file);
@@ -349,9 +442,20 @@
 
     function applyEsp32() {
       cfgStatus(t('cfg.applying'), 'ok');
-      fetch('/api/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-        .then(function () { startRebootCountdown(); })
-        .catch(function () { startRebootCountdown(); }); // ESP restarts, connection drops
+      var pending = localStorage.getItem(CFG_PENDING_KEY);
+      var doRestart = function () {
+        fetch('/api/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+          .then(function () { startRebootCountdown(); })
+          .catch(function () { startRebootCountdown(); });
+      };
+      if (pending) {
+        post('/api/config/activate', { file: pending })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(doRestart)
+          .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
+      } else {
+        doRestart();
+      }
     }
 
     function startRebootCountdown() {
@@ -373,7 +477,8 @@
       fetch('/api/status')
         .then(function (r) {
           if (r.ok) {
-            history.replaceState(null, '', location.pathname + '#debug');
+            clearDirty();
+            history.replaceState(null, '', location.pathname + '#config');
             location.reload();
           } else {
             setTimeout(tryReconnect, 1000);
@@ -387,6 +492,27 @@
       el.style.display = msg ? '' : 'none';
       el.className = 'cfg-status ' + cls;
       el.textContent = msg;
+    }
+
+    /* ── Dirty state ────────────────────────────────────────────────────── */
+
+    var CFG_DIRTY_KEY = 'mrjfx_dirty';
+
+    function markDirty() {
+      localStorage.setItem(CFG_DIRTY_KEY, '1');
+      renderDirtyBanner();
+    }
+
+    function clearDirty() {
+      localStorage.removeItem(CFG_DIRTY_KEY);
+      localStorage.removeItem(CFG_PENDING_KEY);
+      _cfgSelected = null;
+      renderDirtyBanner();
+    }
+
+    function renderDirtyBanner() {
+      var dirty = !!localStorage.getItem(CFG_DIRTY_KEY);
+      document.getElementById('dirty-banner').style.display = dirty ? '' : 'none';
     }
 
     /* ── Debug (mise au point) ──────────────────────────────────────────── */
@@ -480,7 +606,7 @@
       var badge = board.spiRank > 0
         ? ' <span class="dbg-idx-badge">board\u00a0' + board.spiRank + '</span>'
         : ' <span class="dbg-idx-badge">GPIO</span>';
-      var name = (def && def.label) ? def.label : board.type;
+      var name = tbt(board.type, 'label', (def && def.label) ? def.label : board.type);
 
       return '<div class="dbg-board">'
         + '<div class="dbg-board-hdr">'
@@ -488,6 +614,7 @@
         + '<div class="dbg-board-actions">'
         + '<button class="dbg-hbtn on"  onclick="dbgAll(' + boardApiIdx + ',1)">' + t('dbg.all_on') + '</button>'
         + '<button class="dbg-hbtn off" onclick="dbgAll(' + boardApiIdx + ',0)">' + t('dbg.all_off') + '</button>'
+        + (def && def.rows > 0 ? '<button class="dbg-hbtn test" onclick="dbgAllTest(' + boardApiIdx + ')">' + t('dbg.all_test') + '</button>' : '')
         + '</div></div>'
         + (def ? renderDipPcb(board, boardApiIdx, def) : '')
         + '</div>';
@@ -497,7 +624,7 @@
     // Boards with rows=0 (UART chains, I²C modules…) show description only.
     function renderDipPcb(board, boardApiIdx, def) {
       if (!def.rows || def.rows === 0) {
-        return '<div class="dbg-pcb"><div class="dbg-info">' + (def.description || '') + '</div></div>';
+        return '<div class="dbg-pcb"><div class="dbg-info">' + tbt(board.type, 'desc', def.description || '') + '</div></div>';
       }
       var leftPins = (def.pins || []).filter(function (p) { return p.side === 'left'; })
         .sort(function (a, b) { return a.row - b.row; });
@@ -505,7 +632,7 @@
         .sort(function (a, b) { return a.row - b.row; });
       var leftCols = leftPins.map(function (p) { return renderPin(board, boardApiIdx, p); }).join('');
       var rightCols = rightPins.map(function (p) { return renderPin(board, boardApiIdx, p); }).join('');
-      var shortLabel = (def.label || board.type).split(/[\s\u00d7]/)[0];
+      var shortLabel = tbt(board.type, 'label', def.label || board.type);
       return '<div class="dbg-pcb">'
         + '<div class="dbg-dip">'
         + '<div class="dbg-col">' + leftCols + '</div>'
@@ -632,10 +759,92 @@
         .catch(function (e) { console.error('dbgTestSpi', e); });
     }
 
+    // Clear client-side SPI test state for a card.
+    function dbgClearSpiTest(card, pinCount) {
+      for (var p = 1; p <= pinCount; p++) delete _dbgTestSpi['c' + card + '_p' + p];
+    }
+
     // Sequential all-on/off — operates only on devices assigned to this board.
+    // Also clears any active test state so the UI reflects real device state.
     function dbgAll(boardApiIdx, state) {
-      post('/api/all', { state: state, board: boardApiIdx + 1 })
-        .then(function () { loadDebug(); });
+      var board = _dbgBoards[boardApiIdx];
+      var clearCalls = [];
+      if (board) {
+        if (board.spiRank > 0) {
+          // Explicitly reset every active test pin in _buf before /api/all
+          var card = board.spiRank;
+          var pinCount = board.pinCount || 16;
+          for (var p = 1; p <= pinCount; p++) {
+            if (_dbgTestSpi['c' + card + '_p' + p]) {
+              clearCalls.push(fetch('/api/test/spi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ card: card, channel: p, state: 0 })
+              }));
+            }
+          }
+          dbgClearSpiTest(card, pinCount);
+        } else {
+          var def = _boardTypes[board.type];
+          var gpins = (def && def.pins) ? def.pins : [];
+          gpins.forEach(function (pin) {
+            if (pin.wiring !== undefined && _dbgTest['g' + pin.wiring]) {
+              clearCalls.push(fetch('/api/test/gpio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: pin.wiring, state: 0 })
+              }));
+              delete _dbgTest['g' + pin.wiring];
+            }
+          });
+        }
+      }
+      Promise.all(clearCalls).then(function () {
+        post('/api/all', { state: state, board: boardApiIdx + 1 })
+          .then(function () { loadDebug(); });
+      });
+    }
+
+    // ALL test: turn off all devices on the card, then light every testable pin.
+    function dbgAllTest(boardApiIdx) {
+      var board = _dbgBoards[boardApiIdx];
+      if (!board) return;
+      post('/api/all', { state: 0, board: boardApiIdx + 1 })
+        .then(function () {
+          var calls = [];
+          if (board.spiRank > 0) {
+            // SPI board: test all channels 1..pinCount
+            var card = board.spiRank;
+            var pinCount = board.pinCount || 16;
+            for (var p = 1; p <= pinCount; p++) {
+              _dbgTestSpi['c' + card + '_p' + p] = 1;
+              calls.push(fetch('/api/test/spi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ card: card, channel: p, state: 1 })
+              }));
+            }
+          } else {
+            // GPIO board: test all output pins that are not system pins
+            var def = _boardTypes[board.type];
+            var pins = (def && def.pins) ? def.pins : [];
+            pins.forEach(function (pin) {
+              if (pin.wiring === undefined) return;
+              if (_dbgSysPins[pin.wiring]) return;
+              var caps = pin.capabilities || [];
+              if (caps.indexOf('output') < 0) return;
+              _dbgTest['g' + pin.wiring] = 1;
+              calls.push(fetch('/api/test/gpio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: pin.wiring, state: 1 })
+              }));
+            });
+          }
+          return Promise.all(calls);
+        })
+        .then(function () { renderDebugBoards(); })
+        .catch(function (e) { console.error('dbgAllTest', e); });
     }
 
     /* ── About ──────────────────────────────────────────────────────────── */
@@ -834,7 +1043,6 @@
       deUpdateWiring(prefillPin, dev);
       deStatus('', '');
       document.getElementById('de-save-btn').disabled = false;
-      document.getElementById('de-apply-btn').style.display = 'none';
 
       document.getElementById('de-overlay').style.display = 'block';
       document.getElementById('de-modal').style.display = 'flex';
@@ -969,7 +1177,7 @@
         .then(function () {
           deStatus(t('de.saved'), 'ok');
           document.getElementById('de-save-btn').disabled = false;
-          document.getElementById('de-apply-btn').style.display = '';
+          markDirty();
         })
         .catch(function (e) {
           if (e) { deStatus(t('de.err_prefix') + e.message, 'err'); document.getElementById('de-save-btn').disabled = false; }
@@ -991,7 +1199,7 @@
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function () {
           deStatus(t('de.deleted'), 'ok');
-          document.getElementById('de-apply-btn').style.display = '';
+          markDirty();
         })
         .catch(function (e) { deStatus(t('de.err_prefix') + e.message, 'err'); });
     }
@@ -1004,13 +1212,14 @@
     })();
     var _th = localStorage.getItem('mrj-theme') || 'night';
     if (_th !== 'night') document.body.classList.add('th-' + _th);
+    renderDirtyBanner();
     document.querySelectorAll('.theme-dot').forEach(function (b) {
       b.classList.toggle('active', b.classList.contains('theme-dot-' + _th));
     });
     applyLang();
     (function () {
       var h = location.hash.slice(1);
-      var valid = ['cockpit', 'canvas', 'params', 'debug', 'about'];
+      var valid = ['cockpit', 'canvas', 'params', 'config', 'about'];
       if (h && valid.indexOf(h) >= 0) switchView(h);
     })();
     window.addEventListener('hashchange', function () {
