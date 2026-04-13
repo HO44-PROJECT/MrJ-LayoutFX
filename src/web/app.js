@@ -294,14 +294,16 @@
 
             // Slot 1 : badge (active/pending) ou bouton Activer — largeur fixe via CSS
             // Slots 2-5 : Backup, Download, [Rename, Delete] ou fantômes invisibles
-            // → 5 slots constants : zone nom identique pour toutes les lignes
-            var ghost = '<span class="cfg-row-btn cfg-row-ghost" aria-hidden="true"></span>';
+            // Les fantômes portent le même texte que les vrais boutons (visibility:hidden)
+            // → même largeur → zone nom identique pour toutes les lignes
+            var ghostRename = '<span class="cfg-row-btn cfg-row-ghost" aria-hidden="true">' + t('cfg.rename.btn') + '</span>';
+            var ghostDelete = '<span class="cfg-row-btn cfg-row-ghost" aria-hidden="true">✕ ' + t('cfg.destroy.btn') + '</span>';
             var btns = '<div class="cfg-row-btns">';
             if (isActive) {
               btns += '<span class="cfg-filebadge">' + t('cfg.badge.active') + '</span>';
               btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'config.json\')">' + t('cfg.snapshot.btn') + '</button>';
               btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'config.json\',_cfgActive)">⬇ ' + t('cfg.dl.btn') + '</button>';
-              btns += ghost + ghost; // fantômes pour Rename + Delete
+              btns += ghostRename + ghostDelete;
             } else if (isPending) {
               btns += '<span class="cfg-filebadge pending">' + t('cfg.badge.pending') + '</span>';
               btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'' + sf + '\')">' + t('cfg.snapshot.btn') + '</button>';
