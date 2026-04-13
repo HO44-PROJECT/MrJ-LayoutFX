@@ -166,16 +166,23 @@ public:
 
 public:
   /**
-   * @brief Sets the servo speed [-1000…+1000]. Triggers the coroutine.
+   * @brief Sets the servo running speed [-1000…+1000].
    *
-   * Clamps to [SERVO_SPEED_MIN, SERVO_SPEED_MAX], updates the speed member and
-   * calls newState() to wake the coroutine. 0 → OFF_STATE, non-zero → RUN_STATE.
+   * speed == 0  → stop() : coroutine stops the motor ; speed is preserved.
+   * speed != 0  → clamp, store in speed, wake coroutine via _speedChanged flag → RUN_STATE.
    */
-  inline virtual void setSpeed(SERVO_SPEED newSpeed) {
-    newSpeed = max(min(newSpeed, SERVO_SPEED_MAX), SERVO_SPEED_MIN);
-    speed = newSpeed;  // Coroutine picks it up immediately via COROUTINE_AWAIT / next cycle.
-    // Keep desiredState consistent for the UI (/api/devices "desired" field).
-    desiredState = (speed == SERVO_SPEED_STOP) ? OFF_STATE : RUN_STATE;
+  inline virtual void setSpeed(SERVO_SPEED s) {
+    if (s == SERVO_SPEED_STOP) {
+      stop();
+      return;
+    }
+    SERVO_SPEED abs_s = max(min(s, SERVO_SPEED_MAX), SERVO_SPEED_MIN);
+  #ifdef SERVO_PRESERVE_DIRECTION
+    speed = (speed < 0) ? -abs(abs_s) : abs(abs_s); // magnitude only, keep current direction
+  #else
+    speed = abs_s; // signed value used as-is
+  #endif
+    start();
   }
 
   /**
@@ -192,48 +199,71 @@ public:
    * @return 0 = OK, 1 = no response, 2 = bad response, -1 = not initialised.
    */
   inline virtual int healthCheck() override {
-    if (servo == nullptr) return -1;
     return servo->healthCheckBlocking();
   }
 
   /**
    * @brief Append mode and speed read from the servo to the health JSON.
    */
-  inline virtual void appendHealthJson(String& json) override {
-    if (servo == nullptr) return;
-    json += F(",\"hw_mode\":");  json += servo->getHealthMode();
-    json += F(",\"hw_speed\":"); json += servo->getHealthSpeed();
+  inline virtual void appendHealthJson(String &json) override {
+    json += F(",\"hw_mode\":");
+    json += servo->getHealthMode();
+    json += F(",\"hw_speed\":");
+    json += servo->getHealthSpeed();
   }
   #endif
 
   /**
-   * @brief Stops the servo by setting the speed to SERVO_SPEED_STOP (0).
+   * @brief Stops the motor. speed is preserved for a future start().
    *
-   * Calls setSpeed with a speed of 0 to stop the servo's rotation, updating the state to OFF_STATE.
+   * Does NOT call setSpeed(0) to avoid zeroing speed.
+   * Goes directly through the state machine (desiredState → OFF_STATE).
    */
   inline virtual void stop() {
-    setSpeed(SERVO_SPEED_STOP); // Stop the servo
+    desiredState = OFF_STATE;
+    activateNewTarget(); // sets state=INIT_STATE, targetState=OFF → coroutine wakes
   }
 
   /**
-   * @brief Starts the servo at the last known speed.
+   * @brief Starts (or restarts) the motor at the current speed value.
    *
-   * Restores the servo to the previously set speed stored in the speed member variable.
-   * If the servo is not initialized, the state is set to OFF_STATE.
+   * Forces state=INIT_STATE before activateNewTarget() so the coroutine wakes
+   * even when targetState is already RUN_STATE (speed change while running).
    */
   inline virtual void start() {
-    setSpeed(speed); // Restore the last known speed
+    desiredState = RUN_STATE;
+    setState(INIT_STATE); // force wake regardless of previous target
+    activateNewTarget();  // aligns targetState = RUN_STATE (does not overwrite INIT)
   }
 
   /**
-   * @brief Reverses the servo's direction by negating the current speed.
-   *
-   * Sets the servo speed to the negative of the last known speed, effectively reversing
-   * the direction of rotation. If the servo is not initialized, the state is set to OFF_STATE.
+   * @brief Reverses direction: speed = -speed, then start.
    */
   inline virtual void reverse() {
-    setSpeed(-speed); // Set speed to opposite direction
+    speed = -speed;
+    start();
   }
+
+  /**
+   * @brief Handle ALL ON / ALL OFF from /api/all.
+   *
+   * OFF_STATE → stop()  (speed preserved)
+   * other     → start() (resumes at current speed)
+   *
+   * stop()/start() use activateNewTarget() directly — no recursion with newState().
+   */
+  inline virtual void newState(STATE_TYPE s) override {
+    if (s == OFF_STATE)
+      stop();
+    else
+      start();
+  }
+
+  /** @brief ALL ON alias (same as start). */
+  inline virtual void switchOn() override { start(); }
+
+  /** @brief ALL OFF alias (same as stop, speed preserved). */
+  inline virtual void switchOff() override { stop(); }
 
   #ifdef DEMO
   void demo(uint32_t *lastSwitchTime, uint16_t delay = 2000) {
@@ -256,11 +286,7 @@ protected:
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
   LobotServo *servo = nullptr; ///< Pointer to LobotServo object
   #endif
-  SERVO_SPEED speed     = SERVO_SPEED_STOP; ///< Requested speed (set by setSpeed / API).
-  SERVO_SPEED lastSpeed = SERVO_SPEED_STOP; ///< Last speed sent to the servo hardware (coroutine use only).
-
-private:
-  uint32_t timerStart;
+  SERVO_SPEED speed = SERVO_SPEED_DEFAULT; ///< Running speed — never 0, preserved across stop/start.
 };
 
 #endif // MRJFX_SERIAL_SERVO_ENABLED

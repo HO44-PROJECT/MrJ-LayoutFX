@@ -256,141 +256,126 @@
 
     /* ── Config file switcher ───────────────────────────────────────────── */
 
-    var CFG_PENDING_KEY = 'mrjfx_pending_cfg';  // confirmed as future active (persisted)
-    var _cfgSelected = null;                     // highlighted in UI only (in-memory)
+    var CFG_PENDING_KEY = 'mrjfx_pending_cfg'; // persisted: file to activate on next restart
+    var _cfgRenaming = null;                   // filename currently being renamed inline
+    var _cfgActive   = 'config.json';          // current active source filename (from API)
+
+    function _cfgTs() {
+      var now = new Date();
+      return now.getFullYear() + pad2(now.getMonth() + 1) + pad2(now.getDate())
+           + '_' + pad2(now.getHours()) + pad2(now.getMinutes());
+    }
 
     function loadConfigs() {
       fetch('/api/configs')
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          _cfgActive = data.active || 'config.json';
           var pending = localStorage.getItem(CFG_PENDING_KEY);
           var el = document.getElementById('cfg-filelist');
           el.innerHTML = data.files.map(function (f) {
-            var isActive   = (f === data.active);
-            var isPending  = (!isActive && f === pending);
-            var isSelected = (!isActive && !isPending && f === _cfgSelected);
-            var cls = 'cfg-fileitem'
-              + (isActive   ? ' active'   : '')
-              + (isPending  ? ' pending'  : '')
-              + (isSelected ? ' selected' : '');
-            var onclick = isActive ? '' : ' onclick="highlightCfgFile(\'' + f + '\')"';
-            var badge = isActive   ? ' <span class="cfg-filebadge">actif</span>'
-                      : isPending  ? ' <span class="cfg-filebadge pending">en attente</span>'
-                      : '';
-            return '<div class="' + cls + '"' + onclick + '>'
-              + '<span class="cfg-filedot"></span>'
-              + '<span>' + f + '</span>'
-              + badge
+            var isActive  = (f === data.active);
+            var isPending = (!isActive && f === pending);
+            var cls = 'cfg-fileitem' + (isActive ? ' active' : '') + (isPending ? ' pending' : '');
+            var dot  = '<span class="cfg-filedot"></span>';
+            var sf   = f.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+            // Inline rename mode
+            if (f === _cfgRenaming) {
+              return '<div class="' + cls + '">' + dot
+                + '<input id="cfg-rename-inp" class="cfg-rename-inp" type="text" maxlength="27"'
+                + ' value="' + f.replace(/\.json$/, '') + '"'
+                + ' onkeydown="if(event.key===\'Enter\')cfgRenameConfirm(\'' + sf + '\');'
+                +             'if(event.key===\'Escape\')cfgRenameCancel()">'
+                + '<button class="cfg-row-btn ok" onclick="cfgRenameConfirm(\'' + sf + '\')" title="OK">✓</button>'
+                + '<button class="cfg-row-btn" onclick="cfgRenameCancel()" title="Annuler">✕</button>'
+                + '</div>';
+            }
+
+            // Slot 1 : badge (active/pending) ou bouton Activer — largeur fixe via CSS
+            // Slots 2-5 : Backup, Download, [Rename, Delete] ou fantômes invisibles
+            // → 5 slots constants : zone nom identique pour toutes les lignes
+            var ghost = '<span class="cfg-row-btn cfg-row-ghost" aria-hidden="true"></span>';
+            var btns = '<div class="cfg-row-btns">';
+            if (isActive) {
+              btns += '<span class="cfg-filebadge">' + t('cfg.badge.active') + '</span>';
+              btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'config.json\')">' + t('cfg.snapshot.btn') + '</button>';
+              btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'config.json\',_cfgActive)">⬇ ' + t('cfg.dl.btn') + '</button>';
+              btns += ghost + ghost; // fantômes pour Rename + Delete
+            } else if (isPending) {
+              btns += '<span class="cfg-filebadge pending">' + t('cfg.badge.pending') + '</span>';
+              btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'' + sf + '\')">' + t('cfg.snapshot.btn') + '</button>';
+              btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'' + sf + '\')">⬇ ' + t('cfg.dl.btn') + '</button>';
+              btns += '<button class="cfg-row-btn" onclick="cfgRename(\'' + sf + '\')">' + t('cfg.rename.btn') + '</button>';
+              btns += '<button class="cfg-row-btn danger" onclick="cfgDelete(\'' + sf + '\')">✕ ' + t('cfg.destroy.btn') + '</button>';
+            } else {
+              btns += '<button class="cfg-row-btn primary" onclick="cfgChoose(\'' + sf + '\')">' + t('cfg.choose_btn') + '</button>';
+              btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'' + sf + '\')">' + t('cfg.snapshot.btn') + '</button>';
+              btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'' + sf + '\')">⬇ ' + t('cfg.dl.btn') + '</button>';
+              btns += '<button class="cfg-row-btn" onclick="cfgRename(\'' + sf + '\')">' + t('cfg.rename.btn') + '</button>';
+              btns += '<button class="cfg-row-btn danger" onclick="cfgDelete(\'' + sf + '\')">✕ ' + t('cfg.destroy.btn') + '</button>';
+            }
+            btns += '</div>';
+
+            return '<div class="' + cls + '">'
+              + dot
+              + '<span class="cfg-fname">' + f + '</span>'
+              + btns
               + '</div>';
           }).join('');
-          renderCfgChooseBtn();
-          renderCfgSelActions();
         })
         .catch(function () {
           document.getElementById('cfg-filelist').textContent = '—';
         });
     }
 
-    // Step 1 — highlight a file in the list (no state change yet)
-    function highlightCfgFile(filename) {
-      _cfgSelected = filename;
-      loadConfigs();
-    }
+    /* ── Per-row config actions ─────────────────────────────────────────── */
 
-    // Step 2 — confirm the highlighted file as pending (triggers dirty)
-    function chooseCfgFile() {
-      if (!_cfgSelected) return;
-      localStorage.setItem(CFG_PENDING_KEY, _cfgSelected);
-      _cfgSelected = null;
+    function cfgChoose(name) {
+      localStorage.setItem(CFG_PENDING_KEY, name);
       loadConfigs();
       markDirty();
     }
 
-    function renderCfgChooseBtn() {
-      var el = document.getElementById('cfg-choose-btn');
-      if (!el) return;
-      // Show only when something is highlighted and not already pending
-      var pending = localStorage.getItem(CFG_PENDING_KEY);
-      var show = !!_cfgSelected && _cfgSelected !== pending;
-      el.style.display = show ? '' : 'none';
-      if (show) el.textContent = '✓ ' + t('cfg.choose_btn');
-    }
-
-    function renderCfgSelActions() {
-      var el = document.getElementById('cfg-sel-actions');
-      if (!el) return;
-      el.style.display = _cfgSelected ? '' : 'none';
-      // Hide sub-rows when deselecting
-      if (!_cfgSelected) {
-        document.getElementById('cfg-rename-row').style.display = 'none';
-        document.getElementById('cfg-destroy-row').style.display = 'none';
-      }
-    }
-
-    /* ── File management actions ────────────────────────────────────────── */
-
-    function saveCfgWithTimestamp() {
-      if (!_cfgSelected) return;
-      var now = new Date();
-      var ts = now.getFullYear() + pad2(now.getMonth() + 1) + pad2(now.getDate())
-             + '_' + pad2(now.getHours()) + pad2(now.getMinutes());
-      var base = _cfgSelected.replace(/\.json$/, '').substring(0, 13); // 13 + '_' + 13chars_ts + '.json' = 32 = LFS_NAME_MAX
-      var toName = base + '_' + ts + '.json';
-      post('/api/config/copy', { from: _cfgSelected, to: toName })
+    function cfgSnapshot(name) {
+      var base = name.replace(/\.json$/, '').substring(0, 13); // 13 + '_' + 13chars_ts + '.json' ≤ 32
+      var toName = base + '_' + _cfgTs() + '.json';
+      post('/api/config/copy', { from: name, to: toName })
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function () { cfgStatus('Sauvegardé → ' + toName, 'ok'); loadConfigs(); })
+        .then(function () { cfgStatus('Snapshot → ' + toName, 'ok'); loadConfigs(); })
         .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
     }
 
-    function showRenameCfg() {
-      document.getElementById('cfg-destroy-row').style.display = 'none';
-      var row = document.getElementById('cfg-rename-row');
-      row.style.display = '';
-      var input = document.getElementById('cfg-rename-input');
-      input.value = _cfgSelected.replace(/\.json$/, '');
-      input.focus();
-      input.select();
+    function cfgRename(name) {
+      _cfgRenaming = name;
+      loadConfigs();
+      setTimeout(function () {
+        var inp = document.getElementById('cfg-rename-inp');
+        if (inp) { inp.focus(); inp.select(); }
+      }, 0);
     }
 
-    function cancelRenameCfg() {
-      document.getElementById('cfg-rename-row').style.display = 'none';
-    }
-
-    function confirmRenameCfg() {
-      if (!_cfgSelected) return;
-      var newName = document.getElementById('cfg-rename-input').value.trim();
+    function cfgRenameConfirm(oldName) {
+      var inp = document.getElementById('cfg-rename-inp');
+      if (!inp) return;
+      var newName = inp.value.trim();
       if (!newName) return;
       if (!newName.endsWith('.json')) newName += '.json';
-      var oldName = _cfgSelected;
       post('/api/config/rename', { from: oldName, to: newName })
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(function () {
-          document.getElementById('cfg-rename-row').style.display = 'none';
-          _cfgSelected = newName;
-          cfgStatus('Renommé → ' + newName, 'ok');
-          loadConfigs();
-        })
+        .then(function () { _cfgRenaming = null; cfgStatus('Renommé → ' + newName, 'ok'); loadConfigs(); })
         .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
     }
 
-    function showDestroyCfg() {
-      document.getElementById('cfg-rename-row').style.display = 'none';
-      document.getElementById('cfg-destroy-row').style.display = '';
+    function cfgRenameCancel() {
+      _cfgRenaming = null;
+      loadConfigs();
     }
 
-    function cancelDestroyCfg() {
-      document.getElementById('cfg-destroy-row').style.display = 'none';
-    }
-
-    function confirmDestroyCfg() {
-      if (!_cfgSelected) return;
-      deleteJson('/api/configs', { file: _cfgSelected })
-        .then(function () {
-          document.getElementById('cfg-destroy-row').style.display = 'none';
-          _cfgSelected = null;
-          cfgStatus('Fichier supprimé.', 'ok');
-          loadConfigs();
-        })
+    function cfgDelete(name) {
+      if (!confirm('Supprimer ' + name + ' ?')) return;
+      deleteJson('/api/configs', { file: name })
+        .then(function () { cfgStatus('Fichier supprimé.', 'ok'); loadConfigs(); })
         .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
     }
 
@@ -403,14 +388,23 @@
       cfgStatus('', '');
     }
 
-    function downloadConfig() {
-      // Let the browser handle the download — Content-Disposition on server side
-      // names the file, but we also set a fallback via <a download>.
-      var a = document.createElement('a');
-      a.href = '/api/config';
-      a.download = 'config.json';
-      a.click();
+    function cfgDownload(name, suggestedName) {
+      fetch('/api/config/file?name=' + encodeURIComponent(name))
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+        .then(function (blob) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = suggestedName || name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        })
+        .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
     }
+
+    function downloadConfig() { cfgDownload('config.json', _cfgActive); }
 
     function uploadConfig() {
       var file = document.getElementById('cfg-file').files[0];
@@ -418,20 +412,16 @@
 
       var reader = new FileReader();
       reader.onload = function (e) {
-        // Validate JSON client-side before sending
         try { JSON.parse(e.target.result); }
         catch (err) { cfgStatus('JSON invalide : ' + err.message, 'err'); return; }
 
         document.getElementById('cfg-upload-btn').disabled = true;
         cfgStatus('Envoi en cours…', 'ok');
 
-        // Wrap in {_name, content} so the server can extract the filename
-        // without needing query params (broken with JSON body) or custom headers
-        var payload = JSON.stringify({ _name: file.name, content: e.target.result });
-        fetch('/api/configs', {
+        fetch('/api/configs?name=' + encodeURIComponent(file.name), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload
+          headers: { 'Content-Type': 'application/json', 'X-Config-Name': file.name },
+          body: e.target.result
         })
           .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
           .then(function () { cfgStatus(t('cfg.saved'), 'ok'); document.getElementById('cfg-upload-btn').disabled = false; loadConfigs(); })

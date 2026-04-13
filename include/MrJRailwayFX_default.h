@@ -96,11 +96,16 @@
 #define TRAFFIC_LIGHT_CAUTION_DURATION_MS 3000UL ///< Time yellow stays lit before STOP
 
 // Servo configuration constants
-#define LX16A_SERVO_ID 1                 ///< Default servo ID for bus communication (range: 0-253)
-#define LX16A_BAUD_RATE 115200           ///< Serial baud rate for LX-16A communication
-#define SERVO_SPEED_MAX ((int16_t)1000)  ///< Maximum speed for LX-16A servo in motor mode (full forward)
-#define SERVO_SPEED_MIN ((int16_t)-1000) ///< Minimum speed for LX-16A servo in motor mode (full reverse)
-#define SERVO_SPEED_STOP 0               ///< Speed value to stop the servo in motor mode
+#define LX16A_SERVO_ID 1                       ///< Default servo ID for bus communication (range: 0-253)
+#define LX16A_BAUD_RATE 115200                 ///< Serial baud rate for LX-16A communication
+#define SERVO_SPEED_MAX ((int16_t)1000)        ///< Maximum speed for LX-16A servo in motor mode (full forward)
+#define SERVO_SPEED_MIN ((int16_t)-1000)       ///< Minimum speed for LX-16A servo in motor mode (full reverse)
+#define SERVO_SPEED_STOP 0                     ///< Speed value to stop the servo in motor mode
+#define SERVO_SPEED_DEFAULT ((SERVO_SPEED)300) ///< Default running speed applied at first start()
+// Define SERVO_PRESERVE_DIRECTION to make setSpeed() ignore the sign of its argument
+// and preserve the current rotation direction instead.
+// If not defined (default), setSpeed() uses the signed value as-is.
+// #define SERVO_PRESERVE_DIRECTION
 
 // Beacon effect configuration constants
 #define BEACON_FLASH_ON_DURATION_1 80   ///< Duration of the first flash in milliseconds.
@@ -114,14 +119,14 @@
 
 // OLED display defaults (overridable in config.h)
 #ifndef OLED_SDA
-  #define OLED_SDA 21           ///< Default SDA pin for I²C OLED (ESP32 hardware default).
+  #define OLED_SDA 21 ///< Default SDA pin for I²C OLED (ESP32 hardware default).
 #endif
 #ifndef OLED_SCL
-  #define OLED_SCL 22           ///< Default SCL pin for I²C OLED (ESP32 hardware default).
+  #define OLED_SCL 22 ///< Default SCL pin for I²C OLED (ESP32 hardware default).
 #endif
 #ifndef OLED_HEIGHT
-  #define OLED_HEIGHT 64        ///< Display height in pixels — 64 (SSD1306 0.96") or 32 (SSD1306 0.91").
+  #define OLED_HEIGHT 64 ///< Display height in pixels — 64 (SSD1306 0.96") or 32 (SSD1306 0.91").
 #endif
 #ifndef OLED_EVENT_MS
-  #define OLED_EVENT_MS 3000    ///< Duration (ms) the event screen is shown before returning to idle.
+  #define OLED_EVENT_MS 3000 ///< Duration (ms) the event screen is shown before returning to idle.
 #endif

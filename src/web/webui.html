@@ -90,37 +90,14 @@
       <!-- Config management -->
       <div class="cfgmgr">
 
-        <!-- Available configs + download/apply -->
+        <!-- Available configs -->
         <div class="cfgmgr-row">
           <div class="cfgmgr-row-label">
             <span class="cfgmgr-icon">📂</span>
             <span data-i18n="cfg.switch.title">Configs disponibles</span>
           </div>
           <div class="cfgmgr-row-body">
-            <div class="cfgmgr-row-desc" data-i18n="cfg.switch.desc">Cliquez pour sélectionner une configuration.</div>
             <div id="cfg-filelist" class="cfg-filelist">…</div>
-            <div class="cfgmgr-btns">
-              <button class="cfgmgr-btn secondary" onclick="downloadConfig()" data-i18n="cfg.dl.btn">⬇ Télécharger</button>
-            </div>
-            <!-- Selection-dependent actions -->
-            <div id="cfg-sel-actions" class="cfgmgr-btns" style="display:none">
-              <button id="cfg-choose-btn" class="cfgmgr-btn" onclick="chooseCfgFile()" style="display:none">✓ Choisir</button>
-              <button class="cfgmgr-btn secondary" onclick="saveCfgWithTimestamp()" data-i18n="cfg.save.btn">Sauvegarder</button>
-              <button class="cfgmgr-btn secondary" onclick="showRenameCfg()" data-i18n="cfg.rename.btn">Renommer</button>
-              <button class="cfgmgr-btn danger" onclick="showDestroyCfg()" data-i18n="cfg.destroy.btn">Détruire</button>
-            </div>
-            <!-- Rename input row -->
-            <div id="cfg-rename-row" class="cfgmgr-input-row" style="display:none">
-              <input id="cfg-rename-input" class="cfgmgr-input" type="text" placeholder="nouveau-nom" maxlength="27">
-              <button class="cfgmgr-btn" onclick="confirmRenameCfg()">✓</button>
-              <button class="cfgmgr-btn secondary" onclick="cancelRenameCfg()">✕</button>
-            </div>
-            <!-- Destroy confirm row -->
-            <div id="cfg-destroy-row" class="cfgmgr-input-row" style="display:none">
-              <span class="cfgmgr-confirm-msg" data-i18n="cfg.destroy.confirm">Supprimer définitivement ?</span>
-              <button class="cfgmgr-btn danger" onclick="confirmDestroyCfg()" data-i18n="cfg.destroy.yes">Supprimer</button>
-              <button class="cfgmgr-btn secondary" onclick="cancelDestroyCfg()" data-i18n="cfg.cancel">Annuler</button>
-            </div>
           </div>
         </div>
 

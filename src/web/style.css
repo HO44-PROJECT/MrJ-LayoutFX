@@ -745,34 +745,22 @@
     .cfg-fileitem {
       display: flex;
       align-items: center;
-      gap: .6rem;
-      padding: .5rem .8rem;
+      gap: .5rem;
+      padding: .35rem .6rem;
       border-radius: 6px;
       border: 2px solid var(--bd);
       background: var(--bg2);
-      cursor: pointer;
+      cursor: default;
       font-size: .82rem;
       font-weight: 600;
-      color: var(--t1);
-      transition: border-color .15s, background .15s, color .15s
-    }
-
-    .cfg-fileitem:hover:not(.active):not(.pending):not(.selected) {
-      border-color: var(--acc);
-      background: var(--bg3);
-    }
-
-    .cfg-fileitem.selected {
-      border-color: var(--acc);
-      background: var(--bg2)
+      color: var(--t1)
     }
 
     .cfg-fileitem.active {
       border-color: #27ae60;
       background: var(--bg1);
       color: var(--t0);
-      font-weight: 700;
-      cursor: default
+      font-weight: 700
     }
 
     .cfg-fileitem.pending {
@@ -784,12 +772,7 @@
       width: 9px; height: 9px;
       border-radius: 50%;
       border: 2px solid var(--bd);
-      flex-shrink: 0;
-      transition: background .15s, border-color .15s
-    }
-
-    .cfg-fileitem:hover:not(.active):not(.pending) .cfg-filedot {
-      border-color: var(--acc)
+      flex-shrink: 0
     }
 
     .cfg-fileitem.active .cfg-filedot {
@@ -802,25 +785,104 @@
       border-color: #e67e22
     }
 
-    .cfg-fileitem.selected .cfg-filedot {
-      background: var(--acc);
-      border-color: var(--acc)
+    .cfg-fname {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0
     }
 
+    /* Badge "actif" / "en attente" : dimensions identiques au bouton Activer (slot 1). */
     .cfg-filebadge {
-      margin-left: auto;
-      font-size: .65rem;
-      font-weight: 700;
-      padding: .1rem .35rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      min-width: 4.5rem;
       border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
       background: #1a3a2a;
       color: #27ae60;
-      letter-spacing: .5px
+      border: 1px solid #27ae60
     }
 
     .cfg-filebadge.pending {
       background: #3a2200;
-      color: #e67e22
+      color: #e67e22;
+      border-color: #e67e22
+    }
+
+    /* Fantôme : occupe la place d'un bouton absent sans être visible. */
+    .cfg-row-ghost {
+      visibility: hidden;
+      pointer-events: none;
+      border-color: transparent !important;
+      background: transparent !important
+    }
+
+    .cfg-row-btns {
+      display: flex;
+      gap: .2rem;
+      flex-shrink: 0
+    }
+
+    .cfg-row-btn {
+      border-radius: 4px;
+      border: 1px solid var(--bd);
+      background: var(--bg3);
+      color: var(--t1);
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      white-space: nowrap;
+      transition: border-color .12s, background .12s, color .12s
+    }
+
+    .cfg-row-btn:hover {
+      border-color: var(--t2);
+      background: var(--bg1)
+    }
+
+    .cfg-row-btn.primary {
+      border-color: var(--acc);
+      color: var(--acc);
+      min-width: 4.5rem
+    }
+
+    .cfg-row-btn.primary:hover {
+      background: var(--acc);
+      color: var(--bg0)
+    }
+
+    .cfg-row-btn.ok {
+      border-color: #27ae60;
+      color: #27ae60
+    }
+
+    .cfg-row-btn.ok:hover {
+      background: #27ae60;
+      color: var(--bg0)
+    }
+
+    .cfg-row-btn.danger:hover {
+      border-color: #c0392b;
+      color: #c0392b
+    }
+
+    .cfg-rename-inp {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg0);
+      border: 1px solid var(--acc);
+      color: var(--t0);
+      border-radius: 4px;
+      padding: .15rem .4rem;
+      font-size: .8rem
     }
 
     .cfg-btn {
@@ -1369,43 +1431,42 @@
       position: absolute;
       bottom: 2px;
       right: 2px;
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       border-radius: 3px;
-      border: 1px solid var(--bd);
-      background: var(--bg2);
-      color: var(--t3);
+      border: 1px solid var(--t3);
+      background: var(--bg1);
+      color: var(--t1);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all .12s;
       z-index: 2;
-      padding: 0
+      padding: 0;
+      opacity: .5
     }
 
     .dbg-led-btn svg {
-      width: 10px;
-      height: 10px
+      width: 12px;
+      height: 12px
     }
 
-    .dbg-led-btn:hover {
-      border-color: var(--d3);
-      background: var(--d1);
-      color: var(--d3)
-    }
+    .dbg-pin:hover .dbg-led-btn { opacity: 1 }
+    .dbg-led-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }
 
     .dbg-led-btn.on {
-      border-color: var(--d3);
-      background: var(--d1);
-      color: var(--d3);
-      box-shadow: 0 0 4px rgba(39, 174, 96, .35)
+      opacity: 1;
+      border-color: #27ae60;
+      background: rgba(39,174,96,.18);
+      color: #4de88a;
+      box-shadow: 0 0 5px rgba(39, 174, 96, .45)
     }
 
     .dbg-led-btn.off {
-      border-color: var(--bd);
-      background: var(--bg2);
-      color: var(--t4)
+      border-color: #c0392b;
+      background: rgba(192,57,43,.12);
+      color: #e87070
     }
 
     /* ── Device editor modal ────────────────────────────────────────────── */
@@ -1508,22 +1569,22 @@
       position: absolute;
       top: 2px;
       left: 2px;
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       border-radius: 3px;
-      border: 1px solid var(--bd);
-      background: var(--bg2);
-      color: var(--t2);
+      border: 1px solid var(--t3);
+      background: var(--bg1);
+      color: var(--t1);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: .58rem;
+      font-size: .72rem;
       line-height: 1;
       z-index: 2;
       padding: 0;
-      opacity: 0;
-      transition: opacity .12s
+      opacity: .5;
+      transition: opacity .12s, border-color .12s, color .12s
     }
     .dbg-pin:hover .dbg-edit-btn { opacity: 1 }
     .dbg-edit-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }

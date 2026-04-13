@@ -35,30 +35,14 @@
  * @param servoID ID of the servo for bus communication (range: 0-253, default: LX16A_SERVO_ID).
  */
 SerialServoMotor::SerialServoMotor(LX16ABus *servoBus, PIN_ID tXpin, PIN_ID TXFlagGPIO, int servoID) {
-  // Check if an existing servo bus is provided; otherwise, allocate a new one
-  if (servoBus == nullptr) {
-    servoBus = new LX16ABus(); // Create a new LX16ABus object for serial communication
-  }
-  // Assign the servo bus pointer to the class instance
+  if (servoBus == nullptr)
+    servoBus = new LX16ABus();
   this->servoBus = servoBus;
-
-  // Proceed with initialization only if the servo bus is valid
-  if (servoBus != nullptr) {
-    // Allocate a new LX16AServo object linked to the bus and specified servo ID
-    servo = new LX16AServo(this->servoBus, servoID);
-
-    // Configure the serial bus with the TX pin and direction pin (use -1 for direction if NO_PIN is provided)
-    servoBus->begin(&Serial, tXpin, TXFlagGPIO == NO_PIN ? -1 : TXFlagGPIO);
-
-    // Clear the serial buffer to prevent stale data from interfering with communication
-    Serial.flush();
-
-    // Initialize serial communication at the predefined baud rate (LX16A_BAUD_RATE)
-    Serial.begin(LX16A_BAUD_RATE);
-
-    // Set the servo to motor mode with an initial speed of stopped (SERVO_SPEED_STOP)
-    stop();
-  }
+  servo = new LX16AServo(this->servoBus, servoID);
+  servoBus->begin(&Serial, tXpin, TXFlagGPIO == NO_PIN ? -1 : TXFlagGPIO);
+  Serial.flush();
+  Serial.begin(LX16A_BAUD_RATE);
+  stop();
 }
   #endif
 
@@ -110,15 +94,14 @@ SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFla
  */
 int SerialServoMotor::runCoroutine() {
   COROUTINE_LOOP() {
-    // Wait for a state change (OFF↔RUN) OR a speed change while running.
-    COROUTINE_AWAIT(getState() != getTargetState() || speed != lastSpeed);
+    // Wake when state != targetState, i.e. when activateNewTarget() or start() sets INIT_STATE.
+    DEVICE_WAIT_STATE_CHANGE(getTargetState());
 
-    lastSpeed = speed;
     if (getTargetState() == OFF_STATE) {
-      if (servo != nullptr) servo->motor_mode(SERVO_SPEED_STOP);
+      servo->motor_mode(SERVO_SPEED_STOP);
       setState(OFF_STATE);
     } else {
-      if (servo != nullptr) servo->motor_mode(speed);
+      servo->motor_mode(speed);
       setState(RUN_STATE);
     }
   }

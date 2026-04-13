@@ -48,7 +48,7 @@ void ApiServer::sendJson(int code, const __FlashStringHelper *body) {
 void ApiServer::_onOptions() {
   _server->sendHeader(F("Access-Control-Allow-Origin"),  F("*"));
   _server->sendHeader(F("Access-Control-Allow-Methods"), F("GET,POST,DELETE,OPTIONS"));
-  _server->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type,Accept"));
+  _server->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type,Accept,X-Config-Name"));
   _server->send(204);
 }
 
@@ -84,7 +84,7 @@ void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
     if (_server->method() == HTTP_OPTIONS) {
       _server->sendHeader(F("Access-Control-Allow-Origin"),  F("*"));
       _server->sendHeader(F("Access-Control-Allow-Methods"), F("GET,POST,DELETE,OPTIONS"));
-      _server->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type,Accept"));
+      _server->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type,Accept,X-Config-Name"));
       _server->send(204);
     } else {
       _server->send(404, "application/json", F("{\"error\":\"not found\"}"));

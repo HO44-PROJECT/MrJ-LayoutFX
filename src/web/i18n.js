@@ -65,6 +65,7 @@
         'cfg.dl.title': 'T\u00e9l\u00e9charger',
         'cfg.dl.desc': "R\u00e9cup\u00e8re la configuration active de l'ESP32.",
         'cfg.dl.btn': 'T\u00e9l\u00e9charger',
+        'cfg.snapshot.btn': 'Backup',
         'cfg.ul.title': 'Uploader',
         'cfg.ul.desc': "Envoie un nouveau fichier JSON \u2014 l'ESP32 red\u00e9marre pour l'appliquer.",
         'cfg.ul.nofile': 'Aucun fichier s\u00e9lectionn\u00e9',
@@ -78,11 +79,14 @@
         'cfg.apply.title': 'Appliquer',
         'cfg.apply.desc': 'Relance l\u2019ESP32 pour appliquer la configuration sauvegard\u00e9e.',
         'cfg.apply.btn': 'Red\u00e9marrer',
-        'cfg.choose_btn': 'Choisir',
-        'cfg.save.btn': 'Sauvegarder',
+        'cfg.choose_btn': 'Activer',
+        'cfg.badge.active': 'actif',
+        'cfg.badge.pending': 'en attente',
+        'cfg.save.btn': 'Backup',
         'cfg.rename.btn': 'Renommer',
-        'cfg.destroy.btn': 'D\u00e9truire',
+        'cfg.destroy.btn': 'Supprimer',
         'cfg.destroy.confirm': 'Supprimer d\u00e9finitivement\u00a0?',
+        'cfg.destroy.file': 'Supprimer {file}\u00a0?',
         'cfg.destroy.yes': 'Supprimer',
         'cfg.cancel': 'Annuler',
         'cfg.dirty.msg': 'Configuration modifi\u00e9e \u2014 un red\u00e9marrage est n\u00e9cessaire pour appliquer les changements.',
@@ -194,6 +198,7 @@
         'cfg.dl.title': 'Download',
         'cfg.dl.desc': 'Get the active configuration from the ESP32.',
         'cfg.dl.btn': 'Download',
+        'cfg.snapshot.btn': 'Backup',
         'cfg.ul.title': 'Upload',
         'cfg.ul.desc': 'Send a new JSON file \u2014 the ESP32 reboots to apply it.',
         'cfg.ul.nofile': 'No file selected',
@@ -207,12 +212,14 @@
         'cfg.apply.title': 'Apply',
         'cfg.apply.desc': 'Restart the ESP32 to apply the saved configuration.',
         'cfg.apply.btn': 'Restart',
-        'cfg.choose_btn': 'Choose',
-        'cfg.dup.btn': 'Duplicate',
-        'cfg.save.btn': 'Save snapshot',
+        'cfg.choose_btn': 'Activate',
+        'cfg.badge.active': 'active',
+        'cfg.badge.pending': 'pending',
+        'cfg.save.btn': 'Backup',
         'cfg.rename.btn': 'Rename',
         'cfg.destroy.btn': 'Delete',
         'cfg.destroy.confirm': 'Permanently delete this file?',
+        'cfg.destroy.file': 'Delete {file}?',
         'cfg.destroy.yes': 'Delete',
         'cfg.cancel': 'Cancel',
         'cfg.dirty.msg': 'Configuration changed \u2014 a restart is required to apply the changes.',
@@ -331,4 +338,6 @@
       });
       document.getElementById('lang-fr').classList.toggle('active', _lang === 'fr');
       document.getElementById('lang-en').classList.toggle('active', _lang === 'en');
+      // Re-render dynamic lists that embed translated strings (tooltips, etc.)
+      if (typeof loadConfigs === 'function') loadConfigs();
     }

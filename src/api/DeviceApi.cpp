@@ -43,6 +43,7 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/all", HTTP_POST, _onAllDevices);
   ApiServer::on("/api/group", HTTP_POST, _onGroupDevices);
   ApiServer::on("/api/config", HTTP_GET, _onGetConfig);
+  ApiServer::on("/api/config/file", HTTP_GET, _onGetNamedConfig);
   ApiServer::on("/api/config", HTTP_POST, _onPostConfig);
   ApiServer::on("/api/config", HTTP_DELETE, _onDeleteConfig);
   ApiServer::on("/api/configs", HTTP_GET, _onGetConfigs);
@@ -59,6 +60,10 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/test/spi", HTTP_POST, _onTestSpi);
   ApiServer::on("/api/restart", HTTP_POST, _onRestart);
   ApiServer::on("/api/servo", HTTP_POST, _onServo);
+
+  // Collect custom upload header
+  static const char *hdrs[] = {"X-Config-Name"};
+  ApiServer::server().collectHeaders(hdrs, 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -135,6 +140,7 @@ void DeviceApi::_onPostDevice() {
 }
 
 void DeviceApi::_onSwitch() {
+  Serial.println(F("API: POST /api/switch"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -146,6 +152,7 @@ void DeviceApi::_onSwitch() {
   }
   const char *id = doc["id"] | "";
   bool on = doc["on"].as<bool>();
+  Serial.printf("[switch] id='%s' on=%d\n", id, (int)on);
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
@@ -264,6 +271,8 @@ void DeviceApi::_onGetConfigs() {
 // Config file management helpers
 // ---------------------------------------------------------------------------
 
+static bool _sanitizeCfgName(String &name); // forward declaration
+
 // Write buf[0..len) to path in 512-byte chunks. Returns true if all bytes written.
 static bool _writeAllBytes(File &f, const uint8_t *buf, size_t len) {
   const size_t CHUNK = 512;
@@ -321,6 +330,28 @@ static bool _safeRename(const char *from, const char *to) {
   return true;
 }
 
+void DeviceApi::_onGetNamedConfig() {
+  Serial.println(F("API: GET /api/config/file"));
+  String name = ApiServer::server().arg("name");
+  if (!_sanitizeCfgName(name)) {
+    ApiServer::sendJson(400, F("{\"error\":\"invalid filename\"}"));
+    return;
+  }
+  String path = "/" + name;
+  if (!LittleFS.exists(path.c_str())) {
+    ApiServer::sendJson(404, F("{\"error\":\"file not found\"}"));
+    return;
+  }
+  String cd = "attachment; filename=\"";
+  cd += name;
+  cd += "\"";
+  ApiServer::server().sendHeader("Content-Disposition", cd);
+  ApiServer::server().sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  File f = LittleFS.open(path.c_str(), "r");
+  ApiServer::server().streamFile(f, "application/json");
+  f.close();
+}
+
 static bool _sanitizeCfgName(String &name) {
   if (!name.endsWith(".json"))
     name += ".json";
@@ -338,23 +369,15 @@ static bool _sanitizeCfgName(String &name) {
 
 void DeviceApi::_onPostNamedConfig() {
   Serial.println(F("API: POST /api/configs"));
-  if (!ApiServer::server().hasArg("plain")) {
-    ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
-    return;
-  }
-  // Body: {"_name":"filename.json","content":"<raw json string>"}
-  // content is a JSON-encoded string, not a nested object — avoids double-parsing
-  JsonDocument doc;
-  DeserializationError err = deserializeJson(doc, ApiServer::server().arg("plain"));
-  if (err || !doc["_name"].is<const char *>() || !doc["content"].is<const char *>()) {
-    Serial.printf("[FS] parse error: %s\n", err ? err.c_str() : "missing fields");
-    ApiServer::sendJson(400, F("{\"error\":\"expected {_name, content}\"}"));
-    return;
-  }
-  String name = doc["_name"].as<const char *>();
-  String content = doc["content"].as<const char *>();
-  if (name.isEmpty() || content.isEmpty()) {
-    ApiServer::sendJson(400, F("{\"error\":\"empty name or content\"}"));
+  // Filename: prefer X-Config-Name header, fallback to ?name= URL param
+  String name = ApiServer::server().header("X-Config-Name");
+  if (name.isEmpty())
+    name = ApiServer::server().arg("name");
+  bool hasBody = ApiServer::server().hasArg("plain") && ApiServer::server().arg("plain").length() > 0;
+  Serial.printf("[upload] name='%s' hasBody=%d argCount=%d\n",
+    name.c_str(), (int)hasBody, ApiServer::server().args());
+  if (name.isEmpty() || !hasBody) {
+    ApiServer::sendJson(400, F("{\"error\":\"filename and body required\"}"));
     return;
   }
   if (!_sanitizeCfgName(name)) {
@@ -365,6 +388,7 @@ void DeviceApi::_onPostNamedConfig() {
     ApiServer::sendJson(400, F("{\"error\":\"use POST /api/config to overwrite active config\"}"));
     return;
   }
+  const String &content = ApiServer::server().arg("plain");
   String path = "/" + name;
   Serial.printf("[upload] name=%s content_len=%u\n", name.c_str(), content.length());
   if (LittleFS.exists(path.c_str()))
