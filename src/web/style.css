@@ -1807,7 +1807,10 @@
       font-size: .8rem;
       color: var(--t0);
       font-variant-numeric: tabular-nums;
-      text-align: right
+      text-align: right;
+      overflow-wrap: break-word;
+      word-break: break-all;
+      min-width: 0
     }
 
     .abt-link {

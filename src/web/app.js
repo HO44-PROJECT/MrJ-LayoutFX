@@ -1065,7 +1065,7 @@
       html += abtCard(t('abt.firmware'), [
         { label: t('abt.version'), value: s.version || '\u2014' },
         { label: t('abt.build'), value: s.build_date || '\u2014' },
-        { label: t('abt.project'), value: t('abt.coming_soon') },
+        { label: t('abt.env'), value: s.env || '\u2014' },
       ]);
 
       // System

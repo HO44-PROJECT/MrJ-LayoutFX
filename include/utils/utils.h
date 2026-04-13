@@ -15,15 +15,15 @@
 
 #pragma once
 
-#include <MrJRailwayFX_define.h>
 #include <Arduino.h>
+#include <MrJRailwayFX_define.h>
 
 #ifdef DEBUG_OLED
-#include "DebugOled.h"
+  #include "DebugOled.h"
 #endif
 
 #ifdef OLED_STATUS
-#include "StatusOled.h"
+  #include "StatusOled.h"
 #endif
 
 /**
@@ -88,47 +88,87 @@ void debugPrintln(size_t value);
 
 #ifdef DEBUG_SERIAL
 
-#define DEBUG_INIT(speed) do { Serial.begin(speed); while (!Serial) { ; } delay(1000); } while (0)
+  #define DEBUG_INIT(speed) \
+    do {                    \
+      Serial.begin(speed);  \
+      while (!Serial) {     \
+        ;                   \
+      }                     \
+      delay(1000);          \
+    } while (0)
 
-// Debug print macros
-// #define DEBUG_PRINT(x) debuPrint(x)
-// #define DEBUG_PRINTLN(x) debugPrintln(x)
-#define DEBUG_PRINT(x, ...) debugPrint(x, ##__VA_ARGS__)
-#define DEBUG_PRINTLN(x, ...) debugPrintln(x, ##__VA_ARGS__)
+  #define DEBUG_PRINT(x, ...) debugPrint(x, ##__VA_ARGS__)
+  #define DEBUG_PRINTLN(x, ...) debugPrintln(x, ##__VA_ARGS__)
 
 #elif defined(DEBUG_OLED)
 
-#define DEBUG_INIT(speed) oled_init(speed)
-#define DEBUG_PRINT(x, ...) oled_print(x, ##__VA_ARGS__)
-#define DEBUG_PRINTLN(x, ...) oled_println(x, ##__VA_ARGS__)
-#define DEBUG_PRINTF(x, ...) oled_printf(x, ##__VA_ARGS__)
+  #define DEBUG_INIT(speed) oled_init(speed)
+  #define DEBUG_PRINT(x, ...) oled_print(x, ##__VA_ARGS__)
+  #define DEBUG_PRINTLN(x, ...) oled_println(x, ##__VA_ARGS__)
+  #define DEBUG_PRINTF(x, ...) oled_printf(x, ##__VA_ARGS__)
 
 #else
 
-#define DEBUG_INIT(speed)
-#define DEBUG_PRINT(x, ...)
-#define DEBUG_PRINTLN(x, ...)
-#define DEBUG_PRINTF(x, ...)
+  #define DEBUG_INIT(speed)
+  #define DEBUG_PRINT(x, ...)
+  #define DEBUG_PRINTLN(x, ...)
+  #define DEBUG_PRINTF(x, ...)
 
+#endif
+
+// ---------------------------------------------------------------------------
+// Operational logging — LOG_SERIAL and/or LOG_OLED, combinable
+// LOG_PRINT  : partial line fragment (Serial only)
+// LOG_PRINTLN: complete line (Serial + OLED if LOG_OLED)
+// ---------------------------------------------------------------------------
+
+#ifdef LOG_SERIAL
+  #define _LOG_S_PRINT(x) Serial.print(x)
+  #define _LOG_S_PRINTLN(x) Serial.println(x)
+#else
+  #define _LOG_S_PRINT(x)
+  #define _LOG_S_PRINTLN(x)
+#endif
+
+#if defined(LOG_OLED) && defined(MRJFX_OLED_ENABLED)
+  #include "oled/OledDisplay.h"
+  #define _LOG_O_PRINTLN(x) OledDisplay::log(x)
+#else
+  #define _LOG_O_PRINTLN(x)
+#endif
+
+#define LOG_PRINT(x) \
+  do {               \
+    _LOG_S_PRINT(x); \
+  } while (0)
+#define LOG_PRINTLN(x) \
+  do {                 \
+    _LOG_S_PRINTLN(x); \
+    _LOG_O_PRINTLN(x); \
+  } while (0)
+#ifdef LOG_SERIAL
+  #define LOG_PRINTF(fmt, ...) Serial.printf(fmt, ##__VA_ARGS__)
+#else
+  #define LOG_PRINTF(fmt, ...)
 #endif
 
 #ifdef OLED_STATUS
 
 extern StatusOled oled_status;
 
-#define STATUS_BEGIN() oled_status.begin()
-#define STATUS_PRINT(msg) oled_status.print(msg)
-#define STATUS_PRINTLN(msg) oled_status.print(msg, true)
-#define STATUS(id, status) oled_status.updateVisibleStatus(id, status)
-#define STATUS_LABEL(id, value) oled_status.label(id, value)
+  #define STATUS_BEGIN() oled_status.begin()
+  #define STATUS_PRINT(msg) oled_status.print(msg)
+  #define STATUS_PRINTLN(msg) oled_status.print(msg, true)
+  #define STATUS(id, status) oled_status.updateVisibleStatus(id, status)
+  #define STATUS_LABEL(id, value) oled_status.label(id, value)
 
 #else
 
-#define STATUS_BEGIN()
-#define STATUS_PRINT(msg)
-#define STATUS_PRINTLN(msg)
-#define STATUS(id, status)
-#define STATUS_LABEL(id, value)
+  #define STATUS_BEGIN()
+  #define STATUS_PRINT(msg)
+  #define STATUS_PRINTLN(msg)
+  #define STATUS(id, status)
+  #define STATUS_LABEL(id, value)
 
 #endif
 
@@ -140,10 +180,9 @@ extern StatusOled oled_status;
  * @param ... Variable arguments for formatting.
  */
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-    void format_P(char *buf, size_t bufsize, PGM_P fmt, ...);
+void format_P(char *buf, size_t bufsize, PGM_P fmt, ...);
 #ifdef __cplusplus
 }
 #endif

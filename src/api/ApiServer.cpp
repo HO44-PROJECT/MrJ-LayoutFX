@@ -6,6 +6,7 @@
  */
 
 #include "api/ApiServer.h"
+#include "utils/utils.h"
 
 #ifdef MRJFX_WEBUI_ENABLED
 

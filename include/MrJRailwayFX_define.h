@@ -43,7 +43,7 @@
 #else
   #undef MRJFX_DCC_ENABLED // DCC is disabled if DCC_PIN is not defined.
   #undef MRJFX_DCC_AUDIT_ENABLED
-#endif                     // End DCC check
+#endif // End DCC check
 
 // -- WIFI (ESP32 only) ────────────────────────────────────────────────────────
 // ── HTTP port default (user may override in config.h) ────────────────────────
@@ -97,6 +97,15 @@
   #undef MRJFX_OLED_ENABLED
 #endif // End OLED check
 
+// ── Boot-sensitive pin release (ESP32 only) ───────────────────────────────────
+// GPIO 5, 10, 12-15 are driven LOW at startup by default (strapping + JTAG pins).
+// Define USE_JTAG in config.h to skip this entirely (e.g. when using a JTAG probe).
+#if defined(ESP32) && !defined(USE_JTAG)
+  #define MRJFX_RELEASE_JTAG 1
+#else
+  #undef MRJFX_RELEASE_JTAG
+#endif
+
 #ifdef SPI_CARDS // SPI shift-register bus support is enabled if SPI_CARDS is defined.
   #define MRJFX_SPI_CARDS_ENABLED 1
 #else
@@ -120,4 +129,3 @@
 #else
   #undef MRJFX_SERIAL_SERVO_ENABLED
 #endif // End Serial servo check
-

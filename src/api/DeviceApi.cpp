@@ -74,7 +74,7 @@ void DeviceApi::init(const DeviceFactory &factory) {
 // ---------------------------------------------------------------------------
 
 void DeviceApi::_onGetDevices() {
-  Serial.println(F("API: GET /api/devices"));
+  LOG_PRINTLN(F("API: GET /api/devices"));
   String json = "[";
   for (size_t i = 0; i < _factory->count(); i++) {
     Device *d = _factory->device(i);
@@ -150,7 +150,7 @@ void DeviceApi::_onPostDevice() {
 }
 
 void DeviceApi::_onSwitch() {
-  Serial.println(F("API: POST /api/switch"));
+  LOG_PRINTLN(F("API: POST /api/switch"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -162,7 +162,7 @@ void DeviceApi::_onSwitch() {
   }
   const char *id = doc["id"] | "";
   bool on = doc["on"].as<bool>();
-  Serial.printf("[switch] id='%s' on=%d\n", id, (int)on);
+  LOG_PRINTF("[switch] id='%s' on=%d\n", id, (int)on);
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
@@ -230,7 +230,7 @@ void DeviceApi::_onGroupDevices() {
 // ---------------------------------------------------------------------------
 
 void DeviceApi::_onGetConfig() {
-  Serial.println(F("API: GET /api/config"));
+  LOG_PRINTLN(F("API: GET /api/config"));
   if (!ConfigManager::configExists()) {
     ApiServer::sendJson(404, F("{\"error\":\"config not found\"}"));
     return;
@@ -240,7 +240,7 @@ void DeviceApi::_onGetConfig() {
 }
 
 void DeviceApi::_onPostConfig() {
-  Serial.println(F("API: POST /api/config"));
+  LOG_PRINTLN(F("API: POST /api/config"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -253,10 +253,10 @@ void DeviceApi::_onPostConfig() {
 }
 
 void DeviceApi::_onGetConfigs() {
-  Serial.println(F("API: GET /api/configs"));
+  LOG_PRINTLN(F("API: GET /api/configs"));
   // Read the source file used for the last activation (written by activateConfig)
   String activeName;
-  File src = LittleFS.open("/config_source.txt", "r");
+  File src = LittleFS.exists("/config_source.txt") ? LittleFS.open("/config_source.txt", "r") : File();
   if (src) {
     activeName = src.readString();
     src.close();
@@ -291,7 +291,7 @@ static bool _writeAllBytes(File &f, const uint8_t *buf, size_t len) {
     size_t toWrite = min(len - offset, CHUNK);
     size_t w = f.write(buf + offset, toWrite);
     if (w == 0) {
-      Serial.printf("[FS] write stalled at offset=%u\n", offset);
+      LOG_PRINTF("[FS] write stalled at offset=%u\n", offset);
       return false;
     }
     offset += w;
@@ -303,7 +303,7 @@ static bool _writeAllBytes(File &f, const uint8_t *buf, size_t len) {
 static bool _copyFile(const char *src, const char *dst) {
   File in = LittleFS.open(src, "r");
   if (!in) {
-    Serial.printf("[FS] open(%s,r) failed\n", src);
+    LOG_PRINTF("[FS] open(%s,r) failed\n", src);
     return false;
   }
   if (LittleFS.exists(dst))
@@ -311,7 +311,7 @@ static bool _copyFile(const char *src, const char *dst) {
   File out = LittleFS.open(dst, "w");
   if (!out) {
     in.close();
-    Serial.printf("[FS] open(%s,w) failed errno=%d\n", dst, errno);
+    LOG_PRINTF("[FS] open(%s,w) failed errno=%d\n", dst, errno);
     return false;
   }
   uint8_t buf[512];
@@ -322,14 +322,14 @@ static bool _copyFile(const char *src, const char *dst) {
     size_t w = out.write(buf, n);
     total += w;
     if (w != n) {
-      Serial.printf("[FS] write short: %u/%u at offset=%u\n", w, n, total);
+      LOG_PRINTF("[FS] write short: %u/%u at offset=%u\n", w, n, total);
       in.close(); out.close();
       return false;
     }
   }
   in.close();
   out.close();
-  Serial.printf("[FS] copyFile %s -> %s (%u bytes)\n", src, dst, total);
+  LOG_PRINTF("[FS] copyFile %s -> %s (%u bytes)\n", src, dst, total);
   return true;
 }
 
@@ -341,7 +341,7 @@ static bool _safeRename(const char *from, const char *to) {
 }
 
 void DeviceApi::_onGetNamedConfig() {
-  Serial.println(F("API: GET /api/config/file"));
+  LOG_PRINTLN(F("API: GET /api/config/file"));
   String name = ApiServer::server().arg("name");
   if (!_sanitizeCfgName(name)) {
     ApiServer::sendJson(400, F("{\"error\":\"invalid filename\"}"));
@@ -378,13 +378,13 @@ static bool _sanitizeCfgName(String &name) {
 // ---------------------------------------------------------------------------
 
 void DeviceApi::_onPostNamedConfig() {
-  Serial.println(F("API: POST /api/configs"));
+  LOG_PRINTLN(F("API: POST /api/configs"));
   // Filename: prefer X-Config-Name header, fallback to ?name= URL param
   String name = ApiServer::server().header("X-Config-Name");
   if (name.isEmpty())
     name = ApiServer::server().arg("name");
   bool hasBody = ApiServer::server().hasArg("plain") && ApiServer::server().arg("plain").length() > 0;
-  Serial.printf("[upload] name='%s' hasBody=%d argCount=%d\n",
+  LOG_PRINTF("[upload] name='%s' hasBody=%d argCount=%d\n",
     name.c_str(), (int)hasBody, ApiServer::server().args());
   if (name.isEmpty() || !hasBody) {
     ApiServer::sendJson(400, F("{\"error\":\"filename and body required\"}"));
@@ -400,19 +400,19 @@ void DeviceApi::_onPostNamedConfig() {
   }
   const String &content = ApiServer::server().arg("plain");
   String path = "/" + name;
-  Serial.printf("[upload] name=%s content_len=%u\n", name.c_str(), content.length());
+  LOG_PRINTF("[upload] name=%s content_len=%u\n", name.c_str(), content.length());
   if (LittleFS.exists(path.c_str()))
     LittleFS.remove(path.c_str());
   errno = 0;
   File f = LittleFS.open(path.c_str(), "w");
-  Serial.printf("[upload] open(%s,w) ok=%d errno=%d\n", path.c_str(), (int)(bool)f, errno);
+  LOG_PRINTF("[upload] open(%s,w) ok=%d errno=%d\n", path.c_str(), (int)(bool)f, errno);
   if (!f) {
     ApiServer::sendJson(500, F("{\"error\":\"write failed\"}"));
     return;
   }
   bool ok = _writeAllBytes(f, (const uint8_t *)content.c_str(), content.length());
   f.close();
-  Serial.printf("[FS] saved %s ok=%d\n", path.c_str(), (int)ok);
+  LOG_PRINTF("[FS] saved %s ok=%d\n", path.c_str(), (int)ok);
   if (!ok) {
     ApiServer::sendJson(500, F("{\"error\":\"write incomplete\"}"));
     return;
@@ -421,7 +421,7 @@ void DeviceApi::_onPostNamedConfig() {
 }
 
 void DeviceApi::_onDeleteNamedConfig() {
-  Serial.println(F("API: DELETE /api/configs"));
+  LOG_PRINTLN(F("API: DELETE /api/configs"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -442,12 +442,12 @@ void DeviceApi::_onDeleteNamedConfig() {
     return;
   }
   LittleFS.remove(path.c_str());
-  Serial.printf("[FS] deleted %s\n", path.c_str());
+  LOG_PRINTF("[FS] deleted %s\n", path.c_str());
   ApiServer::sendJson(200, F("{\"ok\":true}"));
 }
 
 void DeviceApi::_onCopyConfig() {
-  Serial.println(F("API: POST /api/config/copy"));
+  LOG_PRINTLN(F("API: POST /api/config/copy"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -477,12 +477,12 @@ void DeviceApi::_onCopyConfig() {
     ApiServer::sendJson(500, F("{\"error\":\"write failed\"}"));
     return;
   }
-  Serial.printf("[FS] copied %s -> %s\n", fromPath.c_str(), toPath.c_str());
+  LOG_PRINTF("[FS] copied %s -> %s\n", fromPath.c_str(), toPath.c_str());
   ApiServer::sendJson(200, F("{\"ok\":true}"));
 }
 
 void DeviceApi::_onRenameConfig() {
-  Serial.println(F("API: POST /api/config/rename"));
+  LOG_PRINTLN(F("API: POST /api/config/rename"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -508,7 +508,7 @@ void DeviceApi::_onRenameConfig() {
     ApiServer::sendJson(404, F("{\"error\":\"source not found\"}"));
     return;
   }
-  Serial.printf("[rename] %s -> %s\n", fromPath.c_str(), toPath.c_str());
+  LOG_PRINTF("[rename] %s -> %s\n", fromPath.c_str(), toPath.c_str());
   if (!_safeRename(fromPath.c_str(), toPath.c_str())) {
     ApiServer::sendJson(500, F("{\"error\":\"rename failed\"}"));
     return;
@@ -517,7 +517,7 @@ void DeviceApi::_onRenameConfig() {
 }
 
 void DeviceApi::_onActivateConfig() {
-  Serial.println(F("API: POST /api/config/activate"));
+  LOG_PRINTLN(F("API: POST /api/config/activate"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -541,7 +541,7 @@ void DeviceApi::_onActivateConfig() {
 }
 
 void DeviceApi::_onDeleteConfig() {
-  Serial.println(F("API: DELETE /api/config"));
+  LOG_PRINTLN(F("API: DELETE /api/config"));
   ConfigManager::deleteConfig();
   ApiServer::sendJson(200, F("{\"ok\":true}"));
   delay(200);
@@ -549,7 +549,7 @@ void DeviceApi::_onDeleteConfig() {
 }
 
 void DeviceApi::_onServo() {
-  Serial.println(F("API: POST /api/servo"));
+  LOG_PRINTLN(F("API: POST /api/servo"));
   if (!ApiServer::server().hasArg("plain")) {
     ApiServer::sendJson(400, F("{\"error\":\"body required\"}"));
     return;
@@ -581,7 +581,7 @@ void DeviceApi::_onServo() {
 }
 
 void DeviceApi::_onRestart() {
-  Serial.println(F("API: POST /api/restart"));
+  LOG_PRINTLN(F("API: POST /api/restart"));
   ApiServer::sendJson(200, F("{\"ok\":true}"));
 #ifdef MRJFX_OLED_ENABLED
   OledDisplay::showMessage("MrJ RailwayFX", "Redemarrage...");
@@ -595,11 +595,14 @@ void DeviceApi::_onRestart() {
 // ---------------------------------------------------------------------------
 
 void DeviceApi::_onGetStatus() {
-  Serial.println(F("API: GET /api/status"));
+  LOG_PRINTLN(F("API: GET /api/status"));
   JsonDocument doc;
 
   doc["version"] = FIRMWARE_VERSION;
   doc["build_date"] = __DATE__ " " __TIME__;
+#ifdef PIOENV_NAME
+  doc["env"] = F(PIOENV_NAME);
+#endif
   doc["uptime_s"] = millis() / 1000UL;
   doc["ip"] = WiFi.localIP().toString();
   doc["config"] = ConfigManager::configExists();
@@ -654,16 +657,19 @@ void DeviceApi::_onGetStatus() {
 #endif
 
   // Pins reserved by compile-time features (not declared in config.json)
+#if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_OLED_ENABLED)
   {
     JsonObject sp = doc["sys_pins"].to<JsonObject>();
-    // UART0 — always active (Serial.begin in MrJFX::init)
+#if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
     sp[1] = F("TX0");
     sp[3] = F("RX0");
+#endif
 #ifdef MRJFX_OLED_ENABLED
     sp[OLED_SDA] = F("SDA");
     sp[OLED_SCL] = F("SCL");
 #endif
   }
+#endif
 
   String json;
   serializeJson(doc, json);
@@ -675,7 +681,7 @@ void DeviceApi::_onGetStatus() {
 // ---------------------------------------------------------------------------
 
 void DeviceApi::_onGetBoards() {
-  Serial.println(F("API: GET /api/boards"));
+  LOG_PRINTLN(F("API: GET /api/boards"));
   String json = "[";
   for (uint8_t i = 1; i <= _factory->boardCount(); i++) {
     const DeviceFactory::BoardCfg &b = _factory->board(i);
@@ -698,7 +704,7 @@ void DeviceApi::_onGetBoards() {
 }
 
 void DeviceApi::_onGetBoardTypes() {
-  Serial.println(F("API: GET /api/board-types"));
+  LOG_PRINTLN(F("API: GET /api/board-types"));
   if (!LittleFS.exists("/board_types.json")) {
     ApiServer::sendJson(404, F("{\"error\":\"board_types.json not found\"}"));
     return;
@@ -797,6 +803,7 @@ void DeviceApi::_onTestSpi() {
   #else
   (void)card;
   (void)channel;
+  (void)state;
   ApiServer::sendJson(501, F("{\"error\":\"SPI not enabled\"}"));
   #endif
 }
