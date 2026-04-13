@@ -33,9 +33,9 @@ DfAudio::DfAudio(SoftwareSerial *serial, PIN_ID rxPin, PIN_ID txPin, int speed)
     // Check if an existing servo bus is provided; otherwise, allocate a new one
     if (serial == nullptr)
     {
-        // Serial.println("New SoftwareSerial");
-        // Serial.println(rxPin);
-        // Serial.println(txPin);
+        // DEBUG_PRINTLN("New SoftwareSerial");
+        // DEBUG_PRINTLN(rxPin);
+        // DEBUG_PRINTLN(txPin);
         serial = new SoftwareSerial(pinId(rxPin), pinId(txPin));
         serial->begin(speed);
     }
@@ -69,12 +69,12 @@ bool DfAudio::waitForAck(unsigned long timeout)
                 // pour l’instant on se contente d’un ACK simple
                 while (serial->available())
                     serial->read(); // vider le buffer
-                // Serial.println("ack ok");
+                // DEBUG_PRINTLN("ack ok");
                 return true;
             }
         }
     }
-    // Serial.println("ack ko");
+    // DEBUG_PRINTLN("ack ko");
     return false; // timeout
 }
 
@@ -120,7 +120,7 @@ void DfAudio::setVolume(uint8_t level)
 {
     if (level > 30)
     {
-        // Serial.println("Volume level must be between 0 and 30.");
+        // DEBUG_PRINTLN("Volume level must be between 0 and 30.");
         return;
     }
     uint8_t command[] = {0x7E, 0x06, 0x01, 0x02, 0x00, level, 0xEF};

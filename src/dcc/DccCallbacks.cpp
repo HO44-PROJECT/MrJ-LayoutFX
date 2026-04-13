@@ -122,9 +122,9 @@ void notifyDccMsg(DCC_MSG *Msg)
         return;
 
     // Debug: Print raw byte values in hexadecimal (commented out)
-    // Serial.print("Raw: b1=0x"); Serial.print(b1, HEX);
-    // Serial.print(", b2=0x"); Serial.print(b2, HEX);
-    // Serial.println();
+    // DEBUG_PRINT("Raw: b1=0x"); LOG_PRINT(b1, HEX);
+    // DEBUG_PRINT(", b2=0x"); LOG_PRINT(b2, HEX);
+    // DEBUG_PRINTLN();
 
     // Calculate the board address (1 to 511)
     // Extract the lower 6 bits of the first byte (b1)
@@ -135,9 +135,9 @@ void notifyDccMsg(DCC_MSG *Msg)
     uint16_t boardAddr = ((uint16_t)high3 << 6) | low6;
 
     // Debug: Print address calculation details (commented out)
-    // Serial.print("Address calc: low6=0x"); Serial.print(low6, HEX);
-    // Serial.print(", high3=0x"); Serial.print(high3, HEX);
-    // Serial.print(", BoardAddr="); Serial.println(boardAddr);
+    // DEBUG_PRINT("Address calc: low6=0x"); LOG_PRINT(low6, HEX);
+    // DEBUG_PRINT(", high3=0x"); LOG_PRINT(high3, HEX);
+    // DEBUG_PRINT(", BoardAddr="); LOG_PRINTLN(boardAddr);
 
     // Check if the packet is a Basic Accessory packet (b2 bit 7 = 1) or Extended Accessory packet (b2 bit 7 = 0)
     if (b2 & 0x80)
@@ -156,11 +156,11 @@ void notifyDccMsg(DCC_MSG *Msg)
         uint16_t addr = (((boardAddr - 1) << 2) | pair) + 1;
 
         // Debug: Print Basic Accessory packet details (commented out)
-        // Serial.print("Basic Packet: BoardAddr="); Serial.print(boardAddr);
-        // Serial.print(", Pair="); Serial.print(pair);
-        // Serial.print(", Dir="); Serial.print(dir);
-        // Serial.print(", State="); Serial.print(state);
-        // Serial.print(", CalcAddr="); Serial.println(addr);
+        // DEBUG_PRINT("Basic Packet: BoardAddr="); LOG_PRINT(boardAddr);
+        // DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
+        // DEBUG_PRINT(", Dir="); LOG_PRINT(dir);
+        // DEBUG_PRINT(", State="); LOG_PRINT(state);
+        // DEBUG_PRINT(", CalcAddr="); LOG_PRINTLN(addr);
 
         // Check if in output-oriented mode
         if (DccDrivable::IS_OUTPUT_MODE())
@@ -190,10 +190,10 @@ void notifyDccMsg(DCC_MSG *Msg)
         uint16_t addr = (((boardAddr - 1) << 2) | pair) + 1;
 
         // Debug: Print Extended Accessory packet details (commented out)
-        // Serial.print("Extended Packet: BoardAddr="); Serial.print(boardAddr);
-        // Serial.print(", Pair="); Serial.print(pair);
-        // Serial.print(", Aspect="); Serial.print(aspect);
-        // Serial.print(", CalcAddr="); Serial.println(addr);
+        // DEBUG_PRINT("Extended Packet: BoardAddr="); LOG_PRINT(boardAddr);
+        // DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
+        // DEBUG_PRINT(", Aspect="); LOG_PRINT(aspect);
+        // DEBUG_PRINT(", CalcAddr="); LOG_PRINTLN(addr);
 
         // Notify signal output state with the calculated address and aspect
         notifyDccSigOutputState(addr, aspect);
