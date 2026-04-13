@@ -27,28 +27,28 @@ void ConfigManager::init(const char *configPath) {
   _configPath = configPath;
 
   if (!LittleFS.begin(true)) {
-    Serial.println(F("[FS] mount failed"));
+    LOG_PRINTLN(F("[FS] mount failed"));
   } else {
-    Serial.println(F("[FS] mounted"));
+    LOG_PRINTLN(F("[FS] mounted"));
   }
 
   String boardTypes = _readFile("/board_types.json");
   String json = readConfig();
   if (!json.isEmpty()) {
-    Serial.println(F("[Factory] loading config..."));
+    LOG_PRINTLN(F("[Factory] loading config..."));
     if (_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
       _factory.initAll();
-      Serial.print(F("[Factory] "));
-      Serial.print(_factory.count());
-      Serial.println(F(" device(s) ready"));
+      LOG_PRINT(F("[Factory] "));
+      LOG_PRINT(_factory.count());
+      LOG_PRINTLN(F(" device(s) ready"));
       if (_factory.dccPin() >= 0) {
         DccDrivable::init((uint8_t)_factory.dccPin());
       }
     } else {
-      Serial.println(F("[Factory] JSON parse error"));
+      LOG_PRINTLN(F("[Factory] JSON parse error"));
     }
   } else {
-    Serial.println(F("[Factory] no config"));
+    LOG_PRINTLN(F("[Factory] no config"));
   }
 }
 

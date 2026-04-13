@@ -132,7 +132,9 @@ public:
    *          5. ApiServer/WiFi (if WIFI_SSID and WIFI_PASSWORD are defined)
    */
   static void init() {
+#if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
     Serial.begin(115200);
+#endif
 
     // 0. Start OLED display early (shows boot context).
 #ifdef MRJFX_OLED_ENABLED

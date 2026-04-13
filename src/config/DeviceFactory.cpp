@@ -66,8 +66,8 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, json);
   if (err) {
-    Serial.print(F("DeviceFactory: JSON error — "));
-    Serial.println(err.c_str());
+    LOG_PRINT(F("DeviceFactory: JSON error — "));
+    LOG_PRINTLN(err.c_str());
     return false;
   }
 
@@ -80,7 +80,7 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   if (doc["boards"].is<JsonArray>()) {
     for (JsonObject bd : doc["boards"].as<JsonArray>()) {
       if (_boardCount >= FACTORY_MAX_BOARDS) {
-        Serial.println(F("DeviceFactory: FACTORY_MAX_BOARDS reached"));
+        LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_BOARDS reached"));
         break;
       }
 
@@ -96,7 +96,7 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       // SPI boards: assign daisy-chain rank and register in _spiCards[]
       if (bcfg.busType == BUS_SPI_MASTER) {
         if (_spiCardCount >= FACTORY_MAX_SPI_CARDS) {
-          Serial.println(F("DeviceFactory: FACTORY_MAX_SPI_CARDS reached"));
+          LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_SPI_CARDS reached"));
           _boardCount++;
           continue;
         }
@@ -116,23 +116,23 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
         _spiCardCount++;
       }
 
-      Serial.print(F("DeviceFactory: board["));
-      Serial.print(_boardCount + 1);
-      Serial.print(F("] id="));
-      Serial.print(bcfg.id);
-      Serial.print(F(" type="));
-      Serial.print(bcfg.typeStr);
+      LOG_PRINT(F("DeviceFactory: board["));
+      LOG_PRINT(_boardCount + 1);
+      LOG_PRINT(F("] id="));
+      LOG_PRINT(bcfg.id);
+      LOG_PRINT(F(" type="));
+      LOG_PRINT(bcfg.typeStr);
       if (bcfg.busKey[0]) {
-        Serial.print(F(" bus="));
-        Serial.print(bcfg.busKey);
+        LOG_PRINT(F(" bus="));
+        LOG_PRINT(bcfg.busKey);
       }
       if (bcfg.spiRank > 0) {
-        Serial.print(F(" rank="));
-        Serial.print(bcfg.spiRank);
-        Serial.print(F(" pins="));
-        Serial.print(bcfg.pinCount);
+        LOG_PRINT(F(" rank="));
+        LOG_PRINT(bcfg.spiRank);
+        LOG_PRINT(F(" pins="));
+        LOG_PRINT(bcfg.pinCount);
       }
-      Serial.println();
+      LOG_PRINTLN();
 
       _boardCount++;
     }
@@ -151,7 +151,7 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   // 4. Parse devices
   for (JsonObject obj : doc["devices"].as<JsonArray>()) {
     if (_count >= FACTORY_MAX_DEVICES) {
-      Serial.println(F("DeviceFactory: FACTORY_MAX_DEVICES reached"));
+      LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_DEVICES reached"));
       break;
     }
     Device *d = _createDevice(obj);
@@ -190,8 +190,8 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       _dccPin = bus["pin"] | -1;
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_DCC;
-      Serial.print(F("DeviceFactory: bus dcc pin="));
-      Serial.println(_dccPin);
+      LOG_PRINT(F("DeviceFactory: bus dcc pin="));
+      LOG_PRINTLN(_dccPin);
     } else if (strcmp(type, "spi_master_only") == 0) {
       _spiBus.mosi = bus["mosi"] | -1;
       _spiBus.sclk = bus["sclk"] | -1;
@@ -199,21 +199,21 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_MASTER;
       if (_spiBus.configured()) {
-        Serial.print(F("DeviceFactory: bus spi mosi="));
-        Serial.print(_spiBus.mosi);
-        Serial.print(F(" sclk="));
-        Serial.print(_spiBus.sclk);
-        Serial.print(F(" latch="));
-        Serial.println(_spiBus.latch);
+        LOG_PRINT(F("DeviceFactory: bus spi mosi="));
+        LOG_PRINT(_spiBus.mosi);
+        LOG_PRINT(F(" sclk="));
+        LOG_PRINT(_spiBus.sclk);
+        LOG_PRINT(F(" latch="));
+        LOG_PRINTLN(_spiBus.latch);
       } else {
-        Serial.println(F("DeviceFactory: bus spi — incomplete config, ignored"));
+        LOG_PRINTLN(F("DeviceFactory: bus spi — incomplete config, ignored"));
       }
     } else if (strcmp(type, "spi_full_duplex") == 0) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_FULL;
-      Serial.print(F("DeviceFactory: bus spi_full_duplex "));
-      Serial.print(busKey);
-      Serial.println(F(" — not yet handled"));
+      LOG_PRINT(F("DeviceFactory: bus spi_full_duplex "));
+      LOG_PRINT(busKey);
+      LOG_PRINTLN(F(" — not yet handled"));
     } else if (strcmp(type, "uart") == 0) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_UART;
@@ -227,35 +227,35 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
         cfg.serial = serialFromBusKey(cfg.name);
         if (cfg.serial && cfg.tx >= 0 && cfg.rx >= 0) {
           cfg.serial->begin(cfg.baud, SERIAL_8N1, cfg.rx, cfg.tx);
-          Serial.print(F("DeviceFactory: bus uart "));
-          Serial.print(cfg.name);
-          Serial.print(F(" tx="));
-          Serial.print(cfg.tx);
-          Serial.print(F(" rx="));
-          Serial.print(cfg.rx);
-          Serial.print(F(" baud="));
-          Serial.println(cfg.baud);
+          LOG_PRINT(F("DeviceFactory: bus uart "));
+          LOG_PRINT(cfg.name);
+          LOG_PRINT(F(" tx="));
+          LOG_PRINT(cfg.tx);
+          LOG_PRINT(F(" rx="));
+          LOG_PRINT(cfg.rx);
+          LOG_PRINT(F(" baud="));
+          LOG_PRINTLN(cfg.baud);
         } else {
-          Serial.print(F("DeviceFactory: bus uart "));
-          Serial.print(busKey);
-          Serial.println(F(" — key must be uart0/uart1/uart2"));
+          LOG_PRINT(F("DeviceFactory: bus uart "));
+          LOG_PRINT(busKey);
+          LOG_PRINTLN(F(" — key must be uart0/uart1/uart2"));
         }
         _portCount++;
       } else {
-        Serial.println(F("DeviceFactory: FACTORY_MAX_PORTS reached"));
+        LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_PORTS reached"));
       }
     } else if (strcmp(type, "i2c") == 0) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_I2C;
-      Serial.print(F("DeviceFactory: bus i2c "));
-      Serial.print(busKey);
-      Serial.print(F(" sda="));
-      Serial.print((int)(bus["sda"] | -1));
-      Serial.print(F(" scl="));
-      Serial.println((int)(bus["scl"] | -1));
+      LOG_PRINT(F("DeviceFactory: bus i2c "));
+      LOG_PRINT(busKey);
+      LOG_PRINT(F(" sda="));
+      LOG_PRINT((int)(bus["sda"] | -1));
+      LOG_PRINT(F(" scl="));
+      LOG_PRINTLN((int)(bus["scl"] | -1));
     } else {
-      Serial.print(F("DeviceFactory: unknown bus type — "));
-      Serial.println(type);
+      LOG_PRINT(F("DeviceFactory: unknown bus type — "));
+      LOG_PRINTLN(type);
     }
 
     if (_busCount < FACTORY_MAX_BUSES)
@@ -302,8 +302,8 @@ uint8_t DeviceFactory::_resolveBoardId(const char *id) const {
     if (strcmp(_boards_cfg[i].id, id) == 0)
       return i + 1;
   }
-  Serial.print(F("DeviceFactory: unknown board id — "));
-  Serial.println(id);
+  LOG_PRINT(F("DeviceFactory: unknown board id — "));
+  LOG_PRINTLN(id);
   return 0;
 }
 
@@ -328,7 +328,7 @@ PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   #ifdef MRJFX_SPI_CARDS_ENABLED
       return PIN_ID::spi(bcfg.spiRank, bit);
   #else
-      Serial.println(F("DeviceFactory: SPI board requires -DSPI_CARDS — device skipped"));
+      LOG_PRINTLN(F("DeviceFactory: SPI board requires -DSPI_CARDS — device skipped"));
       return (PIN_ID)255; // NO_PIN
   #endif
     }
@@ -461,19 +461,19 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   else if (strcmp(type, "DfAudio") == 0) {
   #ifdef MRJFX_AUDIO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
-      Serial.println(F("DeviceFactory: DfAudio — board not found"));
+      LOG_PRINTLN(F("DeviceFactory: DfAudio — board not found"));
       return nullptr;
     }
     const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
     if (bcfg.busType != BUS_UART) {
-      Serial.print(F("DeviceFactory: DfAudio — board is not on a uart bus: "));
-      Serial.println(bcfg.id);
+      LOG_PRINT(F("DeviceFactory: DfAudio — board is not on a uart bus: "));
+      LOG_PRINTLN(bcfg.id);
       return nullptr;
     }
     PortCfg *cfg = _findPort(bcfg.busKey);
     if (!cfg || cfg->rx < 0 || cfg->tx < 0) {
-      Serial.print(F("DeviceFactory: DfAudio — uart config missing for bus: "));
-      Serial.println(bcfg.busKey);
+      LOG_PRINT(F("DeviceFactory: DfAudio — uart config missing for bus: "));
+      LOG_PRINTLN(bcfg.busKey);
       return nullptr;
     }
     #ifdef MRJFX_SPI_CARDS_ENABLED
@@ -491,38 +491,38 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   else if (strcmp(type, "SerialServo") == 0) {
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
-      Serial.println(F("DeviceFactory: SerialServo — board not found"));
+      LOG_PRINTLN(F("DeviceFactory: SerialServo — board not found"));
       return nullptr;
     }
     const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
     if (bcfg.busType != BUS_UART) {
-      Serial.print(F("DeviceFactory: SerialServo — board is not on a uart bus: "));
-      Serial.println(bcfg.id);
+      LOG_PRINT(F("DeviceFactory: SerialServo — board is not on a uart bus: "));
+      LOG_PRINTLN(bcfg.id);
       return nullptr;
     }
     HardwareSerial *ser = _findSerial(bcfg.busKey);
     if (!ser) {
-      Serial.print(F("DeviceFactory: SerialServo — uart not found for bus: "));
-      Serial.println(bcfg.busKey);
+      LOG_PRINT(F("DeviceFactory: SerialServo — uart not found for bus: "));
+      LOG_PRINTLN(bcfg.busKey);
       return nullptr;
     }
     uint8_t servoId = (uint8_t)wiring.as<int>();
     if (_lobotCount >= FACTORY_MAX_DEVICES) {
-      Serial.println(F("DeviceFactory: LOBOT servo array full"));
+      LOG_PRINTLN(F("DeviceFactory: LOBOT servo array full"));
       return nullptr;
     }
     LobotServo *ls = new LobotServo(*ser, servoId);
     _lobotServos[_lobotCount++] = ls;
     d = new SerialServoMotor(ls, NO_PIN, NO_PIN, (int)servoId);
   #else
-    Serial.println(F("DeviceFactory: SerialServo requires build_flags = -DLOBOT"));
+    LOG_PRINTLN(F("DeviceFactory: SerialServo requires build_flags = -DLOBOT"));
     return nullptr;
   #endif
   }
 
   else {
-    Serial.print(F("DeviceFactory: unknown type — "));
-    Serial.println(type);
+    LOG_PRINT(F("DeviceFactory: unknown type — "));
+    LOG_PRINTLN(type);
     return nullptr;
   }
 
@@ -536,12 +536,12 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   if (strcmp(obj["default_state"] | "off", "on") == 0)
     d->newState(1);
 
-  Serial.print(F("DeviceFactory: created "));
-  Serial.print(type);
-  Serial.print(F(" label="));
-  Serial.print(label[0]);
-  Serial.print(F(" addr="));
-  Serial.println(address);
+  LOG_PRINT(F("DeviceFactory: created "));
+  LOG_PRINT(type);
+  LOG_PRINT(F(" label="));
+  LOG_PRINT(label[0]);
+  LOG_PRINT(F(" addr="));
+  LOG_PRINTLN(address);
 
   return d;
 }

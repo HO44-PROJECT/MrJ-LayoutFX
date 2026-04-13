@@ -59,24 +59,26 @@ void ApiServer::on(const char *path, HTTPMethod method,
 }
 
 void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
+#ifdef LOG_SERIAL
   Serial.setDebugOutput(false);
+#endif
 
   // Ensure server exists with the requested port (first call wins).
   _get(port);
 
   // --- WiFi ---
   WiFi.begin(ssid, password);
-  Serial.print(F("[WiFi] connecting"));
+  LOG_PRINT(F("[WiFi] connecting"));
   for (int i = 0; i < 40 && WiFi.status() != WL_CONNECTED; i++) {
     delay(500);
-    Serial.print('.');
+    LOG_PRINT('.');
   }
-  Serial.println();
+  LOG_PRINTLN();
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.print(F("[WiFi] IP: "));
-    Serial.println(WiFi.localIP());
+    LOG_PRINT(F("[WiFi] IP: "));
+    LOG_PRINTLN(WiFi.localIP());
   } else {
-    Serial.println(F("[WiFi] not connected"));
+    LOG_PRINTLN(F("[WiFi] not connected"));
   }
 
   // --- Preflight handler for CORS (OPTIONS) ---
@@ -93,8 +95,8 @@ void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
 
   // --- Start HTTP server ---
   _server->begin();
-  Serial.print(F("[HTTP] port "));
-  Serial.println(port);
+  LOG_PRINT(F("[HTTP] port "));
+  LOG_PRINTLN(port);
 
   // --- System task on Core 0 (same core as WiFi stack) ---
   // All non-coroutine work: HTTP + DCC. Core 1 (loop) = CoroutineScheduler only.

@@ -30,7 +30,7 @@
 
 #ifdef MRJFX_OLED_ENABLED
 
-#include <U8g2lib.h>
+  #include <U8g2lib.h>
 
 /**
  * @class OledDisplay
@@ -46,60 +46,76 @@
  */
 class OledDisplay {
 public:
-    /**
-     * @brief Construct the display instance (does NOT initialise Wire or U8g2).
-     */
-    OledDisplay();
+  /**
+   * @brief Construct the display instance (does NOT initialise Wire or U8g2).
+   */
+  OledDisplay();
 
-    /**
-     * @brief Initialise Wire (I²C) and the U8g2 driver.
-     * Must be called once in MrJFX::init(), before CoroutineScheduler::setup().
-     */
-    static void init();
+  /**
+   * @brief Initialise Wire (I²C) and the U8g2 driver.
+   * Must be called once in MrJFX::init(), before CoroutineScheduler::setup().
+   */
+  static void init();
 
-    /**
-     * @brief Trigger the event screen for the given device state change.
-     * Safe to call from any context (DeviceApi HTTP handlers run on Core 0).
-     *
-     * @param type  Device type string (value of getDeviceName(), as const char*).
-     * @param id    Device id string.
-     * @param state New state integer.
-     */
-    static void notify(const char* type, const char* id, int state);
+  /**
+   * @brief Trigger the event screen for the given device state change.
+   * Safe to call from any context (DeviceApi HTTP handlers run on Core 0).
+   *
+   * @param type  Device type string (value of getDeviceName(), as const char*).
+   * @param id    Device id string.
+   * @param state New state integer.
+   */
+  static void notify(const char *type, const char *id, int state);
 
-    /**
-     * @brief Draw a two-line message directly to the OLED (synchronous, bypasses event task).
-     *
-     * Used just before ESP.restart() so the display updates even as the FreeRTOS
-     * task is about to be killed. Caller must ensure at least ~50 ms before restart.
-     *
-     * @param line1 First line text.
-     * @param line2 Second line text (may be nullptr).
-     */
-    static void showMessage(const char* line1, const char* line2 = nullptr);
+  /**
+   * @brief Draw a two-line message directly to the OLED (synchronous, bypasses event task).
+   *
+   * Used just before ESP.restart() so the display updates even as the FreeRTOS
+   * task is about to be killed. Caller must ensure at least ~50 ms before restart.
+   *
+   * @param line1 First line text.
+   * @param line2 Second line text (may be nullptr).
+   */
+  static void showMessage(const char *line1, const char *line2 = nullptr);
+
+  /**
+   * @brief Post a one-line log message to the OLED (non-blocking, via event pipe).
+   *
+   * Displayed as a transient screen between idle and device-event screens.
+   * On ESP32, F() strings can be passed directly (cast to const char*).
+   *
+   * @param msg  Log message (SRAM string, max 21 chars visible at 6×10 font).
+   */
+  static void log(const char *msg);
+  static void log(const __FlashStringHelper *msg);
 
 private:
-    void _begin();
-    void _drawIdle();
-    void _drawEvent();
-    void _drawIcon(const char* type, uint8_t ox, uint8_t oy);
-    static const char* _stateName(const char* type, int state);
-    static void _task(void*);
+  void _begin();
+  void _drawIdle();
+  void _drawEvent();
+  void _drawLog();
+  void _drawIcon(const char *type, uint8_t ox, uint8_t oy);
+  static const char *_stateName(const char *type, int state);
+  static void _task(void *);
 
-    // Event state — shared through the single global instance via static storage.
-    static char          _evtType[24];
-    static char          _evtId[24];
-    static int           _evtState;
-    static volatile bool _hasEvent;
+  // Event state — shared through the single global instance via static storage.
+  static char _evtType[24];
+  static char _evtId[24];
+  static int _evtState;
+  static volatile bool _hasEvent;
 
-    // U8g2 driver — selected at compile time by OLED_HEIGHT.
-    // Pins (SCL, SDA) are passed at construction so U8G2 initialises Wire internally.
-#if OLED_HEIGHT == 32
-    U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C _u8g2;
-#else
-    U8G2_SSD1306_128X64_NONAME_F_HW_I2C   _u8g2;
-#endif
-    // Note: constructor is  OledDisplay() : _u8g2(U8G2_R0, U8X8_PIN_NONE, OLED_SCL, OLED_SDA) {}
+  // Log state
+  static char _logMsg[44];
+  static volatile bool _hasLog;
+
+  // U8g2 driver — selected at compile time by OLED_HEIGHT.
+  // Pins (SCL, SDA) are passed at construction so U8G2 initialises Wire internally.
+  #if OLED_HEIGHT == 32
+  U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C _u8g2;
+  #else
+  U8G2_SSD1306_128X64_NONAME_F_HW_I2C _u8g2;
+  #endif
+  // Note: constructor is  OledDisplay() : _u8g2(U8G2_R0, U8X8_PIN_NONE, OLED_SCL, OLED_SDA) {}
 };
 
 /** @brief Single global instance — auto-registered with AceRoutine. */

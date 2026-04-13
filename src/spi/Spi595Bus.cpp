@@ -49,10 +49,10 @@ void Spi595Bus::init(int mosi, int sclk, int latch,
 
   flush(); // All outputs LOW at startup.
 
-  Serial.print(F("Spi595Bus: init ok — totalBytes="));
-  Serial.print(_totalBytes);
-  Serial.print(F(" cards="));
-  Serial.println(_cardCount);
+  LOG_PRINT(F("Spi595Bus: init ok — totalBytes="));
+  LOG_PRINT(_totalBytes);
+  LOG_PRINT(F(" cards="));
+  LOG_PRINTLN(_cardCount);
 }
 
 // ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value) {
   uint8_t bitIdx = globalBit % 8;
 
   // if (byteIdx != 0 and byteIdx != 1)
-  //   Serial.println(byteIdx);
+  //   LOG_PRINTLN(byteIdx);
 
   if (value) {
     _buf[byteIdx] |= (1u << bitIdx);
