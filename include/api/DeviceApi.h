@@ -56,6 +56,7 @@ private:
     static void _onAllDevices();
     static void _onGroupDevices();
     static void _onGetConfig();
+    static void _onGetNamedConfig();
     static void _onPostConfig();
     static void _onDeleteConfig();
     static void _onGetConfigs();
