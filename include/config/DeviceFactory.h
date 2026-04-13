@@ -56,37 +56,39 @@
 
 #ifdef MRJFX_CONFIG_ENABLED
 
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include "devices/Device.h"
+  #include "devices/Device.h"
+  #include <Arduino.h>
+  #include <ArduinoJson.h>
 
-static constexpr uint8_t FACTORY_MAX_DEVICES    = 24;
-static constexpr uint8_t FACTORY_MAX_PORTS      =  4;
-static constexpr uint8_t FACTORY_MAX_BOARDS     = 12;
-static constexpr uint8_t FACTORY_MAX_BUSES      =  8;
-static constexpr uint8_t FACTORY_MAX_BOARD_TYPES = 16;  ///< Max entries from board_types.json.
+  #ifndef FACTORY_MAX_DEVICES
+    #define FACTORY_MAX_DEVICES 256 ///< Override via build_flags: -DFACTORY_MAX_DEVICES=512
+  #endif
+
+static constexpr uint8_t FACTORY_MAX_PORTS = 4;
+static constexpr uint8_t FACTORY_MAX_BOARDS = 12;
+static constexpr uint8_t FACTORY_MAX_BUSES = 8;
+static constexpr uint8_t FACTORY_MAX_BOARD_TYPES = 16; ///< Max entries from board_types.json.
 
 class DeviceFactory {
 public:
-
   // ---------------------------------------------------------------------------
   // Enums
   // ---------------------------------------------------------------------------
 
   /** @brief Protocol type of a bus entry — resolved at parse time, drives wiring semantics. */
   enum BusType : uint8_t {
-    BUS_NONE       = 0,  ///< No bus — root MCU board, wiring = GPIO.
-    BUS_SPI_MASTER = 1,  ///< spi_master_only — wiring = output bit (1-based in daisy-chain).
-    BUS_SPI_FULL   = 2,  ///< spi_full_duplex — reserved.
-    BUS_UART       = 3,  ///< uart — wiring = servo ID (LobotChain) or no wiring (DfPlayerMini).
-    BUS_I2C        = 4,  ///< i2c — reserved.
-    BUS_DCC        = 5,  ///< dcc — input only, no boards attached.
+    BUS_NONE = 0,       ///< No bus — root MCU board, wiring = GPIO.
+    BUS_SPI_MASTER = 1, ///< spi_master_only — wiring = output bit (1-based in daisy-chain).
+    BUS_SPI_FULL = 2,   ///< spi_full_duplex — reserved.
+    BUS_UART = 3,       ///< uart — wiring = servo ID (LobotChain) or no wiring (DfPlayerMini).
+    BUS_I2C = 4,        ///< i2c — reserved.
+    BUS_DCC = 5,        ///< dcc — input only, no boards attached.
   };
 
   /** @brief Hardware type of one SPI slot — used only for Spi595Bus::init(). */
   enum SpiCardType : uint8_t {
     SPI_CARD_UNKNOWN = 0,
-    SPI_CARD_HC595   = 1,
+    SPI_CARD_HC595 = 1,
   };
 
   // ---------------------------------------------------------------------------
@@ -95,25 +97,25 @@ public:
 
   /** @brief Configuration for one serial port (populated from buses[type=uart]). */
   struct PortCfg {
-    char            name[32];  ///< Bus key, e.g. "uart2".
-    HardwareSerial* serial;    ///< Matching ESP32 global (Serial/Serial1/Serial2).
-    int             tx;
-    int             rx;
-    int             baud;
+    char name[32];          ///< Bus key, e.g. "uart2".
+    HardwareSerial *serial; ///< Matching ESP32 global (Serial/Serial1/Serial2).
+    int tx;
+    int rx;
+    int baud;
   };
 
   /** @brief SPI physical bus config (populated from buses[type=spi_master_only]). */
   struct SpiBusCfg {
-    int mosi  = -1;
-    int sclk  = -1;
+    int mosi = -1;
+    int sclk = -1;
     int latch = -1;
     bool configured() const { return mosi >= 0 && sclk >= 0 && latch >= 0; }
   };
 
   /** @brief Minimal config for one SPI slot — used to call Spi595Bus::init(). */
   struct SpiCardCfg {
-    SpiCardType type     = SPI_CARD_UNKNOWN;
-    uint8_t     pinCount = 0;
+    SpiCardType type = SPI_CARD_UNKNOWN;
+    uint8_t pinCount = 0;
     bool configured() const { return type != SPI_CARD_UNKNOWN && pinCount > 0; }
   };
 
@@ -124,13 +126,13 @@ public:
    * The firmware never interprets it — wiring semantics are derived from busType.
    */
   struct BoardCfg {
-    char    id[32]      = {};  ///< Unique board identifier.
-    char    label[48]   = {};  ///< Optional human-readable label.
-    char    typeStr[32] = {};  ///< Board type string (frontend only, e.g. "HC595").
-    char    busKey[32]  = {};  ///< Key of the bus this board is on (empty = root board).
-    BusType busType     = BUS_NONE;  ///< Resolved bus protocol at parse time.
-    uint8_t pinCount    = 0;   ///< Number of output pins (SPI boards only).
-    uint8_t spiRank     = 0;   ///< 1-based daisy-chain rank (SPI boards only).
+    char id[32] = {};           ///< Unique board identifier.
+    char label[48] = {};        ///< Optional human-readable label.
+    char typeStr[32] = {};      ///< Board type string (frontend only, e.g. "HC595").
+    char busKey[32] = {};       ///< Key of the bus this board is on (empty = root board).
+    BusType busType = BUS_NONE; ///< Resolved bus protocol at parse time.
+    uint8_t pinCount = 0;       ///< Number of output pins (SPI boards only).
+    uint8_t spiRank = 0;        ///< 1-based daisy-chain rank (SPI boards only).
 
     bool isRoot() const { return busType == BUS_NONE; }
   };
@@ -139,25 +141,25 @@ public:
   // Public API
   // ---------------------------------------------------------------------------
 
-  bool load(const char* json, const char* boardTypesJson = nullptr);
+  bool load(const char *json, const char *boardTypesJson = nullptr);
   void initAll();
 
-  size_t      count()               const { return _count; }
-  Device*     device(size_t i)      const { return (i < _count) ? _devices[i] : nullptr; }
-  const char* deviceId(size_t i)    const { return (i < _count) ? _ids[i] : ""; }
-  uint8_t     deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
+  size_t count() const { return _count; }
+  Device *device(size_t i) const { return (i < _count) ? _devices[i] : nullptr; }
+  const char *deviceId(size_t i) const { return (i < _count) ? _ids[i] : ""; }
+  uint8_t deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
 
-  const SpiBusCfg& spiBus()        const { return _spiBus; }
-  uint8_t          boardCount()    const { return _boardCount; }
-  uint8_t          spiCardCount()  const { return _spiCardCount; }
-  int              dccPin()        const { return _dccPin; }
+  const SpiBusCfg &spiBus() const { return _spiBus; }
+  uint8_t boardCount() const { return _boardCount; }
+  uint8_t spiCardCount() const { return _spiCardCount; }
+  int dccPin() const { return _dccPin; }
 
-  const BoardCfg& board(uint8_t i) const {
+  const BoardCfg &board(uint8_t i) const {
     static const BoardCfg empty;
     return (i >= 1 && i <= _boardCount) ? _boards_cfg[i - 1] : empty;
   }
 
-  const SpiCardCfg& spiCard(uint8_t i) const {
+  const SpiCardCfg &spiCard(uint8_t i) const {
     static const SpiCardCfg empty;
     return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
   }
@@ -165,48 +167,48 @@ public:
 private:
   static constexpr uint8_t FACTORY_MAX_SPI_CARDS = 8;
 
-  Device*    _devices[FACTORY_MAX_DEVICES];
-  char       _ids[FACTORY_MAX_DEVICES][32];
-  uint8_t    _boards[FACTORY_MAX_DEVICES];
-  size_t     _count        = 0;
+  Device *_devices[FACTORY_MAX_DEVICES];
+  char _ids[FACTORY_MAX_DEVICES][32];
+  uint8_t _boards[FACTORY_MAX_DEVICES];
+  size_t _count = 0;
 
-  int        _dccPin       = -1;
-  SpiBusCfg  _spiBus;
+  int _dccPin = -1;
+  SpiBusCfg _spiBus;
 
-  BoardCfg   _boards_cfg[FACTORY_MAX_BOARDS];
-  uint8_t    _boardCount   = 0;
+  BoardCfg _boards_cfg[FACTORY_MAX_BOARDS];
+  uint8_t _boardCount = 0;
 
   SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];
-  uint8_t    _spiCardCount = 0;
+  uint8_t _spiCardCount = 0;
 
-  PortCfg  _ports[FACTORY_MAX_PORTS];
-  size_t   _portCount = 0;
+  PortCfg _ports[FACTORY_MAX_PORTS];
+  size_t _portCount = 0;
 
   /** @brief Bus key → BusType catalog, populated during _parseBuses(). */
   struct BusEntry {
-    char    key[32] = {};
-    BusType type    = BUS_NONE;
+    char key[32] = {};
+    BusType type = BUS_NONE;
   };
   BusEntry _busEntries[FACTORY_MAX_BUSES];
-  uint8_t  _busCount = 0;
+  uint8_t _busCount = 0;
 
-#ifdef MRJFX_LOBOT_SERVO_ENABLED
-  ace_routine::Coroutine* _lobotServos[FACTORY_MAX_DEVICES];
-  size_t                  _lobotCount = 0;
-#endif
+  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  ace_routine::Coroutine *_lobotServos[FACTORY_MAX_DEVICES];
+  size_t _lobotCount = 0;
+  #endif
 
-  bool    _parseBuses(JsonObject buses);
-  BusType _resolveBusType(const char* busKey) const;
-  uint8_t _resolveBoardId (const char* id)    const;
-  uint8_t _resolveBoardIdx(JsonVariant v)     const;
+  bool _parseBuses(JsonObject buses);
+  BusType _resolveBusType(const char *busKey) const;
+  uint8_t _resolveBoardId(const char *id) const;
+  uint8_t _resolveBoardIdx(JsonVariant v) const;
 
-  PortCfg*        _findPort  (const char* busKey);
-  HardwareSerial* _findSerial(const char* busKey);
+  PortCfg *_findPort(const char *busKey);
+  HardwareSerial *_findSerial(const char *busKey);
 
-  PIN_ID _pin (JsonVariant v, uint8_t boardIdx = 0);
-  size_t _pins(JsonVariant v, PIN_ID* out, size_t maxPins, uint8_t boardIdx = 0);
+  PIN_ID _pin(JsonVariant v, uint8_t boardIdx = 0);
+  size_t _pins(JsonVariant v, PIN_ID *out, size_t maxPins, uint8_t boardIdx = 0);
 
-  Device* _createDevice(JsonObject obj);
+  Device *_createDevice(JsonObject obj);
 };
 
-#endif  // MRJFX_CONFIG_ENABLED
+#endif // MRJFX_CONFIG_ENABLED

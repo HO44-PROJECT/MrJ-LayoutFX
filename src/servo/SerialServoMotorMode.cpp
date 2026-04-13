@@ -39,6 +39,7 @@ SerialServoMotor::SerialServoMotor(LX16ABus *servoBus, PIN_ID tXpin, PIN_ID TXFl
     servoBus = new LX16ABus();
   this->servoBus = servoBus;
   servo = new LX16AServo(this->servoBus, servoID);
+  _servoId = (uint8_t)servoID;
   servoBus->begin(&Serial, tXpin, TXFlagGPIO == NO_PIN ? -1 : TXFlagGPIO);
   Serial.flush();
   Serial.begin(LX16A_BAUD_RATE);
@@ -69,6 +70,7 @@ SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFla
   } else {
     this->servo = servo;
   }
+  _servoId = (uint8_t)servoID;
 
   // Optional: Configure single-pin or direction pin
   if (tXpin != NO_PIN) {

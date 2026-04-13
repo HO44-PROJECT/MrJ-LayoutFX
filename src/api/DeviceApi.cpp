@@ -21,6 +21,9 @@
   #ifdef MRJFX_OLED_ENABLED
     #include "oled/OledDisplay.h"
   #endif
+  #ifdef MRJFX_SERIAL_SERVO_ENABLED
+    #include "servo/SerialServoMotorMode.h"
+  #endif
 
   #define FIRMWARE_VERSION "v1"
 
@@ -106,7 +109,14 @@ void DeviceApi::_onGetDevices() {
       json += (int)d->getPin(j);
   #endif
     }
-    json += F("]}");
+    json += F("]");
+  #ifdef MRJFX_SERIAL_SERVO_ENABLED
+    if (strcmp_P("SerialServo", (const char *)d->getDeviceName()) == 0) {
+      json += F(",\"servoId\":");
+      json += (int)static_cast<SerialServoMotor *>(d)->getServoId();
+    }
+  #endif
+    json += F("}");
   }
   json += "]";
   ApiServer::sendJson(200, json);
@@ -573,7 +583,10 @@ void DeviceApi::_onServo() {
 void DeviceApi::_onRestart() {
   Serial.println(F("API: POST /api/restart"));
   ApiServer::sendJson(200, F("{\"ok\":true}"));
-  delay(200);
+#ifdef MRJFX_OLED_ENABLED
+  OledDisplay::showMessage("MrJ RailwayFX", "Redemarrage...");
+#endif
+  delay(400);
   ESP.restart();
 }
 
@@ -590,7 +603,8 @@ void DeviceApi::_onGetStatus() {
   doc["uptime_s"] = millis() / 1000UL;
   doc["ip"] = WiFi.localIP().toString();
   doc["config"] = ConfigManager::configExists();
-  doc["devices"] = (int)_factory->count();
+  doc["devices"]     = (int)_factory->count();
+  doc["devices_max"] = (int)FACTORY_MAX_DEVICES;
   doc["cpu_mhz"] = ESP.getCpuFreqMHz();
   doc["chip"] = ESP.getChipModel();
   doc["chip_rev"] = ESP.getChipRevision();
@@ -602,6 +616,54 @@ void DeviceApi::_onGetStatus() {
   doc["sketch_free"] = ESP.getFreeSketchSpace();
   doc["fs_total"] = LittleFS.totalBytes();
   doc["fs_used"] = LittleFS.usedBytes();
+
+  JsonObject feat = doc["features"].to<JsonObject>();
+  feat["wifi"]        = true;  // always true (API requires WiFi)
+  feat["api"]         = true;  // always true (this endpoint exists)
+  feat["webui"]       = true;  // always true (this page is served)
+  feat["config"]      = true;  // always true (API requires config)
+#ifdef MRJFX_OLED_ENABLED
+  feat["oled"]        = true;
+#else
+  feat["oled"]        = false;
+#endif
+#ifdef MRJFX_SPI_CARDS_ENABLED
+  feat["spi"]         = true;
+#else
+  feat["spi"]         = false;
+#endif
+#ifdef MRJFX_LOBOT_SERVO_ENABLED
+  feat["lobot_servo"] = true;
+#else
+  feat["lobot_servo"] = false;
+#endif
+#ifdef MRJFX_LX16A_SERVO_ENABLED
+  feat["lx16a_servo"] = true;
+#else
+  feat["lx16a_servo"] = false;
+#endif
+#ifdef MRJFX_DCC_ENABLED
+  feat["dcc"]         = true;
+#else
+  feat["dcc"]         = false;
+#endif
+#ifdef MRJFX_AUDIO_ENABLED
+  feat["audio"]       = true;
+#else
+  feat["audio"]       = false;
+#endif
+
+  // Pins reserved by compile-time features (not declared in config.json)
+  {
+    JsonObject sp = doc["sys_pins"].to<JsonObject>();
+    // UART0 — always active (Serial.begin in MrJFX::init)
+    sp[1] = F("TX0");
+    sp[3] = F("RX0");
+#ifdef MRJFX_OLED_ENABLED
+    sp[OLED_SDA] = F("SDA");
+    sp[OLED_SCL] = F("SCL");
+#endif
+  }
 
   String json;
   serializeJson(doc, json);

@@ -286,7 +286,12 @@ protected:
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
   LobotServo *servo = nullptr; ///< Pointer to LobotServo object
   #endif
-  SERVO_SPEED speed = SERVO_SPEED_DEFAULT; ///< Running speed — never 0, preserved across stop/start.
+  SERVO_SPEED speed    = SERVO_SPEED_DEFAULT; ///< Running speed — never 0, preserved across stop/start.
+  uint8_t     _servoId = 0;                  ///< Servo bus ID (1–253), set by constructor.
+
+public:
+  /** @brief Returns the servo bus ID (1–253). */
+  uint8_t getServoId() const { return _servoId; }
 };
 
 #endif // MRJFX_SERIAL_SERVO_ENABLED

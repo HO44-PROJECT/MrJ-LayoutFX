@@ -1225,6 +1225,41 @@
       opacity: .6
     }
 
+    /* Servo speed preset colors (reused from cockpit .tbtn palette) */
+    .dbg-hbtn.t-stop  { background: #7f8c8d; color: #fff }
+    .dbg-hbtn.t-slow  { background: #2980b9; color: #fff }
+    .dbg-hbtn.t-go    { background: #27ae60; color: #fff }
+    .dbg-hbtn.t-flash { background: #e67e22; color: #fff }
+    .dbg-hbtn.t-sh1   { background: #8e44ad; color: #fff }
+
+    /* Bus device rows (UART chains: LobotChain, DfAudio…) */
+    .dbg-bus-dev {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .3rem .1rem;
+      border-bottom: 1px solid var(--d2)
+    }
+
+    .dbg-bus-dev:last-of-type { border-bottom: none }
+
+    .dbg-bus-id {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--t0);
+      min-width: 5rem
+    }
+
+    .dbg-bus-addr {
+      font-size: .72rem;
+      color: var(--t3);
+      min-width: 2.5rem
+    }
+
+    .dbg-bus-add {
+      padding-top: .4rem
+    }
+
     /* PCB area */
     .dbg-pcb {
       background: var(--d0);
@@ -1256,13 +1291,39 @@
       gap: .25rem
     }
 
+    .dbg-usb {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: center;
+      gap: .3rem;
+      padding: .2rem .5rem;
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--t3);
+      text-transform: uppercase
+    }
+
+    .dbg-usb::before {
+      content: '';
+      display: inline-block;
+      width: 32px;
+      height: 22px;
+      border: 2px solid var(--t3);
+      border-radius: 3px;
+      position: relative;
+      box-shadow: inset 0 0 0 1.5px var(--bg1);
+      background: linear-gradient(to bottom, var(--t4) 20%, var(--bg1) 20%, var(--bg1) 80%, var(--t4) 80%)
+    }
+
     .dbg-chip {
       background: var(--d4);
       border: 1px solid var(--d2);
       border-radius: 4px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       text-align: center;
       font-size: .62rem;
       color: var(--d3);
@@ -1469,6 +1530,58 @@
       color: #e87070
     }
 
+    /* ── Reboot modal ───────────────────────────────────────────────────── */
+    #reboot-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 400
+    }
+    #reboot-overlay.active { display: block }
+    #reboot-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 401;
+      background: var(--d1);
+      border: 1px solid var(--d2);
+      border-radius: 10px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      min-width: 260px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6)
+    }
+    .reboot-spinner {
+      width: 40px; height: 40px;
+      margin: 0 auto .8rem;
+      border: 4px solid var(--d2);
+      border-top-color: var(--acc);
+      border-radius: 50%;
+      animation: reboot-spin .8s linear infinite
+    }
+    @keyframes reboot-spin { to { transform: rotate(360deg) } }
+    .reboot-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin: 0 0 .35rem;
+      color: var(--t0)
+    }
+    .reboot-msg {
+      font-size: .88rem;
+      color: var(--t2);
+      margin: 0 0 .6rem
+    }
+    .reboot-count {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--acc);
+      margin: 0;
+      min-height: 1.8rem
+    }
+
     /* ── Device editor modal ────────────────────────────────────────────── */
     #de-overlay {
       display: none;
@@ -1589,6 +1702,29 @@
     .dbg-pin:hover .dbg-edit-btn { opacity: 1 }
     .dbg-edit-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }
 
+    /* Edit button inside bus device rows — override absolute positioning */
+    .dbg-bus-dev .dbg-edit-btn {
+      position: static;
+      width: auto;
+      height: auto;
+      padding: .18rem .45rem;
+      opacity: 1;
+      margin-left: auto;
+      font-size: .78rem
+    }
+    .dbg-del-btn {
+      padding: .18rem .45rem;
+      border-radius: 4px;
+      border: 1px solid #c0392b;
+      background: transparent;
+      color: #c0392b;
+      cursor: pointer;
+      font-size: .78rem;
+      line-height: 1;
+      transition: background .12s, color .12s
+    }
+    .dbg-del-btn:hover { background: #c0392b; color: #fff }
+
     /* ── About view ─────────────────────────────────────────────────────── */
     .abt-panel {
       padding: 1.5rem;
@@ -1705,6 +1841,51 @@
 
     .abt-bar.crit {
       background: #c0392b
+    }
+
+    .abt-feat-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem;
+      padding-top: .2rem
+    }
+
+    .abt-feat {
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .18rem .55rem;
+      border-radius: 20px;
+      letter-spacing: .3px;
+      cursor: pointer
+    }
+
+    #abt-tooltip {
+      display: none;
+      position: fixed;
+      background: var(--t0);
+      color: var(--bg1);
+      font-size: .78rem;
+      line-height: 1.4;
+      padding: .5rem .75rem;
+      border-radius: 6px;
+      max-width: 240px;
+      z-index: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      pointer-events: none
+    }
+
+    .abt-feat.on {
+      background: var(--d0);
+      color: var(--d3);
+      border: 1px solid var(--d2)
+    }
+
+    .abt-feat.off {
+      background: var(--bg2);
+      color: var(--t4);
+      border: 1px solid var(--bd);
+      text-decoration: line-through;
+      opacity: .65
     }
 
     /* ── Placeholder views ───────────────────────────────────────────────── */

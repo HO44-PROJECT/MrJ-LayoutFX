@@ -59,6 +59,14 @@ void OledDisplay::_begin() {
 // Public API
 // ---------------------------------------------------------------------------
 
+void OledDisplay::showMessage(const char* line1, const char* line2) {
+    oledDisplay._u8g2.clearBuffer();
+    oledDisplay._u8g2.setFont(u8g2_font_6x10_tr);
+    if (line1) oledDisplay._u8g2.drawStr(0, 12, line1);
+    if (line2) oledDisplay._u8g2.drawStr(0, 26, line2);
+    oledDisplay._u8g2.sendBuffer();
+}
+
 void OledDisplay::notify(const char* type, const char* id, int state) {
     strncpy(_evtType, type ? type : "",  sizeof(_evtType) - 1);
     _evtType[sizeof(_evtType) - 1] = '\0';

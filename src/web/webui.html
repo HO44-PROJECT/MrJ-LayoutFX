@@ -182,6 +182,19 @@
   <script>%%I18N%%
 %%ICONS%%
 %%APP%%  </script>
+
+  <!-- ── Feature tooltip ──────────────────────────────────────────────── -->
+  <div id="abt-tooltip"></div>
+
+  <!-- ── Reboot modal ─────────────────────────────────────────────────── -->
+  <div id="reboot-overlay"></div>
+  <div id="reboot-modal">
+    <div class="reboot-spinner"></div>
+    <p id="reboot-title" class="reboot-title" data-i18n="rst.title">Redémarrage en cours…</p>
+    <p id="reboot-msg"   class="reboot-msg"   data-i18n="rst.msg">La page se rafraîchira automatiquement.</p>
+    <p id="reboot-count" class="reboot-count"></p>
+  </div>
+
   <!-- ── Device editor modal ──────────────────────────────────────────── -->
   <div id="de-overlay" onclick="closeDevEditor()"></div>
   <div id="de-modal">
@@ -196,7 +209,7 @@
       </div>
       <div class="de-field">
         <label data-i18n="de.lbl_type">Type</label>
-        <select id="de-type" onchange="deUpdateWiring()"></select>
+        <select id="de-type" onchange="deUpdateWiring();deUpdateAddrLabel()"></select>
       </div>
       <div class="de-field">
         <label data-i18n="de.lbl_board">Board</label>
@@ -204,7 +217,7 @@
       </div>
       <div id="de-wiring-grp"></div>
       <div class="de-field">
-        <label><span data-i18n="de.lbl_addr">Adresse DCC</span> <span data-i18n="de.lbl_addr_hint" style="font-weight:400;text-transform:none;font-size:.9em">(optionnel, 1–10239)</span></label>
+        <label><span class="de-addr-lbl" data-i18n="de.lbl_addr">Adresse DCC</span> <span class="de-addr-hint" data-i18n="de.lbl_addr_hint" style="font-weight:400;text-transform:none;font-size:.9em">(optionnel, 1–10239)</span></label>
         <input type="number" id="de-addr" min="1" max="10239" placeholder="—">
       </div>
       <div class="de-field">

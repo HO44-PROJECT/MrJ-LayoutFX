@@ -12,7 +12,13 @@
   #include "api/ApiServer.h"
   #include "api/webui_html.h"
 
+static void _onGetRoot() {
+  ApiServer::server().sendHeader("Location", "/ui");
+  ApiServer::server().send(302);
+}
+
 void WebUI::init() {
+  ApiServer::on("/",   HTTP_GET, _onGetRoot);
   ApiServer::on("/ui", HTTP_GET, _onGetUi);
 }
 

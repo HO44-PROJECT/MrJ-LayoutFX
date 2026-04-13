@@ -67,6 +67,17 @@ public:
      */
     static void notify(const char* type, const char* id, int state);
 
+    /**
+     * @brief Draw a two-line message directly to the OLED (synchronous, bypasses event task).
+     *
+     * Used just before ESP.restart() so the display updates even as the FreeRTOS
+     * task is about to be killed. Caller must ensure at least ~50 ms before restart.
+     *
+     * @param line1 First line text.
+     * @param line2 Second line text (may be nullptr).
+     */
+    static void showMessage(const char* line1, const char* line2 = nullptr);
+
 private:
     void _begin();
     void _drawIdle();
