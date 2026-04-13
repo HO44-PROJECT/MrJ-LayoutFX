@@ -408,9 +408,24 @@
 
     function downloadConfig() { cfgDownload('config.json', _cfgActive); }
 
+    // Sanitize a filename to match LittleFS/server rules: alphanum + _ - . only, max 32 chars.
+    function _sanitizeCfgName(name) {
+      // Strip path, keep only filename
+      name = name.replace(/^.*[\\/]/, '');
+      // Ensure .json extension
+      if (!name.match(/\.json$/i)) name += '.json';
+      // Replace any invalid char with underscore
+      name = name.replace(/[^a-zA-Z0-9_\-.]/g, '_');
+      // Truncate to 32 chars (LFS_NAME_MAX)
+      if (name.length > 32) name = name.substring(0, 28) + '.json';
+      return name;
+    }
+
     function uploadConfig() {
       var file = document.getElementById('cfg-file').files[0];
       if (!file) return;
+
+      var safeName = _sanitizeCfgName(file.name);
 
       var reader = new FileReader();
       reader.onload = function (e) {
@@ -418,11 +433,11 @@
         catch (err) { cfgStatus('JSON invalide : ' + err.message, 'err'); return; }
 
         document.getElementById('cfg-upload-btn').disabled = true;
-        cfgStatus('Envoi en cours…', 'ok');
+        cfgStatus('Envoi en cours… → ' + safeName, 'ok');
 
-        fetch('/api/configs?name=' + encodeURIComponent(file.name), {
+        fetch('/api/configs?name=' + encodeURIComponent(safeName), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Config-Name': file.name },
+          headers: { 'Content-Type': 'application/json', 'X-Config-Name': safeName },
           body: e.target.result
         })
           .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
