@@ -1135,6 +1135,32 @@
       gap: .5rem
     }
 
+    #i2c-result {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .4rem;
+      padding: .4rem .75rem;
+      background: var(--bg1);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      font-size: .8rem
+    }
+    .i2c-pins { color: var(--t2); font-size: .75rem }
+    .i2c-label { color: var(--t2) }
+    .i2c-none { color: var(--t2); font-style: italic }
+    .i2c-addr {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      background: var(--bg2);
+      border: 1px solid var(--bd);
+      border-radius: 4px;
+      padding: .1rem .4rem;
+      font-family: monospace
+    }
+    .i2c-name { color: var(--accent); font-family: inherit; font-size: .75rem }
+
     .dbg-info {
       padding: .5rem .75rem;
       font-size: .78rem;

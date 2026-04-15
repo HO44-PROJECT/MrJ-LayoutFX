@@ -144,6 +144,10 @@
         'dbg.all_off': 'Tout OFF',
         'dbg.all_test': 'Tout TEST',
         'dbg.no_boards': 'Aucune carte. Cliquez sur \u00ab\u00a0+\u00a0Carte\u00a0\u00bb pour commencer.',
+        'dbg.scan_i2c': 'Scan I2C',
+        'dbg.scan_i2c_scanning': 'Scan\u2026',
+        'dbg.scan_i2c_none': 'Aucun p\u00e9riph\u00e9rique trouv\u00e9',
+        'dbg.scan_i2c_found': 'P\u00e9riph\u00e9riques trouv\u00e9s',
         // device editor
         'de.add_btn': '+ Ajouter',
         'de.new': 'Nouveau device',
@@ -283,6 +287,10 @@
         'dbg.all_off': 'All OFF',
         'dbg.all_test': 'All TEST',
         'dbg.no_boards': 'No boards. Click \u00ab\u00a0+\u00a0Board\u00a0\u00bb to start.',
+        'dbg.scan_i2c': 'Scan I2C',
+        'dbg.scan_i2c_scanning': 'Scanning\u2026',
+        'dbg.scan_i2c_none': 'No devices found',
+        'dbg.scan_i2c_found': 'Devices found',
         // device editor
         'de.add_btn': '+ Add',
         'de.new': 'New device',

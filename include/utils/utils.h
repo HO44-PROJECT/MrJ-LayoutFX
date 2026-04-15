@@ -132,19 +132,23 @@ void debugPrintln(size_t value);
 
 #if defined(LOG_OLED) && defined(MRJFX_OLED_ENABLED)
   #include "oled/OledDisplay.h"
-  #define _LOG_O_PRINTLN(x) OledDisplay::log(x)
+  inline void _oledLog() {}
+  inline void _oledLog(const char *s) { OledDisplay::log(s); }
+  inline void _oledLog(const __FlashStringHelper *s) { OledDisplay::log(s); }
+  template<typename T> inline void _oledLog(T v) { OledDisplay::log(String(v).c_str()); }
+  #define _LOG_O_PRINTLN(...) _oledLog(__VA_ARGS__)
 #else
-  #define _LOG_O_PRINTLN(x)
+  #define _LOG_O_PRINTLN(...)
 #endif
 
 #define LOG_PRINT(x) \
   do {               \
     _LOG_S_PRINT(x); \
   } while (0)
-#define LOG_PRINTLN(x) \
-  do {                 \
-    _LOG_S_PRINTLN(x); \
-    _LOG_O_PRINTLN(x); \
+#define LOG_PRINTLN(...) \
+  do {                   \
+    _LOG_S_PRINTLN(__VA_ARGS__); \
+    _LOG_O_PRINTLN(__VA_ARGS__); \
   } while (0)
 #ifdef LOG_SERIAL
   #define LOG_PRINTF(fmt, ...) Serial.printf(fmt, ##__VA_ARGS__)

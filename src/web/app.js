@@ -627,6 +627,53 @@
 
     function refreshDebug() { loadDebug(); }
 
+    // ── I2C scanner ──────────────────────────────────────────────────────────
+
+    var I2C_KNOWN = {
+      0x20: 'PCF8574', 0x21: 'PCF8574', 0x22: 'PCF8574', 0x23: 'PCF8574',
+      0x24: 'PCF8574', 0x25: 'PCF8574', 0x26: 'PCF8574', 0x27: 'PCF8574',
+      0x38: 'PCF8574A', 0x39: 'PCF8574A', 0x3A: 'PCF8574A', 0x3B: 'PCF8574A',
+      0x3C: 'SSD1306/SH1106', 0x3D: 'SSD1306',
+      0x40: 'INA219/PCA9685', 0x48: 'ADS1115/PCF8591',
+      0x57: 'EEPROM/DS3231', 0x68: 'DS3231/MPU6050', 0x69: 'MPU6050',
+      0x76: 'BME280/BMP280', 0x77: 'BME280/BMP280'
+    };
+
+    function scanI2c() {
+      var btn = document.getElementById('i2c-scan-btn');
+      var res = document.getElementById('i2c-result');
+      btn.disabled = true;
+      btn.textContent = t('dbg.scan_i2c_scanning');
+      res.style.display = 'none';
+      fetch('/api/scan/i2c')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var sda = d.sda !== undefined ? d.sda : '?';
+          var scl = d.scl !== undefined ? d.scl : '?';
+          var html = '<span class="i2c-pins">SDA\u00a0GPIO' + sda + ' / SCL\u00a0GPIO' + scl + '</span> ';
+          if (!d.found || d.found.length === 0) {
+            html += '<span class="i2c-none">' + t('dbg.scan_i2c_none') + '</span>';
+          } else {
+            html += '<span class="i2c-label">' + t('dbg.scan_i2c_found') + ':</span> ';
+            html += d.found.map(function(a) {
+              var hex = '0x' + ('0' + a.toString(16).toUpperCase()).slice(-2);
+              var name = I2C_KNOWN[a] ? ' <span class="i2c-name">' + I2C_KNOWN[a] + '</span>' : '';
+              return '<span class="i2c-addr">' + hex + name + '</span>';
+            }).join(' ');
+          }
+          res.innerHTML = html;
+          res.style.display = 'flex';
+        })
+        .catch(function(e) {
+          res.innerHTML = '<span class="i2c-none">Erreur: ' + e.message + '</span>';
+          res.style.display = 'flex';
+        })
+        .finally(function() {
+          btn.disabled = false;
+          btn.textContent = t('dbg.scan_i2c');
+        });
+    }
+
     // Find a device by board API index (0-based) and wiring number.
     // Firmware stores board as 1-based index, so boardApiIdx+1 is used for matching.
     function dbgFindDev(boardApiIdx, wiring) {

@@ -23,6 +23,7 @@
  *   GET  /api/health         — hardware health check for each device (servo ACK, etc.)
  *   POST /api/test/gpio      — body {"pin":<n>,"state":<0|1>} — raw GPIO toggle
  *   POST /api/test/spi       — body {"card":<n>,"channel":<n>,"state":<0|1>} — raw SPI
+ *   GET  /api/scan/i2c      — scan I2C bus, return found addresses (requires I2C_SCAN)
  *
  * Must be called after ConfigManager::init() and before ApiServer::init().
  *
@@ -73,6 +74,9 @@ private:
     static void _onTestSpi();
     static void _onRestart();
     static void _onServo();
+#ifdef MRJFX_I2C_SCAN_ENABLED
+    static void _onScanI2c();
+#endif
 };
 
 #endif  // MRJFX_API_SERVER_ENABLED

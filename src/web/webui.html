@@ -79,10 +79,12 @@
       <div class="dbg-top">
         <div class="abt-title" data-i18n="nav.debug">Configuration</div>
         <div style="display:flex;gap:.4rem">
+          <button class="abt-refresh" id="i2c-scan-btn" onclick="scanI2c()" data-i18n="dbg.scan_i2c">Scan I2C</button>
           <button class="abt-refresh" onclick="openDevEditor(0,undefined,null)" data-i18n="de.add_btn">+ Ajouter</button>
           <button class="abt-refresh" onclick="refreshDebug()" data-i18n="abt.refresh">Actualiser</button>
         </div>
       </div>
+      <div id="i2c-result" style="display:none"></div>
 
       <!-- Board cards -->
       <div id="dbg-boards"></div>

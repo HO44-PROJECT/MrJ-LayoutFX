@@ -24,6 +24,9 @@
   #ifdef MRJFX_SERIAL_SERVO_ENABLED
     #include "servo/SerialServoMotorMode.h"
   #endif
+  #ifdef MRJFX_I2C_SCAN_ENABLED
+    #include <Wire.h>
+  #endif
 
   #define FIRMWARE_VERSION "v1"
 
@@ -63,6 +66,9 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/test/spi", HTTP_POST, _onTestSpi);
   ApiServer::on("/api/restart", HTTP_POST, _onRestart);
   ApiServer::on("/api/servo", HTTP_POST, _onServo);
+#ifdef MRJFX_I2C_SCAN_ENABLED
+  ApiServer::on("/api/scan/i2c", HTTP_GET, _onScanI2c);
+#endif
 
   // Collect custom upload header
   static const char *hdrs[] = {"X-Config-Name"};
@@ -661,12 +667,12 @@ void DeviceApi::_onGetStatus() {
   {
     JsonObject sp = doc["sys_pins"].to<JsonObject>();
 #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
-    sp[1] = F("TX0");
-    sp[3] = F("RX0");
+    sp[String(1)] = F("TX0");
+    sp[String(3)] = F("RX0");
 #endif
 #ifdef MRJFX_OLED_ENABLED
-    sp[OLED_SDA] = F("SDA");
-    sp[OLED_SCL] = F("SCL");
+    sp[String(OLED_SDA)] = F("SDA");
+    sp[String(OLED_SCL)] = F("SCL");
 #endif
   }
 #endif
@@ -807,5 +813,35 @@ void DeviceApi::_onTestSpi() {
   ApiServer::sendJson(501, F("{\"error\":\"SPI not enabled\"}"));
   #endif
 }
+
+// ---------------------------------------------------------------------------
+// I2C scanner
+// ---------------------------------------------------------------------------
+
+#ifdef MRJFX_I2C_SCAN_ENABLED
+void DeviceApi::_onScanI2c() {
+  LOG_PRINTLN(F("API: GET /api/scan/i2c"));
+#ifdef MRJFX_OLED_ENABLED
+  const int sda = OLED_SDA, scl = OLED_SCL;
+#else
+  const int sda = 21, scl = 22;
+#endif
+  Wire.begin(sda, scl);
+
+  JsonDocument doc;
+  doc["sda"] = sda;
+  doc["scl"] = scl;
+  JsonArray found = doc["found"].to<JsonArray>();
+  for (uint8_t addr = 1; addr < 127; addr++) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) found.add(addr);
+  }
+  doc["count"] = found.size();
+
+  String json;
+  serializeJson(doc, json);
+  ApiServer::sendJson(200, json);
+}
+#endif
 
 #endif // MRJFX_API_SERVER_ENABLED

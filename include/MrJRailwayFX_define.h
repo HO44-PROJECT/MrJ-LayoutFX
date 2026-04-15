@@ -118,6 +118,14 @@
   #undef MRJFX_AUDIO_ENABLED
 #endif // End AUDIO check
 
+// ── I2C scanner (ESP32 only) ──────────────────────────────────────────────────
+// Define I2C_SCAN in config.h to expose GET /api/scan/i2c in the web UI.
+#if defined(ESP32) && defined(I2C_SCAN)
+  #define MRJFX_I2C_SCAN_ENABLED 1
+#else
+  #undef MRJFX_I2C_SCAN_ENABLED
+#endif
+
 // ── Serial servo support (conditionally compiled) ─────────────────────────────
 #if defined(LOBOT) || defined(LX16A) // LOBOT implies LX16A, but user can define LX16A without LOBOT if they want.
   #define MRJFX_SERIAL_SERVO_ENABLED 1
