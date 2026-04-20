@@ -90,7 +90,7 @@ public:
   static void log(const __FlashStringHelper *msg);
 
 private:
-  void _begin();
+  bool _begin(); ///< Returns false if no display ACKs on the I²C bus — suppresses task creation.
   void _drawIdle();
   void _drawEvent();
   void _drawLog();

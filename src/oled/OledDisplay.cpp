@@ -43,18 +43,26 @@ OledDisplay::OledDisplay()
     : _u8g2(U8G2_R0, U8X8_PIN_NONE, OLED_SCL, OLED_SDA) {}
 
 void OledDisplay::init() {
-  oledDisplay._begin();
+  if (!oledDisplay._begin()) {
+    // No display found — skip task creation to avoid repeated I2C timeouts on Core 0.
+    Serial.println(F("[OLED] WARNING: no display found on SDA/SCL pins — OLED disabled"));
+    return;
+  }
   xTaskCreatePinnedToCore(_task, "oled", 4096, nullptr, 1, nullptr, 0); // Core 0
 }
 
-void OledDisplay::_begin() {
-  _u8g2.begin();
+bool OledDisplay::_begin() {
+  if (!_u8g2.begin()) {
+    // begin() returns 0 when the display does not ACK — nothing is connected.
+    return false;
+  }
   // Draw a boot screen immediately — before the coroutine scheduler starts.
   _u8g2.clearBuffer();
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(0, 12, "MrJ RailwayFX");
   _u8g2.drawStr(0, 26, "Starting...");
   _u8g2.sendBuffer();
+  return true;
 }
 
 // ---------------------------------------------------------------------------

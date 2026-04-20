@@ -663,7 +663,7 @@ void DeviceApi::_onGetStatus() {
 #endif
 
   // Pins reserved by compile-time features (not declared in config.json)
-#if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_OLED_ENABLED)
+#if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_OLED_ENABLED) || defined(MRJFX_DCC_ENABLED)
   {
     JsonObject sp = doc["sys_pins"].to<JsonObject>();
 #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
@@ -673,6 +673,9 @@ void DeviceApi::_onGetStatus() {
 #ifdef MRJFX_OLED_ENABLED
     sp[String(OLED_SDA)] = F("SDA");
     sp[String(OLED_SCL)] = F("SCL");
+#endif
+#ifdef MRJFX_DCC_ENABLED
+    sp[String(DCC_PIN)] = F("DCC");
 #endif
   }
 #endif

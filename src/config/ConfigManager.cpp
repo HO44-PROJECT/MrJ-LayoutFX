@@ -27,9 +27,27 @@ void ConfigManager::init(const char *configPath) {
   _configPath = configPath;
 
   if (!LittleFS.begin(true)) {
-    LOG_PRINTLN(F("[FS] mount failed"));
-  } else {
-    LOG_PRINTLN(F("[FS] mounted"));
+    // Boot-critical: always print directly to Serial, regardless of LOG_SERIAL.
+    Serial.println(F("[FS] ERROR: mount failed — check partition scheme (Tools > Partition Scheme)"));
+    return;
+  }
+
+  // Check for required files before any open() to suppress noisy vfs_api errors.
+  // Boot-critical messages go directly to Serial, not through LOG_PRINTLN,
+  // so they are always visible even when LOG_SERIAL is not defined.
+  bool boardTypesMissing = !LittleFS.exists("/board_types.json");
+  bool configMissing     = !LittleFS.exists(_configPath);
+
+  if (boardTypesMissing || configMissing) {
+    Serial.println(F("[FS] WARNING: filesystem is empty or incomplete."));
+    Serial.println(F("[FS]   -> In PlatformIO: run 'Upload Filesystem Image' (littlefs) to upload the data/ folder."));
+    if (boardTypesMissing) Serial.println(F("[FS]   missing: board_types.json"));
+    if (configMissing)     Serial.println(F("[FS]   missing: config.json"));
+  }
+
+  if (configMissing) {
+    Serial.println(F("[Factory] no config — skipping device load"));
+    return;
   }
 
   String boardTypes = _readFile("/board_types.json");
@@ -122,6 +140,9 @@ String ConfigManager::readFile(const char *path) {
 }
 
 String ConfigManager::_readFile(const char *path) {
+  // Check existence before open() to avoid noisy vfs_api "does not exist" errors in Serial log.
+  if (!LittleFS.exists(path))
+    return String();
   File f = LittleFS.open(path, "r");
   if (!f)
     return String();

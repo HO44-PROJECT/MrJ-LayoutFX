@@ -9,6 +9,7 @@
 #ifdef MRJFX_SPI_CARDS_ENABLED
 
   #include "spi/Spi595Bus.h"
+  #include "utils/utils.h"
 
 // ---------------------------------------------------------------------------
 // Static member definitions

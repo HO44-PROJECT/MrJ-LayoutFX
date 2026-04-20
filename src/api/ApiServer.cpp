@@ -60,9 +60,7 @@ void ApiServer::on(const char *path, HTTPMethod method,
 }
 
 void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
-#ifdef LOG_SERIAL
-  Serial.setDebugOutput(false);
-#endif
+  Serial.setDebugOutput(false); // prevent ESP-IDF binary logs leaking on UART0
 
   // Ensure server exists with the requested port (first call wins).
   _get(port);
@@ -76,10 +74,11 @@ void ApiServer::init(const char *ssid, const char *password, uint16_t port) {
   }
   LOG_PRINTLN();
   if (WiFi.status() == WL_CONNECTED) {
-    LOG_PRINT(F("[WiFi] IP: "));
-    LOG_PRINTLN(WiFi.localIP());
+    // Always print IP — critical info needed even when LOG_SERIAL is not defined.
+    Serial.print(F("[WiFi] IP: "));
+    Serial.println(WiFi.localIP());
   } else {
-    LOG_PRINTLN(F("[WiFi] not connected"));
+    Serial.println(F("[WiFi] not connected"));
   }
 
   // --- Preflight handler for CORS (OPTIONS) ---
