@@ -275,10 +275,36 @@ void DeviceApi::_onGetConfigs() {
     if (activeName.startsWith("/"))
       activeName = activeName.substring(1);
   }
+  // Build enriched file list: each entry is { "file": "...", "name": "..." }
+  String fileArr = "[";
+  bool first = true;
+  File root = LittleFS.open("/");
+  File entry = root.openNextFile();
+  while (entry) {
+    String fname = entry.name();
+    if (fname.startsWith("/")) fname = fname.substring(1);
+    if (fname.endsWith(".json") && fname != "board_types.json") {
+      String content = ConfigManager::readFile(("/" + fname).c_str());
+      String cfgName = "";
+      if (!content.isEmpty()) {
+        JsonDocument doc;
+        if (!deserializeJson(doc, content) && doc["name"].is<const char *>())
+          cfgName = doc["name"].as<String>();
+      }
+      // Escape cfgName for JSON
+      cfgName.replace("\\", "\\\\");
+      cfgName.replace("\"", "\\\"");
+      if (!first) fileArr += ",";
+      fileArr += "{\"file\":\"" + fname + "\",\"name\":\"" + cfgName + "\"}";
+      first = false;
+    }
+    entry = root.openNextFile();
+  }
+  fileArr += "]";
   String json = F("{\"active\":\"");
   json += activeName;
   json += F("\",\"files\":");
-  json += ConfigManager::listConfigs();
+  json += fileArr;
   json += "}";
   ApiServer::sendJson(200, json);
 }
@@ -678,6 +704,28 @@ void DeviceApi::_onGetStatus() {
     sp[String(DCC_PIN)] = F("DCC");
 #endif
   }
+#endif
+
+  // WiFi details
+  doc["wifi_ssid"] = WiFi.SSID();
+  doc["wifi_rssi"] = WiFi.RSSI();
+  doc["wifi_mac"]  = WiFi.macAddress();
+
+  // Library versions (compile-time macros where available)
+  JsonObject libs = doc["libs"].to<JsonObject>();
+  libs["ArduinoJson"] = ARDUINOJSON_VERSION;
+  libs["ESP-IDF"]     = esp_get_idf_version();
+#ifdef ESP_ARDUINO_VERSION_STR
+  libs["Arduino-ESP32"] = ESP_ARDUINO_VERSION_STR;
+#endif
+#ifdef ACE_ROUTINE_VERSION_STR
+  libs["AceRoutine"] = ACE_ROUTINE_VERSION_STR;
+#endif
+#ifdef NMRADCC_VERSION
+  libs["NmraDcc"] = NMRADCC_VERSION;
+#endif
+#ifdef U8G2_VERSION
+  libs["U8g2"] = U8G2_VERSION;
 #endif
 
   String json;
