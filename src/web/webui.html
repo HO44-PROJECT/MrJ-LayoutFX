@@ -42,9 +42,6 @@
       <div class="nav-item" data-view="canvas" onclick="switchView('canvas')">
         <span class="nav-icon">🗺</span> <span data-i18n="nav.canvas">Vue plan</span>
       </div>
-      <div class="nav-item" data-view="params" onclick="switchView('params')">
-        <span class="nav-icon">⚙</span> <span data-i18n="nav.params">Paramètres</span>
-      </div>
       <div class="nav-item" data-view="config" onclick="switchView('config')">
         <span class="nav-icon">📁</span> <span data-i18n="nav.debug">Configuration</span>
       </div>
@@ -82,20 +79,18 @@
 
     <!-- Sub-tab bar -->
     <div class="cfg-tabs">
-      <button class="cfg-tab active" data-tab="boards" onclick="switchCfgTab('boards')" data-i18n="cfg.tab.boards">Boards</button>
-      <button class="cfg-tab" data-tab="buses" onclick="switchCfgTab('buses')" data-i18n="cfg.tab.buses">Buses</button>
-      <button class="cfg-tab" data-tab="files" onclick="switchCfgTab('files')" data-i18n="cfg.tab.files">Fichiers</button>
-      <button class="cfg-tab" data-tab="diag" onclick="switchCfgTab('diag')" data-i18n="cfg.tab.diag">Diagnostics</button>
+      <button class="cfg-tab active" data-tab="files"  onclick="switchCfgTab('files')"  data-i18n="cfg.tab.files">Fichiers config</button>
+      <button class="cfg-tab" data-tab="boards" onclick="switchCfgTab('boards')" data-i18n="cfg.tab.boards">Cartes &amp; extensions</button>
+      <button class="cfg-tab" data-tab="buses"  onclick="switchCfgTab('buses')"  data-i18n="cfg.tab.buses">Bus</button>
+      <button class="cfg-tab" data-tab="diag"   onclick="switchCfgTab('diag')"   data-i18n="cfg.tab.diag">Diagnostics</button>
+      <input id="cfg-layout-name" type="text" class="cfg-tab-name-inp" data-i18n-placeholder="cfg.layout_name_ph" placeholder="Nom du réseau…" autocomplete="off" oninput="onLayoutNameInput()">
     </div>
 
     <!-- ── Tab: Boards ───────────────────────────────────────────────── -->
     <div id="cfg-tab-boards" class="cfg-tabpanel active">
       <div class="dbg-panel">
         <div class="dbg-top">
-          <div style="display:flex;align-items:center;gap:.6rem;flex:1;min-width:0">
-            <div class="abt-title" data-i18n="cfg.tab.boards" style="flex-shrink:0">Boards</div>
-            <input id="cfg-layout-name" type="text" data-i18n-placeholder="cfg.layout_name_ph" placeholder="Nom du réseau…" autocomplete="off" oninput="onLayoutNameInput()" style="flex:1;min-width:80px;max-width:220px;border:1px solid var(--bd);border-radius:5px;background:var(--bg0);color:var(--t1);padding:.25rem .5rem;font-size:.8rem">
-          </div>
+          <div class="abt-title" data-i18n="cfg.tab.boards">Boards</div>
           <div style="display:flex;gap:.4rem;align-items:center">
             <button class="abt-refresh" onclick="openBoardEditor(null)" data-i18n="be.add_btn">+ Carte</button>
             <button class="abt-refresh" onclick="refreshDebug()" data-i18n="abt.refresh">Actualiser</button>
@@ -180,6 +175,29 @@
   <!-- ── View: À propos ───────────────────────────────────────────────── -->
   <div id="view-about" class="view">
     <div class="abt-panel">
+
+      <!-- Settings (formerly Paramètres) -->
+      <div class="prm-section abt-settings-section">
+        <div class="prm-section-title" data-i18n="prm.interface">Interface</div>
+        <div class="prm-row">
+          <span class="prm-label" data-i18n="prm.language">Langue</span>
+          <div class="prm-lang-btns">
+            <button class="prm-lang-btn active" id="lang-fr" onclick="setLang('fr')">FR</button>
+            <button class="prm-lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+            <button class="prm-lang-btn" id="lang-de" onclick="setLang('de')">DE</button>
+            <button class="prm-lang-btn" id="lang-es" onclick="setLang('es')">ES</button>
+          </div>
+        </div>
+        <div class="prm-row">
+          <span class="prm-label" data-i18n="prm.poll_interval">Rafraîchissement</span>
+          <div class="prm-field">
+            <input type="number" id="prm-poll" min="500" max="30000" step="500"
+              class="prm-input prm-input-sm" onchange="savePollInterval()">
+            <span class="prm-unit">ms</span>
+          </div>
+        </div>
+      </div>
+
       <div class="abt-top">
         <div class="abt-title" data-i18n="nav.about">À propos</div>
         <button class="abt-refresh" onclick="loadAbout()" data-i18n="abt.refresh">Actualiser</button>
@@ -200,37 +218,6 @@
   </div>
 
 
-  <!-- ── View: Paramètres ─────────────────────────────────────────────── -->
-  <div id="view-params" class="view">
-    <div class="prm-panel">
-
-      <!-- Interface: language + poll interval -->
-      <div class="prm-section">
-        <div class="prm-section-title" data-i18n="prm.interface">Interface</div>
-
-        <div class="prm-row">
-          <span class="prm-label" data-i18n="prm.language">Langue</span>
-          <div class="prm-lang-btns">
-            <button class="prm-lang-btn active" id="lang-fr" onclick="setLang('fr')">FR</button>
-            <button class="prm-lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
-            <button class="prm-lang-btn" id="lang-de" onclick="setLang('de')">DE</button>
-            <button class="prm-lang-btn" id="lang-es" onclick="setLang('es')">ES</button>
-          </div>
-        </div>
-
-        <div class="prm-row">
-          <span class="prm-label" data-i18n="prm.poll_interval">Rafraîchissement</span>
-          <div class="prm-field">
-            <input type="number" id="prm-poll" min="500" max="30000" step="500" class="prm-input prm-input-sm"
-              onchange="savePollInterval()">
-            <span class="prm-unit">ms</span>
-          </div>
-        </div>
-      </div>
-
-
-    </div>
-  </div>
 
   <script>%%I18N%%
 %%ICONS%%

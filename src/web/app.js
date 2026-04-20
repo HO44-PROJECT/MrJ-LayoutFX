@@ -32,6 +32,7 @@
     }
 
     function switchView(name) {
+      if (name === 'params') name = 'about'; // params merged into about
       // Hide all views
       document.querySelectorAll('.view').forEach(function (v) {
         v.classList.remove('active');
@@ -52,12 +53,11 @@
       _currentView = name;
       location.hash = name;
       closeDrawer();
-      if (name === 'params') loadParams();
       if (name === 'about') loadAbout();
       if (name === 'config') { renderDirtyBanner(); switchCfgTab(_currentCfgTab); }
     }
 
-    var _currentCfgTab = 'boards';
+    var _currentCfgTab = 'files';
 
     function switchCfgTab(name) {
       _currentCfgTab = name;
@@ -450,7 +450,10 @@
           _cfgActive = data.active || 'config.json';
           var pending = localStorage.getItem(CFG_PENDING_KEY);
           var el = document.getElementById('cfg-filelist');
-          el.innerHTML = data.files.map(function (f) {
+          el.innerHTML = data.files.map(function (entry) {
+            // Support both old format (string) and new format ({file,name})
+            var f    = (typeof entry === 'string') ? entry : entry.file;
+            var cname = (typeof entry === 'object' && entry.name) ? entry.name : '';
             var isActive  = (f === data.active);
             var isPending = (!isActive && f === pending);
             var cls = 'cfg-fileitem' + (isActive ? ' active' : '') + (isPending ? ' pending' : '');
@@ -469,10 +472,6 @@
                 + '</div>';
             }
 
-            // Slot 1 : badge (active/pending) ou bouton Activer — largeur fixe via CSS
-            // Slots 2-5 : Backup, Download, [Rename, Delete] ou fantômes invisibles
-            // Les fantômes portent le même texte que les vrais boutons (visibility:hidden)
-            // → même largeur → zone nom identique pour toutes les lignes
             var ghostRename = '<span class="cfg-row-btn cfg-row-ghost" aria-hidden="true">' + t('cfg.rename.btn') + '</span>';
             var ghostDelete = '<span class="cfg-row-btn cfg-row-ghost" aria-hidden="true">✕ ' + t('cfg.destroy.btn') + '</span>';
             var btns = '<div class="cfg-row-btns">';
@@ -499,6 +498,7 @@
             return '<div class="' + cls + '">'
               + dot
               + '<span class="cfg-fname">' + f + '</span>'
+              + '<span class="cfg-flayout">' + (cname ? cname : '') + '</span>'
               + btns
               + '</div>';
           }).join('');
@@ -888,7 +888,6 @@
       applyLayoutName(name);
       if (!_dbgCfg) return;
       _dbgCfg.name = name || undefined;
-      markDirty();
       saveCfg(_dbgCfg);
     }
 
@@ -1319,7 +1318,7 @@
       var m = Math.floor((s % 3600) / 60);
       var sec = s % 60;
       var str = pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
-      return d > 0 ? d + 'd\u00a0' + str : str;
+      return d > 0 ? d + t('abt.day_unit') + '\u00a0' + str : str;
     }
 
     function abtCard(title, rows) {
@@ -1428,6 +1427,26 @@
             bar: tempPct
           },
         ]);
+      }
+
+      // WiFi
+      if (s.wifi_ssid !== undefined) {
+        var rssi = s.wifi_rssi || 0;
+        var rssiPct = Math.min(100, Math.max(0, Math.round((rssi + 100) * 2)));
+        var rssiLabel = rssi >= -60 ? '\uD83D\uDFE2' : rssi >= -75 ? '\uD83D\uDFE1' : '\uD83D\uDD34';
+        html += abtCard(t('abt.wifi'), [
+          { label: t('abt.wifi_ssid'), value: s.wifi_ssid || '\u2014' },
+          { label: t('abt.wifi_rssi'), value: rssiLabel + '\u00a0' + rssi + '\u00a0dBm', bar: rssiPct },
+          { label: t('abt.wifi_mac'),  value: s.wifi_mac || '\u2014' },
+        ]);
+      }
+
+      // Libraries
+      if (s.libs) {
+        var libRows = Object.keys(s.libs).map(function (k) {
+          return { label: k, value: s.libs[k] || '\u2014' };
+        });
+        html += abtCard(t('abt.libs'), libRows);
       }
 
       // Features
@@ -2263,7 +2282,7 @@
     applyLang();
     (function () {
       var h = location.hash.slice(1);
-      var valid = ['cockpit', 'canvas', 'params', 'config', 'about'];
+      var valid = ['cockpit', 'canvas', 'params', 'config', 'about']; // 'params' redirects to 'about'
       if (h && valid.indexOf(h) >= 0) switchView(h);
     })();
     window.addEventListener('hashchange', function () {

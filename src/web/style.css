@@ -872,11 +872,24 @@
     }
 
     .cfg-fname {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      width: 140px;
+      flex-shrink: 0
+    }
+
+    .cfg-flayout {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      min-width: 0
+      min-width: 0;
+      font-size: .8rem;
+      color: var(--t3);
+      font-style: italic;
+      padding: 0 .5rem
     }
 
     /* Badge "actif" / "en attente" : dimensions identiques au bouton Activer (slot 1). */
@@ -1231,6 +1244,20 @@
     }
 
     .cfg-tab:hover { color: var(--t0) }
+
+    .cfg-tab-name-inp {
+      margin-left: auto;
+      align-self: center;
+      border: 1px solid var(--bd);
+      border-radius: 5px;
+      background: var(--bg0);
+      color: var(--t1);
+      padding: .2rem .5rem;
+      font-size: .8rem;
+      width: 180px;
+      outline: none
+    }
+    .cfg-tab-name-inp:focus { border-color: var(--acc) }
 
     .cfg-tab.active {
       color: var(--acc);
@@ -1940,6 +1967,12 @@
       gap: 1rem
     }
 
+    .abt-settings-section {
+      border-bottom: 1px solid var(--bd);
+      padding-bottom: 1rem;
+      margin-bottom: .5rem
+    }
+
     .abt-top {
       display: flex;
       align-items: center;
@@ -2033,9 +2066,7 @@
       color: var(--t0);
       font-variant-numeric: tabular-nums;
       text-align: right;
-      overflow-wrap: break-word;
-      word-break: break-all;
-      min-width: 0
+      white-space: nowrap
     }
 
     .abt-link {
