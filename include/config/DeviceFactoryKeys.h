@@ -1,0 +1,90 @@
+/**
+ * @file DeviceFactoryKeys.h
+ * @brief JSON field names and device type strings used by DeviceFactory.
+ *
+ * Centralises every literal that appears in config.json or board_types.json so
+ * that schema renames touch exactly one place.  Consumed only by DeviceFactory.
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @author  MrJ
+ * @date    2026-04-22
+ * @license MIT License. See the LICENSE file in the project root for details.
+ */
+
+#pragma once
+
+namespace factory_keys {
+
+// ── Document sections ──────────────────────────────────────────────────────
+constexpr char kSecBuses[] = "buses";
+constexpr char kSecBoards[] = "boards";
+constexpr char kSecDevices[] = "devices";
+constexpr char kSecPins[] = "pins"; ///< board_types.json only
+
+// ── Fields shared across sections ─────────────────────────────────────────
+constexpr char kFId[] = "id";
+constexpr char kFType[] = "type";
+constexpr char kFLabel[] = "label";
+constexpr char kFWiring[] = "wiring";
+constexpr char kFBus[] = "bus";
+constexpr char kFBoard[] = "board";
+
+// ── Bus type values ────────────────────────────────────────────────────────
+constexpr char kBusDcc[] = "dcc";
+constexpr char kBusSpiMaster[] = "spi_master_only";
+constexpr char kBusSpiDuplex[] = "spi_full_duplex";
+constexpr char kBusUart[] = "uart";
+constexpr char kBusI2c[] = "i2c";
+
+// ── Bus field keys ─────────────────────────────────────────────────────────
+constexpr char kFPin[] = "pin";     ///< dcc
+constexpr char kFMosi[] = "mosi";   ///< spi_master_only
+constexpr char kFSclk[] = "sclk";   ///< spi_master_only
+constexpr char kFLatch[] = "latch"; ///< spi_master_only
+constexpr char kFTx[] = "tx";       ///< uart
+constexpr char kFRx[] = "rx";       ///< uart
+constexpr char kFBaud[] = "baud";   ///< uart
+constexpr char kFSda[] = "sda";     ///< i2c
+constexpr char kFScl[] = "scl";     ///< i2c
+
+// ── Board field keys ──────────────────────────────────────────────────────
+constexpr char kFPinCount[] = "pin_count"; ///< Overrides structural count from board_types.json
+
+// ── Device field keys and values ──────────────────────────────────────────
+constexpr char kFAddress[] = "address";
+constexpr char kFDefaultState[] = "default_state";
+constexpr char kVOn[] = "on";
+
+// ── UART bus key names ────────────────────────────────────────────────────
+constexpr char kUartKey0[] = "uart0";
+constexpr char kUartKey1[] = "uart1";
+constexpr char kUartKey2[] = "uart2";
+
+// ── Device type names — must match the "type" field in "devices[]" ────────
+constexpr char kDevBeacon[] = "Beacon";
+constexpr char kDevCampFire[] = "CampFire";
+constexpr char kDevLed[] = "Led";
+constexpr char kDevDefectLamp[] = "DefectLamp";
+constexpr char kDevElectricLamp[] = "ElectricLamp";
+constexpr char kDevGasLamp[] = "GasLamp";
+constexpr char kDevNeonSign[] = "NeonSign";
+constexpr char kDevOilLamp[] = "OilLamp";
+constexpr char kDevSignalFlare[] = "SignalFlare";
+constexpr char kDevSolderLamp[] = "SolderLamp";
+constexpr char kDevStorm[] = "Storm";
+constexpr char kDevTorch[] = "Torch";
+constexpr char kDevTrainHeadLamp[] = "TrainHeadLamp";
+constexpr char kDevTurnSignal[] = "TurnSignal";
+constexpr char kDevStaticLow[] = "StaticLow";
+constexpr char kDevDoubleBeacon[] = "DoubleBeacon";
+constexpr char kDevRailwayCrossing[] = "RailwayCrossingLights";
+constexpr char kDevMrJDBBlocSignal[] = "MrJDBBlocSignal";
+constexpr char kDevMrJDBEntrySignal[] = "MrJDBEntrySignal";
+constexpr char kDevTrafficLight3[] = "TrafficLight3Phase";
+constexpr char kDevTrafficLight4[] = "TrafficLight4Phase";
+constexpr char kDevMrJDBExitSignal[] = "MrJDBExitSignal";
+constexpr char kDevDfAudio[] = "DfAudio";
+constexpr char kDevSerialServo[] = "SerialServo";
+
+} // namespace factory_keys

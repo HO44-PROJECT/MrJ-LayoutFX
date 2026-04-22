@@ -1007,7 +1007,30 @@
         dip += '<div class="dbg-col">' + colRow('right', 1) + '</div>';
         dip += '<div class="dbg-col">' + colRow('right', 2) + '</div>';
       } else {
-        dip += '<div class="dbg-col">' + colRow('left', 1)  + '</div>';
+        var _conns = def.connectors || [];
+        var _lcArr = _conns.filter(function(c){ return c.side === 'left';  });
+        var _rcArr = _conns.filter(function(c){ return c.side === 'right'; });
+        function renderBusConn(conn) {
+          return '<div class="dbg-bus-conn">'
+            + '<div class="dbg-bconn-lbl">' + conn.label + '</div>'
+            + (conn.pins || []).map(function(p) {
+                return '<div class="dbg-bconn-pin">'
+                  + '<span class="dbg-bconn-name">' + p.label + '</span>'
+                  + '<span class="dbg-bconn-gpio">' + p.gpio + '</span>'
+                  + '</div>';
+              }).join('')
+            + '</div>';
+        }
+        var _leftPinsHtml = '<div class="dbg-col">' + colRow('left', 1) + '</div>';
+        if (_lcArr.length || _rcArr.length) {
+          dip += '<div class="dbg-conn-row">'
+            + _lcArr.map(renderBusConn).join('')
+            + _leftPinsHtml
+            + _rcArr.map(renderBusConn).join('')
+            + '</div>';
+        } else {
+          dip += _leftPinsHtml;
+        }
         dip += wrapChip(shortLabel);
         dip += '<div class="dbg-col">' + colRow('right', 1) + '</div>';
       }
@@ -1071,7 +1094,10 @@
       var caps = pin.capabilities || [];
 
       if (pin.wiring === undefined) {
-        var sc = caps.indexOf('gnd') >= 0 ? 'gnd' : caps.indexOf('power') >= 0 ? 'pwr' : 'nc';
+        var sc = caps.indexOf('gnd') >= 0 ? 'gnd'
+               : caps.indexOf('power') >= 0 ? 'pwr'
+               : caps.indexOf('bus_reserved') >= 0 ? 'bus-rsv'
+               : 'nc';
         return '<div class="dbg-pin ' + sc + '">' + pin.label + '</div>';
       }
 
@@ -1585,17 +1611,18 @@
 
     function deUpdateAddrLabel() {
       var isServo = SERVO_TYPES.indexOf(document.getElementById('de-type').value) >= 0;
-      // For servo: bus ID is in the wiring field — hide the DCC addr field entirely
+      // Board field: hide for servos (they're on a UART bus board, not a GPIO board)
+      var boardField = document.getElementById('de-board-field');
+      if (boardField) boardField.style.display = isServo ? 'none' : '';
+      // Addr field: always show — DCC address for both LED devices and servos
       var addrField = document.querySelector('#de-modal #de-addr');
       var addrFieldRow = addrField ? addrField.closest('.de-field') : null;
-      if (addrFieldRow) addrFieldRow.style.display = isServo ? 'none' : '';
-      if (!isServo) {
-        var lbl  = document.querySelector('#de-modal .de-addr-lbl');
-        var hint = document.querySelector('#de-modal .de-addr-hint');
-        if (lbl)  lbl.textContent  = t('de.lbl_addr');
-        if (hint) hint.textContent = t('de.lbl_addr_hint');
-        if (addrField) { addrField.min = 1; addrField.max = 10239; }
-      }
+      if (addrFieldRow) addrFieldRow.style.display = '';
+      var lbl  = document.querySelector('#de-modal .de-addr-lbl');
+      var hint = document.querySelector('#de-modal .de-addr-hint');
+      if (lbl)  lbl.textContent  = t('de.lbl_addr');
+      if (hint) hint.textContent = t('de.lbl_addr_hint');
+      if (addrField) { addrField.min = 1; addrField.max = 10239; }
     }
 
     function deUpdateWiring(prefillPin, dev) {
@@ -1816,7 +1843,8 @@
       'esp32devkitc':          'ESP32DevkitC',
       'esp32devkitcbreadboard': 'ESP32DevkitC',
       'esp32minibreadboard':   'ESP32Mini',
-      'esp32mini':             'ESP32Mini'
+      'esp32mini':             'ESP32Mini',
+      'mrjfxv1':               'MrJRailwayFX_v1'
     };
 
     function guessDefaultBoardType() {
@@ -1830,17 +1858,31 @@
       _beEditIdx = cfgIdx !== null ? cfgIdx : -1;
       var board = (cfgIdx !== null && cfgIdx >= 0 && _dbgCfg) ? _dbgCfg.boards[cfgIdx] : null;
 
-      // Populate type select — disable types whose required bus has no instance in config
+      // Populate type select
       var typeEl = document.getElementById('be-type');
       var buses = (_dbgCfg && _dbgCfg.buses) || {};
+      var feats = (_dbgStatus && _dbgStatus.features) || {};
+      var isNew = (_beEditIdx < 0);
+      // Check if a main GPIO board (busType===null) already exists
+      var hasMainBoard = isNew && ((_dbgCfg && _dbgCfg.boards) || []).some(function (b) {
+        return !(_boardTypes[b.type] && _boardTypes[b.type].busType);
+      });
       typeEl.innerHTML = Object.keys(_boardTypes).map(function (k) {
         var def = _boardTypes[k];
         var required = def.busType || null;
-        var hasCompatBus = !required || Object.keys(buses).some(function (bk) {
+        var isMainType = !required;
+        // Feature flag unlocks bus-type boards even before a bus is configured
+        var featureCovers = (required === 'spi_master_only' && feats.spi)
+                         || (required === 'i2c' && (feats.oled || feats.i2c))
+                         || (required === 'uart' && (feats.lobot_servo || feats.lx16a_servo || feats.audio));
+        var hasCompatBus = !required || featureCovers || Object.keys(buses).some(function (bk) {
           return buses[bk].type === required;
         });
-        var dis = hasCompatBus ? '' : ' disabled title="' + t('be.no_bus_warn').replace(/"/g, '&quot;') + '"';
-        var label = (def.label || k) + (hasCompatBus ? '' : ' \u26a0');
+        var conflict = isMainType && hasMainBoard;
+        var disabled = conflict || !hasCompatBus;
+        var tip = conflict ? t('be.one_gpio_board_only') : t('be.no_bus_warn');
+        var dis = disabled ? ' disabled title="' + tip.replace(/"/g, '&quot;') + '"' : '';
+        var label = (def.label || k) + (disabled ? ' \u26a0' : '');
         return '<option value="' + k + '"' + dis + '>' + label + '</option>';
       }).join('');
 
@@ -1866,10 +1908,20 @@
       applyLang();
     }
 
+    function beUpdateIdPlaceholder() {
+      var idEl = document.getElementById('be-id');
+      if (!idEl || idEl.disabled || idEl.value.trim()) return;
+      var type = document.getElementById('be-type').value;
+      var base = type.toLowerCase().replace(/[^a-z0-9]/g, '');
+      idEl.placeholder = base || 'auto';
+    }
+
     function beUpdateFields(board) {
       var type = document.getElementById('be-type').value;
       var def = _boardTypes[type] || {};
       var requiredBusType = def.busType || null;
+
+      beUpdateIdPlaceholder();
 
       // Bus select
       var busEl = document.getElementById('be-bus');
@@ -1934,7 +1986,14 @@
       var bus = document.getElementById('be-bus').value;
       var pc = parseInt(document.getElementById('be-pincount').value, 10);
 
-      if (!id) { beStatus(t('be.err_id'), 'err'); return; }
+      if (!id) {
+        var base = type.toLowerCase().replace(/[^a-z0-9]/g, '') || 'board';
+        var existingIds = ((_dbgCfg && _dbgCfg.boards) || []).map(function (b) { return b.id; });
+        id = base;
+        var n = 2;
+        while (existingIds.indexOf(id) >= 0) { id = base + '_' + n++; }
+        document.getElementById('be-id').value = id;
+      }
       if (!type) { beStatus(t('be.err_type'), 'err'); return; }
       var def = _boardTypes[type] || {};
       if (def.busType && !bus) { beStatus(t('be.err_bus_required').replace('{{type}}', def.busType), 'err'); return; }
@@ -1961,6 +2020,29 @@
               }
             }
             cfg.boards.push(entry);
+            // Create implicit buses declared by this board type (if not already present)
+            var implBuses = def.implicitBuses || [];
+            if (!cfg.buses) cfg.buses = {};
+            implBuses.forEach(function (ib) {
+              var alreadyExists = Object.keys(cfg.buses).some(function (bk) {
+                return cfg.buses[bk].type === ib.type;
+              });
+              if (!alreadyExists) {
+                var busKey = ib.label.toLowerCase()
+                  .replace(/²/g, '2').replace(/³/g, '3')
+                  .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                var busEntry = { type: ib.type };
+                if (ib.scl  !== undefined) busEntry.scl  = ib.scl;
+                if (ib.sda  !== undefined) busEntry.sda  = ib.sda;
+                if (ib.tx   !== undefined) busEntry.tx   = ib.tx;
+                if (ib.rx   !== undefined) busEntry.rx   = ib.rx;
+                if (ib.baud !== undefined) busEntry.baud = ib.baud;
+                if (ib.mosi !== undefined) busEntry.mosi = ib.mosi;
+                if (ib.sclk !== undefined) busEntry.sclk = ib.sclk;
+                if (ib.latch!== undefined) busEntry.latch= ib.latch;
+                cfg.buses[busKey] = busEntry;
+              }
+            });
           }
           return fetch('/api/config', {
             method: 'POST',
@@ -2049,7 +2131,10 @@
         return '<div class="bus-row"><span class="bus-lbl">' + lbl + '</span><span class="bus-val">' + (val !== undefined && val !== null ? val : '—') + '</span></div>';
       }
 
-      if (feat.oled) {
+      var hasAppI2c = Object.keys(cfg.buses || {}).some(function (k) {
+        return (cfg.buses[k].type === 'i2c');
+      });
+      if (feat.oled && !hasAppI2c) {
         var sdaPin = null, sclPin = null;
         Object.keys(sp).forEach(function (g) {
           if (sp[g] === 'SDA') sdaPin = g;

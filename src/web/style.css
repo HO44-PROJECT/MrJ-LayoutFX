@@ -1512,6 +1512,55 @@
       gap: .25rem
     }
 
+    /* Bus connector blocks flanking the first pin row */
+    .dbg-conn-row {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: .3rem
+    }
+    .dbg-bus-conn {
+      display: flex;
+      flex-direction: column;
+      gap: .18rem;
+      border: 1.5px solid var(--acc);
+      border-radius: 5px;
+      padding: .3rem .45rem;
+      background: var(--bg2);
+      box-sizing: border-box;
+      width: 100px;
+      flex-shrink: 0;
+      align-self: stretch
+    }
+    .dbg-bconn-lbl {
+      font-size: .48rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--acc);
+      text-transform: uppercase;
+      text-align: center;
+      padding-bottom: .18rem;
+      border-bottom: 1px solid var(--bd);
+      margin-bottom: .05rem
+    }
+    .dbg-bconn-pin {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: .3rem
+    }
+    .dbg-bconn-name {
+      font-size: .58rem;
+      font-weight: 600;
+      color: var(--t1)
+    }
+    .dbg-bconn-gpio {
+      font-size: .55rem;
+      color: var(--t3);
+      font-family: monospace
+    }
+
     .dbg-usb {
       display: flex;
       flex-direction: row-reverse;
@@ -1609,7 +1658,7 @@
       letter-spacing: .3px
     }
 
-    .dbg-pin:not(.nc):not(.gnd):not(.pwr):not(.sys):not(.jtag):not(.ro):not(.boot):not(.flash):not(.busy):hover {
+    .dbg-pin:not(.nc):not(.gnd):not(.pwr):not(.sys):not(.jtag):not(.ro):not(.boot):not(.flash):not(.busy):not(.bus-rsv):hover {
       border-color: #27ae60;
       color: #4CAF50
     }
@@ -1684,6 +1733,14 @@
       border: none;
       background: transparent;
       color: #6a6a80;
+      cursor: default
+    }
+
+    .dbg-pin.bus-rsv {
+      background: #d0eae0;
+      border-color: #3a8a6a;
+      border-style: dashed;
+      color: #1a5a3a;
       cursor: default
     }
 

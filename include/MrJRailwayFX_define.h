@@ -47,10 +47,12 @@
 
 // -- WIFI (ESP32 only) ────────────────────────────────────────────────────────
 // ── HTTP port default (user may override in config.h) ────────────────────────
-#ifdef ESP32        // WiFi is only supported on ESP32, and requires both WIFI_SSID and WIFI_PASSWORD to be defined.
-  #ifndef HTTP_PORT // User can define HTTP_PORT in config.h; default to 80 if not defined.
-    #define HTTP_PORT 80
-  #endif                                           // End HTTP_PORT default
+#ifdef ESP32 // WiFi is only supported on ESP32, and requires both WIFI_SSID and WIFI_PASSWORD to be defined.
+  #ifdef HTTP_PORT
+    #define MRJFX_API_HTTP_PORT HTTP_PORT
+  #else
+    #define MRJFX_API_HTTP_PORT 80
+  #endif
   #if defined(WIFI_SSID) && defined(WIFI_PASSWORD) // Both WIFI_SSID and WIFI_PASSWORD must be defined to enable WiFi.
     #define MRJFX_WIFI_ENABLED 1
   #else
@@ -137,3 +139,32 @@
 #else
   #undef MRJFX_SERIAL_SERVO_ENABLED
 #endif // End Serial servo check
+
+// ── Bus registry limits ───────────────────────────────────────────────────
+#ifdef BUS_MAX_SPI_CARDS
+  #define MRJFX_BUS_MAX_SPI_CARDS BUS_MAX_SPI_CARDS
+#else
+  #define MRJFX_BUS_MAX_SPI_CARDS 8
+#endif
+
+#ifdef BUS_MAX_UART
+  #define MRJFX_BUS_MAX_UART BUS_MAX_UART
+#else
+  #define MRJFX_BUS_MAX_UART 4
+#endif
+
+#ifdef BUS_MAX_I2C
+  #define MRJFX_BUS_MAX_I2C BUS_MAX_I2C
+#else
+  #define MRJFX_BUS_MAX_I2C 2
+#endif
+
+// ── Max simultaneous devices ──────────────────────────────────────────────
+#ifdef FACTORY_MAX_DEVICES
+  #define MRJFX_FACTORY_MAX_DEVICES FACTORY_MAX_DEVICES
+#else
+  #define MRJFX_FACTORY_MAX_DEVICES 256
+#endif
+
+// ── Firmware version ──────────────────────────────────────────────────────
+#define MRJFX_FIRMWARE_VERSION "v1.0"

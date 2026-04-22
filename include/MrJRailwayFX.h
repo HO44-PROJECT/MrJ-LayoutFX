@@ -79,6 +79,7 @@
 
 // ── ESP32 networking & config (conditionally compiled) ───────────────────────
 #ifdef MRJFX_CONFIG_ENABLED
+  #include "bus/BusRegistry.h"
   #include "config/ConfigManager.h"
 #endif
 
@@ -142,9 +143,9 @@ public:
     //     Define USE_JTAG in config.h to skip this entirely.
 #ifdef MRJFX_RELEASE_JTAG
     static const gpio_num_t _boot_pins[] = {
-      GPIO_NUM_5,                                           // strapping pin, pull-up at boot
-      GPIO_NUM_10,                                          // SPI flash SD3, free in DIO mode
-      GPIO_NUM_12, GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15   // JTAG
+        GPIO_NUM_5,                                        // strapping pin, pull-up at boot
+        GPIO_NUM_10,                                       // SPI flash SD3, free in DIO mode
+        GPIO_NUM_12, GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15 // JTAG
     };
     for (auto p : _boot_pins) {
       gpio_reset_pin(p);
@@ -182,7 +183,7 @@ public:
 
     // 5. Connect WiFi and start HTTP server on Core 0.
 #ifdef MRJFX_API_SERVER_ENABLED
-    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, HTTP_PORT);
+    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, MRJFX_API_HTTP_PORT);
 #endif
   }
 
@@ -194,9 +195,8 @@ public:
   static void loop() {
     ace_routine::CoroutineScheduler::loop();
 
-#ifdef MRJFX_SPI_CARDS_ENABLED
-    // Flush the SPI shift-register output image to hardware.
-    Spi595Bus::flush();
+#ifdef MRJFX_CONFIG_ENABLED
+    BusRegistry::flush();
 #endif
 
 #if MRJFX_DCC_ENABLED

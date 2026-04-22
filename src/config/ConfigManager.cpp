@@ -9,9 +9,6 @@
 
 #ifdef MRJFX_CONFIG_ENABLED
 
-  #include "dcc/DccDrivable.h"
-  #include <LittleFS.h>
-
 // ---------------------------------------------------------------------------
 // Static member definitions
 // ---------------------------------------------------------------------------
@@ -23,6 +20,12 @@ const char *ConfigManager::_configPath = nullptr;
 // Public
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Mount LittleFS, load and parse config.json, initialise all devices and DCC.
+ *        Boot-critical messages go directly to Serial regardless of LOG_SERIAL so they
+ *        are always visible when the filesystem is missing or incomplete.
+ * @param configPath LittleFS path to the JSON config file (e.g. "/config.json").
+ */
 void ConfigManager::init(const char *configPath) {
   _configPath = configPath;
 
@@ -36,13 +39,15 @@ void ConfigManager::init(const char *configPath) {
   // Boot-critical messages go directly to Serial, not through LOG_PRINTLN,
   // so they are always visible even when LOG_SERIAL is not defined.
   bool boardTypesMissing = !LittleFS.exists("/board_types.json");
-  bool configMissing     = !LittleFS.exists(_configPath);
+  bool configMissing = !LittleFS.exists(_configPath);
 
   if (boardTypesMissing || configMissing) {
     Serial.println(F("[FS] WARNING: filesystem is empty or incomplete."));
     Serial.println(F("[FS]   -> In PlatformIO: run 'Upload Filesystem Image' (littlefs) to upload the data/ folder."));
-    if (boardTypesMissing) Serial.println(F("[FS]   missing: board_types.json"));
-    if (configMissing)     Serial.println(F("[FS]   missing: config.json"));
+    if (boardTypesMissing)
+      Serial.println(F("[FS]   missing: board_types.json"));
+    if (configMissing)
+      Serial.println(F("[FS]   missing: config.json"));
   }
 
   if (configMissing) {
@@ -70,10 +75,16 @@ void ConfigManager::init(const char *configPath) {
   }
 }
 
+/** @brief Read the active config file from LittleFS. Returns an empty String if absent. */
 String ConfigManager::readConfig() {
   return _readFile(_configPath);
 }
 
+/**
+ * @brief Write (overwrite) the active config file on LittleFS in kFsChunkSize-byte chunks.
+ * @param json JSON string to persist.
+ * @return true on success, false if the file could not be opened or a write stalled.
+ */
 bool ConfigManager::writeConfig(const String &json) {
   File f = LittleFS.open(_configPath, "w", true); // create=true required on arduino-esp32 3.x
   if (!f)
@@ -81,25 +92,34 @@ bool ConfigManager::writeConfig(const String &json) {
   const uint8_t *buf = (const uint8_t *)json.c_str();
   size_t total = json.length();
   size_t offset = 0;
-  const size_t CHUNK = 512;
   while (offset < total) {
-    size_t toWrite = min(total - offset, CHUNK);
+    size_t toWrite = min(total - offset, kFsChunkSize);
     size_t w = f.write(buf + offset, toWrite);
-    if (w == 0) { f.close(); return false; }
+    if (w == 0) {
+      f.close();
+      return false;
+    }
     offset += w;
   }
   f.close();
   return true;
 }
 
+/** @brief Delete the active config file from LittleFS. Does nothing if absent. */
 void ConfigManager::deleteConfig() {
   LittleFS.remove(_configPath);
 }
 
+/** @brief Return true if the active config file exists on LittleFS. */
 bool ConfigManager::configExists() {
   return LittleFS.exists(_configPath);
 }
 
+/**
+ * @brief Build a JSON array string of all *.json files in LittleFS root,
+ *        excluding board_types.json.
+ * @return JSON array string, e.g. ["config.json","backup.json"].
+ */
 String ConfigManager::listConfigs() {
   String out = "[";
   bool first = true;
@@ -107,9 +127,11 @@ String ConfigManager::listConfigs() {
   File f = root.openNextFile();
   while (f) {
     String name = f.name();
-    if (name.startsWith("/")) name = name.substring(1); // strip leading slash (ESP32 LittleFS quirk)
+    if (name.startsWith("/"))
+      name = name.substring(1); // strip leading slash (ESP32 LittleFS quirk)
     if (name.endsWith(".json") && name != "board_types.json") {
-      if (!first) out += ",";
+      if (!first)
+        out += ",";
       out += "\"";
       out += name;
       out += "\"";
@@ -121,13 +143,24 @@ String ConfigManager::listConfigs() {
   return out;
 }
 
+/**
+ * @brief Copy srcFile to configPath, making it the active config.
+ *        Also records the source filename in /config_source.txt for the UI.
+ * @param srcFile LittleFS path of the source file (e.g. "/config_backup.json").
+ * @return true on success, false if the source is empty or the write fails.
+ */
 bool ConfigManager::activateConfig(const char *srcFile) {
   String content = _readFile(srcFile);
-  if (content.isEmpty()) return false;
-  if (!writeConfig(content)) return false;
+  if (content.isEmpty())
+    return false;
+  if (!writeConfig(content))
+    return false;
   // Remember which source file is active
   File f = LittleFS.open("/config_source.txt", "w", true); // create=true required on arduino-esp32 3.x
-  if (f) { f.print(srcFile); f.close(); }
+  if (f) {
+    f.print(srcFile);
+    f.close();
+  }
   return true;
 }
 
@@ -135,10 +168,21 @@ bool ConfigManager::activateConfig(const char *srcFile) {
 // LittleFS helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Public wrapper — read any file from LittleFS by path.
+ * @param path Absolute LittleFS path (e.g. "/board_types.json").
+ * @return File contents as a String, or an empty String if absent.
+ */
 String ConfigManager::readFile(const char *path) {
   return _readFile(path);
 }
 
+/**
+ * @brief Read a LittleFS file into a String.
+ *        Checks existence before open() to suppress noisy vfs_api "does not exist" logs.
+ * @param path Absolute LittleFS path.
+ * @return File contents, or empty String if the file does not exist or cannot be opened.
+ */
 String ConfigManager::_readFile(const char *path) {
   // Check existence before open() to avoid noisy vfs_api "does not exist" errors in Serial log.
   if (!LittleFS.exists(path))

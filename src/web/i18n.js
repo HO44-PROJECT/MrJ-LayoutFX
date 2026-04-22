@@ -231,6 +231,7 @@
         'be.err_dup': 'ID d\u00e9j\u00e0 utilis\u00e9',
         'be.del_confirm': 'Supprimer la carte \u00ab\u00a0{{id}}\u00a0\u00bb et ses devices ?',
         'be.bus_missing': '\u2014 aucun bus {{type}} configur\u00e9 \u2014',
+        'be.one_gpio_board_only': 'Une seule carte GPIO principale est autoris\u00e9e par configuration.',
         'be.no_bus_warn': 'Ce type n\u00e9cessite un bus \u00ab\u00a0{{type}}\u00a0\u00bb. Cr\u00e9ez d\u2019abord le bus dans l\u2019onglet Bus.',
         'be.err_bus_required': 'Bus {{type}} requis \u2014 cr\u00e9ez-le dans l\u2019onglet Bus.',
         // bus editor
@@ -444,6 +445,7 @@
         'be.err_dup': 'ID bereits vergeben',
         'be.del_confirm': 'Karte \u00ab\u00a0{{id}}\u00a0\u00bb und ihre Ger\u00e4te l\u00f6schen?',
         'be.bus_missing': '\u2014 kein {{type}}-Bus konfiguriert \u2014',
+        'be.one_gpio_board_only': 'Pro Konfiguration ist nur eine GPIO-Hauptkarte erlaubt.',
         'be.no_bus_warn': 'Dieser Typ ben\u00f6tigt einen \u00ab\u00a0{{type}}\u00a0\u00bb-Bus. Erstellen Sie ihn zuerst im Bus-Reiter.',
         'be.err_bus_required': '{{type}}-Bus erforderlich \u2014 im Bus-Reiter erstellen.',
         'bue.add_btn': '+ Bus',
@@ -654,6 +656,7 @@
         'be.err_dup': 'ID ya en uso',
         'be.del_confirm': '\u00bfEliminar tarjeta \u00ab\u00a0{{id}}\u00a0\u00bb y sus dispositivos?',
         'be.bus_missing': '\u2014 sin bus {{type}} configurado \u2014',
+        'be.one_gpio_board_only': 'Solo se permite una tarjeta GPIO principal por configuraci\u00f3n.',
         'be.no_bus_warn': 'Este tipo requiere un bus \u00ab\u00a0{{type}}\u00a0\u00bb. Cr\u00e9elo primero en la pesta\u00f1a Buses.',
         'be.err_bus_required': 'Bus {{type}} requerido \u2014 cr\u00e9elo en la pesta\u00f1a Buses.',
         'bue.add_btn': '+ Bus',
@@ -852,6 +855,7 @@
         'be.err_dup': 'ID already in use',
         'be.del_confirm': 'Delete board \u00ab\u00a0{{id}}\u00a0\u00bb and its devices?',
         'be.bus_missing': '\u2014 no {{type}} bus configured \u2014',
+        'be.one_gpio_board_only': 'Only one main GPIO board is allowed per configuration.',
         'be.no_bus_warn': 'This type requires a \u00ab\u00a0{{type}}\u00a0\u00bb bus. Create it first in the Buses tab.',
         'be.err_bus_required': 'A {{type}} bus is required \u2014 create it in the Buses tab.',
         // bus editor
@@ -980,4 +984,6 @@
       });
       // Re-render dynamic lists that embed translated strings (tooltips, etc.)
       if (typeof loadConfigs === 'function') loadConfigs();
+      if (typeof renderDebugBoards === 'function') renderDebugBoards();
+      if (typeof renderBusesTab === 'function') renderBusesTab();
     }

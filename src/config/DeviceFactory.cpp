@@ -11,26 +11,56 @@
 
 #ifdef MRJFX_CONFIG_ENABLED
 
-  #include "MrJRailwayFX.h"
-  #ifdef MRJFX_SPI_CARDS_ENABLED
-    #include "spi/Spi595Bus.h"
+  // Device subclass headers — included here only (not in .h) to avoid polluting all consumers.
+  #include "devices/StaticLow.h"
+  #include "led_fx/Beacon.h"
+  #include "led_fx/CampFire.h"
+  #include "led_fx/DefectLamp.h"
+  #include "led_fx/DoubleBeacon.h"
+  #include "led_fx/ElectricLamp.h"
+  #include "led_fx/GasLamp.h"
+  #include "led_fx/Led.h"
+  #include "led_fx/NeonSign.h"
+  #include "led_fx/OilLamp.h"
+  #include "led_fx/RailwayCrossingLights.h"
+  #include "led_fx/SignalFlare.h"
+  #include "led_fx/SolderLamp.h"
+  #include "led_fx/Storm.h"
+  #include "led_fx/Torch.h"
+  #include "led_fx/TrainHeadLamp.h"
+  #include "led_fx/TurnSignal.h"
+  #include "signals/MrJDbBlocSignal.h"
+  #include "signals/MrJDbEntrySignal.h"
+  #include "signals/MrJDbExitSignal.h"
+  #include "traffic/TrafficLight3Phase.h"
+  #include "traffic/TrafficLight4Phase.h"
+  #ifdef MRJFX_AUDIO_ENABLED
+    #include "audio/DfAudio.h"
+  #endif
+  #ifdef MRJFX_SERIAL_SERVO_ENABLED
+    #include "servo/SerialServoMotorMode.h"
   #endif
 
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
-    #include "servo/LobotServo.h"
-  #endif
+using namespace factory_keys;
 
 // ---------------------------------------------------------------------------
-// Internal helper — map uart bus key to the ESP32 global HardwareSerial.
-// Convention: uart bus keys must be uart0, uart1, or uart2.
+// UART key → HardwareSerial mapping
 // ---------------------------------------------------------------------------
+
+/** @brief Maps a uart bus key to its ESP32 global HardwareSerial instance. */
 static HardwareSerial *serialFromBusKey(const char *key) {
-  if (strcmp(key, "uart0") == 0)
-    return &Serial;
-  if (strcmp(key, "uart1") == 0)
-    return &Serial1;
-  if (strcmp(key, "uart2") == 0)
-    return &Serial2;
+  static const struct {
+    const char *key;
+    HardwareSerial *serial;
+  } kUartMap[] = {
+      {kUartKey0, &Serial},
+      {kUartKey1, &Serial1},
+      {kUartKey2, &Serial2},
+  };
+  for (const auto &e : kUartMap) {
+    if (strcmp(key, e.key) == 0)
+      return e.serial;
+  }
   return nullptr;
 }
 
@@ -38,10 +68,26 @@ static HardwareSerial *serialFromBusKey(const char *key) {
 // Public API
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Parse a JSON config document and instantiate all buses, boards and devices.
+ *
+ * The three parsing passes are ordered intentionally:
+ *   1. Buses   — builds the bus catalog (_busEntries[]) and registers each bus in
+ *                BusRegistry. Hardware is NOT initialised at this stage.
+ *   2. Boards  — resolves each board's bus type and, for SPI boards, assigns a
+ *                daisy-chain rank and registers the slot in BusRegistry.
+ *   3. Devices — instantiates Device subclasses; bus hardware is activated lazily
+ *                here (activateUart/activateSpi) on first device creation.
+ *
+ * @param json           Null-terminated JSON string (device config).
+ * @param boardTypesJson Optional null-terminated JSON string (board_types.json).
+ *                       Used to infer SPI board pin counts when "pin_count" is absent.
+ * @return true on success, false if the main JSON fails to parse.
+ */
 bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   // Pre-index pin counts from board_types.json (count pins with a wiring field).
   // Stored in parallel arrays to avoid dynamic allocation on embedded targets.
-  char _btTypeNames[FACTORY_MAX_BOARD_TYPES][32] = {};
+  char _btTypeNames[FACTORY_MAX_BOARD_TYPES][FACTORY_ID_LEN] = {};
   uint8_t _btPinCounts[FACTORY_MAX_BOARD_TYPES] = {};
   uint8_t _btCount = 0;
 
@@ -51,10 +97,10 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       for (JsonPair kv : btDoc.as<JsonObject>()) {
         if (_btCount >= FACTORY_MAX_BOARD_TYPES)
           break;
-        strncpy(_btTypeNames[_btCount], kv.key().c_str(), sizeof(_btTypeNames[0]) - 1);
+        strncpy(_btTypeNames[_btCount], kv.key().c_str(), FACTORY_ID_LEN - 1);
         uint8_t cnt = 0;
-        for (JsonObject p : kv.value()["pins"].as<JsonArray>()) {
-          if (!p["wiring"].isNull())
+        for (JsonObject p : kv.value()[kSecPins].as<JsonArray>()) {
+          if (!p[kFWiring].isNull())
             cnt++;
         }
         _btPinCounts[_btCount] = cnt;
@@ -71,36 +117,35 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
     return false;
   }
 
-  // 1. Parse buses — populates _busEntries[], _dccPin, _spiBus, _ports[]
-  if (doc["buses"].is<JsonObject>()) {
-    _parseBuses(doc["buses"].as<JsonObject>());
-  }
+  // Pass 1 — buses.
+  if (doc[kSecBuses].is<JsonObject>())
+    _parseBuses(doc[kSecBuses].as<JsonObject>());
 
-  // 2. Parse boards — resolve busType from key, build _spiCards[] for HC595
-  if (doc["boards"].is<JsonArray>()) {
-    for (JsonObject bd : doc["boards"].as<JsonArray>()) {
+  // Pass 2 — boards.
+  if (doc[kSecBoards].is<JsonArray>()) {
+    for (JsonObject bd : doc[kSecBoards].as<JsonArray>()) {
       if (_boardCount >= FACTORY_MAX_BOARDS) {
         LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_BOARDS reached"));
         break;
       }
 
       BoardCfg &bcfg = _boards_cfg[_boardCount];
-      strncpy(bcfg.id, bd["id"] | "", sizeof(bcfg.id) - 1);
-      strncpy(bcfg.label, bd["label"] | "", sizeof(bcfg.label) - 1);
-      strncpy(bcfg.typeStr, bd["type"] | "", sizeof(bcfg.typeStr) - 1);
-      strncpy(bcfg.busKey, bd["bus"] | "", sizeof(bcfg.busKey) - 1);
+      strncpy(bcfg.id, bd[kFId] | "", sizeof(bcfg.id) - 1);
+      strncpy(bcfg.label, bd[kFLabel] | "", sizeof(bcfg.label) - 1);
+      strncpy(bcfg.typeStr, bd[kFType] | "", sizeof(bcfg.typeStr) - 1);
+      strncpy(bcfg.busKey, bd[kFBus] | "", sizeof(bcfg.busKey) - 1);
       bcfg.busType = _resolveBusType(bcfg.busKey);
       bcfg.pinCount = 0;
       bcfg.spiRank = 0;
 
-      // SPI boards: assign daisy-chain rank and register in _spiCards[]
       if (bcfg.busType == BUS_SPI_MASTER) {
         if (_spiCardCount >= FACTORY_MAX_SPI_CARDS) {
           LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_SPI_CARDS reached"));
           _boardCount++;
           continue;
         }
-        // Derive pin count from board_types.json definition; pin_count in JSON overrides.
+
+        // Derive pin count from board_types.json; an explicit kFPinCount overrides.
         uint8_t structural = 0;
         for (uint8_t t = 0; t < _btCount; t++) {
           if (strcmp(_btTypeNames[t], bcfg.typeStr) == 0) {
@@ -108,12 +153,13 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
             break;
           }
         }
-        bcfg.pinCount = (uint8_t)(bd["pin_count"] | (int)structural);
-        bcfg.spiRank = _spiCardCount + 1;
+        bcfg.pinCount = (uint8_t)(bd[kFPinCount] | (int)structural);
+        bcfg.spiRank = _spiCardCount + 1; // 1-based daisy-chain rank.
 
         _spiCards[_spiCardCount].type = SPI_CARD_HC595;
         _spiCards[_spiCardCount].pinCount = bcfg.pinCount;
         _spiCardCount++;
+        BusRegistry::regSpiCard(bcfg.pinCount);
       }
 
       LOG_PRINT(F("DeviceFactory: board["));
@@ -133,39 +179,34 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
         LOG_PRINT(bcfg.pinCount);
       }
       LOG_PRINTLN();
-
       _boardCount++;
     }
   }
 
-  // 3. Init Spi595Bus once all SPI boards are registered
-  #ifdef MRJFX_SPI_CARDS_ENABLED
-  if (_spiBus.configured() && _spiCardCount > 0) {
-    uint8_t pinCounts[FACTORY_MAX_SPI_CARDS];
-    for (uint8_t i = 0; i < _spiCardCount; i++)
-      pinCounts[i] = _spiCards[i].pinCount;
-    Spi595Bus::init(_spiBus.mosi, _spiBus.sclk, _spiBus.latch, pinCounts, _spiCardCount);
-  }
-  #endif
-
-  // 4. Parse devices
-  for (JsonObject obj : doc["devices"].as<JsonArray>()) {
-    if (_count >= FACTORY_MAX_DEVICES) {
-      LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_DEVICES reached"));
+  // Pass 3 — devices. Bus hardware is activated lazily on first device creation.
+  for (JsonObject obj : doc[kSecDevices].as<JsonArray>()) {
+    if (_count >= MRJFX_FACTORY_MAX_DEVICES) {
+      LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_DEVICES reached"));
       break;
     }
     Device *d = _createDevice(obj);
     if (d) {
-      const char *id = obj["id"] | "";
+      const char *id = obj[kFId] | "";
       strncpy(_ids[_count], id, sizeof(_ids[0]) - 1);
       _ids[_count][sizeof(_ids[0]) - 1] = '\0';
-      _boards[_count] = _resolveBoardIdx(obj["board"]);
+      _boards[_count] = _resolveBoardIdx(obj[kFBoard]);
       _devices[_count++] = d;
     }
   }
   return true;
 }
 
+/**
+ * @brief Call initPins() on every Device created by load().
+ *
+ * Separated from load() so the caller can interpose between construction and
+ * hardware initialisation (e.g. to apply saved states first).
+ */
 void DeviceFactory::initAll() {
   for (size_t i = 0; i < _count; i++)
     _devices[i]->initPins();
@@ -175,30 +216,47 @@ void DeviceFactory::initAll() {
 // Private — buses
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Iterate the "buses" JSON object and register each bus in the internal
+ *        catalog (_busEntries[]) and in BusRegistry.
+ *
+ * Hardware is NOT touched here. BusRegistry::activate*() is called later, on
+ * first device creation, so unused buses never open their port.
+ *
+ * Supported bus types and the fields they consume:
+ *   dcc             pin
+ *   spi_master_only mosi, sclk, latch
+ *   spi_full_duplex (reserved — logged, not handled)
+ *   uart            tx, rx, baud
+ *   i2c             sda, scl
+ */
 bool DeviceFactory::_parseBuses(JsonObject buses) {
   for (JsonPair kv : buses) {
     const char *busKey = kv.key().c_str();
     JsonObject bus = kv.value().as<JsonObject>();
-    const char *type = bus["type"] | "";
+    const char *type = bus[kFType] | "";
 
-    // Register in bus catalog
-    if (_busCount < FACTORY_MAX_BUSES) {
+    // Register key in the catalog before branching so it is reachable by
+    // _resolveBusType() regardless of which branch runs below.
+    if (_busCount < FACTORY_MAX_BUSES)
       strncpy(_busEntries[_busCount].key, busKey, sizeof(_busEntries[0].key) - 1);
-    }
 
-    if (strcmp(type, "dcc") == 0) {
-      _dccPin = bus["pin"] | -1;
+    if (strcmp(type, kBusDcc) == 0) {
+      _dccPin = bus[kFPin] | -1;
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_DCC;
+      BusRegistry::regDcc(_dccPin);
       LOG_PRINT(F("DeviceFactory: bus dcc pin="));
       LOG_PRINTLN(_dccPin);
-    } else if (strcmp(type, "spi_master_only") == 0) {
-      _spiBus.mosi = bus["mosi"] | -1;
-      _spiBus.sclk = bus["sclk"] | -1;
-      _spiBus.latch = bus["latch"] | -1;
+
+    } else if (strcmp(type, kBusSpiMaster) == 0) {
+      _spiBus.mosi = bus[kFMosi] | -1;
+      _spiBus.sclk = bus[kFSclk] | -1;
+      _spiBus.latch = bus[kFLatch] | -1;
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_MASTER;
       if (_spiBus.configured()) {
+        BusRegistry::regSpi(_spiBus.mosi, _spiBus.sclk, _spiBus.latch);
         LOG_PRINT(F("DeviceFactory: bus spi mosi="));
         LOG_PRINT(_spiBus.mosi);
         LOG_PRINT(F(" sclk="));
@@ -206,53 +264,56 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
         LOG_PRINT(F(" latch="));
         LOG_PRINTLN(_spiBus.latch);
       } else {
-        LOG_PRINTLN(F("DeviceFactory: bus spi — incomplete config, ignored"));
+        LOG_PRINTLN(F("DeviceFactory: bus spi — incomplete config (mosi/sclk/latch required), ignored"));
       }
-    } else if (strcmp(type, "spi_full_duplex") == 0) {
+
+    } else if (strcmp(type, kBusSpiDuplex) == 0) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_FULL;
+      // Full-duplex SPI reserved — no devices use it yet.
       LOG_PRINT(F("DeviceFactory: bus spi_full_duplex "));
       LOG_PRINT(busKey);
       LOG_PRINTLN(F(" — not yet handled"));
-    } else if (strcmp(type, "uart") == 0) {
+
+    } else if (strcmp(type, kBusUart) == 0) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_UART;
       if (_portCount < FACTORY_MAX_PORTS) {
         PortCfg &cfg = _ports[_portCount];
         strncpy(cfg.name, busKey, sizeof(cfg.name) - 1);
         cfg.name[sizeof(cfg.name) - 1] = '\0';
-        cfg.tx = bus["tx"] | -1;
-        cfg.rx = bus["rx"] | -1;
-        cfg.baud = bus["baud"] | 115200;
-        cfg.serial = serialFromBusKey(cfg.name);
-        if (cfg.serial && cfg.tx >= 0 && cfg.rx >= 0) {
-          cfg.serial->begin(cfg.baud, SERIAL_8N1, cfg.rx, cfg.tx);
-          LOG_PRINT(F("DeviceFactory: bus uart "));
-          LOG_PRINT(cfg.name);
-          LOG_PRINT(F(" tx="));
-          LOG_PRINT(cfg.tx);
-          LOG_PRINT(F(" rx="));
-          LOG_PRINT(cfg.rx);
-          LOG_PRINT(F(" baud="));
-          LOG_PRINTLN(cfg.baud);
-        } else {
-          LOG_PRINT(F("DeviceFactory: bus uart "));
-          LOG_PRINT(busKey);
-          LOG_PRINTLN(F(" — key must be uart0/uart1/uart2"));
-        }
+        cfg.tx = bus[kFTx] | -1;
+        cfg.rx = bus[kFRx] | -1;
+        cfg.baud = bus[kFBaud] | 115200;
+        cfg.serial = serialFromBusKey(cfg.name); // nullptr if key is not uart0/1/2.
+        // Defer serial->begin() — BusRegistry::activateUart() will call it on first use.
+        BusRegistry::regUart(cfg.name, cfg.serial, cfg.tx, cfg.rx, cfg.baud);
+        LOG_PRINT(F("DeviceFactory: bus uart registered "));
+        LOG_PRINT(cfg.name);
+        LOG_PRINT(F(" tx="));
+        LOG_PRINT(cfg.tx);
+        LOG_PRINT(F(" rx="));
+        LOG_PRINT(cfg.rx);
+        LOG_PRINT(F(" baud="));
+        LOG_PRINTLN(cfg.baud);
         _portCount++;
       } else {
         LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_PORTS reached"));
       }
-    } else if (strcmp(type, "i2c") == 0) {
+
+    } else if (strcmp(type, kBusI2c) == 0) {
       if (_busCount < FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_I2C;
-      LOG_PRINT(F("DeviceFactory: bus i2c "));
+      int sda = bus[kFSda] | -1;
+      int scl = bus[kFScl] | -1;
+      BusRegistry::regI2c(busKey, sda, scl);
+      LOG_PRINT(F("DeviceFactory: bus i2c registered "));
       LOG_PRINT(busKey);
       LOG_PRINT(F(" sda="));
-      LOG_PRINT((int)(bus["sda"] | -1));
+      LOG_PRINT(sda);
       LOG_PRINT(F(" scl="));
-      LOG_PRINTLN((int)(bus["scl"] | -1));
+      LOG_PRINTLN(scl);
+
     } else {
       LOG_PRINT(F("DeviceFactory: unknown bus type — "));
       LOG_PRINTLN(type);
@@ -264,6 +325,12 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
   return true;
 }
 
+/**
+ * @brief Look up the BusType for a given bus key.
+ *
+ * Called during board parsing (pass 2) to resolve each board's bus protocol.
+ * Returns BUS_NONE for an empty key (root board) or an unregistered key.
+ */
 DeviceFactory::BusType DeviceFactory::_resolveBusType(const char *busKey) const {
   if (!busKey || busKey[0] == '\0')
     return BUS_NONE;
@@ -278,6 +345,12 @@ DeviceFactory::BusType DeviceFactory::_resolveBusType(const char *busKey) const 
 // Private — port lookup
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Find the PortCfg for a given uart bus key, or nullptr.
+ *
+ * Used by DfAudio to retrieve the rx/tx pin numbers without activating the UART.
+ * DfAudio uses SoftwareSerial internally and drives the pins itself.
+ */
 DeviceFactory::PortCfg *DeviceFactory::_findPort(const char *busKey) {
   for (size_t i = 0; i < _portCount; i++) {
     if (strcmp(_ports[i].name, busKey) == 0)
@@ -286,6 +359,12 @@ DeviceFactory::PortCfg *DeviceFactory::_findPort(const char *busKey) {
   return nullptr;
 }
 
+/**
+ * @brief Return the HardwareSerial* stored in the PortCfg for a bus key, or nullptr.
+ *
+ * Does NOT activate (begin) the port. Prefer BusRegistry::activateUart() for
+ * devices that drive the port themselves (e.g. SerialServo).
+ */
 HardwareSerial *DeviceFactory::_findSerial(const char *busKey) {
   PortCfg *cfg = _findPort(busKey);
   return cfg ? cfg->serial : nullptr;
@@ -295,6 +374,11 @@ HardwareSerial *DeviceFactory::_findSerial(const char *busKey) {
 // Private — board resolution
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Resolve a board id string to a 1-based board index.
+ *
+ * Returns 0 when the id is empty or not found (0 = "root MCU / no board").
+ */
 uint8_t DeviceFactory::_resolveBoardId(const char *id) const {
   if (!id || id[0] == '\0')
     return 0;
@@ -307,6 +391,11 @@ uint8_t DeviceFactory::_resolveBoardId(const char *id) const {
   return 0;
 }
 
+/**
+ * @brief Variant of _resolveBoardId() that accepts a JsonVariant.
+ *
+ * Handles the case where the "board" field is absent or not a string.
+ */
 uint8_t DeviceFactory::_resolveBoardIdx(JsonVariant v) const {
   if (v.is<const char *>())
     return _resolveBoardId(v.as<const char *>());
@@ -317,6 +406,16 @@ uint8_t DeviceFactory::_resolveBoardIdx(JsonVariant v) const {
 // Private — pin helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Convert a JSON wiring value to a PIN_ID, routing through SPI or GPIO
+ *        depending on the board's bus type.
+ *
+ * For SPI boards, activateSpi() is called here so the bus is guaranteed to be
+ * ready before the first PIN_ID::spi() value is consumed by a Device.
+ *
+ * @param v        JsonVariant holding an int or a single-element int array.
+ * @param boardIdx 1-based index into _boards_cfg (0 = root MCU).
+ */
 PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   uint8_t bit = v.is<JsonArray>()
                     ? (uint8_t)v.as<JsonArray>()[0].as<int>()
@@ -326,6 +425,7 @@ PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
     const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
     if (bcfg.busType == BUS_SPI_MASTER && bcfg.spiRank > 0) {
   #ifdef MRJFX_SPI_CARDS_ENABLED
+      BusRegistry::activateSpi(); // Idempotent — only initialises on first call.
       return PIN_ID::spi(bcfg.spiRank, bit);
   #else
       LOG_PRINTLN(F("DeviceFactory: SPI board requires -DSPI_CARDS — device skipped"));
@@ -340,6 +440,12 @@ PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   #endif
 }
 
+/**
+ * @brief Resolve a JSON wiring value that may be a single int or an int array.
+ *
+ * Each element is converted via _pin(). Stops at maxPins.
+ * Returns the number of pins written to @p out.
+ */
 size_t DeviceFactory::_pins(JsonVariant v, PIN_ID *out, size_t maxPins, uint8_t boardIdx) {
   if (v.is<JsonArray>()) {
     JsonArray arr = v.as<JsonArray>();
@@ -356,109 +462,120 @@ size_t DeviceFactory::_pins(JsonVariant v, PIN_ID *out, size_t maxPins, uint8_t 
 // Private — device factory
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Instantiate one Device from a "devices[]" JSON object.
+ *
+ * Returns nullptr on any error (unknown type, missing board, missing bus, etc.).
+ * On success, also applies label, DCC address, and default_state.
+ *
+ * Device types by pin count:
+ *   single-pin  : Beacon, CampFire, Led, DefectLamp, ElectricLamp, GasLamp,
+ *                 NeonSign, OilLamp, SignalFlare, SolderLamp, Storm, Torch,
+ *                 TrainHeadLamp, TurnSignal
+ *   variable    : StaticLow
+ *   two-pin     : DoubleBeacon, RailwayCrossingLights, MrJDBBlocSignal
+ *   three-pin   : MrJDBEntrySignal, TrafficLight3Phase, TrafficLight4Phase
+ *   four-pin    : MrJDBExitSignal
+ *   bus-driven  : DfAudio (uart, SoftwareSerial), SerialServo (uart, HardwareSerial)
+ */
 Device *DeviceFactory::_createDevice(JsonObject obj) {
-  const char *type = obj["type"] | "";
-  const char *label = obj["label"] | " ";
-  int address = obj["address"] | 0;
-  JsonVariant wiring = obj["wiring"];
-  uint8_t boardIdx = _resolveBoardIdx(obj["board"]);
+  const char *type = obj[kFType] | "";
+  const char *label = obj[kFLabel] | " ";
+  int address = obj[kFAddress] | 0;
+  JsonVariant wiring = obj[kFWiring];
+  uint8_t boardIdx = _resolveBoardIdx(obj[kFBoard]);
 
   Device *d = nullptr;
 
   // ------------------------------------------------------------------
   // Single-pin LED effects
   // ------------------------------------------------------------------
-  if (strcmp(type, "Beacon") == 0)
+  if (strcmp(type, kDevBeacon) == 0)
     d = new Beacon(_pin(wiring, boardIdx));
-  else if (strcmp(type, "CampFire") == 0)
+  else if (strcmp(type, kDevCampFire) == 0)
     d = new CampFire(_pin(wiring, boardIdx));
-  else if (strcmp(type, "Led") == 0)
+  else if (strcmp(type, kDevLed) == 0)
     d = new Led(_pin(wiring, boardIdx));
-  else if (strcmp(type, "DefectLamp") == 0)
+  else if (strcmp(type, kDevDefectLamp) == 0)
     d = new DefectLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "ElectricLamp") == 0)
+  else if (strcmp(type, kDevElectricLamp) == 0)
     d = new ElectricLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "GasLamp") == 0)
+  else if (strcmp(type, kDevGasLamp) == 0)
     d = new GasLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "NeonSign") == 0)
+  else if (strcmp(type, kDevNeonSign) == 0)
     d = new NeonSign(_pin(wiring, boardIdx));
-  else if (strcmp(type, "OilLamp") == 0)
+  else if (strcmp(type, kDevOilLamp) == 0)
     d = new OilLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "SignalFlare") == 0)
+  else if (strcmp(type, kDevSignalFlare) == 0)
     d = new SignalFlare(_pin(wiring, boardIdx));
-  else if (strcmp(type, "SolderLamp") == 0)
+  else if (strcmp(type, kDevSolderLamp) == 0)
     d = new SolderLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "Storm") == 0)
+  else if (strcmp(type, kDevStorm) == 0)
     d = new Storm(_pin(wiring, boardIdx));
-  else if (strcmp(type, "Torch") == 0)
+  else if (strcmp(type, kDevTorch) == 0)
     d = new Torch(_pin(wiring, boardIdx));
-  else if (strcmp(type, "TrainHeadLamp") == 0)
+  else if (strcmp(type, kDevTrainHeadLamp) == 0)
     d = new TrainHeadLamp(_pin(wiring, boardIdx));
-  else if (strcmp(type, "TurnSignal") == 0)
+  else if (strcmp(type, kDevTurnSignal) == 0)
     d = new TurnSignal(_pin(wiring, boardIdx));
 
   // ------------------------------------------------------------------
-  // StaticLow
+  // Variable-pin
   // ------------------------------------------------------------------
-  else if (strcmp(type, "StaticLow") == 0) {
-    PIN_ID pins[FACTORY_MAX_DEVICES];
-    size_t n = _pins(wiring, pins, FACTORY_MAX_DEVICES, boardIdx);
+  else if (strcmp(type, kDevStaticLow) == 0) {
+    PIN_ID pins[MRJFX_FACTORY_MAX_DEVICES];
+    size_t n = _pins(wiring, pins, MRJFX_FACTORY_MAX_DEVICES, boardIdx);
     d = new StaticLow(n, pins);
   }
 
   // ------------------------------------------------------------------
   // Two-pin
   // ------------------------------------------------------------------
-  else if (strcmp(type, "DoubleBeacon") == 0) {
+  else if (strcmp(type, kDevDoubleBeacon) == 0) {
     PIN_ID pins[2] = {NO_PIN, NO_PIN};
     _pins(wiring, pins, 2, boardIdx);
     d = new DoubleBeacon(pins[0], pins[1]);
-  }
-  else if (strcmp(type, "RailwayCrossingLights") == 0) {
+  } else if (strcmp(type, kDevRailwayCrossing) == 0) {
     PIN_ID pins[2] = {NO_PIN, NO_PIN};
     _pins(wiring, pins, 2, boardIdx);
     d = new RailwayCrossingLights(pins[0], pins[1]);
-  }
-
-  // ------------------------------------------------------------------
-  // 2-pin signals
-  // ------------------------------------------------------------------
-  else if (strcmp(type, "MrJDBBlocSignal") == 0) {
+  } else if (strcmp(type, kDevMrJDBBlocSignal) == 0) {
     PIN_ID pins[2] = {NO_PIN, NO_PIN};
     _pins(wiring, pins, 2, boardIdx);
     d = new MrJDBBlocSignal(pins);
   }
 
   // ------------------------------------------------------------------
-  // 3-pin signals
+  // Three-pin
   // ------------------------------------------------------------------
-  else if (strcmp(type, "MrJDBEntrySignal") == 0) {
+  else if (strcmp(type, kDevMrJDBEntrySignal) == 0) {
     PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 3, boardIdx);
     d = new MrJDBEntrySignal(pins);
-  } else if (strcmp(type, "TrafficLight3Phase") == 0) {
+  } else if (strcmp(type, kDevTrafficLight3) == 0) {
     PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 3, boardIdx);
     d = new TrafficLight3Phases(pins);
-  } else if (strcmp(type, "TrafficLight4Phase") == 0) {
+  } else if (strcmp(type, kDevTrafficLight4) == 0) {
     PIN_ID pins[3] = {NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 3, boardIdx);
     d = new TrafficLight4Phases(pins);
   }
 
   // ------------------------------------------------------------------
-  // 4-pin signals
+  // Four-pin
   // ------------------------------------------------------------------
-  else if (strcmp(type, "MrJDBExitSignal") == 0) {
+  else if (strcmp(type, kDevMrJDBExitSignal) == 0) {
     PIN_ID pins[4] = {NO_PIN, NO_PIN, NO_PIN, NO_PIN};
     _pins(wiring, pins, 4, boardIdx);
     d = new MrJDBExitSignal(pins);
   }
 
   // ------------------------------------------------------------------
-  // DfAudio — rx/tx come from the board's uart bus
+  // DfAudio — uses SoftwareSerial driven by rx/tx from the board's uart bus.
+  // The HardwareSerial port is NOT opened here; DfAudio owns its own pins.
   // ------------------------------------------------------------------
-  else if (strcmp(type, "DfAudio") == 0) {
+  else if (strcmp(type, kDevDfAudio) == 0) {
   #ifdef MRJFX_AUDIO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
       LOG_PRINTLN(F("DeviceFactory: DfAudio — board not found"));
@@ -481,14 +598,14 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     #else
     d = new DfAudio((PIN_ID)(uint8_t)cfg->rx, (PIN_ID)(uint8_t)cfg->tx);
     #endif
-
   #endif // MRJFX_AUDIO_ENABLED
   }
 
   // ------------------------------------------------------------------
-  // SerialServo — HardwareSerial comes from the board's uart bus
+  // SerialServo — drives a Lobot LX-16A chain over HardwareSerial.
+  // The port is opened lazily here via BusRegistry::activateUart().
   // ------------------------------------------------------------------
-  else if (strcmp(type, "SerialServo") == 0) {
+  else if (strcmp(type, kDevSerialServo) == 0) {
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
       LOG_PRINTLN(F("DeviceFactory: SerialServo — board not found"));
@@ -500,14 +617,14 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       LOG_PRINTLN(bcfg.id);
       return nullptr;
     }
-    HardwareSerial *ser = _findSerial(bcfg.busKey);
+    HardwareSerial *ser = BusRegistry::activateUart(bcfg.busKey);
     if (!ser) {
-      LOG_PRINT(F("DeviceFactory: SerialServo — uart not found for bus: "));
+      LOG_PRINT(F("DeviceFactory: SerialServo — failed to activate uart: "));
       LOG_PRINTLN(bcfg.busKey);
       return nullptr;
     }
     uint8_t servoId = (uint8_t)wiring.as<int>();
-    if (_lobotCount >= FACTORY_MAX_DEVICES) {
+    if (_lobotCount >= MRJFX_FACTORY_MAX_DEVICES) {
       LOG_PRINTLN(F("DeviceFactory: LOBOT servo array full"));
       return nullptr;
     }
@@ -527,13 +644,13 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   }
 
   // ------------------------------------------------------------------
-  // Common post-creation setup
+  // Common post-creation setup (label, DCC address, default state).
   // ------------------------------------------------------------------
   if (label[0] != '\0' && label[0] != ' ')
     d->setLabel(label[0]);
   if (address > 0)
     d->registerDccDrivableDevice((ADDRESS)address);
-  if (strcmp(obj["default_state"] | "off", "on") == 0)
+  if (strcmp(obj[kFDefaultState] | "", kVOn) == 0)
     d->newState(1);
 
   LOG_PRINT(F("DeviceFactory: created "));

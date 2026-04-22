@@ -1,53 +1,53 @@
 /**
  * @file DeviceFactory.h
- *
  * @brief Creates Device instances from a JSON configuration document (ESP32 only).
  *
- * @objective Read the JSON config, instantiate the correct Device subclass for every
- *            entry in "devices", open the buses described in "buses", set the DCC
- *            address, and set the label.
+ * Reads the JSON config, instantiates the correct Device subclass for every entry
+ * in "devices", opens the buses described in "buses", sets the DCC address and label.
  *
- *            JSON schema summary
- *            -------------------
- *            {
- *              "buses": {
- *                "<key>": { "type": "dcc",             "pin": <gpio> },
- *                "<key>": { "type": "spi_master_only", "mosi": <gpio>, "sclk": <gpio>, "latch": <gpio> },
- *                "<key>": { "type": "uart",             "tx": <gpio>, "rx": <gpio>, "baud": <int> },
- *                "<key>": { "type": "i2c",              "sda": <gpio>, "scl": <gpio> }
- *              },
- *              "boards": [
- *                { "id": "<str>", "type": "<str>" },
- *                { "id": "<str>", "type": "<str>", "bus": "<key>", "pin_count": <int> }
- *              ],
- *              "devices": [
- *                { "id": "<str>", "type": "<ClassName>",
- *                  "board":         "<board-id>",
- *                  "wiring":        <int> | [<int>…],
- *                  "label":         "<char>",
- *                  "address":       <int>,
- *                  "default_state": "on"|"off"
- *                }
- *              ]
- *            }
+ * JSON schema summary
+ * -------------------
+ * {
+ *   "buses": {
+ *     "<key>": { "type": "dcc",             "pin": <gpio> },
+ *     "<key>": { "type": "spi_master_only", "mosi": <gpio>, "sclk": <gpio>, "latch": <gpio> },
+ *     "<key>": { "type": "uart",             "tx": <gpio>, "rx": <gpio>, "baud": <int> },
+ *     "<key>": { "type": "i2c",              "sda": <gpio>, "scl": <gpio> }
+ *   },
+ *   "boards": [
+ *     { "id": "<str>", "type": "<str>" },
+ *     { "id": "<str>", "type": "<str>", "bus": "<key>", "pin_count": <int> }
+ *   ],
+ *   "devices": [
+ *     { "id": "<str>", "type": "<ClassName>",
+ *       "board":         "<board-id>",
+ *       "wiring":        <int> | [<int>…],
+ *       "label":         "<char>",
+ *       "address":       <int>,
+ *       "default_state": "on"|"off"
+ *     }
+ *   ]
+ * }
  *
- *            Wiring semantics — derived from the bus type of the board:
- *            -----------------------------------------------------------
- *            board with no bus (root MCU)      → wiring = GPIO pin number
- *            board on spi_master_only bus       → wiring = output bit (1-based in chain)
- *            board on uart bus (LobotChain)     → wiring = servo ID
- *            board on uart bus (DfPlayerMini)   → no wiring (rx/tx from bus)
+ * Wiring semantics — derived from the bus type of the board:
+ * ----------------------------------------------------------
+ *   board with no bus (root MCU)      → wiring = GPIO pin number
+ *   board on spi_master_only bus       → wiring = output bit (1-based in chain)
+ *   board on uart bus (LobotChain)     → wiring = servo ID
+ *   board on uart bus (DfPlayerMini)   → no wiring (rx/tx from bus)
  *
- *            The "type" field of a board entry is a free string used by the
- *            frontend to look up the visual definition in board_types.json.
- *            The firmware never interprets it.
+ * The "type" field of a board entry is a free string used by the frontend to look
+ * up the visual definition in board_types.json.  The firmware never interprets it.
  *
  * @note Requires ArduinoJson (>= 6) in lib_deps.
  *       For SerialServo, also requires the MRJFX_LOBOT_SERVO_ENABLED build flag.
  *       UART bus keys must match the hardware serial name (uart0, uart1, uart2).
  *
  * @project MrJ-ArduinoRailwayFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @author  MrJ
+ * @date    2026-04-22
+ * @license MIT License. See the LICENSE file in the project root for details.
  */
 
 #pragma once
@@ -56,21 +56,35 @@
 
 #ifdef MRJFX_CONFIG_ENABLED
 
+  #include "bus/BusRegistry.h"
+  #include "config/DeviceFactoryKeys.h"
   #include "devices/Device.h"
+  #include "utils/utils.h"
   #include <Arduino.h>
   #include <ArduinoJson.h>
 
-  #ifndef FACTORY_MAX_DEVICES
-    #define FACTORY_MAX_DEVICES 256 ///< Override via build_flags: -DFACTORY_MAX_DEVICES=512
+  #ifdef MRJFX_SPI_CARDS_ENABLED
+    #include "spi/Spi595Bus.h"
   #endif
 
-static constexpr uint8_t FACTORY_MAX_PORTS = 4;
-static constexpr uint8_t FACTORY_MAX_BOARDS = 12;
-static constexpr uint8_t FACTORY_MAX_BUSES = 8;
+  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+    #include "servo/LobotServo.h"
+  #endif
+
+static constexpr uint8_t FACTORY_MAX_PORTS = 4;        ///< Max UART/serial ports (PortCfg array size).
+static constexpr uint8_t FACTORY_MAX_BOARDS = 12;      ///< Max boards per config (BoardCfg array size).
+static constexpr uint8_t FACTORY_MAX_BUSES = 8;        ///< Max bus entries in the "buses" config array.
 static constexpr uint8_t FACTORY_MAX_BOARD_TYPES = 16; ///< Max entries from board_types.json.
 
 class DeviceFactory {
 public:
+  // ---------------------------------------------------------------------------
+  // Size constants (shared by struct fields and local buffers)
+  // ---------------------------------------------------------------------------
+
+  static constexpr uint8_t FACTORY_ID_LEN = 32;    ///< Max chars for id / type / bus-key strings (incl. NUL).
+  static constexpr uint8_t FACTORY_LABEL_LEN = 48; ///< Max chars for human-readable label strings (incl. NUL).
+
   // ---------------------------------------------------------------------------
   // Enums
   // ---------------------------------------------------------------------------
@@ -97,8 +111,8 @@ public:
 
   /** @brief Configuration for one serial port (populated from buses[type=uart]). */
   struct PortCfg {
-    char name[32];          ///< Bus key, e.g. "uart2".
-    HardwareSerial *serial; ///< Matching ESP32 global (Serial/Serial1/Serial2).
+    char name[FACTORY_ID_LEN]; ///< Bus key, e.g. "uart2".
+    HardwareSerial *serial;    ///< Matching ESP32 global (Serial/Serial1/Serial2).
     int tx;
     int rx;
     int baud;
@@ -126,13 +140,13 @@ public:
    * The firmware never interprets it — wiring semantics are derived from busType.
    */
   struct BoardCfg {
-    char id[32] = {};           ///< Unique board identifier.
-    char label[48] = {};        ///< Optional human-readable label.
-    char typeStr[32] = {};      ///< Board type string (frontend only, e.g. "HC595").
-    char busKey[32] = {};       ///< Key of the bus this board is on (empty = root board).
-    BusType busType = BUS_NONE; ///< Resolved bus protocol at parse time.
-    uint8_t pinCount = 0;       ///< Number of output pins (SPI boards only).
-    uint8_t spiRank = 0;        ///< 1-based daisy-chain rank (SPI boards only).
+    char id[FACTORY_ID_LEN] = {};       ///< Unique board identifier.
+    char label[FACTORY_LABEL_LEN] = {}; ///< Optional human-readable label.
+    char typeStr[FACTORY_ID_LEN] = {};  ///< Board type string (frontend only, e.g. "HC595").
+    char busKey[FACTORY_ID_LEN] = {};   ///< Key of the bus this board is on (empty = root board).
+    BusType busType = BUS_NONE;         ///< Resolved bus protocol at parse time.
+    uint8_t pinCount = 0;               ///< Number of output pins (SPI boards only).
+    uint8_t spiRank = 0;                ///< 1-based daisy-chain rank (SPI boards only).
 
     bool isRoot() const { return busType == BUS_NONE; }
   };
@@ -141,12 +155,39 @@ public:
   // Public API
   // ---------------------------------------------------------------------------
 
+  /**
+   * @brief Parse a JSON config document and instantiate all buses, boards and devices.
+   * @param json           Null-terminated JSON string (device config).
+   * @param boardTypesJson Optional null-terminated JSON string (board_types.json).
+   *                       Used to infer SPI board pin counts when "pin_count" is absent.
+   * @return true on success, false if the main JSON fails to parse.
+   */
   bool load(const char *json, const char *boardTypesJson = nullptr);
+
+  /** @brief Call initPins() on every Device created by load(). */
   void initAll();
 
+  /** @brief Number of devices created by load(). */
   size_t count() const { return _count; }
+
+  /**
+   * @brief Access a device by index.
+   * @param i Zero-based device index.
+   * @return Pointer to the Device, or nullptr if out of range.
+   */
   Device *device(size_t i) const { return (i < _count) ? _devices[i] : nullptr; }
+
+  /**
+   * @brief Get the config id string for a device.
+   * @param i Zero-based device index.
+   * @return Null-terminated id string, or "" if out of range.
+   */
   const char *deviceId(size_t i) const { return (i < _count) ? _ids[i] : ""; }
+
+  /**
+   * @brief Get the 1-based board index for a device (0 = root MCU).
+   * @param i Zero-based device index.
+   */
   uint8_t deviceBoard(size_t i) const { return (i < _count) ? _boards[i] : 0; }
 
   const SpiBusCfg &spiBus() const { return _spiBus; }
@@ -154,22 +195,32 @@ public:
   uint8_t spiCardCount() const { return _spiCardCount; }
   int dccPin() const { return _dccPin; }
 
+  /**
+   * @brief Access a board configuration by 1-based index.
+   * @param i 1-based board index.
+   * @return Reference to the BoardCfg, or an empty default if out of range.
+   */
   const BoardCfg &board(uint8_t i) const {
     static const BoardCfg empty;
     return (i >= 1 && i <= _boardCount) ? _boards_cfg[i - 1] : empty;
   }
 
+  /**
+   * @brief Access an SPI card configuration by 1-based index.
+   * @param i 1-based SPI card index.
+   * @return Reference to the SpiCardCfg, or an empty default if out of range.
+   */
   const SpiCardCfg &spiCard(uint8_t i) const {
     static const SpiCardCfg empty;
     return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
   }
 
 private:
-  static constexpr uint8_t FACTORY_MAX_SPI_CARDS = 8;
+  static constexpr uint8_t FACTORY_MAX_SPI_CARDS = 8; ///< Max 74HC595 cards in daisy-chain (SpiCardCfg array size).
 
-  Device *_devices[FACTORY_MAX_DEVICES];
-  char _ids[FACTORY_MAX_DEVICES][32];
-  uint8_t _boards[FACTORY_MAX_DEVICES];
+  Device *_devices[MRJFX_FACTORY_MAX_DEVICES];
+  char _ids[MRJFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
+  uint8_t _boards[MRJFX_FACTORY_MAX_DEVICES];
   size_t _count = 0;
 
   int _dccPin = -1;
@@ -186,14 +237,14 @@ private:
 
   /** @brief Bus key → BusType catalog, populated during _parseBuses(). */
   struct BusEntry {
-    char key[32] = {};
+    char key[FACTORY_ID_LEN] = {};
     BusType type = BUS_NONE;
   };
   BusEntry _busEntries[FACTORY_MAX_BUSES];
   uint8_t _busCount = 0;
 
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
-  ace_routine::Coroutine *_lobotServos[FACTORY_MAX_DEVICES];
+  ace_routine::Coroutine *_lobotServos[MRJFX_FACTORY_MAX_DEVICES];
   size_t _lobotCount = 0;
   #endif
 
