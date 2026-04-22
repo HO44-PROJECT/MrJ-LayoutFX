@@ -72,8 +72,9 @@ public:
   /** @brief Read any file from LittleFS by path. Returns empty String if absent. */
   static String readFile(const char *path);
 
+  static constexpr size_t kFsChunkSize = 512; ///< LittleFS read/write chunk size — shared with DeviceApi helpers.
+
 private:
-  static constexpr size_t kFsChunkSize = 512; ///< Write chunk size for LittleFS operations.
 
   static DeviceFactory _factory;
   static const char *_configPath;

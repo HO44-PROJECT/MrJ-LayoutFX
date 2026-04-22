@@ -11,6 +11,7 @@
 
 #ifdef MRJFX_API_SERVER_ENABLED
 
+using namespace api_keys;
 using namespace http_status;
 
 // ---------------------------------------------------------------------------

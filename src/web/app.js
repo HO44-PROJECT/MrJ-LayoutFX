@@ -2020,28 +2020,15 @@
               }
             }
             cfg.boards.push(entry);
-            // Create implicit buses declared by this board type (if not already present)
-            var implBuses = def.implicitBuses || [];
+            // Inject structural buses for this board type (always present, not deletable from UI)
             if (!cfg.buses) cfg.buses = {};
-            implBuses.forEach(function (ib) {
-              var alreadyExists = Object.keys(cfg.buses).some(function (bk) {
-                return cfg.buses[bk].type === ib.type;
+            (def.structuralBuses || []).forEach(function (sb) {
+              if (cfg.buses[sb.key]) return; // already present — keep user edits
+              var entry = { type: sb.type };
+              ['sda','scl','tx','rx','baud','mosi','sclk','latch'].forEach(function (f) {
+                if (sb[f] !== undefined) entry[f] = sb[f];
               });
-              if (!alreadyExists) {
-                var busKey = ib.label.toLowerCase()
-                  .replace(/²/g, '2').replace(/³/g, '3')
-                  .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-                var busEntry = { type: ib.type };
-                if (ib.scl  !== undefined) busEntry.scl  = ib.scl;
-                if (ib.sda  !== undefined) busEntry.sda  = ib.sda;
-                if (ib.tx   !== undefined) busEntry.tx   = ib.tx;
-                if (ib.rx   !== undefined) busEntry.rx   = ib.rx;
-                if (ib.baud !== undefined) busEntry.baud = ib.baud;
-                if (ib.mosi !== undefined) busEntry.mosi = ib.mosi;
-                if (ib.sclk !== undefined) busEntry.sclk = ib.sclk;
-                if (ib.latch!== undefined) busEntry.latch= ib.latch;
-                cfg.buses[busKey] = busEntry;
-              }
+              cfg.buses[sb.key] = entry;
             });
           }
           return fetch('/api/config', {
@@ -2108,6 +2095,16 @@
     // Map bus field id suffix to JSON key (strip 'bue-' prefix)
     function _bueFieldKey(id) { return id.replace('bue-', ''); }
 
+    // Returns {busKey: true} for every structural bus of all boards currently in cfg
+    function _structuralBusKeys() {
+      var keys = {};
+      ((_dbgCfg && _dbgCfg.boards) || []).forEach(function (b) {
+        var def = _boardTypes[b.type] || {};
+        (def.structuralBuses || []).forEach(function (sb) { keys[sb.key] = true; });
+      });
+      return keys;
+    }
+
     function renderBusesTab() {
       var el = document.getElementById('buses-list');
       if (!el) return;
@@ -2129,22 +2126,6 @@
       }
       function busRow(lbl, val) {
         return '<div class="bus-row"><span class="bus-lbl">' + lbl + '</span><span class="bus-val">' + (val !== undefined && val !== null ? val : '—') + '</span></div>';
-      }
-
-      var hasAppI2c = Object.keys(cfg.buses || {}).some(function (k) {
-        return (cfg.buses[k].type === 'i2c');
-      });
-      if (feat.oled && !hasAppI2c) {
-        var sdaPin = null, sclPin = null;
-        Object.keys(sp).forEach(function (g) {
-          if (sp[g] === 'SDA') sdaPin = g;
-          if (sp[g] === 'SCL') sclPin = g;
-        });
-        html += '<div class="bus-card bus-structural">'
-          + busTitle('i2c (OLED)', 'i2c', true)
-          + busRow('SDA', sdaPin)
-          + busRow('SCL', sclPin)
-          + '</div>';
       }
 
       if (sp['1'] === 'TX0' || sp['3'] === 'RX0') {
@@ -2173,19 +2154,21 @@
         return;
       }
 
+      var structKeys = _structuralBusKeys();
       html += keys.map(function (k) {
         var bus = buses[k];
+        var isStruct = !!structKeys[k];
         var fields = BUS_FIELDS[bus.type] || [];
         var rows = fields.map(function (f) {
           return busRow(f.label.split(' ')[0], bus[_bueFieldKey(f.id)]);
         }).join('');
         var ks = k.replace(/'/g, "\\'");
-        return '<div class="bus-card">'
-          + busTitle(k, bus.type || '?', false)
+        return '<div class="bus-card' + (isStruct ? ' bus-structural' : '') + '">'
+          + busTitle(k, bus.type || '?', isStruct)
           + rows
           + '<div class="bus-card-actions">'
           + '<button class="dbg-hbtn" onclick="openBusEditor(\'' + ks + '\')">' + t('bue.edit') + '</button>'
-          + '<button class="dbg-hbtn off" onclick="deleteBus(\'' + ks + '\')">' + t('de.del') + '</button>'
+          + (isStruct ? '' : '<button class="dbg-hbtn off" onclick="deleteBus(\'' + ks + '\')">' + t('de.del') + '</button>')
           + '</div>'
           + '</div>';
       }).join('');
@@ -2208,12 +2191,13 @@
         return '<option value="' + tp + '">' + tp + '</option>';
       }).join('');
 
+      var isStructural = !!(key && _structuralBusKeys()[key]);
       if (key && busData) {
         document.getElementById('bue-title').textContent = t('bue.edit_prefix') + key;
         document.getElementById('bue-key').value = key;
         document.getElementById('bue-key').disabled = true;
         typeEl.value = busData.type || availTypes[0];
-        document.getElementById('bue-del-btn').style.display = '';
+        document.getElementById('bue-del-btn').style.display = isStructural ? 'none' : '';
       } else {
         document.getElementById('bue-title').textContent = t('bue.new');
         document.getElementById('bue-key').value = '';
@@ -2224,6 +2208,17 @@
       }
 
       bueUpdateFields(busData);
+
+      // Structural bus with boards attached — GPIO pins become read-only
+      if (isStructural) {
+        var hasBoards = ((_dbgCfg && _dbgCfg.boards) || []).some(function (b) { return b.bus === key; });
+        if (hasBoards) {
+          document.querySelectorAll('#bue-fields input').forEach(function (inp) {
+            if (inp.id !== 'bue-baud') inp.readOnly = true;
+          });
+        }
+      }
+
       bueStatus('', '');
       document.getElementById('bue-save-btn').disabled = false;
       document.getElementById('bue-overlay').style.display = 'block';
@@ -2328,6 +2323,7 @@
     }
 
     function deleteBus(key) {
+      if (_structuralBusKeys()[key]) return; // structural buses are non-deletable
       if (!confirm(t('bue.del_confirm').replace('{{key}}', key))) return;
       fetch('/api/config')
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
