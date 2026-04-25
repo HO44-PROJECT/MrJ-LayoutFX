@@ -8,6 +8,7 @@
  */
 
 #include "api/DeviceApi.h"
+#include "api/build_info.h"
 
 #ifdef MRJFX_API_SERVER_ENABLED
 
@@ -85,16 +86,12 @@ void DeviceApi::_onGetStatus() {
   feat[kFeatAudio] = false;
   #endif
 
-  #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_OLED_ENABLED) || defined(MRJFX_DCC_ENABLED)
+  #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_DCC_ENABLED)
   {
     JsonObject sp = doc[kSysPins].to<JsonObject>();
     #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
     sp[String(1)] = kPinTx0;
     sp[String(3)] = kPinRx0;
-    #endif
-    #ifdef MRJFX_OLED_ENABLED
-    sp[String(OLED_SDA)] = kPinSda;
-    sp[String(OLED_SCL)] = kPinScl;
     #endif
     #ifdef MRJFX_DCC_ENABLED
     sp[String(DCC_PIN)] = kPinDcc;
@@ -106,21 +103,41 @@ void DeviceApi::_onGetStatus() {
   doc[kWifiRssi] = WiFi.RSSI();
   doc[kWifiMac] = WiFi.macAddress();
 
+  #define _MRJFX_STR_(x) #x
+  #define _MRJFX_STR(x) _MRJFX_STR_(x)
+  static const struct { const char *name; const char *runtime; } kRuntimeVers[] = {
+    #ifdef ACE_ROUTINE_VERSION_STR
+    { "AceRoutine",   ACE_ROUTINE_VERSION_STR },
+    #endif
+    { "ArduinoJson",  ARDUINOJSON_VERSION },
+    #ifdef NMRADCC_VERSION
+    { "NmraDcc",      _MRJFX_STR(NMRADCC_VERSION) },
+    #endif
+    #ifdef U8G2_VERSION
+    { "U8g2",         U8G2_VERSION },
+    #endif
+    { nullptr, nullptr }
+  };
+  #undef _MRJFX_STR_
+  #undef _MRJFX_STR
+
   JsonObject libs = doc[kLibs].to<JsonObject>();
-  libs[kLibArduinoJson] = ARDUINOJSON_VERSION;
   libs[kLibEspIdf] = esp_get_idf_version();
   #ifdef ESP_ARDUINO_VERSION_STR
   libs[kLibArduinoEsp32] = ESP_ARDUINO_VERSION_STR;
   #endif
-  #ifdef ACE_ROUTINE_VERSION_STR
-  libs[kLibAceRoutine] = ACE_ROUTINE_VERSION_STR;
-  #endif
-  #ifdef NMRADCC_VERSION
-  libs[kLibNmraDcc] = NMRADCC_VERSION;
-  #endif
-  #ifdef U8G2_VERSION
-  libs[kLibU8g2] = U8G2_VERSION;
-  #endif
+  for (int i = 0; kLibDeps[i].name; i++) {
+    String val = kLibDeps[i].ver;
+    for (int j = 0; kRuntimeVers[j].name; j++) {
+      if (strcmp(kLibDeps[i].name, kRuntimeVers[j].name) == 0 && kRuntimeVers[j].runtime) {
+        val += " (";
+        val += kRuntimeVers[j].runtime;
+        val += ")";
+        break;
+      }
+    }
+    libs[kLibDeps[i].name] = val;
+  }
 
   String json;
   serializeJson(doc, json);

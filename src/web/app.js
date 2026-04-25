@@ -726,7 +726,8 @@
     var _dbgSysPins = {};  // gpio → sys label from config: {23:'MOSI', 18:'SCLK', ...}
     var _dbgFirmwarePins = {};  // gpio → label from compile-time features (api/status sys_pins)
 
-    // Extract system-used GPIO labels from /api/config payload (buses format)
+    // Extract system-used GPIO labels from /api/config payload (buses format).
+    // Rule: a bus entry in cfg.buses always reserves its pins — no special cases.
     function loadSystemPins(cfg) {
       _dbgSysPins = {};
       if (!cfg) return;
@@ -788,7 +789,7 @@
         })
         .catch(function () { });
       Promise.all([pDevs, pTypes, pBoards, pCfg, pStatus]).then(function () {
-        // Merge firmware-reserved pins — config-declared buses take precedence
+        // Merge firmware-reserved pins — config-declared buses take precedence.
         Object.keys(_dbgFirmwarePins).forEach(function (gpio) {
           if (!_dbgSysPins[gpio]) _dbgSysPins[gpio] = _dbgFirmwarePins[gpio];
         });
@@ -2020,16 +2021,6 @@
               }
             }
             cfg.boards.push(entry);
-            // Inject structural buses for this board type (always present, not deletable from UI)
-            if (!cfg.buses) cfg.buses = {};
-            (def.structuralBuses || []).forEach(function (sb) {
-              if (cfg.buses[sb.key]) return; // already present — keep user edits
-              var entry = { type: sb.type };
-              ['sda','scl','tx','rx','baud','mosi','sclk','latch'].forEach(function (f) {
-                if (sb[f] !== undefined) entry[f] = sb[f];
-              });
-              cfg.buses[sb.key] = entry;
-            });
           }
           return fetch('/api/config', {
             method: 'POST',
@@ -2096,13 +2087,28 @@
     function _bueFieldKey(id) { return id.replace('bue-', ''); }
 
     // Returns {busKey: true} for every structural bus of all boards currently in cfg
-    function _structuralBusKeys() {
-      var keys = {};
-      ((_dbgCfg && _dbgCfg.boards) || []).forEach(function (b) {
-        var def = _boardTypes[b.type] || {};
-        (def.structuralBuses || []).forEach(function (sb) { keys[sb.key] = true; });
-      });
-      return keys;
+    function addLinkedBus(btType, lbKey) {
+      var def = _boardTypes[btType] || {};
+      var lb = (def.linkedBuses || []).filter(function (b) { return b.key === lbKey; })[0];
+      if (!lb) return;
+      fetch('/api/config')
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (cfg) {
+          if (!cfg.buses) cfg.buses = {};
+          if (cfg.buses[lb.key]) return Promise.resolve(null); // already present
+          var entry = { type: lb.type };
+          ['sda','scl','tx','rx','baud','mosi','sclk','latch'].forEach(function (f) {
+            if (lb[f] !== undefined) entry[f] = lb[f];
+          });
+          cfg.buses[lb.key] = entry;
+          return fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cfg)
+          });
+        })
+        .then(function (r) { if (r && !r.ok) throw new Error('HTTP ' + r.status); markDirty(); loadDebug(); })
+        .catch(function (e) { alert(t('de.err_prefix') + e.message); });
     }
 
     function renderBusesTab() {
@@ -2117,11 +2123,10 @@
       var sp   = (_dbgStatus && _dbgStatus.sys_pins)  || {};
       var feat = (_dbgStatus && _dbgStatus.features)  || {};
 
-      function busTitle(key, type, structural) {
+      function busTitle(key, type) {
         return '<div class="bus-card-title">'
           + key
           + '<span class="bus-type-badge">' + type + '</span>'
-          + (structural ? '<span class="bus-structural-badge">' + t('bue.structural') + '</span>' : '')
           + '</div>';
       }
       function busRow(lbl, val) {
@@ -2130,7 +2135,7 @@
 
       if (sp['1'] === 'TX0' || sp['3'] === 'RX0') {
         html += '<div class="bus-card bus-structural">'
-          + busTitle('uart0 (debug)', 'uart', true)
+          + busTitle('uart0 (debug)', 'uart')
           + busRow('TX', 1)
           + busRow('RX', 3)
           + '</div>';
@@ -2140,7 +2145,7 @@
         var dccPin = null;
         Object.keys(sp).forEach(function (g) { if (sp[g] === 'DCC') dccPin = g; });
         html += '<div class="bus-card bus-structural">'
-          + busTitle('dcc', 'dcc', true)
+          + busTitle('dcc', 'dcc')
           + busRow('PIN', dccPin)
           + '</div>';
       }
@@ -2154,24 +2159,45 @@
         return;
       }
 
-      var structKeys = _structuralBusKeys();
       html += keys.map(function (k) {
         var bus = buses[k];
-        var isStruct = !!structKeys[k];
         var fields = BUS_FIELDS[bus.type] || [];
         var rows = fields.map(function (f) {
           return busRow(f.label.split(' ')[0], bus[_bueFieldKey(f.id)]);
         }).join('');
         var ks = k.replace(/'/g, "\\'");
-        return '<div class="bus-card' + (isStruct ? ' bus-structural' : '') + '">'
-          + busTitle(k, bus.type || '?', isStruct)
+        return '<div class="bus-card">'
+          + busTitle(k, bus.type || '?')
           + rows
           + '<div class="bus-card-actions">'
           + '<button class="dbg-hbtn" onclick="openBusEditor(\'' + ks + '\')">' + t('bue.edit') + '</button>'
-          + (isStruct ? '' : '<button class="dbg-hbtn off" onclick="deleteBus(\'' + ks + '\')">' + t('de.del') + '</button>')
+          + '<button class="dbg-hbtn off" onclick="deleteBus(\'' + ks + '\')">' + t('de.del') + '</button>'
           + '</div>'
           + '</div>';
       }).join('');
+
+      // ── Linked bus suggestions (from board types, not yet in cfg.buses) ──
+      var seenLbKeys = {};
+      ((_dbgCfg && _dbgCfg.boards) || []).forEach(function (b) {
+        var def = _boardTypes[b.type] || {};
+        (def.linkedBuses || []).forEach(function (lb) {
+          if (buses[lb.key] || seenLbKeys[lb.key]) return;
+          seenLbKeys[lb.key] = true;
+          var fields = BUS_FIELDS[lb.type] || [];
+          var rows = fields.map(function (f) {
+            return busRow(f.label.split(' ')[0], lb[_bueFieldKey(f.id)]);
+          }).join('');
+          var lks = lb.key.replace(/'/g, "\\'");
+          var bts = b.type.replace(/'/g, "\\'");
+          html += '<div class="bus-card bus-suggestion">'
+            + busTitle(lb.label || lb.key, lb.type || '?')
+            + rows
+            + '<div class="bus-card-actions">'
+            + '<button class="dbg-hbtn" onclick="addLinkedBus(\'' + bts + '\',\'' + lks + '\')">' + t('bue.add') + '</button>'
+            + '</div>'
+            + '</div>';
+        });
+      });
 
       el.innerHTML = html;
     }
@@ -2191,13 +2217,12 @@
         return '<option value="' + tp + '">' + tp + '</option>';
       }).join('');
 
-      var isStructural = !!(key && _structuralBusKeys()[key]);
       if (key && busData) {
         document.getElementById('bue-title').textContent = t('bue.edit_prefix') + key;
         document.getElementById('bue-key').value = key;
         document.getElementById('bue-key').disabled = true;
         typeEl.value = busData.type || availTypes[0];
-        document.getElementById('bue-del-btn').style.display = isStructural ? 'none' : '';
+        document.getElementById('bue-del-btn').style.display = '';
       } else {
         document.getElementById('bue-title').textContent = t('bue.new');
         document.getElementById('bue-key').value = '';
@@ -2208,16 +2233,6 @@
       }
 
       bueUpdateFields(busData);
-
-      // Structural bus with boards attached — GPIO pins become read-only
-      if (isStructural) {
-        var hasBoards = ((_dbgCfg && _dbgCfg.boards) || []).some(function (b) { return b.bus === key; });
-        if (hasBoards) {
-          document.querySelectorAll('#bue-fields input').forEach(function (inp) {
-            if (inp.id !== 'bue-baud') inp.readOnly = true;
-          });
-        }
-      }
 
       bueStatus('', '');
       document.getElementById('bue-save-btn').disabled = false;
@@ -2323,7 +2338,6 @@
     }
 
     function deleteBus(key) {
-      if (_structuralBusKeys()[key]) return; // structural buses are non-deletable
       if (!confirm(t('bue.del_confirm').replace('{{key}}', key))) return;
       fetch('/api/config')
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })

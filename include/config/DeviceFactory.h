@@ -71,11 +71,6 @@
     #include "servo/LobotServo.h"
   #endif
 
-static constexpr uint8_t FACTORY_MAX_PORTS = 4;        ///< Max UART/serial ports (PortCfg array size).
-static constexpr uint8_t FACTORY_MAX_BOARDS = 12;      ///< Max boards per config (BoardCfg array size).
-static constexpr uint8_t FACTORY_MAX_BUSES = 8;        ///< Max bus entries in the "buses" config array.
-static constexpr uint8_t FACTORY_MAX_BOARD_TYPES = 16; ///< Max entries from board_types.json.
-
 class DeviceFactory {
 public:
   // ---------------------------------------------------------------------------
@@ -216,8 +211,6 @@ public:
   }
 
 private:
-  static constexpr uint8_t FACTORY_MAX_SPI_CARDS = 8; ///< Max 74HC595 cards in daisy-chain (SpiCardCfg array size).
-
   Device *_devices[MRJFX_FACTORY_MAX_DEVICES];
   char _ids[MRJFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
   uint8_t _boards[MRJFX_FACTORY_MAX_DEVICES];
@@ -226,13 +219,13 @@ private:
   int _dccPin = -1;
   SpiBusCfg _spiBus;
 
-  BoardCfg _boards_cfg[FACTORY_MAX_BOARDS];
+  BoardCfg _boards_cfg[MRJFX_FACTORY_MAX_BOARDS];
   uint8_t _boardCount = 0;
 
-  SpiCardCfg _spiCards[FACTORY_MAX_SPI_CARDS];
+  SpiCardCfg _spiCards[MRJFX_FACTORY_MAX_SPI_CARDS];
   uint8_t _spiCardCount = 0;
 
-  PortCfg _ports[FACTORY_MAX_PORTS];
+  PortCfg _ports[MRJFX_FACTORY_MAX_PORTS];
   size_t _portCount = 0;
 
   /** @brief Bus key → BusType catalog, populated during _parseBuses(). */
@@ -240,7 +233,7 @@ private:
     char key[FACTORY_ID_LEN] = {};
     BusType type = BUS_NONE;
   };
-  BusEntry _busEntries[FACTORY_MAX_BUSES];
+  BusEntry _busEntries[MRJFX_FACTORY_MAX_BUSES];
   uint8_t _busCount = 0;
 
   #ifdef MRJFX_LOBOT_SERVO_ENABLED

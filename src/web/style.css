@@ -2370,6 +2370,13 @@
     .bus-card.bus-structural {
       border-color: #4a3e1a
     }
+    .bus-card.bus-suggestion {
+      border-style: dashed;
+      opacity: .6
+    }
+    .bus-card.bus-suggestion:hover {
+      opacity: 1
+    }
 
     /* ── Board/Bus editor modals (reuse de-modal shell) ── */
     #be-overlay, #bue-overlay {

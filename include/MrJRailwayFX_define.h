@@ -1,6 +1,6 @@
 /**
- * @file MrJRailwayFX.h
- * @brief Single entry point for the MrJ-RailwayFX library.
+ * @file MrJRailwayFX_define.h
+ * @brief Feature-gate and size-limit defines for the MrJ-RailwayFX library.
  *
  * Aggregates all public headers and exposes MrJFX::init() / MrJFX::loop()
  * for a minimal user main.cpp:
@@ -166,5 +166,33 @@
   #define MRJFX_FACTORY_MAX_DEVICES 256
 #endif
 
-// ── Firmware version ──────────────────────────────────────────────────────
-#define MRJFX_FIRMWARE_VERSION "v1.0"
+// ── DeviceFactory structure limits ───────────────────────────────────────
+#ifdef FACTORY_MAX_BOARDS
+  #define MRJFX_FACTORY_MAX_BOARDS FACTORY_MAX_BOARDS
+#else
+  #define MRJFX_FACTORY_MAX_BOARDS 12
+#endif
+
+#ifdef FACTORY_MAX_BUSES
+  #define MRJFX_FACTORY_MAX_BUSES FACTORY_MAX_BUSES
+#else
+  #define MRJFX_FACTORY_MAX_BUSES 8
+#endif
+
+#ifdef FACTORY_MAX_PORTS
+  #define MRJFX_FACTORY_MAX_PORTS FACTORY_MAX_PORTS
+#else
+  #define MRJFX_FACTORY_MAX_PORTS 4
+#endif
+
+#ifdef FACTORY_MAX_BOARD_TYPES
+  #define MRJFX_FACTORY_MAX_BOARD_TYPES FACTORY_MAX_BOARD_TYPES
+#else
+  #define MRJFX_FACTORY_MAX_BOARD_TYPES 16
+#endif
+
+#ifdef FACTORY_MAX_SPI_CARDS
+  #define MRJFX_FACTORY_MAX_SPI_CARDS FACTORY_MAX_SPI_CARDS
+#else
+  #define MRJFX_FACTORY_MAX_SPI_CARDS 8
+#endif

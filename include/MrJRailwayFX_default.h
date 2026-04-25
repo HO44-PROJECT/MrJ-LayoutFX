@@ -17,6 +17,9 @@
 
 #pragma once
 
+// ── Firmware version ──────────────────────────────────────────────────────────
+#define MRJFX_FIRMWARE_VERSION "v1.0"
+
 // Effects parameters
 
 // JMRI constants for DB signals

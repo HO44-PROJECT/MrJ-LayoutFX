@@ -87,15 +87,15 @@ static HardwareSerial *serialFromBusKey(const char *key) {
 bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   // Pre-index pin counts from board_types.json (count pins with a wiring field).
   // Stored in parallel arrays to avoid dynamic allocation on embedded targets.
-  char _btTypeNames[FACTORY_MAX_BOARD_TYPES][FACTORY_ID_LEN] = {};
-  uint8_t _btPinCounts[FACTORY_MAX_BOARD_TYPES] = {};
+  char _btTypeNames[MRJFX_FACTORY_MAX_BOARD_TYPES][FACTORY_ID_LEN] = {};
+  uint8_t _btPinCounts[MRJFX_FACTORY_MAX_BOARD_TYPES] = {};
   uint8_t _btCount = 0;
 
   if (boardTypesJson) {
     JsonDocument btDoc;
     if (deserializeJson(btDoc, boardTypesJson) == DeserializationError::Ok) {
       for (JsonPair kv : btDoc.as<JsonObject>()) {
-        if (_btCount >= FACTORY_MAX_BOARD_TYPES)
+        if (_btCount >= MRJFX_FACTORY_MAX_BOARD_TYPES)
           break;
         strncpy(_btTypeNames[_btCount], kv.key().c_str(), FACTORY_ID_LEN - 1);
         uint8_t cnt = 0;
@@ -124,8 +124,8 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   // Pass 2 — boards.
   if (doc[kSecBoards].is<JsonArray>()) {
     for (JsonObject bd : doc[kSecBoards].as<JsonArray>()) {
-      if (_boardCount >= FACTORY_MAX_BOARDS) {
-        LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_BOARDS reached"));
+      if (_boardCount >= MRJFX_FACTORY_MAX_BOARDS) {
+        LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_BOARDS reached"));
         break;
       }
 
@@ -139,8 +139,8 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       bcfg.spiRank = 0;
 
       if (bcfg.busType == BUS_SPI_MASTER) {
-        if (_spiCardCount >= FACTORY_MAX_SPI_CARDS) {
-          LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_SPI_CARDS reached"));
+        if (_spiCardCount >= MRJFX_FACTORY_MAX_SPI_CARDS) {
+          LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_SPI_CARDS reached"));
           _boardCount++;
           continue;
         }
@@ -238,12 +238,12 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
 
     // Register key in the catalog before branching so it is reachable by
     // _resolveBusType() regardless of which branch runs below.
-    if (_busCount < FACTORY_MAX_BUSES)
+    if (_busCount < MRJFX_FACTORY_MAX_BUSES)
       strncpy(_busEntries[_busCount].key, busKey, sizeof(_busEntries[0].key) - 1);
 
     if (strcmp(type, kBusDcc) == 0) {
       _dccPin = bus[kFPin] | -1;
-      if (_busCount < FACTORY_MAX_BUSES)
+      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_DCC;
       BusRegistry::regDcc(_dccPin);
       LOG_PRINT(F("DeviceFactory: bus dcc pin="));
@@ -253,7 +253,7 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       _spiBus.mosi = bus[kFMosi] | -1;
       _spiBus.sclk = bus[kFSclk] | -1;
       _spiBus.latch = bus[kFLatch] | -1;
-      if (_busCount < FACTORY_MAX_BUSES)
+      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_MASTER;
       if (_spiBus.configured()) {
         BusRegistry::regSpi(_spiBus.mosi, _spiBus.sclk, _spiBus.latch);
@@ -268,7 +268,7 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       }
 
     } else if (strcmp(type, kBusSpiDuplex) == 0) {
-      if (_busCount < FACTORY_MAX_BUSES)
+      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_FULL;
       // Full-duplex SPI reserved — no devices use it yet.
       LOG_PRINT(F("DeviceFactory: bus spi_full_duplex "));
@@ -276,9 +276,9 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       LOG_PRINTLN(F(" — not yet handled"));
 
     } else if (strcmp(type, kBusUart) == 0) {
-      if (_busCount < FACTORY_MAX_BUSES)
+      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_UART;
-      if (_portCount < FACTORY_MAX_PORTS) {
+      if (_portCount < MRJFX_FACTORY_MAX_PORTS) {
         PortCfg &cfg = _ports[_portCount];
         strncpy(cfg.name, busKey, sizeof(cfg.name) - 1);
         cfg.name[sizeof(cfg.name) - 1] = '\0';
@@ -298,11 +298,11 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
         LOG_PRINTLN(cfg.baud);
         _portCount++;
       } else {
-        LOG_PRINTLN(F("DeviceFactory: FACTORY_MAX_PORTS reached"));
+        LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_PORTS reached"));
       }
 
     } else if (strcmp(type, kBusI2c) == 0) {
-      if (_busCount < FACTORY_MAX_BUSES)
+      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_I2C;
       int sda = bus[kFSda] | -1;
       int scl = bus[kFScl] | -1;
@@ -319,7 +319,7 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       LOG_PRINTLN(type);
     }
 
-    if (_busCount < FACTORY_MAX_BUSES)
+    if (_busCount < MRJFX_FACTORY_MAX_BUSES)
       _busCount++;
   }
   return true;
