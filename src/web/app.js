@@ -1676,7 +1676,11 @@
           var bt2 = _boardTypes[board2.type];
           // Collect used pins from config (source of truth) and sys_pins
           var usedPins = {};
-          Object.keys(_dbgSysPins || {}).forEach(function(g) { usedPins[parseInt(g)] = true; });
+          // _dbgSysPins are MCU GPIO numbers — skip for SPI/bus expansion cards
+          // whose logical pin numbers (1-16) would collide with MCU GPIO numbers
+          if (!(bt2 && bt2.busType)) {
+            Object.keys(_dbgSysPins || {}).forEach(function(g) { usedPins[parseInt(g)] = true; });
+          }
           var cfgBoard2Id = _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardIdx2]
             ? _dbgCfg.boards[boardIdx2].id : (board2.id || '');
           ((_dbgCfg && _dbgCfg.devices) || []).forEach(function(d) {
