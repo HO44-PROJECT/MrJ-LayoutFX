@@ -20,8 +20,6 @@
 
 #include <MrJRailwayFX_define.h>
 
-// #ifdef MRJFX_DCC_ENABLED
-
 #include "utils/ArduinoBoard.h"
 #include <assert.h>
 #ifdef MRJFX_DCC_ENABLED

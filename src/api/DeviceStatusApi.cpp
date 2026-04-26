@@ -105,19 +105,21 @@ void DeviceApi::_onGetStatus() {
 
   #define _MRJFX_STR_(x) #x
   #define _MRJFX_STR(x) _MRJFX_STR_(x)
-  static const struct { const char *name; const char *runtime; } kRuntimeVers[] = {
-    #ifdef ACE_ROUTINE_VERSION_STR
-    { "AceRoutine",   ACE_ROUTINE_VERSION_STR },
-    #endif
-    { "ArduinoJson",  ARDUINOJSON_VERSION },
-    #ifdef NMRADCC_VERSION
-    { "NmraDcc",      _MRJFX_STR(NMRADCC_VERSION) },
-    #endif
-    #ifdef U8G2_VERSION
-    { "U8g2",         U8G2_VERSION },
-    #endif
-    { nullptr, nullptr }
-  };
+  static const struct {
+    const char *name;
+    const char *runtime;
+  } kRuntimeVers[] = {
+  #ifdef ACE_ROUTINE_VERSION_STR
+      {"AceRoutine", ACE_ROUTINE_VERSION_STR},
+  #endif
+      {"ArduinoJson", ARDUINOJSON_VERSION},
+  #ifdef NMRADCC_VERSION
+      {"NmraDcc", _MRJFX_STR(NMRADCC_VERSION)},
+  #endif
+  #ifdef U8G2_VERSION
+      {"U8g2", U8G2_VERSION},
+  #endif
+      {nullptr, nullptr}};
   #undef _MRJFX_STR_
   #undef _MRJFX_STR
 
@@ -172,16 +174,35 @@ void DeviceApi::_onGetBoards() {
   ApiServer::sendJson(kOk, json);
 }
 
-/** @brief Stream /board_types.json from LittleFS as application/json. Returns 404 if absent. */
-void DeviceApi::_onGetBoardTypes() {
-  LOG_PRINTLN(F("API: GET /api/board-types"));
-  if (!LittleFS.exists(kPathBoardTypes)) {
-    ApiServer::sendJson(kNotFound, F("{\"error\":\"board_types.json not found\"}"));
+/** @brief Stream a JSON file from LittleFS. Sends 404 if the file is absent. */
+static void _streamJsonFile(const char *path, const char *filename) {
+  if (!LittleFS.exists(path)) {
+    String err = F("{\"error\":\"");
+    err += filename;
+    err += F(" not found\"}");
+    ApiServer::sendJson(kNotFound, err);
     return;
   }
-  File f = LittleFS.open(kPathBoardTypes, "r");
+  File f = LittleFS.open(path, "r");
   ApiServer::server().streamFile(f, "application/json");
   f.close();
+}
+
+void DeviceApi::_onGetBoardTypes() {
+  LOG_PRINTLN(F("API: GET /api/board-types"));
+  _streamJsonFile(kPathBoardTypes, kFileBoardTypes);
+}
+void DeviceApi::_onGetDeviceTypes() {
+  LOG_PRINTLN(F("API: GET /api/device-types"));
+  _streamJsonFile(kPathDeviceTypes, kFileDeviceTypes);
+}
+void DeviceApi::_onGetBusTypes() {
+  LOG_PRINTLN(F("API: GET /api/bus-types"));
+  _streamJsonFile(kPathBusTypes, kFileBusTypes);
+}
+void DeviceApi::_onGetI2cKnown() {
+  LOG_PRINTLN(F("API: GET /api/i2c-known"));
+  _streamJsonFile(kPathI2cKnown, kFileI2cKnown);
 }
 
 // ---------------------------------------------------------------------------

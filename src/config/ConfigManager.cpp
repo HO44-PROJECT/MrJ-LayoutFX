@@ -117,7 +117,7 @@ bool ConfigManager::configExists() {
 
 /**
  * @brief Build a JSON array string of all *.json files in LittleFS root,
- *        excluding board_types.json.
+ *        excluding system definition files (board_types, device_types, bus_types, i2c_known).
  * @return JSON array string, e.g. ["config.json","backup.json"].
  */
 String ConfigManager::listConfigs() {
@@ -129,7 +129,7 @@ String ConfigManager::listConfigs() {
     String name = f.name();
     if (name.startsWith("/"))
       name = name.substring(1); // strip leading slash (ESP32 LittleFS quirk)
-    if (name.endsWith(".json") && name != "board_types.json") {
+    if (name.endsWith(".json") && name != "board_types.json" && name != "device_types.json" && name != "bus_types.json" && name != "i2c_known.json") {
       if (!first)
         out += ",";
       out += "\"";

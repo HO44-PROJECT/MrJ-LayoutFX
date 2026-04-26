@@ -74,8 +74,14 @@ constexpr char kLibNmraDcc[] = "NmraDcc";
 constexpr char kLibU8g2[] = "U8g2";
 
 // ── LittleFS paths (shared across DeviceConfigApi and DeviceStatusApi) ─────
-constexpr char kPathBoardTypes[] = "/board_types.json";
-constexpr char kFileBoardTypes[] = "board_types.json"; ///< Filename only (no leading slash).
+constexpr char kPathBoardTypes[]   = "/board_types.json";
+constexpr char kFileBoardTypes[]   = "board_types.json";   ///< Filename only (no leading slash).
+constexpr char kPathDeviceTypes[]  = "/device_types.json";
+constexpr char kFileDeviceTypes[]  = "device_types.json";
+constexpr char kPathBusTypes[]     = "/bus_types.json";
+constexpr char kFileBusTypes[]     = "bus_types.json";
+constexpr char kPathI2cKnown[]     = "/i2c_known.json";
+constexpr char kFileI2cKnown[]     = "i2c_known.json";
 constexpr char kPathConfigSource[] = "/config_source.txt";
 
 // ── Device control — POST body fields ─────────────────────────────────────

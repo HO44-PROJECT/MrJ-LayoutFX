@@ -135,8 +135,14 @@ private:
   static void _onGetStatus();
   /** @brief GET /api/boards      — Configured boards with id, type, bus, pinCount, spiRank. */
   static void _onGetBoards();
-  /** @brief GET /api/board-types — Stream board_types.json from LittleFS. */
+  /** @brief GET /api/board-types   — Stream board_types.json from LittleFS. */
   static void _onGetBoardTypes();
+  /** @brief GET /api/device-types  — Stream device_types.json from LittleFS. */
+  static void _onGetDeviceTypes();
+  /** @brief GET /api/bus-types     — Stream bus_types.json from LittleFS. */
+  static void _onGetBusTypes();
+  /** @brief GET /api/i2c-known     — Stream i2c_known.json from LittleFS. */
+  static void _onGetI2cKnown();
   /** @brief GET /api/health      — Per-device hardware health check results. */
   static void _onGetHealth();
   /** @brief POST /api/restart    — Immediate ESP32 restart. */
