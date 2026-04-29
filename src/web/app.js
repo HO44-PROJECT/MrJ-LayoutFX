@@ -549,17 +549,23 @@ function loadConfigs() {
           btns += '<span class="cfg-filebadge">' + t('cfg.badge.active') + '</span>';
           btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'config.json\')">' + t('cfg.snapshot.btn') + '</button>';
           btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'config.json\',_cfgActive)">⬇ ' + t('cfg.dl.btn') + '</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadCpp(\'config.json\')">⬇ main.cpp</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadPio(\'config.json\')">⬇ platformio.ini</button>';
           btns += ghostRename + ghostDelete;
         } else if (isPending) {
           btns += '<span class="cfg-filebadge pending">' + t('cfg.badge.pending') + '</span>';
           btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'' + sf + '\')">' + t('cfg.snapshot.btn') + '</button>';
           btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'' + sf + '\')">⬇ ' + t('cfg.dl.btn') + '</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadCpp(\'' + sf + '\')">⬇ main.cpp</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadPio(\'' + sf + '\')">⬇ platformio.ini</button>';
           btns += '<button class="cfg-row-btn" onclick="cfgRename(\'' + sf + '\')">' + t('cfg.rename.btn') + '</button>';
           btns += '<button class="cfg-row-btn danger" onclick="cfgDelete(\'' + sf + '\')">✕ ' + t('cfg.destroy.btn') + '</button>';
         } else {
           btns += '<button class="cfg-row-btn primary" onclick="cfgChoose(\'' + sf + '\')">' + t('cfg.choose_btn') + '</button>';
           btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'' + sf + '\')">' + t('cfg.snapshot.btn') + '</button>';
           btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'' + sf + '\')">⬇ ' + t('cfg.dl.btn') + '</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadCpp(\'' + sf + '\')">⬇ main.cpp</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadPio(\'' + sf + '\')">⬇ platformio.ini</button>';
           btns += '<button class="cfg-row-btn" onclick="cfgRename(\'' + sf + '\')">' + t('cfg.rename.btn') + '</button>';
           btns += '<button class="cfg-row-btn danger" onclick="cfgDelete(\'' + sf + '\')">✕ ' + t('cfg.destroy.btn') + '</button>';
         }
@@ -664,6 +670,32 @@ function cfgDownload(name, suggestedName) {
 
 // Download the currently active config file under its real layout filename.
 function downloadConfig() { cfgDownload('config.json', _cfgActive); }
+
+// Trigger a browser download of a text blob.
+function _downloadText(content, filename) {
+  var blob = new Blob([content], { type: 'text/plain' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// Download main.cpp generated from a config file (local server only).
+function cfgDownloadCpp(name) {
+  fetch('/api/export/code?name=' + encodeURIComponent(name))
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (code) { _downloadText(code, 'main.cpp'); })
+    .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
+}
+
+// Download platformio.ini generated from a config file (local server only).
+function cfgDownloadPio(name) {
+  fetch('/api/export/platformio-ini?name=' + encodeURIComponent(name))
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (ini) { _downloadText(ini, 'platformio.ini'); })
+    .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
+}
 
 // Sanitize a filename to match LittleFS/server rules: alphanum + _ - . only, max 32 chars.
 function _sanitizeCfgName(name) {
@@ -806,12 +838,19 @@ function clearDirty() {
 }
 
 // Show or hide the "restart required" dirty banner based on localStorage state.
+// Always hidden in local-server mode (no real device to restart).
 function renderDirtyBanner() {
+  if (_dbgStatus && _dbgStatus.local) return;
   var dirty = !!localStorage.getItem(CFG_DIRTY_KEY);
   document.getElementById('dirty-banner').style.display = dirty ? '' : 'none';
 }
 
 /* ── Debug (mise au point) ──────────────────────────────────────────── */
+
+// Strip JSON-schema meta-keys (starting with '$') from a catalogue object before storing.
+function _stripMeta(obj) {
+  return Object.fromEntries(Object.entries(obj).filter(function (e) { return !e[0].startsWith('$'); }));
+}
 
 var _boardTypes = {};  // from /api/board-types  (board_types.json)
 var _deviceTypes = {};  // from /api/device-types (device_types.json)
@@ -831,7 +870,7 @@ var _dbgFirmwarePins = {}; // GPIO → label from compile-time features (/api/st
 // SERVO_STATES uses SerialServo as the reference because all servo types share the same
 // speed presets and REV action.
 function _applyDeviceTypes(dt) {
-  _deviceTypes = dt;
+  _deviceTypes = _stripMeta(dt);
   SERVO_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'servo'; });
   STATIC_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'static'; });
   TRAFFIC_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'traffic'; });
@@ -881,7 +920,7 @@ function loadDebug() {
     .catch(function () { });
   var pTypes = fetch('/api/board-types')
     .then(function (r) { if (!r.ok) throw r; return r.json(); })
-    .then(function (bt) { _boardTypes = bt; })
+    .then(function (bt) { _boardTypes = _stripMeta(bt); })
     .catch(function () { });
   var pBoards = fetch('/api/boards')
     .then(function (r) { if (!r.ok) throw r; return r.json(); })
@@ -913,12 +952,12 @@ function loadDebug() {
   var pBusTypes = Object.keys(_busTypes).length > 0 ? Promise.resolve()
     : fetch('/api/bus-types')
       .then(function (r) { if (!r.ok) throw r; return r.json(); })
-      .then(function (bt) { _busTypes = bt; })
+      .then(function (bt) { _busTypes = _stripMeta(bt); })
       .catch(function () { });
   var pI2cKnown = Object.keys(_i2cKnown).length > 0 ? Promise.resolve()
     : fetch('/api/i2c-known')
       .then(function (r) { if (!r.ok) throw r; return r.json(); })
-      .then(function (ik) { _i2cKnown = ik; })
+      .then(function (ik) { _i2cKnown = _stripMeta(ik); })
       .catch(function () { });
   Promise.all([pDevs, pTypes, pBoards, pCfg, pStatus, pDevTypes, pBusTypes, pI2cKnown]).then(function () {
     // Merge firmware-reserved pins — config-declared buses take precedence.
@@ -928,6 +967,7 @@ function loadDebug() {
     applyLayoutName((_dbgCfg && _dbgCfg.name) || '');
     renderDebugBoards();
     if (_currentCfgTab === 'buses') renderBusesTab();
+    if (_currentCfgTab === 'files') loadConfigs();
     var exportBtn = document.getElementById('cfg-export-btn');
     if (exportBtn) exportBtn.style.display = (_dbgStatus && _dbgStatus.ip === 'localhost') ? '' : 'none';
   });
@@ -2391,8 +2431,7 @@ function openBusEditor(key) {
   var feat = (_dbgStatus && _dbgStatus.features) || {};
 
   // Available bus types filtered by compiled-in firmware features.
-  // DCC is always structural (hardcoded #define DCC_PIN) — not user-configurable here.
-  var availTypes = ['i2c', 'uart'];
+  var availTypes = ['i2c', 'uart', 'dcc'];
   if (feat.spi) availTypes.push('spi_master_only');
 
   var typeEl = document.getElementById('bue-type');
@@ -2408,11 +2447,17 @@ function openBusEditor(key) {
     document.getElementById('bue-del-btn').style.display = '';
   } else {
     document.getElementById('bue-title').textContent = t('bue.new');
-    document.getElementById('bue-key').value = '';
     document.getElementById('bue-key').disabled = false;
     typeEl.value = availTypes[0];
     busData = null;
     document.getElementById('bue-del-btn').style.display = 'none';
+    // Suggest a unique key derived from the selected type.
+    var existingBuses = (_dbgCfg && _dbgCfg.buses) || {};
+    var base = availTypes[0].replace('_master_only', '').replace(/_.*/, '');
+    var suggested = base;
+    var n = 2;
+    while (existingBuses[suggested]) { suggested = base + n++; }
+    document.getElementById('bue-key').value = suggested;
   }
 
   bueUpdateFields(busData);
@@ -2430,6 +2475,20 @@ function openBusEditor(key) {
 function bueUpdateFields(busData) {
   var type = document.getElementById('bue-type').value;
   var fields = (_busTypes[type] || {}).fields || [];
+
+  // In add mode, refresh the key suggestion when the type changes,
+  // but only if the key still looks auto-generated (matches a known type base).
+  if (!_bueEditKey) {
+    var keyEl = document.getElementById('bue-key');
+    var existingBuses = (_dbgCfg && _dbgCfg.buses) || {};
+    var base = type.replace('_master_only', '').replace(/_.*/, '');
+    var suggested = base;
+    var n = 2;
+    while (existingBuses[suggested]) { suggested = base + n++; }
+    var cur = keyEl.value;
+    var looksAuto = !cur || /^[a-z]+\d*$/.test(cur);
+    if (looksAuto) keyEl.value = suggested;
+  }
 
   // Build set of GPIO pins already in use (sys_pins + existing buses, excluding the one being edited)
   var usedGpios = {};
@@ -2581,6 +2640,14 @@ window.addEventListener('hashchange', function () {
   var h = location.hash.slice(1);
   if (h && h !== _currentView && document.getElementById('view-' + h)) switchView(h);
 });
+// Fetch status early so _dbgStatus is available for view-specific rendering (e.g. files tab buttons).
+fetch('/api/status')
+  .then(function (r) { return r.json(); })
+  .then(function (st) {
+    if (st && st.env) _dbgStatus = st;
+    if (_currentCfgTab === 'files' && _currentView === 'config') loadConfigs();
+  })
+  .catch(function () {});
 poll();
 _pollTimer = setInterval(poll, POLL);
 

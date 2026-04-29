@@ -29,6 +29,7 @@
 
   #include "utils/utils.h"
   #include <Arduino.h>
+  #include <DNSServer.h>
   #include <WebServer.h>
   #include <WiFi.h>
 
@@ -53,18 +54,25 @@ public:
   static void sendJson(int code, const __FlashStringHelper *body);
 
   /**
-   * @brief Connect WiFi, start HTTP server, launch Core-0 system task,
-   *        then call CoroutineScheduler::setup().
+   * @brief Connect WiFi in STA mode; fall back to AP mode if STA fails.
+   *        Starts the HTTP server and launches the Core-0 system task.
    *
-   * @param ssid      WiFi SSID.
-   * @param password  WiFi password.
-   * @param port      HTTP port (default 80).
+   * @param ssid        STA WiFi SSID.
+   * @param password    STA WiFi password.
+   * @param apSsid      AP fallback SSID (default: WIFI_AP_SSID).
+   * @param apPassword  AP fallback password (default: WIFI_AP_PASSWORD, min 8 chars or "").
+   * @param port        HTTP port (default: MRJFX_API_HTTP_PORT).
    */
-  static void init(const char *ssid, const char *password, uint16_t port = MRJFX_API_HTTP_PORT);
+  static void init(const char *ssid, const char *password,
+                   const char *apSsid, const char *apPassword,
+                   uint16_t port = MRJFX_API_HTTP_PORT);
+
+  /** @brief Return true if the server is running in AP (access-point) mode. */
+  static bool isAP() { return _isAP; }
 
 private:
-  static constexpr uint8_t  kWifiRetries      = 40;   ///< Max connection attempts before giving up.
-  static constexpr uint16_t kWifiRetryMs      = 500;  ///< Delay between each attempt (ms). Total = retries × delay.
+  static constexpr uint8_t  kWifiRetries      = 20;   ///< Max STA connection attempts before AP fallback.
+  static constexpr uint16_t kWifiRetryMs      = 500;  ///< Delay between each attempt (ms).
 
   static constexpr uint32_t kTaskStackBytes   = 4096; ///< Stack size for the Core-0 system task.
   static constexpr uint8_t  kTaskPriority     = 1;    ///< FreeRTOS priority of the system task.
@@ -72,6 +80,8 @@ private:
   static constexpr uint8_t  kTaskYieldTicks   = 1;    ///< vTaskDelay ticks between handleClient() calls.
 
   static WebServer *_server;
+  static bool       _isAP;
+  static DNSServer *_dns;
 
   /**
    * @brief Lazily create the WebServer with the given port (no-op if already created).

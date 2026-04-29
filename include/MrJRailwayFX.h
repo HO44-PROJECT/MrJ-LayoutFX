@@ -183,7 +183,7 @@ public:
 
     // 5. Connect WiFi and start HTTP server on Core 0.
 #ifdef MRJFX_API_SERVER_ENABLED
-    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, MRJFX_API_HTTP_PORT);
+    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, WIFI_AP_SSID, WIFI_AP_PASSWORD, MRJFX_API_HTTP_PORT);
 #endif
   }
 

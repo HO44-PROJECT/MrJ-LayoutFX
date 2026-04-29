@@ -58,7 +58,18 @@
   #else
     #undef MRJFX_WIFI_ENABLED // WiFi is disabled if either WIFI_SSID or WIFI_PASSWORD is missing.
   #endif                      // End WIFI check
-#endif                        // ESP32
+  // AP fallback credentials — user may override in wifi.h / config.h.
+  #ifndef WIFI_AP_SSID
+    #define WIFI_AP_SSID "MrJ-RailwayFX"
+  #endif
+  #ifndef WIFI_AP_PASSWORD
+    #define WIFI_AP_PASSWORD "mrjfx1234"
+  #endif
+  // Define WIFI_FORCE_AP in config.h to skip STA entirely and start in AP mode.
+  #ifdef WIFI_FORCE_AP
+    #define MRJFX_WIFI_FORCE_AP 1
+  #endif
+#endif // ESP32
 
 // -- json config file on LittleFS (ESP32 only)
 // ─────────────────────────────────────────────

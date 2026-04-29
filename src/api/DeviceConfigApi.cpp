@@ -184,7 +184,9 @@ void DeviceApi::_onGetConfigs() {
     String fname = entry.name();
     if (fname.startsWith("/"))
       fname = fname.substring(1);
-    if (fname.endsWith(".json") && fname != kFileBoardTypes) {
+    if (fname.endsWith(".json")
+        && fname != kFileBoardTypes && fname != kFileDeviceTypes
+        && fname != kFileBusTypes   && fname != kFileI2cKnown) {
       String content = ConfigManager::readFile(("/" + fname).c_str());
       String cfgName = "";
       if (!content.isEmpty()) {

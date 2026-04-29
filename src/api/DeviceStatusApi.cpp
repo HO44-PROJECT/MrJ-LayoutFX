@@ -34,7 +34,9 @@ void DeviceApi::_onGetStatus() {
   doc[kEnv] = F(PIOENV_NAME);
   #endif
   doc[kUptimeS] = millis() / 1000UL;
-  doc[kIp] = WiFi.localIP().toString();
+  bool ap = ApiServer::isAP();
+  doc[kIp]       = ap ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
+  doc[F("wifiMode")] = ap ? F("ap") : F("sta");
   doc[kConfig] = ConfigManager::configExists();
   doc[kDevices] = (int)_factory->count();
   doc[kDevicesMax] = (int)MRJFX_FACTORY_MAX_DEVICES;
@@ -99,9 +101,9 @@ void DeviceApi::_onGetStatus() {
   }
   #endif
 
-  doc[kWifiSsid] = WiFi.SSID();
-  doc[kWifiRssi] = WiFi.RSSI();
-  doc[kWifiMac] = WiFi.macAddress();
+  doc[kWifiSsid] = ap ? WiFi.softAPSSID() : WiFi.SSID();
+  doc[kWifiRssi] = ap ? 0                 : WiFi.RSSI();
+  doc[kWifiMac]  = WiFi.macAddress();
 
   #define _MRJFX_STR_(x) #x
   #define _MRJFX_STR(x) _MRJFX_STR_(x)
