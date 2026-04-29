@@ -110,6 +110,12 @@
   #undef MRJFX_OLED_ENABLED
 #endif // End OLED check
 
+#if defined(MRJFX_OLED_ENABLED) && defined(OLED_SPLASH)
+  #define MRJFX_OLED_SPLASH_ENABLED 1
+#else
+  #undef MRJFX_OLED_SPLASH_ENABLED
+#endif
+
 // ── Boot-sensitive pin release (ESP32 only) ───────────────────────────────────
 // GPIO 5, 10, 12-15 are driven LOW at startup by default (strapping + JTAG pins).
 // Define USE_JTAG in config.h to skip this entirely (e.g. when using a JTAG probe).

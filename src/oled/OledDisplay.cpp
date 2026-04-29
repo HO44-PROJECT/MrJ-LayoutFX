@@ -103,10 +103,158 @@ void OledDisplay::notify(const char *type, const char *id, int state) {
 }
 
 // ---------------------------------------------------------------------------
+// Startup splash — steam train scrolling right→left  (#define OLED_SPLASH)
+// ---------------------------------------------------------------------------
+
+  #ifdef MRJFX_OLED_SPLASH_ENABLED
+
+void OledDisplay::_drawTrain(int tx, int frame) {
+  constexpr int W = 128;
+  constexpr int yb = 54; // ground / top-of-rail y
+
+  // Clipping helpers — U8g2 uses unsigned coords; negative x wraps incorrectly.
+  auto box = [&](int x, int y, int w, int h) {
+    if (x + w <= 0 || x >= W)
+      return;
+    if (x < 0) {
+      w += x;
+      x = 0;
+    }
+    _u8g2.drawBox(x, y, w, h);
+  };
+  auto hline = [&](int x, int y, int w) {
+    if (x + w <= 0 || x >= W)
+      return;
+    if (x < 0) {
+      w += x;
+      x = 0;
+    }
+    _u8g2.drawHLine(x, y, w);
+  };
+  auto vline = [&](int x, int y, int len) {
+    if (x < 0 || x >= W)
+      return;
+    _u8g2.drawVLine(x, y, len);
+  };
+  auto line = [&](int x0, int y0, int x1, int y1) {
+    if ((x0 < 0 && x1 < 0) || (x0 >= W && x1 >= W))
+      return;
+    x0 = x0 < 0 ? 0 : (x0 >= W ? W - 1 : x0);
+    x1 = x1 < 0 ? 0 : (x1 >= W ? W - 1 : x1);
+    _u8g2.drawLine(x0, y0, x1, y1);
+  };
+  auto circle = [&](int cx, int cy, int r) {
+    if (cx + r <= 0 || cx - r >= W)
+      return;
+    _u8g2.drawCircle(cx, cy, r);
+  };
+  auto disc = [&](int cx, int cy, int r) {
+    if (cx + r <= 0 || cx - r >= W)
+      return;
+    _u8g2.drawDisc(cx, cy, r);
+  };
+
+  // Rails
+  _u8g2.drawHLine(0, yb + 2, W);
+  _u8g2.drawHLine(0, yb + 4, W);
+
+  // Title
+  _u8g2.setFont(u8g2_font_6x10_tr);
+  _u8g2.setCursor(22, 11);
+  _u8g2.print(F("MrJ Railway FX"));
+
+  // Cowcatcher (only when tx-7 >= 0 to avoid negative drawLine coords)
+  if (tx >= 7 && tx < W) {
+    _u8g2.drawLine(tx - 7, yb, tx, yb - 8);
+    _u8g2.drawLine(tx - 4, yb, tx, yb - 5);
+    _u8g2.drawHLine(tx - 7, yb, 7);
+  }
+
+  // Smokestack
+  box(tx + 10, yb - 28, 5, 10);
+  box(tx + 8, yb - 31, 9, 3);
+
+  // Boiler
+  box(tx, yb - 20, 50, 14);
+
+  // Steam dome
+  disc(tx + 24, yb - 21, 5);
+
+  // Safety valve
+  box(tx + 34, yb - 22, 2, 3);
+
+  // Headlight
+  box(tx, yb - 16, 3, 6);
+
+  // Cab
+  box(tx + 50, yb - 24, 14, 18);
+  _u8g2.setDrawColor(0);
+  box(tx + 52, yb - 22, 9, 8); // window (hollow)
+  _u8g2.setDrawColor(1);
+
+  // Tender
+  box(tx + 67, yb - 18, 22, 12);
+  box(tx + 68, yb - 21, 20, 4);
+  hline(tx + 64, yb - 13, 3);
+
+  // Wheels — spokes alternate + and × every kSplashSpokeFrames frames
+  const bool cross = ((frame / kSplashSpokeFrames) % 2) == 1;
+
+  auto drawWheel = [&](int cx, int cy, int r) {
+    circle(cx, cy, r);
+    if (cx + r > 0 && cx - r < W) {
+      if (cross) {
+        int d = (r * 7) / 10;
+        line(cx - d, cy - d, cx + d, cy + d);
+        line(cx - d, cy + d, cx + d, cy - d);
+      } else {
+        vline(cx, cy - r + 1, 2 * r - 2);
+        hline(cx - r + 1, cy, 2 * r - 2);
+      }
+      disc(cx, cy, 2);
+    }
+  };
+
+  drawWheel(tx + 10, yb - 4, 5); // pony
+  drawWheel(tx + 24, yb - 3, 8); // drive 1
+  drawWheel(tx + 43, yb - 3, 8); // drive 2
+  drawWheel(tx + 71, yb - 4, 5); // tender 1
+  drawWheel(tx + 81, yb - 4, 5); // tender 2
+
+  // Connecting rod (2 px thick)
+  hline(tx + 24, yb - 9, 19);
+  hline(tx + 24, yb - 8, 19);
+
+  // Smoke puffs
+  const int sx = tx + 12;
+  const int sy = yb - 32;
+  const int pulse = (frame % 8 < 4) ? 0 : 1;
+  circle(sx, sy, 2 + pulse);
+  circle(sx + 5, sy - 5, 3);
+  circle(sx + 11, sy - 10, 3 + pulse);
+}
+
+void OledDisplay::_drawSplash() {
+  int frame = 0;
+  for (int tx = 128; tx > -kSplashWidthPx; tx -= kSplashStepPx) {
+    _u8g2.clearBuffer();
+    _drawTrain(tx, frame++);
+    _u8g2.sendBuffer();
+    vTaskDelay(pdMS_TO_TICKS(kSplashDelayMs));
+  }
+  vTaskDelay(pdMS_TO_TICKS(500));
+}
+
+  #endif // MRJFX_OLED_SPLASH_ENABLED
+
+// ---------------------------------------------------------------------------
 // Coroutine body
 // ---------------------------------------------------------------------------
 
 void OledDisplay::_task(void *) {
+  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  oledDisplay._drawSplash();
+  #endif
   for (;;) {
     if (_hasEvent) {
       oledDisplay._drawEvent();

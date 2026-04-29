@@ -97,6 +97,15 @@ private:
   void _drawIcon(const char *type, uint8_t ox, uint8_t oy);
   static const char *_stateName(const char *type, int state);
   static void _task(void *);
+  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  void _drawSplash();
+  void _drawTrain(int tx, int frame);
+
+  static constexpr int kSplashStepPx = 3;      ///< Pixels per frame.
+  static constexpr int kSplashDelayMs = 40;    ///< Ms per frame (~25 fps).
+  static constexpr int kSplashWidthPx = 96;    ///< Full train width (px).
+  static constexpr int kSplashSpokeFrames = 3; ///< Frames per spoke orientation.
+  #endif
 
   // Event state — shared through the single global instance via static storage.
   static char _evtType[24];
