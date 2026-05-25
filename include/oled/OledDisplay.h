@@ -52,7 +52,8 @@ public:
   OledDisplay();
 
   /**
-   * @brief Initialise Wire (I²C) and the U8g2 driver.
+   * @brief Initialise the U8g2 driver and start the OLED FreeRTOS task.
+   * Wire must already be initialised (Wire.begin called by MrJFX::init()).
    * Must be called once in MrJFX::init(), before CoroutineScheduler::setup().
    */
   static void init();
@@ -124,7 +125,8 @@ private:
   #else
   U8G2_SSD1306_128X64_NONAME_F_HW_I2C _u8g2;
   #endif
-  // Note: constructor is  OledDisplay() : _u8g2(U8G2_R0, U8X8_PIN_NONE, OLED_SCL, OLED_SDA) {}
+  // Note: constructor uses U8X8_PIN_NONE for clock+data — Wire is pre-initialized
+  //       by MrJFX::init(); passing pins would re-call Wire.begin() (breaking arduino-esp32 v3).
 };
 
 /** @brief Single global instance — auto-registered with AceRoutine. */

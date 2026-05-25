@@ -116,6 +116,15 @@
   #undef MRJFX_OLED_SPLASH_ENABLED
 #endif
 
+// ── I²C bus (ESP32 only) ──────────────────────────────────────────────────────
+// Activated by any of: #define I2C_CARDS, #define I2C_SCAN, #define OLED.
+// Drives Wire.begin() in MrJFX::init() via MRJFX_I2C_CARDS_ENABLED.
+#if defined(ESP32) && (defined(I2C_CARDS) || defined(I2C_SCAN) || defined(OLED))
+  #define MRJFX_I2C_CARDS_ENABLED 1
+#else
+  #undef MRJFX_I2C_CARDS_ENABLED
+#endif
+
 // ── Boot-sensitive pin release (ESP32 only) ───────────────────────────────────
 // GPIO 5, 10, 12-15 are driven LOW at startup by default (strapping + JTAG pins).
 // Define USE_JTAG in config.h to skip this entirely (e.g. when using a JTAG probe).
@@ -143,6 +152,14 @@
   #define MRJFX_I2C_SCAN_ENABLED 1
 #else
   #undef MRJFX_I2C_SCAN_ENABLED
+#endif
+
+// ── I2C device drivers (ESP32 only) ──────────────────────────────────────────
+// Define I2C_CARDS in config.h to enable I2C-based board device drivers (PCA9685 servo, etc.)
+#if defined(ESP32) && defined(I2C_CARDS)
+  #define MRJFX_I2C_DEVICES_ENABLED 1
+#else
+  #undef MRJFX_I2C_DEVICES_ENABLED
 #endif
 
 // ── Serial servo support (conditionally compiled) ─────────────────────────────

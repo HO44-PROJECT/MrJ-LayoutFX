@@ -12,23 +12,34 @@
  *   DeviceTestApi.cpp   — GPIO / SPI / I2C diagnostic endpoints
  *
  * Routes:
- *   GET  /api/devices        — JSON array of all devices with current state
- *   POST /api/device         — body {"id":"<id>","state":<n>} — set device state
- *   POST /api/switch         — body {"id":"<id>","on":<bool>} — switchOn / switchOff
- *   POST /api/all            — body {"state":<n>[,"board":<n>]} — all non-static devices
- *   POST /api/group          — body {"type":"<name>","state":<n>} — all of one type
- *   GET  /api/config         — download /config.json from LittleFS
- *   POST /api/config         — body <raw JSON> — overwrite /config.json (no reboot)
- *   DELETE /api/config       — delete /config.json then reboot
- *   POST /api/restart        — body {} — immediate ESP32 restart
- *   POST /api/servo          — body {"id":"<id>","speed":<-1000..1000>} — set motor speed
- *   GET  /api/status         — firmware version, IP, heap, LittleFS metrics
- *   GET  /api/boards         — configured boards (id, type, bus, pinCount, spiRank)
- *   GET  /api/board-types    — stream /board_types.json from LittleFS
- *   GET  /api/health         — hardware health check for each device (servo ACK, etc.)
- *   POST /api/test/gpio      — body {"pin":<n>,"state":<0|1>} — raw GPIO toggle
- *   POST /api/test/spi       — body {"card":<n>,"channel":<n>,"state":<0|1>} — raw SPI
- *   GET  /api/scan/i2c       — scan I2C bus, return found addresses (requires I2C_SCAN)
+ *   GET    /api/devices          — JSON array of all devices with current state
+ *   POST   /api/device           — body {"id":"<id>","state":<n>} — set device state
+ *   POST   /api/switch           — body {"id":"<id>","on":<bool>} — switchOn / switchOff
+ *   POST   /api/all              — body {"state":<n>[,"board":<n>]} — all non-static devices
+ *   POST   /api/group            — body {"type":"<name>","state":<n>} — all of one type
+ *   POST   /api/servo            — body {"id":"<id>","speed":<n>|"action":"reverse"}
+ *   GET    /api/config           — download the active config file from LittleFS
+ *   GET    /api/config/file      — download a named config file. Query: ?name=<file>
+ *   POST   /api/config           — body <raw JSON> — overwrite active config (no reboot)
+ *   DELETE /api/config           — delete active config then restart
+ *   POST   /api/config/copy      — body {"from":"<f>","to":"<t>"} — copy config file
+ *   POST   /api/config/rename    — body {"from":"<f>","to":"<t>"} — rename config file
+ *   POST   /api/config/activate  — body {"file":"<name>"} — set active config
+ *   GET    /api/configs          — list all .json config files with active flag
+ *   POST   /api/configs          — upload named config. Header: X-Config-Name
+ *   DELETE /api/configs          — body {"file":"<name>"} — delete named config
+ *   GET    /api/status           — firmware version, IP, heap, LittleFS metrics
+ *   GET    /api/boards           — configured boards (id, type, bus, pinCount, spiRank)
+ *   GET    /api/board-types      — stream board_types.json from LittleFS
+ *   GET    /api/device-types     — stream device_types.json from LittleFS
+ *   GET    /api/bus-types        — stream bus_types.json from LittleFS
+ *   GET    /api/i2c-known        — stream i2c_known.json from LittleFS
+ *   GET    /api/health           — hardware health check for each device (servo ACK, etc.)
+ *   POST   /api/restart          — immediate ESP32 restart
+ *   POST   /api/reload           — re-parse config.json without rebooting (wizard only)
+ *   POST   /api/test/gpio        — body {"pin":<n>,"state":<0|1>} — raw GPIO toggle
+ *   POST   /api/test/spi         — body {"card":<n>,"channel":<n>,"state":<0|1>} — raw SPI
+ *   GET    /api/scan/i2c         — scan I2C bus, return found addresses (requires I2C_SCAN)
  *
  * Must be called after ConfigManager::init() and before ApiServer::init().
  *
@@ -63,6 +74,9 @@
   #ifdef MRJFX_SERIAL_SERVO_ENABLED
     #include "servo/SerialServoMotorMode.h"
   #endif
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+    #include "servo/I2cPwmServoDevice.h"
+  #endif
   #ifdef MRJFX_I2C_SCAN_ENABLED
     #include <Wire.h>
   #endif
@@ -93,10 +107,10 @@ private:
   /** @brief POST /api/servo   — Set motor speed or reverse. Body: {"id":"<id>","speed":<n>|"action":"reverse"}. */
   static void _onServo();
 
-  static constexpr size_t  kFsNameMax   = 32; ///< Max config filename length incl. NUL (LittleFS constraint).
-  static constexpr uint8_t kGpioPinMax  = 39; ///< Highest valid GPIO pin number on ESP32.
-  static constexpr uint8_t kUart0TxPin  = 1;  ///< UART0 TX — reserved, must not be toggled by test endpoints.
-  static constexpr uint8_t kUart0RxPin  = 3;  ///< UART0 RX — reserved, must not be toggled by test endpoints.
+  static constexpr size_t kFsNameMax = 32;   ///< Max config filename length incl. NUL (LittleFS constraint).
+  static constexpr uint8_t kGpioPinMax = 39; ///< Highest valid GPIO pin number on ESP32.
+  static constexpr uint8_t kUart0TxPin = 1;  ///< UART0 TX — reserved, must not be toggled by test endpoints.
+  static constexpr uint8_t kUart0RxPin = 3;  ///< UART0 RX — reserved, must not be toggled by test endpoints.
 
   // ── Config file helpers ───────────────────────────────────────────────────
   /** @brief Validate and normalise a config filename in-place (append .json, reject unsafe chars). */
@@ -147,6 +161,8 @@ private:
   static void _onGetHealth();
   /** @brief POST /api/restart    — Immediate ESP32 restart. */
   static void _onRestart();
+  /** @brief POST /api/reload    — Re-parse config.json without rebooting. Returns 409 if devices are already loaded. */
+  static void _onReload();
 
   // ── Hardware diagnostics ──────────────────────────────────────────────────
   /** @brief POST /api/test/gpio  — Raw GPIO write. Body: {"pin":<n>,"state":<0|1>}. */

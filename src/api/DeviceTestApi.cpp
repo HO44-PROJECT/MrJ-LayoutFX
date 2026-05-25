@@ -93,17 +93,13 @@ void DeviceApi::_onTestSpi() {
   #ifdef MRJFX_I2C_SCAN_ENABLED
 /**
  * @brief Scan all 7-bit I2C addresses and return those that ACK.
- *        Uses OLED_SDA/OLED_SCL if OLED is enabled, otherwise GPIO 21/22.
+ *        Uses I2C_SDA/I2C_SCL (set in config.h or defaulted in MrJRailwayFX_default.h).
+ *        Bus is already initialised by MrJFX::init() via MRJFX_I2C_CARDS_ENABLED.
  *        Response: {"sda":<n>,"scl":<n>,"count":<n>,"found":[addr,…]}.
  */
 void DeviceApi::_onScanI2c() {
   LOG_PRINTLN(F("API: GET /api/scan/i2c"));
-    #ifdef MRJFX_OLED_ENABLED
-  const int sda = OLED_SDA, scl = OLED_SCL;
-    #else
-  const int sda = 21, scl = 22;
-    #endif
-  Wire.begin(sda, scl);
+  const int sda = I2C_SDA, scl = I2C_SCL;
 
   JsonDocument doc;
   doc[kSda] = sda;
@@ -115,6 +111,20 @@ void DeviceApi::_onScanI2c() {
       found.add(addr);
   }
   doc[kCount] = found.size();
+
+  if (found.size() > 0 && LittleFS.exists(kPathI2cKnown)) {
+    File f = LittleFS.open(kPathI2cKnown, "r");
+    JsonDocument known;
+    if (!deserializeJson(known, f)) {
+      JsonObject names = doc[F("names")].to<JsonObject>();
+      for (JsonVariantConst v : found) {
+        String key = String(v.as<int>());
+        JsonVariantConst n = known[key];
+        if (!n.isNull()) names[key] = n;
+      }
+    }
+    f.close();
+  }
 
   String json;
   serializeJson(doc, json);

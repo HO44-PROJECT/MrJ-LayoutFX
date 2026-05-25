@@ -198,16 +198,21 @@ void BusRegistry::flush() {
   #endif
 }
 
-/** @brief Clear all internal state to initial values. No hardware interaction. Intended for tests. */
+/**
+ * @brief Clear all registration state so load() can re-register buses and devices.
+ *        Does NOT reset _i2cReady / _spiReady — the physical bus hardware (Wire,
+ *        SPI) is already running and must not be re-initialised on hot-reload.
+ *        Re-calling Wire.begin() on ESP32 can corrupt the I2C peripheral.
+ */
 void BusRegistry::reset() {
   _uartCount = 0;
   _spiMosi = -1;
   _spiSclk = -1;
   _spiLatch = -1;
   _spiCardCount = 0;
-  _spiReady = false;
+  // _spiReady intentionally preserved — SPI hardware stays configured.
   _i2cCount = 0;
-  _i2cReady = false;
+  // _i2cReady intentionally preserved — Wire must not be re-initialised.
   _dccPin = -1;
   for (uint8_t i = 0; i < MRJFX_BUS_MAX_UART; i++)
     _uarts[i] = {};

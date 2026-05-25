@@ -203,6 +203,27 @@ var ICONS = {
     + '<line x1="15" y1="12" x2="24" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
     + E,
 
+  'PCA9685Servo': S
+    // corps du servo positionnel : rectangle arrondi
+    + '<rect x="3" y="8" width="14" height="8" rx="2" fill="none"/>'
+    // axe
+    + '<circle cx="14" cy="12" r="2" fill="currentColor"/>'
+    // bras en position intermédiaire (~45°)
+    + '<line x1="14" y1="12" x2="19" y2="7"/>'
+    // arc de course (butée basse → butée haute)
+    + '<path d="M21 12 A7 7 0 0 0 14 5"/>'
+    + E,
+
+  'PCA9685Motor': S
+    // corps du moteur : rectangle arrondi
+    + '<rect x="3" y="8" width="12" height="8" rx="2" fill="none"/>'
+    // axe sortant
+    + '<circle cx="13" cy="12" r="2" fill="currentColor"/>'
+    // flèche de rotation continue (cercle presque complet)
+    + '<path d="M19 7a7 7 0 1 1-1.5 11"/>'
+    + '<polyline points="21 16 17 17 17 13"/>'
+    + E,
+
   'Led': S
     + '<circle cx="12" cy="11" r="4"/>'
     + '<path d="M12 1v2M12 18v2M3 11H1M23 11h-2M5.6 4.6l1.4 1.4M15 15.4l1.4 1.4M5.6 17.4l1.4-1.4M15 6.6l1.4-1.4"/>'

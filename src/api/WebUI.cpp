@@ -23,6 +23,7 @@ void WebUI::init() {
 }
 
 void WebUI::_onGetUi() {
+  ApiServer::server().sendHeader("Cache-Control", "no-store");
   ApiServer::server().sendHeader("Content-Encoding", "gzip");
   ApiServer::server().send_P(200, "text/html",
     (const char *)WEBUI_HTML_GZ, WEBUI_HTML_GZ_LEN);

@@ -428,6 +428,28 @@ public:
    */
   virtual ~Device() = default;
 
+  /**
+   * @brief Remove an arbitrary coroutine from the AceRoutine linked list.
+   *
+   * Must be called from the same core that runs CoroutineScheduler::loop()
+   * (Core 1 / Arduino loop), and only between two scheduler passes.
+   * After detachment the object is safe to delete.
+   */
+  static void detachCoroutineFromScheduler(ace_routine::Coroutine* c) {
+    ace_routine::Coroutine** prev = ace_routine::Coroutine::getRoot();
+    while (*prev != nullptr) {
+      if (*prev == c) {
+        *prev = *c->getNext();
+        *c->getNext() = nullptr;
+        break;
+      }
+      prev = (*prev)->getNext();
+    }
+  }
+
+  /** @brief Remove this device from the AceRoutine scheduler list. */
+  void detachFromScheduler() { detachCoroutineFromScheduler(this); }
+
   virtual inline void setLabel(char newLabel) {
     label = newLabel;
     for (uint8_t i = 0; i < getPinCount(); i++) {

@@ -143,13 +143,12 @@ void DeviceApi::_onPostConfig() {
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }
 
-/** @brief Delete config.json then trigger an immediate ESP32 restart. */
+/** @brief Delete config.json then hot-reload (all devices stop, firmware keeps running). */
 void DeviceApi::_onDeleteConfig() {
   LOG_PRINTLN(F("API: DELETE /api/config"));
   ConfigManager::deleteConfig();
+  ConfigManager::requestReload();
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
-  delay(200);
-  ESP.restart();
 }
 
 // ---------------------------------------------------------------------------

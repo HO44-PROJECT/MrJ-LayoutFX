@@ -60,6 +60,7 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/test/gpio", HTTP_POST, _onTestGpio);
   ApiServer::on("/api/test/spi", HTTP_POST, _onTestSpi);
   ApiServer::on("/api/restart", HTTP_POST, _onRestart);
+  ApiServer::on("/api/reload",  HTTP_POST, _onReload);
   ApiServer::on("/api/servo", HTTP_POST, _onServo);
   #ifdef MRJFX_I2C_SCAN_ENABLED
   ApiServer::on("/api/scan/i2c", HTTP_GET, _onScanI2c);
@@ -115,6 +116,25 @@ void DeviceApi::_onGetDevices() {
     if (strcmp_P("SerialServo", (const char *)d->getDeviceName()) == 0) {
       json += F(",\"servoId\":");
       json += (int)static_cast<SerialServoMotor *>(d)->getServoId();
+    }
+  #endif
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+    if (strcmp_P("PCA9685Servo", (const char *)d->getDeviceName()) == 0) {
+      auto *srv = static_cast<I2cPwmServoDevice *>(d);
+      json += F(",\"pulse_min_us\":"); json += srv->getPulseMinUs();
+      json += F(",\"pulse_max_us\":"); json += srv->getPulseMaxUs();
+      json += F(",\"positions\":[");
+      for (uint8_t pi = 0; pi < srv->getPosCount(); pi++) {
+        if (pi > 0) json += ',';
+        json += F("{\"angle\":");
+        json += (int)srv->getPosition(pi).angle;
+        json += F(",\"duration_ms\":");
+        json += (unsigned long)srv->getPosition(pi).duration_ms;
+        const char *lbl = srv->getPosition(pi).label;
+        if (lbl && *lbl) { json += F(",\"label\":\""); json += lbl; json += '"'; }
+        json += '}';
+      }
+      json += ']';
     }
   #endif
     json += F("}");

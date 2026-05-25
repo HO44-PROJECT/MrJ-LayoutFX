@@ -120,12 +120,21 @@
 // Audio device constants
 #define DFAUDIO_BAUD_RATE 8600 ///< Serial baud rate for audio device communication
 
-// OLED display defaults (overridable in config.h)
+// I²C bus pins — used by I2C_CARDS and I2C_SCAN. Override in config.h if needed.
+#ifndef I2C_SDA
+  #define I2C_SDA 21 ///< SDA pin for the shared I²C bus (ESP32 hardware default).
+#endif
+#ifndef I2C_SCL
+  #define I2C_SCL 22 ///< SCL pin for the shared I²C bus (ESP32 hardware default).
+#endif
+
+// OLED pins — default to the shared I²C bus; override independently in config.h
+// to put the OLED on a separate bus (e.g. address conflict or different wiring).
 #ifndef OLED_SDA
-  #define OLED_SDA 21 ///< Default SDA pin for I²C OLED (ESP32 hardware default).
+  #define OLED_SDA I2C_SDA ///< OLED SDA — defaults to I2C_SDA (same bus as I2C_CARDS).
 #endif
 #ifndef OLED_SCL
-  #define OLED_SCL 22 ///< Default SCL pin for I²C OLED (ESP32 hardware default).
+  #define OLED_SCL I2C_SCL ///< OLED SCL — defaults to I2C_SCL (same bus as I2C_CARDS).
 #endif
 #ifndef OLED_HEIGHT
   #define OLED_HEIGHT 64 ///< Display height in pixels — 64 (SSD1306 0.96") or 32 (SSD1306 0.91").

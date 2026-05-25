@@ -1773,6 +1773,14 @@
       color: inherit
     }
 
+    .dbg-pin-state {
+      font-size: .55rem;
+      font-weight: 700;
+      line-height: 1;
+      color: inherit;
+      opacity: .8
+    }
+
     /* Raw GPIO test sub-button (LED icon) overlaid on pin */
     .dbg-pin {
       position: relative
@@ -1940,6 +1948,7 @@
     }
     .de-wiring-row { display: flex; gap: .35rem }
     .de-wiring-row input { flex: 1 }
+    .de-wiring-fixed { padding: .28rem .65rem; background: var(--d2); border-radius: 4px; font-weight: bold; font-size: .95em }
     .de-footer {
       display: flex;
       gap: .45rem;

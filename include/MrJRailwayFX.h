@@ -55,6 +55,11 @@
 #include "led_fx/TrainHeadLamp.h"
 #include "led_fx/TurnSignal.h"
 
+// ── I²C bus ───────────────────────────────────────────────────────────────────
+#ifdef MRJFX_I2C_CARDS_ENABLED
+  #include <Wire.h>
+#endif
+
 // ── OLED ─────────────────────────────────────────────────────────────────────
 #ifdef MRJFX_OLED_ENABLED
   #include "oled/OledDisplay.h"
@@ -111,10 +116,8 @@
   #include "dcc/DccDrivable.h"
 #endif // End DCC check
 
-// ── JTAG release (ESP32 gpio driver) ─────────────────────────────────────────
-#ifdef MRJFX_RELEASE_JTAG
-  #include "driver/gpio.h"
-#endif
+// ── JTAG release ─────────────────────────────────────────────────────────────
+// No driver/gpio.h needed — we use Arduino pinMode/digitalWrite.
 
 // ── MrJFX — single-call init/loop ────────────────────────────────────────────
 /**
@@ -138,27 +141,35 @@ public:
    *          5. ApiServer/WiFi (if WIFI_SSID and WIFI_PASSWORD are defined)
    */
   static void init() {
-    // 0a. Release boot-sensitive pins and drive them LOW — prevents LED flicker.
-    //     Covers: JTAG (GPIO12-15), strapping GPIO5, and SPI-flash GPIO10 (free in DIO mode).
-    //     Define USE_JTAG in config.h to skip this entirely.
+    // 0a. Drive boot-sensitive pins LOW — prevents LED flicker on JTAG/strapping pins.
+    //     Uses Arduino pinMode/digitalWrite (no ESP-IDF driver dependency).
+    //     Define USE_JTAG in config.h to skip this block.
 #ifdef MRJFX_RELEASE_JTAG
-    static const gpio_num_t _boot_pins[] = {
-        GPIO_NUM_5,                                        // strapping pin, pull-up at boot
-        GPIO_NUM_10,                                       // SPI flash SD3, free in DIO mode
-        GPIO_NUM_12, GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15 // JTAG
-    };
-    for (auto p : _boot_pins) {
-      gpio_reset_pin(p);
-      gpio_set_direction(p, GPIO_MODE_OUTPUT);
-      gpio_set_level(p, 0);
-    }
+    { const uint8_t _p[] = {5, 12, 13, 14, 15};
+      for (uint8_t p : _p) { pinMode(p, OUTPUT); digitalWrite(p, LOW); } }
 #endif
 
 #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
     Serial.begin(115200);
 #endif
 
-    // 0. Start OLED display early (shows boot context).
+    // 0. Initialise I²C bus (OLED, I2C_CARDS, I2C_SCAN all depend on it).
+#ifdef MRJFX_I2C_CARDS_ENABLED
+    Wire.begin(I2C_SDA, I2C_SCL);
+    BusRegistry::preInitI2c(); // prevent activateI2c() from calling Wire.begin() again
+    // I2C General Call Soft Reset (addr=0x00, cmd=0x06): resets all PCA9685 chips to
+    // power-on state (all registers=0, outputs OFF) as early as possible.
+    // Prevents spurious servo movement during boot when the ESP32 resets without
+    // cutting power to the PCA9685 (which would otherwise keep emitting old PWM values).
+    // Other I2C devices (OLED SSD1306, etc.) ignore this command.
+#ifdef MRJFX_I2C_DEVICES_ENABLED
+    Wire.beginTransmission(0x00);
+    Wire.write(0x06);
+    Wire.endTransmission();
+#endif
+#endif
+
+    // 0b. Start OLED display early (shows boot context).
 #ifdef MRJFX_OLED_ENABLED
     OledDisplay::init();
 #endif
@@ -166,6 +177,12 @@ public:
     // 1. Load config from LittleFS and init devices.
 #ifdef MRJFX_CONFIG_ENABLED
     ConfigManager::init("/" CONFIG);
+#endif
+
+    // 1b. First-boot hint on OLED when config is empty (no devices configured).
+#if defined(MRJFX_OLED_ENABLED) && defined(MRJFX_CONFIG_ENABLED)
+    if (ConfigManager::factory().count() == 0)
+      OledDisplay::log("No config — use WebUI");
 #endif
 
     // 2. Register /api/* routes (requires config to be loaded first).
@@ -196,6 +213,7 @@ public:
     ace_routine::CoroutineScheduler::loop();
 
 #ifdef MRJFX_CONFIG_ENABLED
+    ConfigManager::handlePendingReload();
     BusRegistry::flush();
 #endif
 

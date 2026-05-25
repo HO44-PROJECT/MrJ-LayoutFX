@@ -40,6 +40,10 @@
   #ifdef MRJFX_SERIAL_SERVO_ENABLED
     #include "servo/SerialServoMotorMode.h"
   #endif
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+    #include "servo/I2cPwmServoDevice.h"
+    #include "servo/I2cPwmMotorDevice.h"
+  #endif
 
 using namespace factory_keys;
 
@@ -137,6 +141,10 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       bcfg.busType = _resolveBusType(bcfg.busKey);
       bcfg.pinCount = 0;
       bcfg.spiRank = 0;
+
+      if (bcfg.busType == BUS_I2C) {
+        bcfg.i2cAddress = (uint8_t)(bd[kFI2cAddress] | 0x40);
+      }
 
       if (bcfg.busType == BUS_SPI_MASTER) {
         if (_spiCardCount >= MRJFX_FACTORY_MAX_SPI_CARDS) {
@@ -633,6 +641,77 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     d = new SerialServoMotor(ls, NO_PIN, NO_PIN, (int)servoId);
   #else
     LOG_PRINTLN(F("DeviceFactory: SerialServo requires build_flags = -DLOBOT"));
+    return nullptr;
+  #endif
+  }
+
+  // ------------------------------------------------------------------
+  // PCA9685Servo — multi-position slewing servo on a PCA9685 I2C board.
+  // ------------------------------------------------------------------
+  else if (strcmp(type, kDevI2cPwmServo) == 0) {
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+    if (boardIdx == 0 || boardIdx > _boardCount) {
+      LOG_PRINTLN(F("DeviceFactory: PCA9685Servo — board not found"));
+      return nullptr;
+    }
+    const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
+    if (bcfg.busType != BUS_I2C) {
+      LOG_PRINT(F("DeviceFactory: PCA9685Servo — board is not on an i2c bus: "));
+      LOG_PRINTLN(bcfg.id);
+      return nullptr;
+    }
+    if (!_pwmDrivers[boardIdx - 1]) {
+      BusRegistry::activateI2c();
+      _pwmDrivers[boardIdx - 1] = new Adafruit_PWMServoDriver(bcfg.i2cAddress);
+      _pwmDrivers[boardIdx - 1]->begin();
+      _pwmDrivers[boardIdx - 1]->setPWMFreq(50);
+    }
+    {
+      uint8_t channel = (uint8_t)wiring.as<int>();
+      I2cPwmServoDevice::Position pos[I2cPwmServoDevice::MAX_POSITIONS];
+      uint8_t posCount = 0;
+      for (JsonObject p : obj[kFPositions].as<JsonArray>()) {
+        if (posCount >= I2cPwmServoDevice::MAX_POSITIONS) break;
+        pos[posCount].angle       = (int16_t)(p[kFAngle]      | 90);
+        pos[posCount].duration_ms = (uint32_t)(p[kFDurationMs] | 2000);
+        posCount++;
+      }
+      d = new I2cPwmServoDevice(_pwmDrivers[boardIdx - 1], channel, pos, posCount);
+    }
+  #else
+    LOG_PRINTLN(F("DeviceFactory: PCA9685Servo requires build_flags = -DI2C_CARDS"));
+    return nullptr;
+  #endif
+  }
+
+  // ------------------------------------------------------------------
+  // PCA9685Motor — continuous-rotation motor on a PCA9685 I2C board.
+  // ------------------------------------------------------------------
+  else if (strcmp(type, kDevI2cPwmMotor) == 0) {
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+    if (boardIdx == 0 || boardIdx > _boardCount) {
+      LOG_PRINTLN(F("DeviceFactory: PCA9685Motor — board not found"));
+      return nullptr;
+    }
+    const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
+    if (bcfg.busType != BUS_I2C) {
+      LOG_PRINT(F("DeviceFactory: PCA9685Motor — board is not on an i2c bus: "));
+      LOG_PRINTLN(bcfg.id);
+      return nullptr;
+    }
+    if (!_pwmDrivers[boardIdx - 1]) {
+      BusRegistry::activateI2c();
+      _pwmDrivers[boardIdx - 1] = new Adafruit_PWMServoDriver(bcfg.i2cAddress);
+      _pwmDrivers[boardIdx - 1]->begin();
+      _pwmDrivers[boardIdx - 1]->setPWMFreq(50);
+    }
+    {
+      uint8_t channel = (uint8_t)wiring.as<int>();
+      int8_t  speed   = (int8_t)(obj[kFSpeed] | 50);
+      d = new I2cPwmMotorDevice(_pwmDrivers[boardIdx - 1], channel, speed);
+    }
+  #else
+    LOG_PRINTLN(F("DeviceFactory: PCA9685Motor requires build_flags = -DI2C_CARDS"));
     return nullptr;
   #endif
   }

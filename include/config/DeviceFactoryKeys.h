@@ -86,5 +86,14 @@ constexpr char kDevTrafficLight4[] = "TrafficLight4Phase";
 constexpr char kDevMrJDBExitSignal[] = "MrJDBExitSignal";
 constexpr char kDevDfAudio[] = "DfAudio";
 constexpr char kDevSerialServo[] = "SerialServo";
+constexpr char kDevI2cPwmServo[] = "PCA9685Servo";
+constexpr char kDevI2cPwmMotor[] = "PCA9685Motor";
+
+// ── I2C device field keys ─────────────────────────────────────────────────────
+constexpr char kFI2cAddress[] = "i2c_address";
+constexpr char kFPositions[]  = "positions";  ///< Array of {angle, duration_ms} for PCA9685Servo.
+constexpr char kFAngle[]      = "angle";       ///< Angle in degrees (0–180) for a servo position.
+constexpr char kFDurationMs[] = "duration_ms"; ///< Transition duration in ms for a servo position.
+constexpr char kFSpeed[]      = "speed";       ///< Motor speed [-100, +100] for PCA9685Motor.
 
 } // namespace factory_keys

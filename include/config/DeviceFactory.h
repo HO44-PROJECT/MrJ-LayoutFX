@@ -70,6 +70,9 @@
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
     #include "servo/LobotServo.h"
   #endif
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+    #include <Adafruit_PWMServoDriver.h>
+  #endif
 
 class DeviceFactory {
 public:
@@ -142,6 +145,7 @@ public:
     BusType busType = BUS_NONE;         ///< Resolved bus protocol at parse time.
     uint8_t pinCount = 0;               ///< Number of output pins (SPI boards only).
     uint8_t spiRank = 0;                ///< 1-based daisy-chain rank (SPI boards only).
+    uint8_t i2cAddress = 0x40;          ///< I2C address (I2C boards only, default 0x40).
 
     bool isRoot() const { return busType == BUS_NONE; }
   };
@@ -239,6 +243,10 @@ private:
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
   ace_routine::Coroutine *_lobotServos[MRJFX_FACTORY_MAX_DEVICES];
   size_t _lobotCount = 0;
+  #endif
+
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  Adafruit_PWMServoDriver *_pwmDrivers[MRJFX_FACTORY_MAX_BOARDS] = {};
   #endif
 
   bool _parseBuses(JsonObject buses);

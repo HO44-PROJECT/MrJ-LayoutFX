@@ -174,7 +174,7 @@ void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, ui
 
   for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {
     if (DccDrivableAddresses[i] == Addr) {
-      // Set state for the matching device
+      DccDrivableDevices[i]->setDccAccessoryState(Direction);
     }
   }
 }

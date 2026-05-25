@@ -62,6 +62,11 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatOled] = false;
   #endif
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  feat[kFeatI2c] = true;
+  #else
+  feat[kFeatI2c] = false;
+  #endif
   #ifdef MRJFX_SPI_CARDS_ENABLED
   feat[kFeatSpi] = true;
   #else
@@ -258,6 +263,19 @@ void DeviceApi::_onRestart() {
   #endif
   delay(400);
   ESP.restart();
+}
+
+/**
+ * @brief Schedule a hot-reload of the config from LittleFS without rebooting.
+ *
+ * Returns 200 immediately; the actual reload is deferred to Core 1 and
+ * executed by ConfigManager::handlePendingReload() on the next loop() pass.
+ * Works regardless of whether devices are currently running.
+ */
+void DeviceApi::_onReload() {
+  LOG_PRINTLN(F("API: POST /api/reload"));
+  ConfigManager::requestReload();
+  ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }
 
 #endif // MRJFX_API_SERVER_ENABLED

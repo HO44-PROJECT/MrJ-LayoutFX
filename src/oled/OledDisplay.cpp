@@ -11,6 +11,7 @@
 
   #include <stdio.h>
   #include <string.h>
+  #include <Wire.h>
 
   #ifdef MRJFX_WIFI_ENABLED
     #include <WiFi.h>
@@ -37,26 +38,35 @@ OledDisplay oledDisplay;
 // Construction / init
 // ---------------------------------------------------------------------------
 
-// U8G2 HW I2C constructor: (rotation, reset, clock=SCL, data=SDA)
-// Passing SCL/SDA here lets U8G2 call Wire.begin() internally.
+// U8G2 HW I2C constructor: pass U8X8_PIN_NONE for clock and data so that
+// begin() uses the pre-initialized Wire instance without calling Wire.begin()
+// again.  On arduino-esp32 v3.x, a second Wire.begin() call reinitialises the
+// I2C peripheral and corrupts the bus.  Wire is started in MrJFX::init().
 OledDisplay::OledDisplay()
-    : _u8g2(U8G2_R0, U8X8_PIN_NONE, OLED_SCL, OLED_SDA) {}
+    : _u8g2(U8G2_R0, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE) {}
 
 void OledDisplay::init() {
   if (!oledDisplay._begin()) {
-    // No display found — skip task creation to avoid repeated I2C timeouts on Core 0.
-    Serial.println(F("[OLED] WARNING: no display found on SDA/SCL pins — OLED disabled"));
+    Serial.println(F("[OLED] no display found at 0x3C/0x3D — OLED disabled"));
     return;
   }
-  xTaskCreatePinnedToCore(_task, "oled", 4096, nullptr, 1, nullptr, 0); // Core 0
+  Serial.println(F("[OLED] display found, task starting"));
+  xTaskCreatePinnedToCore(_task, "oled", 8192, nullptr, 1, nullptr, 0); // Core 0
 }
 
 bool OledDisplay::_begin() {
-  if (!_u8g2.begin()) {
-    // begin() returns 0 when the display does not ACK — nothing is connected.
-    return false;
+  // U8G2 full-buffer begin() always returns true even when no display is connected.
+  // Probe the two standard SSD1306 I2C addresses first so we fail fast.
+  Wire.beginTransmission(0x3C);
+  bool found = (Wire.endTransmission() == 0);
+  if (!found) {
+    Wire.beginTransmission(0x3D);
+    found = (Wire.endTransmission() == 0);
   }
-  // Draw a boot screen immediately — before the coroutine scheduler starts.
+  if (!found)
+    return false;
+
+  _u8g2.begin();
   _u8g2.clearBuffer();
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(0, 12, "MrJ RailwayFX");
@@ -284,13 +294,15 @@ void OledDisplay::_drawIdle() {
   _u8g2.drawStr(0, 10, "MrJ RailwayFX");
   _u8g2.drawHLine(0, 13, 128);
 
-  // IP address (or placeholder while connecting)
+  // IP address — STA IP, AP IP, or placeholder
   char ip[20] = "No WiFi";
     #ifdef MRJFX_WIFI_ENABLED
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
-  else
-    strncpy(ip, "Connecting...", sizeof(ip) - 1);
+  } else {
+    String apStr = WiFi.softAPIP().toString();
+    strncpy(ip, apStr != "0.0.0.0" ? apStr.c_str() : "Connecting...", sizeof(ip) - 1);
+  }
     #endif
   _u8g2.drawStr(0, 26, ip);
 
@@ -307,8 +319,12 @@ void OledDisplay::_drawIdle() {
 
   char ip[20] = "No WiFi";
     #ifdef MRJFX_WIFI_ENABLED
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
+  } else {
+    String apStr = WiFi.softAPIP().toString();
+    strncpy(ip, apStr != "0.0.0.0" ? apStr.c_str() : "Connecting...", sizeof(ip) - 1);
+  }
     #endif
   _u8g2.drawStr(0, 20, ip);
 
