@@ -23,6 +23,8 @@ var POLL = 3000; // cockpit poll interval in ms; user-adjustable, persisted in l
 // Category lists derived from _deviceTypes after fetch.
 // Kept as globals so inline onclick="...SERVO_TYPES..." handlers still work.
 var SERVO_TYPES = [];
+var I2C_SERVO_TYPES = [];
+var I2C_MOTOR_TYPES = [];
 var STATIC_TYPES = [];
 var TRAFFIC_TYPES = [];
 var SERVO_STATES = [];
@@ -39,6 +41,13 @@ function toggleDrawer() {
 // Close the side navigation drawer.
 function closeDrawer() {
   document.body.classList.remove('drawer-open');
+}
+
+// Navigate directly to the boards & extensions tab in the config view.
+// Used by the empty-cockpit CTA and post-wizard navigation.
+function goToBoards() {
+  switchView('config');
+  switchCfgTab('boards');
 }
 
 // Activate a named view (cockpit | config | about).
@@ -210,10 +219,65 @@ function cardServo(d) {
     + '</div>';
 }
 
+// Render a positional I²C servo card (PCA9685Servo).
+// State 0 = STOP (emergency stop), states 1..N = positions from d.positions[].
+// Position labels come from config; falls back to "Pos N" if absent.
+function cardI2cMotor(d) {
+  var states = d.states || (d.speed !== undefined ? [{ speed: d.speed }] : []);
+  var busy = d.state < 0;
+  var dis = busy ? 'disabled' : '';
+  var ico = ICONS[d.type] || ICONS['_'];
+  var tip = tooltip(d.type);
+  var c = busy ? 'busy' : (d.desired > 0 ? 'on' : 'off');
+  function mbtn(label, st, css) {
+    var act = (d.desired === st && !busy) ? 'active' : '';
+    return '<button class="tbtn ' + css + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + st + ')" ' + dis + '>' + label + '</button>';
+  }
+  var btns = mbtn('STOP', 0, 't-stop');
+  states.forEach(function (s, i) {
+    btns += mbtn(s.label || (t('de.card_state') + ' ' + (i + 1)), i + 1, 't-go');
+  });
+  return '<div class="card ' + c + '">'
+    + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+    + '<span class="dot ' + c + '"></span></div>'
+    + '<div class="icon" title="' + tip + '">' + ico + '</div>'
+    + '<span class="badge">' + d.type + '</span>'
+    + meta(d)
+    + '<div class="tbtns">' + btns + '</div>'
+    + '</div>';
+}
+
+function cardI2cServo(d) {
+  var positions = d.positions || [];
+  var busy = d.state < 0;
+  var dis = busy ? 'disabled' : '';
+  var ico = ICONS[d.type] || ICONS['_'];
+  var tip = tooltip(d.type);
+  var c = busy ? 'busy' : (d.desired > 0 ? 'on' : 'off');
+  function pbtn(label, st, css) {
+    var act = (d.desired === st && !busy) ? 'active' : '';
+    return '<button class="tbtn ' + css + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + st + ')" ' + dis + '>' + label + '</button>';
+  }
+  var btns = pbtn('STOP', 0, 't-stop');
+  positions.forEach(function (p, i) {
+    btns += pbtn(p.label || (t('de.card_pos') + ' ' + (i + 1)), i + 1, 't-go');
+  });
+  return '<div class="card ' + c + '">'
+    + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+    + '<span class="dot ' + c + '"></span></div>'
+    + '<div class="icon" title="' + tip + '">' + ico + '</div>'
+    + '<span class="badge">' + d.type + '</span>'
+    + meta(d)
+    + '<div class="tbtns">' + btns + '</div>'
+    + '</div>';
+}
+
 // Dispatcher: routes to the specialised card renderer based on device category.
 function card(d) {
   if ((_deviceTypes[d.type] || {}).category === 'traffic') return cardTraffic(d);
   if (SERVO_TYPES.indexOf(d.type) >= 0) return cardServo(d);
+  if (I2C_SERVO_TYPES.indexOf(d.type) >= 0) return cardI2cServo(d);
+  if (I2C_MOTOR_TYPES.indexOf(d.type) >= 0) return cardI2cMotor(d);
   if ((_deviceTypes[d.type] || {}).category === 'signal') return cardSignal(d);
   var c = cls(d);
   var dis = (c === 'busy' || c === 'static') ? 'disabled' : '';
@@ -306,11 +370,16 @@ function render(devs) {
   var grid = document.getElementById('grid');
   if (devs.length === 0) {
     toolbar.style.display = 'none';
+    // If boards are already configured, guide to config/boards instead of reopening the wizard.
+    var hasBoards = _dbgCfg && _dbgCfg.boards && _dbgCfg.boards.length > 0;
+    var ctaBtn = hasBoards
+      ? '<button class="ck-empty-btn" onclick="goToBoards()">' + t('ck.empty_btn') + '</button>'
+      : '<button class="ck-empty-btn" onclick="openWizard()">' + t('ck.setup_btn') + '</button>';
     grid.innerHTML = '<div class="ck-empty">'
       + '<div class="ck-empty-ico">🎛</div>'
       + '<div class="ck-empty-title">' + t('ck.empty_title') + '</div>'
       + '<div class="ck-empty-body">' + t('ck.empty_body') + '</div>'
-      + '<button class="ck-empty-btn" onclick="switchView(\'config\')">' + t('ck.empty_btn') + '</button>'
+      + ctaBtn
       + '</div>';
   } else {
     toolbar.style.display = '';
@@ -338,15 +407,22 @@ function deleteJson(url, body) {
 function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
 // Show the persistent error banner (connection lost / firmware unreachable).
-function showErr() { document.getElementById('err').style.display = 'block'; }
+// Also marks that we were in error state so the wizard re-triggers on reconnect.
+var _pollErrState = false;
+function showErr() {
+  document.getElementById('err').style.display = 'block';
+  _pollErrState = true;
+}
 
 var _firstPollDone = false;
 
-// Periodic cockpit poll: fetch /api/devices, render cards, trigger welcome wizard on first empty result.
+// Periodic cockpit poll: fetch /api/devices, render cards, trigger welcome wizard when
+// the device list is empty (first poll, or first successful poll after a reconnect).
 function poll() {
   fetch('/api/devices')
     .then(function (r) { if (!r.ok) throw r; return r.json(); })
     .then(function (d) {
+      if (_pollErrState) { _pollErrState = false; _firstPollDone = false; } // reset on reconnect
       document.getElementById('err').style.display = 'none';
       render(d);
       if (_currentView === 'config') { _dbgDevs = d; renderDebugBoards(); }
@@ -358,18 +434,456 @@ function poll() {
     .catch(showErr);
 }
 
-// First-run setup wizard.  Called when the first /api/devices poll returns an empty list.
-// Skipped if the user is already on a specific view (URL hash).
-// Flow: fetch /api/config → if no boards configured, auto-create one board entry
-//       (type guessed from /api/status env), save it, then show the welcome modal.
-function showWelcome() {
-  // Don't show if user already navigated to a specific view via URL hash
-  if (location.hash && location.hash !== '#cockpit') return;
+// ── Setup wizard (first boot) ────────────────────────────────────────────────
+// Replaces the old static welcome modal.  Triggered when the first /api/devices
+// poll returns an empty list AND no boards are configured yet.
+// The wizard collects board, buses and expansion cards in 3–4 steps, builds the
+// config in memory, saves it once, and calls POST /api/reload — no restart.
 
-  // Fetch config (required) and status (for env detection, best-effort)
+var _wiz = null;          // null = wizard closed
+var _wizExpIdx = 0;       // monotonic counter for expansion-board _idx
+
+// Entry point — called by showWelcome() after config + status + board-types are loaded.
+function _wizOpen(status) {
+  var env = ((status && status.env) || '').toLowerCase().replace(/[_\s-]/g, '');
+  var defaultType = _ENV_TO_BOARD[env] || guessDefaultBoardType();
+  var boardId = defaultType.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  _wizExpIdx = 0;
+  _wiz = {
+    step: 1,
+    mainBoardType: defaultType,
+    mainBoardId: boardId,
+    buses: {
+      i2c: { enabled: false, key: 'i2c0', sda: 21, scl: 22 },
+      spi: { enabled: false, key: 'spi', mosi: 23, sclk: 18, latch: 5 },
+      uart: { enabled: false, key: 'uart1', tx: 17, rx: 16, baud: 115200 }
+    },
+    expansionBoards: [],
+    configName: ''
+  };
+
+  document.getElementById('wizard-overlay').style.display = 'block';
+  document.getElementById('wizard-modal').style.display = 'flex';
+  _wizRender();
+}
+
+function _wizClose() {
+  document.getElementById('wizard-overlay').style.display = 'none';
+  document.getElementById('wizard-modal').style.display = 'none';
+  _wiz = null;
+}
+
+// How many steps total (3 when no buses enabled — step 3 expansion is skipped).
+function _wizTotalSteps() {
+  if (!_wiz) return 4;
+  return (_wiz.buses.i2c.enabled || _wiz.buses.spi.enabled || _wiz.buses.uart.enabled) ? 4 : 3;
+}
+
+// Map actual step number to display step number (step 4 becomes "3" when total=3).
+function _wizDisplayStep(step) {
+  if (_wizTotalSteps() === 3 && step === 4) return 3;
+  return step;
+}
+
+// ── Step renderers ───────────────────────────────────────────────────────────
+
+function _wizRenderStep1() {
+  var mcuTypes = Object.keys(_boardTypes).filter(function (k) {
+    var bt = _boardTypes[k]; return bt && !bt.busType;
+  });
+  if (mcuTypes.length === 0) mcuTypes = ['ESP32DevkitC'];
+  var opts = mcuTypes.map(function (k) {
+    var def = _boardTypes[k] || {};
+    return '<option value="' + k + '"' + (k === _wiz.mainBoardType ? ' selected' : '') + '>'
+      + (def.label || k) + '</option>';
+  }).join('');
+  return '<div class="de-field">'
+    + '<label>Type de carte</label>'
+    + '<select id="wiz-board-type" onchange="wizUpdateBoardId()">' + opts + '</select>'
+    + '</div>'
+    + '<div class="de-field">'
+    + '<label>Identifiant</label>'
+    + '<input type="text" id="wiz-board-id" value="' + _wiz.mainBoardId + '" autocomplete="off" placeholder="ex: mainboard">'
+    + '</div>';
+}
+
+function _wizBusCard(busKey, label, fields) {
+  var bus = _wiz.buses[busKey];
+  var fieldsHtml = fields.map(function (f) {
+    return '<div class="de-field" style="margin-top:.35rem">'
+      + '<label style="font-size:.8rem">' + f.label + '</label>'
+      + '<input type="number"' + (bus.enabled ? '' : ' disabled')
+      + ' id="wiz-' + busKey + '-' + f.fk + '"'
+      + ' value="' + (bus[f.fk] !== undefined ? bus[f.fk] : f.ph) + '"'
+      + ' min="' + f.min + '" max="' + f.max + '" placeholder="' + f.ph + '">'
+      + '</div>';
+  }).join('');
+  return '<div class="wiz-bus-card' + (bus.enabled ? ' wiz-bus-card--on' : '') + '" id="wiz-buscard-' + busKey + '">'
+    + '<div class="wiz-bus-header">'
+    + '<label class="wiz-bus-toggle">'
+    + '<input type="checkbox"' + (bus.enabled ? ' checked' : '')
+    + ' onchange="wizToggleBus(\'' + busKey + '\')">'
+    + '<span class="wiz-bus-label">' + label + '</span>'
+    + '</label>'
+    + '</div>'
+    + '<div class="wiz-bus-fields" id="wiz-busfields-' + busKey + '"'
+    + (bus.enabled ? '' : ' style="display:none"') + '>'
+    + fieldsHtml
+    + '</div>'
+    + '</div>';
+}
+
+function _wizRenderStep2() {
+  var feats = (_dbgStatus && _dbgStatus.features) || {};
+  var html = _wizBusCard('i2c', 'I²C', [
+    { fk: 'sda', label: 'SDA (GPIO)', min: 0, max: 39, ph: 21 },
+    { fk: 'scl', label: 'SCL (GPIO)', min: 0, max: 39, ph: 22 }
+  ]);
+  if (feats.spi !== false) {
+    html += _wizBusCard('spi', 'SPI', [
+      { fk: 'mosi', label: 'MOSI (GPIO)', min: 0, max: 39, ph: 23 },
+      { fk: 'sclk', label: 'SCLK (GPIO)', min: 0, max: 39, ph: 18 },
+      { fk: 'latch', label: 'LATCH (GPIO)', min: 0, max: 39, ph: 5 }
+    ]);
+  }
+  html += _wizBusCard('uart', 'Série (UART)', [
+    { fk: 'tx', label: 'TX (GPIO)', min: 0, max: 39, ph: 17 },
+    { fk: 'rx', label: 'RX (GPIO)', min: 0, max: 39, ph: 16 },
+    { fk: 'baud', label: 'Baud', min: 300, max: 921600, ph: 115200 }
+  ]);
+  return html;
+}
+
+function _wizExpBoardsForBus(busLocalKey) {
+  var bts = { i2c: 'i2c', spi: 'spi_master_only', uart: 'uart' }[busLocalKey];
+  return Object.keys(_boardTypes).filter(function (k) {
+    return _boardTypes[k] && _boardTypes[k].busType === bts;
+  });
+}
+
+function _wizRenderExpBoardRow(b) {
+  var compat = _wizExpBoardsForBus(b.busLocalKey);
+  var typeOpts = compat.map(function (k) {
+    var def = _boardTypes[k] || {};
+    return '<option value="' + k + '"' + (k === b.type ? ' selected' : '') + '>'
+      + (def.label || k) + '</option>';
+  }).join('');
+  var i2cField = b.busLocalKey === 'i2c'
+    ? '<div class="de-field" style="margin-top:.3rem">'
+    + '<label style="font-size:.8rem">Adresse I²C</label>'
+    + '<input type="number" value="' + b.i2cAddress + '" min="0" max="127" '
+    + 'onchange="wizUpdateExpBoard(' + b._idx + ',\'i2cAddress\',+this.value)">'
+    + '</div>'
+    : '';
+  return '<div class="wiz-expboard-row">'
+    + '<button class="wiz-del-board" onclick="wizDeleteExpBoard(' + b._idx + ')">✕</button>'
+    + '<div class="de-field">'
+    + '<label style="font-size:.8rem">Type</label>'
+    + '<select onchange="wizUpdateExpBoard(' + b._idx + ',\'type\',this.value)">' + typeOpts + '</select>'
+    + '</div>'
+    + '<div class="de-field">'
+    + '<label style="font-size:.8rem">ID</label>'
+    + '<input type="text" value="' + b.id + '" placeholder="ex: pca1" '
+    + 'onchange="wizUpdateExpBoard(' + b._idx + ',\'id\',this.value)">'
+    + '</div>'
+    + i2cField
+    + '</div>';
+}
+
+function _wizRenderExpSection(busLocalKey, busLabel) {
+  var compat = _wizExpBoardsForBus(busLocalKey);
+  if (compat.length === 0) return '';
+  var rows = _wiz.expansionBoards
+    .filter(function (b) { return b.busLocalKey === busLocalKey; })
+    .map(_wizRenderExpBoardRow).join('');
+  return '<div class="wiz-expboard-section">'
+    + '<p class="wiz-section-title">' + busLabel + '</p>'
+    + '<div id="wiz-expboards-' + busLocalKey + '">' + rows + '</div>'
+    + '<button class="wiz-add-board" onclick="wizAddExpBoard(\'' + busLocalKey + '\')">'
+    + '+ Ajouter une carte</button>'
+    + '</div>';
+}
+
+function _wizRenderStep3() {
+  var html = '';
+  if (_wiz.buses.i2c.enabled) html += _wizRenderExpSection('i2c', 'Bus I²C (' + _wiz.buses.i2c.key + ')');
+  if (_wiz.buses.spi.enabled) html += _wizRenderExpSection('spi', 'Bus SPI (' + _wiz.buses.spi.key + ')');
+  if (_wiz.buses.uart.enabled) html += _wizRenderExpSection('uart', 'Bus Série (' + _wiz.buses.uart.key + ')');
+  if (!html) {
+    html = '<p style="color:var(--t3);font-size:.85rem">Aucune carte d\'extension disponible pour les bus configurés.</p>';
+  }
+  return html;
+}
+
+function _wizRenderStep4() {
+  var lines = [];
+  var bt = _boardTypes[_wiz.mainBoardType];
+  lines.push('<strong>Carte :</strong> ' + ((bt && bt.label) || _wiz.mainBoardType)
+    + ' <span style="color:var(--t3)">(id: ' + _wiz.mainBoardId + ')</span>');
+  var b = _wiz.buses;
+  if (b.i2c.enabled) lines.push('<strong>I²C :</strong> SDA=' + b.i2c.sda + ', SCL=' + b.i2c.scl);
+  if (b.spi.enabled) lines.push('<strong>SPI :</strong> MOSI=' + b.spi.mosi + ', SCLK=' + b.spi.sclk + ', LATCH=' + b.spi.latch);
+  if (b.uart.enabled) lines.push('<strong>Série :</strong> TX=' + b.uart.tx + ', RX=' + b.uart.rx + ', Baud=' + b.uart.baud);
+  _wiz.expansionBoards.forEach(function (eb) {
+    var def = _boardTypes[eb.type] || {};
+    lines.push('<strong>Extension :</strong> ' + (def.label || eb.type)
+      + ' <span style="color:var(--t3)">(id: ' + eb.id + ', bus: ' + eb.busKey + ')</span>');
+  });
+  return '<div class="de-field">'
+    + '<label>Nom de la configuration</label>'
+    + '<input type="text" id="wiz-cfg-name" value="' + (_wiz.configName || 'ma-maquette') + '" '
+    + 'placeholder="ma-maquette" autocomplete="off">'
+    + '</div>'
+    + '<div class="wiz-summary">'
+    + '<p class="wiz-summary-title">Résumé</p>'
+    + lines.map(function (l) { return '<p class="wiz-summary-line">' + l + '</p>'; }).join('')
+    + '</div>'
+    + '<div id="wiz-err" class="wiz-err" style="display:none"></div>';
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function _wizRender() {
+  if (!_wiz) return;
+  var modal = document.getElementById('wizard-modal');
+  if (!modal) return;
+
+  var total = _wizTotalSteps();
+  var step = _wiz.step;
+  var display = _wizDisplayStep(step);
+  var pct = Math.round(display / total * 100);
+
+  var titles = ['Carte principale', 'Bus de communication', 'Cartes d\'extension', 'Nom et résumé'];
+  var title = step <= 4 ? titles[step - 1] : '';
+  if (total === 3 && step === 4) title = titles[3]; // summary when step 3 skipped
+
+  var body = '';
+  if (step === 1) body = _wizRenderStep1();
+  else if (step === 2) body = _wizRenderStep2();
+  else if (step === 3) body = _wizRenderStep3();
+  else if (step === 4) body = _wizRenderStep4();
+
+  var isFirst = (step === 1);
+  var isLast = (step === 4);
+
+  modal.innerHTML =
+    '<div class="wizard-header">'
+    + '<div class="wizard-progress-track"><div class="wizard-progress-fill" style="width:' + pct + '%"></div></div>'
+    + '<div class="wizard-step-info">Étape ' + display + ' / ' + total + '</div>'
+    + '<h2 class="wizard-title">' + title + '</h2>'
+    + '</div>'
+    + '<div class="wizard-body">' + body + '</div>'
+    + '<div class="wizard-footer">'
+    + (isFirst ? '' : '<button class="wizard-btn wizard-btn-back" onclick="wizBack()">← Précédent</button>')
+    + '<span style="flex:1"></span>'
+    + (isLast
+      ? '<button class="wizard-btn wizard-btn-finish" id="wiz-finish-btn" onclick="wizFinish()">✓ Appliquer</button>'
+      : '<button class="wizard-btn wizard-btn-next" onclick="wizNext()">Suivant →</button>')
+    + '</div>';
+}
+
+// ── State save helpers ────────────────────────────────────────────────────────
+
+function _wizSaveStep1() {
+  var typeEl = document.getElementById('wiz-board-type');
+  var idEl = document.getElementById('wiz-board-id');
+  if (typeEl) _wiz.mainBoardType = typeEl.value;
+  if (idEl) _wiz.mainBoardId = idEl.value.trim()
+    || (_wiz.mainBoardType || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function _wizSaveStep2() {
+  ['i2c', 'spi', 'uart'].forEach(function (bk) {
+    var container = document.getElementById('wiz-busfields-' + bk);
+    if (!container) return;
+    container.querySelectorAll('input[type=number]').forEach(function (el) {
+      var fk = el.id.replace('wiz-' + bk + '-', '');
+      if (el.value !== '') _wiz.buses[bk][fk] = Number(el.value);
+    });
+  });
+}
+
+function _wizSaveCfgName() {
+  var el = document.getElementById('wiz-cfg-name');
+  if (el) _wiz.configName = el.value.trim();
+}
+
+function _wizSaveCurrent() {
+  if (_wiz.step === 1) _wizSaveStep1();
+  if (_wiz.step === 2) _wizSaveStep2();
+  if (_wiz.step === 4) _wizSaveCfgName();
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+
+function wizBack() {
+  if (!_wiz) return;
+  _wizSaveCurrent();
+  _wiz.step--;
+  // Skip step 3 if no buses (going backward)
+  if (_wiz.step === 3 && _wizTotalSteps() === 3) _wiz.step--;
+  _wizRender();
+}
+
+function wizNext() {
+  if (!_wiz) return;
+  _wizSaveCurrent();
+  _wiz.step++;
+  // Skip step 3 if no buses enabled
+  if (_wiz.step === 3 && _wizTotalSteps() === 3) _wiz.step++;
+  _wizRender();
+}
+
+// ── Interactivity ─────────────────────────────────────────────────────────────
+
+function wizUpdateBoardId() {
+  var typeEl = document.getElementById('wiz-board-type');
+  var idEl = document.getElementById('wiz-board-id');
+  if (typeEl && idEl && _wiz) {
+    _wiz.mainBoardType = typeEl.value;
+    idEl.value = typeEl.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    _wiz.mainBoardId = idEl.value;
+  }
+}
+
+function wizToggleBus(busKey) {
+  if (!_wiz) return;
+  _wizSaveStep2();
+  _wiz.buses[busKey].enabled = !_wiz.buses[busKey].enabled;
+  var card = document.getElementById('wiz-buscard-' + busKey);
+  var fields = document.getElementById('wiz-busfields-' + busKey);
+  if (!card || !fields) return;
+  if (_wiz.buses[busKey].enabled) {
+    card.classList.add('wiz-bus-card--on');
+    fields.style.display = '';
+    fields.querySelectorAll('input').forEach(function (el) { el.disabled = false; });
+  } else {
+    card.classList.remove('wiz-bus-card--on');
+    fields.style.display = 'none';
+    fields.querySelectorAll('input').forEach(function (el) { el.disabled = true; });
+  }
+}
+
+function wizAddExpBoard(busLocalKey) {
+  if (!_wiz) return;
+  var compat = _wizExpBoardsForBus(busLocalKey);
+  if (compat.length === 0) return;
+  var busKey = _wiz.buses[busLocalKey].key;
+  var type = compat[0];
+  var id = type.toLowerCase().replace(/[^a-z0-9]/g, '') + (_wizExpIdx + 1);
+  _wiz.expansionBoards.push({
+    _idx: _wizExpIdx++, busLocalKey: busLocalKey, busKey: busKey,
+    type: type, id: id, i2cAddress: 64
+  });
+  var cont = document.getElementById('wiz-expboards-' + busLocalKey);
+  if (cont) {
+    cont.innerHTML = _wiz.expansionBoards
+      .filter(function (b) { return b.busLocalKey === busLocalKey; })
+      .map(_wizRenderExpBoardRow).join('');
+  }
+}
+
+function wizUpdateExpBoard(idx, field, value) {
+  if (!_wiz) return;
+  var board = _wiz.expansionBoards.find(function (b) { return b._idx === idx; });
+  if (!board) return;
+  board[field] = value;
+  if (field === 'type') {
+    board.id = value.toLowerCase().replace(/[^a-z0-9]/g, '') + (idx + 1);
+    var cont = document.getElementById('wiz-expboards-' + board.busLocalKey);
+    if (cont) {
+      cont.innerHTML = _wiz.expansionBoards
+        .filter(function (b) { return b.busLocalKey === board.busLocalKey; })
+        .map(_wizRenderExpBoardRow).join('');
+    }
+  }
+}
+
+function wizDeleteExpBoard(idx) {
+  if (!_wiz) return;
+  var board = _wiz.expansionBoards.find(function (b) { return b._idx === idx; });
+  var bk = board ? board.busLocalKey : null;
+  _wiz.expansionBoards = _wiz.expansionBoards.filter(function (b) { return b._idx !== idx; });
+  if (bk) {
+    var cont = document.getElementById('wiz-expboards-' + bk);
+    if (cont) {
+      cont.innerHTML = _wiz.expansionBoards
+        .filter(function (b) { return b.busLocalKey === bk; })
+        .map(_wizRenderExpBoardRow).join('');
+    }
+  }
+}
+
+// ── Config builder ────────────────────────────────────────────────────────────
+
+function _wizBuildConfig() {
+  var cfg = { buses: {}, boards: [], devices: [] };
+  if (_wiz.configName) cfg.name = _wiz.configName;
+
+  // Main MCU board (never has a bus)
+  cfg.boards.push({ id: _wiz.mainBoardId, type: _wiz.mainBoardType });
+
+  // Buses
+  var b = _wiz.buses;
+  if (b.i2c.enabled) cfg.buses[b.i2c.key] = { type: 'i2c', sda: b.i2c.sda, scl: b.i2c.scl };
+  if (b.spi.enabled) cfg.buses[b.spi.key] = { type: 'spi_master_only', mosi: b.spi.mosi, sclk: b.spi.sclk, latch: b.spi.latch };
+  if (b.uart.enabled) cfg.buses[b.uart.key] = { type: 'uart', tx: b.uart.tx, rx: b.uart.rx, baud: b.uart.baud };
+
+  // Expansion boards
+  _wiz.expansionBoards.forEach(function (eb) {
+    var entry = { id: eb.id, type: eb.type, bus: eb.busKey };
+    if (eb.busLocalKey === 'i2c') entry.i2c_address = eb.i2cAddress;
+    cfg.boards.push(entry);
+  });
+
+  return cfg;
+}
+
+// ── Finish ────────────────────────────────────────────────────────────────────
+
+function wizFinish() {
+  if (!_wiz) return;
+  _wizSaveCurrent();
+  var cfg = _wizBuildConfig();
+
+  var btn = document.getElementById('wiz-finish-btn');
+  var errEl = document.getElementById('wiz-err');
+  if (btn) { btn.disabled = true; btn.textContent = 'Application…'; }
+  if (errEl) errEl.style.display = 'none';
+
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cfg)
+  })
+    .then(function (r) { if (!r.ok) throw new Error('Sauvegarde impossible (HTTP ' + r.status + ')'); return r.json(); })
+    .then(function () {
+      return fetch('/api/reload', { method: 'POST' });
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error('Rechargement impossible (HTTP ' + r.status + ')');
+      _dbgCfg = cfg;
+      _wizClose();
+      setTimeout(function () { loadDebug(); poll(); }, 800);
+    })
+    .catch(function (e) {
+      if (btn) { btn.disabled = false; btn.textContent = '✓ Appliquer'; }
+      if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+    });
+}
+
+// ── Trigger (called from poll) ────────────────────────────────────────────────
+
+// Called when the first /api/devices poll returns an empty list.
+function showWelcome() {
   var pStatus = _dbgStatus
     ? Promise.resolve(_dbgStatus)
     : fetch('/api/status').then(function (r) { return r.json(); }).catch(function () { return {}; });
+
+  var pBoardTypes = Object.keys(_boardTypes).length > 0
+    ? Promise.resolve(_boardTypes)
+    : fetch('/api/board-types').then(function (r) { return r.json(); }).catch(function () { return {}; });
 
   Promise.all([
     fetch('/api/config').then(function (r) {
@@ -377,49 +891,59 @@ function showWelcome() {
       if (!r.ok) throw new Error('cfg ' + r.status);
       return r.json();
     }),
-    pStatus
+    pStatus,
+    pBoardTypes
   ])
-    .then(function (results) {
-      var cfg = results[0];
-      var status = results[1];
+    .then(function (res) {
+      var cfg = res[0], status = res[1], bt = res[2];
       _dbgCfg = cfg;
       if (status && status.env) _dbgStatus = status;
+      if (bt && Object.keys(bt).length > 0) _boardTypes = bt;
       loadSystemPins(cfg);
 
-      if (cfg.boards && cfg.boards.length > 0) return; // already set up — nothing to do
-
-      // Determine default MCU board type from env, fall back to ESP32DevkitC
-      var env = (_dbgStatus && _dbgStatus.env || '').toLowerCase().replace(/[_\s-]/g, '');
-      var defaultType = _ENV_TO_BOARD[env] || 'ESP32DevkitC';
-      // If board_types is already loaded, prefer an MCU type (no busType) over the fallback
-      var btKeys = Object.keys(_boardTypes).filter(function (k) { return !(_boardTypes[k].busType); });
-      if (btKeys.length > 0 && !_boardTypes[defaultType]) defaultType = btKeys[0];
-
-      var boardId = defaultType.toLowerCase().replace(/[^a-z0-9]/g, '');
-      cfg.boards = [{ id: boardId, type: defaultType }];
-
-      return fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cfg)
-      })
-        .then(function (r) { if (!r.ok) throw new Error('save ' + r.status); return r.json(); })
-        .then(function () {
-          _dbgCfg = cfg;
-          document.getElementById('welcome-overlay').style.display = 'block';
-          document.getElementById('welcome-modal').style.display = 'flex';
-          applyLang();
-        });
+      if (cfg.boards && cfg.boards.length > 0) return; // already configured — skip
+      _wizOpen(status);
     })
-    .catch(function (e) { console.error('[welcome]', e); });
+    .catch(function (e) { console.error('[wizard]', e); });
 }
 
-// Dismiss the welcome modal and navigate to the boards config tab.
-function closeWelcome() {
-  document.getElementById('welcome-overlay').style.display = 'none';
-  document.getElementById('welcome-modal').style.display = 'none';
-  loadDebug();
-  switchView('config');
+// Kept for backward compat (old HTML might reference it — not used anymore).
+function closeWelcome() { _wizClose(); }
+
+// Open the setup wizard manually, bypassing the "already configured" guard.
+// Warns the user if devices already exist, because the wizard will overwrite the
+// entire config (buses + boards) and strip all devices on apply.
+function openWizard() {
+  var pStatus = _dbgStatus
+    ? Promise.resolve(_dbgStatus)
+    : fetch('/api/status').then(function (r) { return r.json(); }).catch(function () { return {}; });
+
+  var pBoardTypes = Object.keys(_boardTypes).length > 0
+    ? Promise.resolve(_boardTypes)
+    : fetch('/api/board-types').then(function (r) { return r.json(); }).catch(function () { return {}; });
+
+  Promise.all([
+    fetch('/api/config').then(function (r) {
+      if (r.status === 404) return { buses: {}, boards: [], devices: [] };
+      if (!r.ok) throw new Error('cfg ' + r.status);
+      return r.json();
+    }),
+    pStatus,
+    pBoardTypes
+  ])
+    .then(function (res) {
+      var cfg = res[0], status = res[1], bt = res[2];
+      _dbgCfg = cfg;
+      if (status && status.env) _dbgStatus = status;
+      if (bt && Object.keys(bt).length > 0) _boardTypes = bt;
+      loadSystemPins(cfg);
+
+      var devCount = (cfg.devices || []).filter(function (d) { return !d.type || !d.type.startsWith('$'); }).length;
+      if (devCount > 0 && !confirm(t('cfg.wizard_warn').replace('{n}', devCount))) return;
+
+      _wizOpen(status);
+    })
+    .catch(function (e) { console.error('[wizard]', e); });
 }
 
 // Factory-reset the config: wipe buses + devices, keep only a single default board.
@@ -547,10 +1071,10 @@ function loadConfigs() {
         var btns = '<div class="cfg-row-btns">';
         if (isActive) {
           btns += '<span class="cfg-filebadge">' + t('cfg.badge.active') + '</span>';
-          btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(\'config.json\')">' + t('cfg.snapshot.btn') + '</button>';
-          btns += '<button class="cfg-row-btn" onclick="cfgDownload(\'config.json\',_cfgActive)">⬇ ' + t('cfg.dl.btn') + '</button>';
-          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadCpp(\'config.json\')">⬇ main.cpp</button>';
-          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadPio(\'config.json\')">⬇ platformio.ini</button>';
+          btns += '<button class="cfg-row-btn" onclick="cfgSnapshot(_cfgActive)">' + t('cfg.snapshot.btn') + '</button>';
+          btns += '<button class="cfg-row-btn" onclick="cfgDownload(_cfgActive,_cfgActive)">⬇ ' + t('cfg.dl.btn') + '</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadCpp(_cfgActive)">⬇ main.cpp</button>';
+          if (_dbgStatus && _dbgStatus.local) btns += '<button class="cfg-row-btn" onclick="cfgDownloadPio(_cfgActive)">⬇ platformio.ini</button>';
           btns += ghostRename + ghostDelete;
         } else if (isPending) {
           btns += '<span class="cfg-filebadge pending">' + t('cfg.badge.pending') + '</span>';
@@ -669,7 +1193,7 @@ function cfgDownload(name, suggestedName) {
 }
 
 // Download the currently active config file under its real layout filename.
-function downloadConfig() { cfgDownload('config.json', _cfgActive); }
+function downloadConfig() { cfgDownload(_cfgActive, _cfgActive); }
 
 // Trigger a browser download of a text blob.
 function _downloadText(content, filename) {
@@ -738,24 +1262,28 @@ function uploadConfig() {
   reader.readAsText(file);
 }
 
-// Apply pending config file switch (if any), then restart the ESP32.
-// Two-step sequence: POST /api/config/activate to swap the active file on LittleFS,
-// then POST /api/restart.  If no file switch is pending, goes straight to restart.
+// Apply pending config file switch (if any), then hot-reload the firmware config.
+// If a pending file is set: activate it first, then trigger reload.
+// No restart — everything reloads dynamically.
 function applyEsp32() {
   cfgStatus(t('cfg.applying'), 'ok');
   var pending = localStorage.getItem(CFG_PENDING_KEY);
-  var doRestart = function () {
-    fetch('/api/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-      .then(function () { startRebootCountdown(); })
-      .catch(function () { startRebootCountdown(); });
+  var doReload = function () {
+    fetch('/api/reload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function () {
+        clearDirty();
+        cfgStatus(t('cfg.applied'), 'ok');
+        setTimeout(function () { loadDebug(); poll(); }, 800);
+      })
+      .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
   };
   if (pending) {
     post('/api/config/activate', { file: pending })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(doRestart)
+      .then(doReload)
       .catch(function (e) { cfgStatus(t('de.err_prefix') + e.message, 'err'); });
   } else {
-    doRestart();
+    doReload();
   }
 }
 
@@ -823,13 +1351,13 @@ function cfgStatus(msg, cls) {
 
 var CFG_DIRTY_KEY = 'mrjfx_dirty';
 
-// Mark config as dirty (unsaved changes pending restart).
+// Mark config as dirty (pending file-switch — only used by cfgChoose).
 function markDirty() {
   localStorage.setItem(CFG_DIRTY_KEY, '1');
   renderDirtyBanner();
 }
 
-// Clear the dirty flag and pending file selection (called after a successful restart).
+// Clear the dirty flag and pending file selection.
 function clearDirty() {
   localStorage.removeItem(CFG_DIRTY_KEY);
   localStorage.removeItem(CFG_PENDING_KEY);
@@ -837,12 +1365,20 @@ function clearDirty() {
   renderDirtyBanner();
 }
 
-// Show or hide the "restart required" dirty banner based on localStorage state.
-// Always hidden in local-server mode (no real device to restart).
+// Show or hide the pending-file-switch banner based on localStorage state.
+// Always hidden in local-server mode.
 function renderDirtyBanner() {
   if (_dbgStatus && _dbgStatus.local) return;
   var dirty = !!localStorage.getItem(CFG_DIRTY_KEY);
   document.getElementById('dirty-banner').style.display = dirty ? '' : 'none';
+}
+
+// Trigger a hot-reload after any config mutation (device/board/bus save/delete).
+// The reload is deferred to Core 1; after 1.5 s we refresh both runtime device states
+// (poll) and the full board/config view (loadDebug) to pick up newly initialised devices.
+function _reloadAfterSave() {
+  fetch('/api/reload', { method: 'POST' }).catch(function () { });
+  setTimeout(function () { loadDebug(); poll(); }, 1500);
 }
 
 /* ── Debug (mise au point) ──────────────────────────────────────────── */
@@ -872,6 +1408,8 @@ var _dbgFirmwarePins = {}; // GPIO → label from compile-time features (/api/st
 function _applyDeviceTypes(dt) {
   _deviceTypes = _stripMeta(dt);
   SERVO_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'servo'; });
+  I2C_SERVO_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'i2c_servo'; });
+  I2C_MOTOR_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'i2c_motor'; });
   STATIC_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'static'; });
   TRAFFIC_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'traffic'; });
   SERVO_STATES = (dt['SerialServo'] || {}).states || [];
@@ -997,7 +1535,7 @@ function scanI2c() {
         html += '<span class="i2c-label">' + t('dbg.scan_i2c_found') + ':</span> ';
         html += d.found.map(function (a) {
           var hex = '0x' + ('0' + a.toString(16).toUpperCase()).slice(-2);
-          var name = _i2cKnown[a] ? ' <span class="i2c-name">' + _i2cKnown[a] + '</span>' : '';
+          var name = (d.names && d.names[a]) ? ' <span class="i2c-name">' + d.names[a] + '</span>' : '';
           return '<span class="i2c-addr">' + hex + name + '</span>';
         }).join(' ');
       }
@@ -1062,7 +1600,7 @@ function onLayoutNameInput() {
 // Persist the full config object to /api/config; clears dirty on success.
 function saveCfg(cfg) {
   fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) })
-    .then(function (r) { if (r.ok) clearDirty(); })
+    .then(function (r) { if (r.ok) { clearDirty(); _reloadAfterSave(); } })
     .catch(function () { });
 }
 
@@ -1137,16 +1675,26 @@ function renderDipPcb(board, boardApiIdx, def) {
         desired: rt ? rt.desired : 0,
         state: rt ? rt.state : 0,
         addr: cfgDev.address || 0,
-        pins: rt ? (rt.pins || []) : []
+        pins: rt ? (rt.pins || []) : [],
+        label: cfgDev.label
       };
+      if (cfgDev.positions !== undefined) merged.positions = cfgDev.positions;
+      if (cfgDev.pulse_min_us !== undefined) merged.pulse_min_us = cfgDev.pulse_min_us;
+      if (cfgDev.pulse_max_us !== undefined) merged.pulse_max_us = cfgDev.pulse_max_us;
+      if (cfgDev.speed !== undefined) merged.speed = cfgDev.speed;
+      if (cfgDev.states !== undefined) merged.states = cfgDev.states;
+      if (cfgDev.neutral_us !== undefined) merged.neutral_us = cfgDev.neutral_us;
+      if (cfgDev.angle_a !== undefined) merged.angle_a = cfgDev.angle_a;
+      if (cfgDev.angle_b !== undefined) merged.angle_b = cfgDev.angle_b;
       _busDev[cfgDev.id] = merged; // cache for openDevEditorById
       return merged;
     });
     return '<div class="dbg-pcb">'
       + '<div class="dbg-info">' + tbt(board.type, 'desc', def.description || '') + '</div>'
       + devs.map(function (d) { return renderBusDevice(boardApiIdx, d); }).join('')
-      + '<div class="dbg-bus-add"><button class="dbg-hbtn" onclick="openDevEditor('
-      + boardApiIdx + ',1,null,SERVO_TYPES)">' + t('de.add_btn') + '</button></div>'
+      + (def.no_devices ? '' :
+        '<div class="dbg-bus-add"><button class="dbg-hbtn" onclick="openDevEditor('
+        + boardApiIdx + ',1,null,SERVO_TYPES)">' + t('de.add_btn') + '</button></div>')
       + '</div>';
   }
   var allPins = def.pins || [];
@@ -1262,7 +1810,7 @@ function deleteBusDev(id) {
       });
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function () { markDirty(); loadDebug(); })
+    .then(function () { _reloadAfterSave(); loadDebug(); })
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 
@@ -1291,6 +1839,8 @@ function renderPin(board, boardApiIdx, pin) {
 
   var num = pin.wiring;
   var isSpi = board.spiRank > 0;
+  var btDef = _boardTypes[board.type] || {};
+  var isI2c = !isSpi && btDef.busType === 'i2c';
   var dev = dbgFindDev(boardApiIdx, num);
   var cls = '', onclick = '', inner = '', ledBtn = '', editBtn = '';
 
@@ -1311,23 +1861,39 @@ function renderPin(board, boardApiIdx, pin) {
       + ' title="card\u00a0' + card + '\u00a0ch\u00a0' + ch + '">' + LED_ICO + '</button>';
   }
 
+  var i2cTypeFilter = isI2c ? ',I2C_SERVO_TYPES.concat(I2C_MOTOR_TYPES)' : '';
   if (dev && dev._cfgOnly) {
     cls = 'cfg';
     var ico = ICONS[dev.type] || ICONS['_'];
     var tip = tooltip(dev.type);
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
-      + '<span class="dbg-pin-num">' + num + '</span>';
-    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + ')">✎</button>';
+      + '<span class="dbg-pin-num">' + pin.label + '</span>';
+    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
   } else if (dev) {
+    var isDevI2cServo = I2C_SERVO_TYPES.indexOf(dev.type) >= 0;
     cls = dev.desired > 0 ? 'on' : 'off';
-    var ns = dev.desired > 0 ? 0 : 1;
-    onclick = ' onclick="dbgToggleDev(\'' + dev.id + '\',' + ns + ')"';
+    if (isDevI2cServo) {
+      var sc = dev.stateCount || 2;
+      onclick = ' onclick="dbgCycleDev(\'' + dev.id + '\',' + dev.desired + ',' + sc + ')"';
+    } else {
+      var ns = dev.desired > 0 ? 0 : 1;
+      onclick = ' onclick="dbgToggleDev(\'' + dev.id + '\',' + ns + ')"';
+    }
     var ico = ICONS[dev.type] || ICONS['_'];
     var tip = tooltip(dev.type);
+    var stateLabel = isDevI2cServo && dev.desired > 0 ? '<span class="dbg-pin-state">P' + dev.desired + '</span>' : '';
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
-      + '<span class="dbg-pin-num">' + num + '</span>';
-    ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
-    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + ')">✎</button>';
+      + '<span class="dbg-pin-num">' + pin.label + '</span>' + stateLabel;
+    if (!isI2c) ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
+    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
+  } else if (isI2c) {
+    // I²C expansion channel — no GPIO test, open I2C servo editor
+    inner = '<span class="dbg-pin-num">' + pin.label + '</span>';
+    if (caps.indexOf('output') >= 0) {
+      editBtn = '<button class="dbg-edit-btn" title="' + t('de.add_tip') + '" onclick="event.stopPropagation();openDevEditor(' + boardApiIdx + ',' + num + ',null,I2C_SERVO_TYPES.concat(I2C_MOTOR_TYPES))">+</button>';
+    } else {
+      cls = 'nc';
+    }
   } else if (!isSpi) {
     var sysLbl = _dbgSysPins[num] || '';
     if (sysLbl) {
@@ -1372,6 +1938,15 @@ function dbgToggleDev(id, on) {
   post('/api/switch', { id: id, on: !!on })
     .then(function () { loadDebug(); })
     .catch(function (e) { console.error('dbgToggleDev', e); });
+}
+
+// Cycle a multi-state device (e.g. PCA9685Servo) through its states on each click.
+// desired=current state, stateCount=total states (0=STOP + N positions).
+function dbgCycleDev(id, desired, stateCount) {
+  var next = (desired + 1) % stateCount;
+  post('/api/device', { id: id, state: next })
+    .then(function () { loadDebug(); })
+    .catch(function (e) { console.error('dbgCycleDev', e); });
 }
 
 // Apply a UI theme (night | amber | signal); persists choice in localStorage.
@@ -1686,7 +2261,7 @@ function renderAbout(s) {
     var FEAT_LABELS = {
       api: 'API', audio: 'Audio', config: 'Config', dcc: 'DCC',
       lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo',
-      oled: 'OLED', spi: 'SPI', webui: 'WebUI', wifi: 'WiFi'
+      i2c: 'I²C', oled: 'OLED', spi: 'SPI', webui: 'WebUI', wifi: 'WiFi'
     };
     var badges = '';
     Object.keys(FEAT_LABELS).forEach(function (k) {
@@ -1725,7 +2300,9 @@ function loadParams() {
 
 /* ── Device editor ──────────────────────────────────────────────────── */
 
-var _deEditId = null; // id of the device currently being edited, null = new
+var _deEditId = null;    // id of the device currently being edited, null = new
+var _deFixedPin = undefined;          // pin/channel locked from context (pin click), undefined = free
+var _deFixedBoardApiIdx = undefined;  // board index locked from context (I2C boards)
 
 // Opens the device editor for an existing device, looking up the best available data source.
 // Bus devices come from _busDev (config-sourced, has servoId); GPIO devices come from _dbgDevs.
@@ -1751,9 +2328,63 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
     openDevEditor(boardApiIdx, pin, merged, typeFilter);
     return;
   }
-  // Non-bus devices: use runtime dev directly
+  // Non-bus devices: use runtime dev, merging config-only fields (angle_a, angle_b, etc.)
   for (var j = 0; j < _dbgDevs.length; j++) {
-    if (_dbgDevs[j].id === id) { openDevEditor(boardApiIdx, pin, _dbgDevs[j], typeFilter); return; }
+    if (_dbgDevs[j].id === id) {
+      var rtDev = _dbgDevs[j];
+      var cfgLookup = null;
+      if (_dbgCfg && _dbgCfg.devices) {
+        for (var k = 0; k < _dbgCfg.devices.length; k++) {
+          if (_dbgCfg.devices[k].id === id) { cfgLookup = _dbgCfg.devices[k]; break; }
+        }
+      }
+      if (cfgLookup && (cfgLookup.angle_a !== undefined || cfgLookup.angle_b !== undefined
+        || cfgLookup.positions !== undefined || cfgLookup.speed !== undefined
+        || cfgLookup.states !== undefined || cfgLookup.neutral_us !== undefined)) {
+        var mDev = {
+          id: rtDev.id, type: rtDev.type, board: rtDev.board,
+          desired: rtDev.desired, state: rtDev.state, addr: rtDev.addr,
+          pins: rtDev.pins, label: rtDev.label
+        };
+        if (cfgLookup.angle_a !== undefined) mDev.angle_a = cfgLookup.angle_a;
+        if (cfgLookup.angle_b !== undefined) mDev.angle_b = cfgLookup.angle_b;
+        if (cfgLookup.positions !== undefined) mDev.positions = cfgLookup.positions;
+        if (cfgLookup.pulse_min_us !== undefined) mDev.pulse_min_us = cfgLookup.pulse_min_us;
+        if (cfgLookup.pulse_max_us !== undefined) mDev.pulse_max_us = cfgLookup.pulse_max_us;
+        if (cfgLookup.speed !== undefined) mDev.speed = cfgLookup.speed;
+        if (cfgLookup.states !== undefined) mDev.states = cfgLookup.states;
+        if (cfgLookup.neutral_us !== undefined) mDev.neutral_us = cfgLookup.neutral_us;
+        openDevEditor(boardApiIdx, pin, mDev, typeFilter);
+      } else {
+        openDevEditor(boardApiIdx, pin, rtDev, typeFilter);
+      }
+      return;
+    }
+  }
+  // Device not in runtime — look up in config (cfg-only: firmware not restarted after save).
+  if (_dbgCfg && _dbgCfg.devices) {
+    for (var m = 0; m < _dbgCfg.devices.length; m++) {
+      var cfgDev = _dbgCfg.devices[m];
+      if (cfgDev.id === id) {
+        var cfgOnlyDev = {
+          id: cfgDev.id, type: cfgDev.type,
+          board: boardApiIdx + 1,
+          desired: 0, state: 0,
+          addr: cfgDev.address || 0,
+          pins: [pin], label: cfgDev.label
+        };
+        if (cfgDev.positions !== undefined) cfgOnlyDev.positions = cfgDev.positions;
+        if (cfgDev.pulse_min_us !== undefined) cfgOnlyDev.pulse_min_us = cfgDev.pulse_min_us;
+        if (cfgDev.pulse_max_us !== undefined) cfgOnlyDev.pulse_max_us = cfgDev.pulse_max_us;
+        if (cfgDev.speed !== undefined) cfgOnlyDev.speed = cfgDev.speed;
+        if (cfgDev.states !== undefined) cfgOnlyDev.states = cfgDev.states;
+        if (cfgDev.neutral_us !== undefined) cfgOnlyDev.neutral_us = cfgDev.neutral_us;
+        if (cfgDev.angle_a !== undefined) cfgOnlyDev.angle_a = cfgDev.angle_a;
+        if (cfgDev.angle_b !== undefined) cfgOnlyDev.angle_b = cfgDev.angle_b;
+        openDevEditor(boardApiIdx, pin, cfgOnlyDev, typeFilter);
+        return;
+      }
+    }
   }
   openDevEditor(boardApiIdx, pin, null, typeFilter);
 }
@@ -1763,6 +2394,8 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
 // dev is the existing device data (null for new); typeFilter restricts the type dropdown.
 function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
   _deEditId = dev ? dev.id : null;
+  _deFixedPin = prefillPin;
+  _deFixedBoardApiIdx = boardApiIdx;
 
   // Type select — filtered if typeFilter provided (e.g. SERVO_TYPES for bus boards)
   var typeEl = document.getElementById('de-type');
@@ -1770,6 +2403,8 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
   typeEl.innerHTML = typeList.map(function (tp) {
     return '<option value="' + tp + '">' + tp + ' — ' + tooltip(tp) + '</option>';
   }).join('');
+  // Lock type when there is only one option (e.g. PCA9685Servo on an I²C board)
+  typeEl.disabled = typeList.length === 1;
 
   // Board select
   var boardEl = document.getElementById('de-board');
@@ -1782,7 +2417,17 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
     document.getElementById('de-title').textContent = t('de.edit_prefix') + dev.id;
     document.getElementById('de-id').value = dev.id;
     typeEl.value = dev.type;
-    boardEl.value = dev.board - 1;
+    // dev.board may be a string ID (from config) or a 1-based integer (from runtime API).
+    // Resolve to 0-based index in _dbgBoards.
+    if (typeof dev.board === 'number') {
+      boardEl.value = dev.board - 1;
+    } else {
+      var bIdx = -1;
+      for (var bi = 0; bi < _dbgBoards.length; bi++) {
+        if (_dbgBoards[bi].id === dev.board) { bIdx = bi; break; }
+      }
+      boardEl.value = bIdx >= 0 ? bIdx : (boardApiIdx !== undefined ? boardApiIdx : 0);
+    }
     document.getElementById('de-addr').value = dev.addr > 0 ? dev.addr : '';
     document.getElementById('de-defstate').value = dev.desired > 0 ? 'on' : '';
     document.getElementById('de-del-btn').style.display = '';
@@ -1812,12 +2457,16 @@ function closeDevEditor() {
 }
 
 // Update addr/board field visibility and labels based on the currently selected device type.
-// Servo devices: board selector hidden (servo is on a UART bus board, not a GPIO board).
+// Servo devices (UART): board selector hidden (bus board is implicit from the chain).
+// I2C servo devices: board selector hidden (board and channel are fixed from pin click context).
 function deUpdateAddrLabel() {
-  var isServo = SERVO_TYPES.indexOf(document.getElementById('de-type').value) >= 0;
-  // Board field: hide for servos (they're on a UART bus board, not a GPIO board)
+  var type = document.getElementById('de-type').value;
+  var isServo = SERVO_TYPES.indexOf(type) >= 0;
+  var isI2cServo = I2C_SERVO_TYPES.indexOf(type) >= 0;
+  var isI2cMotor = I2C_MOTOR_TYPES.indexOf(type) >= 0;
+  // Board field: hide for UART servos and I2C boards (board is implicit from context)
   var boardField = document.getElementById('de-board-field');
-  if (boardField) boardField.style.display = isServo ? 'none' : '';
+  if (boardField) boardField.style.display = (isServo || isI2cServo || isI2cMotor) ? 'none' : '';
   // Addr field: always show — DCC address for both LED devices and servos
   var addrField = document.querySelector('#de-modal #de-addr');
   var addrFieldRow = addrField ? addrField.closest('.de-field') : null;
@@ -1830,17 +2479,107 @@ function deUpdateAddrLabel() {
 }
 
 // Rebuild the wiring input(s) for the currently selected device type.
-// Servo types get free-text number inputs (UART bus ID 1-253).
-// GPIO types get <select> dropdowns showing available output pins from board_types.json,
-//   filtered to exclude already-used pins and system pins (_dbgSysPins).
-// Called on modal open (prefillPin/dev provided) and on type/board change (no args,
-//   preserve existing values).
+// UART servo: free-text number input (bus ID 1-253).
+// I2C servo (PCA9685): channel is fixed from pin-click context — shown as a badge.
+// GPIO/SPI: <select> dropdown filtered to available output pins.
+// Called on modal open (prefillPin/dev provided) and on type/board change (no args).
 function deUpdateWiring(prefillPin, dev) {
   var type = document.getElementById('de-type').value;
   var isServo = SERVO_TYPES.indexOf(type) >= 0;
-  var count = (_deviceTypes[type] || {}).wiring !== undefined ? (_deviceTypes[type] || {}).wiring : 1;
+  var isI2cServo = I2C_SERVO_TYPES.indexOf(type) >= 0;
+  var isI2cMotor = I2C_MOTOR_TYPES.indexOf(type) >= 0;
+  var count = (_deviceTypes[type] || {}).wires !== undefined ? (_deviceTypes[type] || {}).wires : 1;
   var grp = document.getElementById('de-wiring-grp');
-  if (count === 0) { grp.innerHTML = ''; return; }
+  var extraGrp = document.getElementById('de-extra-grp');
+
+  function makePosRow(lbl, ang, dur, easeOut) {
+    return '<div class="de-pos-row">'
+      + '<input type="text" class="de-pos-lbl" placeholder="Label" value="' + (lbl || '') + '">'
+      + '<input type="number" class="de-pos-ang" min="-90" max="90" placeholder="Angle°" value="' + (ang !== undefined ? ang : 0) + '">'
+      + '<input type="number" class="de-pos-dur" min="100" max="30000" placeholder="Durée ms" value="' + (dur || 2000) + '">'
+      + '<label title="Ralentissement en fin de course (porte, barrière)" style="font-size:.8rem;white-space:nowrap">'
+      + '<input type="checkbox" class="de-pos-ease"' + (easeOut ? ' checked' : '') + '> ↘ ease</label>'
+      + '<button type="button" class="de-pos-del" onclick="deRemovePosition(this)">×</button>'
+      + '</div>';
+  }
+
+  function makeMotorStateRow(lbl, spd, dur, rampUp, rampDown) {
+    return '<div class="de-pos-row">'
+      + '<input type="text" class="de-mst-lbl" placeholder="' + t('de.mst_lbl_ph') + '" value="' + (lbl || '') + '" style="width:5rem">'
+      + '<input type="number" class="de-mst-spd" min="-100" max="100" value="' + (spd !== undefined ? spd : 50) + '" style="width:4rem" title="' + t('de.mst_spd_tip') + '">'
+      + '<input type="number" class="de-mst-dur" min="0" max="300000" value="' + (dur !== undefined ? dur : 0) + '" style="width:5rem" title="' + t('de.mst_dur_tip') + '">'
+      + '<input type="number" class="de-mst-up"  min="0" max="30000"  value="' + (rampUp || 0) + '" style="width:4rem" title="' + t('de.mst_up_tip') + '">'
+      + '<input type="number" class="de-mst-dn"  min="0" max="30000"  value="' + (rampDown || 0) + '" style="width:4rem" title="' + t('de.mst_dn_tip') + '">'
+      + '<button type="button" class="de-pos-del" onclick="deRemoveMotorState(this)">×</button>'
+      + '</div>';
+  }
+
+  function renderExtraGrp() {
+    if (!extraGrp) return;
+    if (isI2cServo) {
+      var positions = (dev && dev.positions) || [];
+      var rowsHtml = positions.map(function (p) {
+        return makePosRow(p.label, p.angle, p.duration_ms, p.ease_out);
+      }).join('');
+      if (!rowsHtml) rowsHtml = makePosRow('Pos 1', 90, 2000); // default row
+      var pMin = (dev && dev.pulse_min_us !== undefined) ? dev.pulse_min_us : 1000;
+      var pMax = (dev && dev.pulse_max_us !== undefined) ? dev.pulse_max_us : 2000;
+      extraGrp.innerHTML = '<div class="de-field"><label>Positions</label>'
+        + '<div id="de-positions-list">' + rowsHtml + '</div>'
+        + '<button type="button" class="btn de-pos-add" onclick="deAddPosition()">+ Position</button>'
+        + '</div>'
+        + '<div class="de-field"><label>Calibration PWM (µs)</label>'
+        + '<div style="display:flex;gap:.5rem;align-items:center">'
+        + '<span style="font-size:.8rem">−90°</span>'
+        + '<input type="number" id="de-pulse-min" min="500" max="2500" value="' + pMin + '" style="width:5rem">'
+        + '<span style="font-size:.8rem">+90°</span>'
+        + '<input type="number" id="de-pulse-max" min="500" max="2500" value="' + pMax + '" style="width:5rem">'
+        + '<span style="font-size:.75rem;color:var(--c-muted)">SG90: 1000/2000 · ext: 500/2500</span>'
+        + '</div></div>';
+    } else if (isI2cMotor) {
+      var motorStates = (dev && dev.states) || [];
+      // Backward compat: old config with just "speed" → show as single state
+      if (motorStates.length === 0 && dev && dev.speed !== undefined) {
+        motorStates = [{ speed: dev.speed, duration_ms: 0, ramp_up_ms: 0, ramp_down_ms: 0 }];
+      }
+      var mRowsHtml = motorStates.map(function (s) {
+        return makeMotorStateRow(s.label, s.speed, s.duration_ms, s.ramp_up_ms, s.ramp_down_ms);
+      }).join('');
+      if (!mRowsHtml) mRowsHtml = makeMotorStateRow('', 50, 0, 0, 0);
+      var neu = (dev && dev.neutral_us !== undefined) ? dev.neutral_us : 1500;
+      extraGrp.innerHTML = '<div class="de-field"><label>États moteur</label>'
+        + '<div style="display:flex;gap:.3rem;font-size:.75rem;margin-bottom:.2rem;color:var(--c-muted)">'
+        + '<span style="width:5rem">Label</span>'
+        + '<span style="width:4rem">Vit.</span>'
+        + '<span style="width:5rem">Durée ms</span>'
+        + '<span style="width:4rem">↑ ms</span>'
+        + '<span style="width:4rem">↓ ms</span>'
+        + '</div>'
+        + '<div id="de-motor-states-list">' + mRowsHtml + '</div>'
+        + '<button type="button" class="btn de-pos-add" onclick="deAddMotorState()">' + t('de.mst_add_btn') + '</button>'
+        + '</div>'
+        + '<div class="de-field">'
+        + '<label>' + t('de.mst_neutral_lbl') + '</label>'
+        + '<div style="display:flex;gap:.5rem;align-items:center">'
+        + '<input type="number" id="de-motor-neutral" min="1000" max="2000" value="' + neu + '" style="width:5rem">'
+        + '<span style="font-size:.75rem;color:var(--c-muted)">' + t('de.mst_neutral_hint') + '</span>'
+        + '</div></div>';
+    } else {
+      extraGrp.innerHTML = '';
+    }
+  }
+
+  if (count === 0) { grp.innerHTML = ''; renderExtraGrp(); return; }
+
+  // I2C servo/motor: channel locked from the pin that was clicked — no selector needed
+  if ((isI2cServo || isI2cMotor) && _deFixedPin !== undefined) {
+    grp.innerHTML = '<div class="de-field"><label>' + t('de.lbl_wiring') + '</label>'
+      + '<div class="de-wiring-row"><span class="de-wiring-fixed">CH ' + _deFixedPin + '</span>'
+      + '<input type="hidden" class="de-w" value="' + _deFixedPin + '"></div></div>';
+    renderExtraGrp();
+    deUpdateIdPlaceholder();
+    return;
+  }
 
   // Preserve currently displayed values when called from onchange (no args)
   var existingInputs = grp.querySelectorAll('.de-w');
@@ -1923,7 +2662,51 @@ function deUpdateWiring(prefillPin, dev) {
 
   html += '</div></div>';
   grp.innerHTML = html;
+  renderExtraGrp();
   deUpdateIdPlaceholder();
+}
+
+// Add a new (empty) position row to the positions list editor.
+function deAddPosition() {
+  var list = document.getElementById('de-positions-list');
+  if (!list) return;
+  var n = list.querySelectorAll('.de-pos-row').length + 1;
+  var row = document.createElement('div');
+  row.className = 'de-pos-row';
+  row.innerHTML = '<input type="text" class="de-pos-lbl" placeholder="Label" value="Pos ' + n + '">'
+    + '<input type="number" class="de-pos-ang" min="-90" max="90" placeholder="Angle°" value="0">'
+    + '<input type="number" class="de-pos-dur" min="100" max="30000" placeholder="Durée ms" value="2000">'
+    + '<label title="Ralentissement en fin de course (porte, barrière)" style="font-size:.8rem;white-space:nowrap">'
+    + '<input type="checkbox" class="de-pos-ease"> ↘ ease</label>'
+    + '<button type="button" class="de-pos-del" onclick="deRemovePosition(this)">×</button>';
+  list.appendChild(row);
+}
+
+// Remove a position row (called from the × button inside the row).
+function deRemovePosition(btn) {
+  var row = btn.parentElement;
+  if (row && row.parentElement) row.parentElement.removeChild(row);
+}
+
+// Add a new (empty) motor state row to the motor states list editor.
+function deAddMotorState() {
+  var list = document.getElementById('de-motor-states-list');
+  if (!list) return;
+  var row = document.createElement('div');
+  row.className = 'de-pos-row';
+  row.innerHTML = '<input type="text" class="de-mst-lbl" placeholder="' + t('de.mst_lbl_ph') + '" style="width:5rem">'
+    + '<input type="number" class="de-mst-spd" min="-100" max="100" value="50" style="width:4rem" title="' + t('de.mst_spd_tip') + '">'
+    + '<input type="number" class="de-mst-dur" min="0" max="300000" value="0" style="width:5rem" title="' + t('de.mst_dur_tip') + '">'
+    + '<input type="number" class="de-mst-up"  min="0" max="30000"  value="0" style="width:4rem" title="' + t('de.mst_up_tip') + '">'
+    + '<input type="number" class="de-mst-dn"  min="0" max="30000"  value="0" style="width:4rem" title="' + t('de.mst_dn_tip') + '">'
+    + '<button type="button" class="de-pos-del" onclick="deRemoveMotorState(this)">×</button>';
+  list.appendChild(row);
+}
+
+// Remove a motor state row (called from the × button inside the row).
+function deRemoveMotorState(btn) {
+  var row = btn.parentElement;
+  if (row && row.parentElement) row.parentElement.removeChild(row);
 }
 
 // Generate a suggested device ID from the type name and first pin (shown as placeholder when id is empty).
@@ -1931,7 +2714,7 @@ function deUpdateIdPlaceholder() {
   var idEl = document.getElementById('de-id');
   if (!idEl || idEl.value.trim()) return;
   var type = (document.getElementById('de-type') || {}).value || '';
-  var count = (_deviceTypes[type] || {}).wiring !== undefined ? (_deviceTypes[type] || {}).wiring : 1;
+  var count = (_deviceTypes[type] || {}).wires !== undefined ? (_deviceTypes[type] || {}).wires : 1;
   var firstPinEl = document.querySelector('.de-w');
   var firstPin = (count > 0 && firstPinEl) ? (parseInt(firstPinEl.value, 10) || '') : '';
   var shortType = type.replace(/^MrJDB/, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1941,9 +2724,9 @@ function deUpdateIdPlaceholder() {
 // Show or hide the device editor inline status message (cls: 'ok' | 'err').
 function deStatus(msg, cls) {
   var el = document.getElementById('de-status');
-  el.style.display = msg ? '' : 'none';
-  el.className = 'de-status ' + cls;
-  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.className = 'de-status ' + (cls || '');
+  el.textContent = msg || '';
 }
 
 // Validate form, auto-generate ID if blank, build the device entry, write to config.json.
@@ -1951,10 +2734,13 @@ function deStatus(msg, cls) {
 function saveDevEditor() {
   var id = (document.getElementById('de-id').value || '').trim();
   var type = document.getElementById('de-type').value;
+  var isI2cType = I2C_SERVO_TYPES.indexOf(type) >= 0 || I2C_MOTOR_TYPES.indexOf(type) >= 0;
   var boardIdx = parseInt(document.getElementById('de-board').value, 10);
+  // For I2C devices the board field is hidden — always use the context-locked index.
+  if (isI2cType && _deFixedBoardApiIdx !== undefined) boardIdx = _deFixedBoardApiIdx;
   var addrStr = (document.getElementById('de-addr').value || '').trim();
   var defState = document.getElementById('de-defstate').value;
-  var count = (_deviceTypes[type] || {}).wiring !== undefined ? (_deviceTypes[type] || {}).wiring : 1;
+  var count = (_deviceTypes[type] || {}).wires !== undefined ? (_deviceTypes[type] || {}).wires : 1;
 
   if (!id) {
     var firstPinEl = document.querySelector('.de-w');
@@ -1969,6 +2755,8 @@ function saveDevEditor() {
   }
 
   var isServo = SERVO_TYPES.indexOf(type) >= 0;
+  var isI2cServo2 = I2C_SERVO_TYPES.indexOf(type) >= 0;
+  var isI2cMotor2 = I2C_MOTOR_TYPES.indexOf(type) >= 0;
   var wiring = [];
   if (count > 0) {
     var wInputs = document.querySelectorAll('.de-w');
@@ -1984,6 +2772,9 @@ function saveDevEditor() {
   }
 
   var board = _dbgBoards[boardIdx];
+  // Fallback: runtime board list may be stale — try config boards (source of truth for id).
+  if (!board && isI2cType && _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardIdx])
+    board = _dbgCfg.boards[boardIdx];
   if (!board) { deStatus(t('de.err_board'), 'err'); return; }
 
   var dev = { id: id, type: type, board: board.id };
@@ -1991,6 +2782,71 @@ function saveDevEditor() {
   else if (count > 1) dev.wiring = wiring;
   if (addrStr) { var addr = parseInt(addrStr, 10); if (addr >= 1 && addr <= 10239) dev.address = addr; }
   if (defState) dev.default_state = defState;
+
+  if (isI2cServo2) {
+    var rows = document.querySelectorAll('#de-positions-list .de-pos-row');
+    var positions = [];
+    var angErr = false;
+    rows.forEach(function (row) {
+      var lbl = (row.querySelector('.de-pos-lbl').value || '').trim();
+      var ang = parseInt(row.querySelector('.de-pos-ang').value, 10);
+      var dur = parseInt(row.querySelector('.de-pos-dur').value, 10);
+      var easeEl = row.querySelector('.de-pos-ease');
+      var easeOut = easeEl ? easeEl.checked : false;
+      if (isNaN(ang) || ang < -90 || ang > 90) { angErr = true; return; }
+      if (isNaN(dur) || dur < 100) dur = 2000;
+      var pos = { angle: ang, duration_ms: dur };
+      if (lbl) pos.label = lbl;
+      if (easeOut) pos.ease_out = true;
+      positions.push(pos);
+    });
+    if (angErr) { deStatus('Angle invalide — plage : −90°..+90°', 'err'); document.getElementById('de-save-btn').disabled = false; return; }
+    if (positions.length === 0) { deStatus(t('de.err_pos_empty'), 'err'); document.getElementById('de-save-btn').disabled = false; return; }
+    dev.positions = positions;
+    var pMinEl = document.getElementById('de-pulse-min');
+    var pMaxEl = document.getElementById('de-pulse-max');
+    var pMinV = pMinEl ? parseInt(pMinEl.value, 10) : 1000;
+    var pMaxV = pMaxEl ? parseInt(pMaxEl.value, 10) : 2000;
+    if (isNaN(pMinV) || pMinV < 500 || pMinV > 2500) pMinV = 1000;
+    if (isNaN(pMaxV) || pMaxV < 500 || pMaxV > 2500) pMaxV = 2000;
+    if (pMinV !== 1000 || pMaxV !== 2000) { dev.pulse_min_us = pMinV; dev.pulse_max_us = pMaxV; }
+    else { delete dev.pulse_min_us; delete dev.pulse_max_us; }
+  }
+  if (isI2cMotor2) {
+    var mRows = document.querySelectorAll('#de-motor-states-list .de-pos-row');
+    var mStates = [];
+    var mErr = false;
+    mRows.forEach(function (row) {
+      var lbl = (row.querySelector('.de-mst-lbl').value || '').trim();
+      var spd = parseInt(row.querySelector('.de-mst-spd').value, 10);
+      var dur = parseInt(row.querySelector('.de-mst-dur').value, 10);
+      var rampUp = parseInt(row.querySelector('.de-mst-up').value, 10);
+      var rampDn = parseInt(row.querySelector('.de-mst-dn').value, 10);
+      if (isNaN(spd) || spd < -100 || spd > 100) { mErr = true; return; }
+      if (isNaN(dur) || dur < 0) dur = 0;
+      if (isNaN(rampUp) || rampUp < 0) rampUp = 0;
+      if (isNaN(rampDn) || rampDn < 0) rampDn = 0;
+      var ms = { speed: spd };
+      if (dur > 0) ms.duration_ms = dur;
+      if (rampUp > 0) ms.ramp_up_ms = rampUp;
+      if (rampDn > 0) ms.ramp_down_ms = rampDn;
+      if (lbl) ms.label = lbl;
+      mStates.push(ms);
+    });
+    if (mErr) { deStatus(t('de.err_mst_speed'), 'err'); document.getElementById('de-save-btn').disabled = false; return; }
+    if (mStates.length === 0) { deStatus(t('de.err_mst_empty'), 'err'); document.getElementById('de-save-btn').disabled = false; return; }
+    dev.states = mStates;
+    delete dev.speed; // remove legacy single-speed field
+    var neuEl = document.getElementById('de-motor-neutral');
+    var neuV = neuEl ? parseInt(neuEl.value, 10) : 1500;
+    if (isNaN(neuV) || neuV < 1000 || neuV > 2000) {
+      deStatus(t('de.err_mst_neutral'), 'err');
+      document.getElementById('de-save-btn').disabled = false;
+      return;
+    }
+    if (neuV !== 1500) dev.neutral_us = neuV;
+    else delete dev.neutral_us;
+  }
 
   document.getElementById('de-save-btn').disabled = true;
   deStatus(t('de.saving'), 'ok');
@@ -2022,7 +2878,7 @@ function saveDevEditor() {
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function () {
-      markDirty();
+      _reloadAfterSave();
       closeDevEditor();
       loadDebug();
     })
@@ -2046,7 +2902,7 @@ function deleteDevEditor() {
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function () {
-      markDirty();
+      _reloadAfterSave();
       closeDevEditor();
       loadDebug();
     })
@@ -2195,6 +3051,19 @@ function beUpdateFields(board) {
   } else if (!board || !isSpi) {
     document.getElementById('be-pincount').value = '';
   }
+
+  // i2c_address + oscillator_hz: only for I2C boards
+  var isI2c = requiredBusType === 'i2c';
+  var i2cField = document.getElementById('be-i2c-field');
+  var oscField = document.getElementById('be-osc-field');
+  var oscHint = document.getElementById('be-osc-hint');
+  if (i2cField) i2cField.style.display = isI2c ? '' : 'none';
+  if (oscField) oscField.style.display = isI2c ? '' : 'none';
+  if (oscHint) oscHint.textContent = t('be.osc_hint');
+  if (isI2c) {
+    document.getElementById('be-i2c-addr').value = (board && board.i2c_address !== undefined) ? board.i2c_address : 64;
+    document.getElementById('be-osc-hz').value = (board && board.oscillator_hz) ? board.oscillator_hz : '';
+  }
 }
 
 // Close the board editor modal without saving.
@@ -2206,9 +3075,9 @@ function closeBoardEditor() {
 // Show or hide the board editor inline status message (cls: 'ok' | 'err' | 'warn').
 function beStatus(msg, cls) {
   var el = document.getElementById('be-status');
-  el.style.display = msg ? '' : 'none';
+  el.style.display = msg ? 'block' : 'none';
   el.className = 'de-status ' + (cls || '');
-  el.textContent = msg;
+  el.textContent = msg || '';
 }
 
 // Validate form, auto-generate ID if blank, write the board entry to config.json.
@@ -2236,6 +3105,12 @@ function saveBoardEditor() {
   var entry = { id: id, type: type };
   if (bus) entry.bus = bus;
   if (def.busType === 'spi_master_only' && pc > 0) entry.pin_count = pc;
+  if (def.busType === 'i2c') {
+    var i2cAddr = parseInt(document.getElementById('be-i2c-addr').value, 10);
+    if (!isNaN(i2cAddr) && i2cAddr !== 64) entry.i2c_address = i2cAddr;
+    var oscHz = parseInt(document.getElementById('be-osc-hz').value, 10);
+    if (!isNaN(oscHz) && oscHz !== 25000000) entry.oscillator_hz = oscHz;
+  }
 
   document.getElementById('be-save-btn').disabled = true;
   beStatus(t('de.saving'), 'ok');
@@ -2263,7 +3138,7 @@ function saveBoardEditor() {
       });
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function () { markDirty(); closeBoardEditor(); loadDebug(); })
+    .then(function () { _reloadAfterSave(); closeBoardEditor(); loadDebug(); })
     .catch(function (e) {
       if (e) { beStatus(t('de.err_prefix') + e.message, 'err'); document.getElementById('be-save-btn').disabled = false; }
     });
@@ -2284,7 +3159,7 @@ function deleteBoard(id) {
       });
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function () { markDirty(); loadDebug(); })
+    .then(function () { _reloadAfterSave(); loadDebug(); })
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 
@@ -2321,7 +3196,7 @@ function addLinkedBus(btType, lbKey) {
         body: JSON.stringify(cfg)
       });
     })
-    .then(function (r) { if (r && !r.ok) throw new Error('HTTP ' + r.status); markDirty(); loadDebug(); })
+    .then(function (r) { if (r && !r.ok) throw new Error('HTTP ' + r.status); _reloadAfterSave(); loadDebug(); })
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 
@@ -2530,9 +3405,9 @@ function closeBusEditor() {
 // Show or hide the bus editor inline status message (cls: 'ok' | 'err' | 'warn').
 function bueStatus(msg, cls) {
   var el = document.getElementById('bue-status');
-  el.style.display = msg ? '' : 'none';
+  el.style.display = msg ? 'block' : 'none';
   el.className = 'de-status ' + (cls || '');
-  el.textContent = msg;
+  el.textContent = msg || '';
 }
 
 // Validate all bus fields (range check per field descriptor), write the bus entry to config.json.
@@ -2579,7 +3454,7 @@ function saveBusEditor() {
       });
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function () { markDirty(); closeBusEditor(); loadDebug(); })
+    .then(function () { _reloadAfterSave(); closeBusEditor(); loadDebug(); })
     .catch(function (e) {
       if (e) { bueStatus(t('de.err_prefix') + e.message, 'err'); document.getElementById('bue-save-btn').disabled = false; }
     });
@@ -2601,7 +3476,7 @@ function deleteBus(key) {
       });
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function () { markDirty(); loadDebug(); renderBusesTab(); })
+    .then(function () { _reloadAfterSave(); loadDebug(); renderBusesTab(); })
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 
@@ -2647,7 +3522,11 @@ fetch('/api/status')
     if (st && st.env) _dbgStatus = st;
     if (_currentCfgTab === 'files' && _currentView === 'config') loadConfigs();
   })
-  .catch(function () {});
-poll();
+  .catch(function () { });
+// Load device-type metadata before the first poll so cockpit cards render correctly.
+fetch('/api/device-types')
+  .then(function (r) { return r.json(); })
+  .then(function (dt) { _applyDeviceTypes(dt); poll(); })
+  .catch(function () { poll(); });
 _pollTimer = setInterval(poll, POLL);
 

@@ -72,12 +72,45 @@ public:
   /** @brief Read any file from LittleFS by path. Returns empty String if absent. */
   static String readFile(const char *path);
 
+  /**
+   * @brief Reload config from LittleFS without a reboot.
+   *
+   * Safe only when no devices are currently running (factory.count() == 0),
+   * which is the case right after a first-boot wizard that saved a config with
+   * buses and boards but no devices yet.
+   *
+   * Sequence: resetIfEmpty → BusRegistry::reset → load → initAll → DCC init.
+   *
+   * @return true on success, false if devices are running or the load fails.
+   */
+  static bool reload();
+
+  /**
+   * @brief Schedule a hot-reload from the HTTP handler (Core 0).
+   *
+   * Sets a volatile flag; the actual reload is deferred to Core 1 via
+   * handlePendingReload(), which must be called from MrJFX::loop().
+   * Safe to call even when devices are running — fullReset() will tear them
+   * down cleanly before the new config is applied.
+   */
+  static void requestReload();
+
+  /**
+   * @brief Execute a pending hot-reload if requestReload() was called.
+   *
+   * Must be called from Core 1 (Arduino loop), strictly between two
+   * CoroutineScheduler::loop() passes.  Performs fullReset(), rebuilds buses
+   * and devices from LittleFS, then resets the scheduler.
+   */
+  static void handlePendingReload();
+
   static constexpr size_t kFsChunkSize = 512; ///< LittleFS read/write chunk size — shared with DeviceApi helpers.
 
 private:
 
   static DeviceFactory _factory;
   static const char *_configPath;
+  static volatile bool _reloadPending;
 
   static String _readFile(const char *path);
 };

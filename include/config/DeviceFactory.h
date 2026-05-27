@@ -145,7 +145,8 @@ public:
     BusType busType = BUS_NONE;         ///< Resolved bus protocol at parse time.
     uint8_t pinCount = 0;               ///< Number of output pins (SPI boards only).
     uint8_t spiRank = 0;                ///< 1-based daisy-chain rank (SPI boards only).
-    uint8_t i2cAddress = 0x40;          ///< I2C address (I2C boards only, default 0x40).
+    uint8_t  i2cAddress   = 0x40;       ///< I2C address (I2C boards only, default 0x40).
+    uint32_t oscillatorHz = 25000000;   ///< PCA9685 oscillator frequency in Hz (default 25 MHz).
 
     bool isRoot() const { return busType == BUS_NONE; }
   };
@@ -165,6 +166,25 @@ public:
 
   /** @brief Call initPins() on every Device created by load(). */
   void initAll();
+
+  /**
+   * @brief Unconditional full reset: suspend, detach and delete every running
+   *        Device (and its associated LobotServo / PCA9685 driver), then clear
+   *        all bus/board/port state.
+   *
+   * MUST be called from the same core as CoroutineScheduler::loop() (Core 1 /
+   * Arduino loop), strictly between two scheduler passes.
+   * After this call, load() can be called again with a fresh config.
+   */
+  void fullReset();
+
+  /**
+   * @brief Clear all bus/board state so load() can be called again.
+   *        Safe only when count() == 0 (no Device objects exist).
+   *        Called by ConfigManager::reload() on first-boot wizard apply.
+   * @return true if reset succeeded, false if devices are already running.
+   */
+  bool resetIfEmpty();
 
   /** @brief Number of devices created by load(). */
   size_t count() const { return _count; }

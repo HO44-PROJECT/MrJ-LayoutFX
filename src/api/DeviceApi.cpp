@@ -132,6 +132,23 @@ void DeviceApi::_onGetDevices() {
         json += (unsigned long)srv->getPosition(pi).duration_ms;
         const char *lbl = srv->getPosition(pi).label;
         if (lbl && *lbl) { json += F(",\"label\":\""); json += lbl; json += '"'; }
+        if (srv->getPosition(pi).ease_out) { json += F(",\"ease_out\":true"); }
+        json += '}';
+      }
+      json += ']';
+    }
+    if (strcmp_P("PCA9685Motor", (const char *)d->getDeviceName()) == 0) {
+      auto *mtr = static_cast<I2cPwmMotorDevice *>(d);
+      json += F(",\"neutral_us\":"); json += mtr->getNeutralUs();
+      json += F(",\"states\":[");
+      for (uint8_t si = 0; si < mtr->getMotorStateCount(); si++) {
+        if (si > 0) json += ',';
+        const I2cPwmMotorDevice::MotorState &ms = mtr->getMotorState(si);
+        json += F("{\"speed\":");        json += (int)ms.speed;
+        json += F(",\"duration_ms\":"); json += (unsigned long)ms.duration_ms;
+        json += F(",\"ramp_up_ms\":"); json += (unsigned long)ms.ramp_up_ms;
+        json += F(",\"ramp_down_ms\":"); json += (unsigned long)ms.ramp_down_ms;
+        if (ms.label[0]) { json += F(",\"label\":\""); json += ms.label; json += '"'; }
         json += '}';
       }
       json += ']';

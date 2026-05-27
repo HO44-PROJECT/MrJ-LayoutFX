@@ -75,6 +75,7 @@
     #include "servo/SerialServoMotorMode.h"
   #endif
   #ifdef MRJFX_I2C_DEVICES_ENABLED
+    #include "servo/I2cPwmMotorDevice.h"
     #include "servo/I2cPwmServoDevice.h"
   #endif
   #ifdef MRJFX_I2C_SCAN_ENABLED

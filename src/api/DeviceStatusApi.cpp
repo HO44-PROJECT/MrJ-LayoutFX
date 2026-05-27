@@ -8,7 +8,7 @@
  */
 
 #include "api/DeviceApi.h"
-#include "api/build_info.h"
+#include "generated/build_info.h"
 
 #ifdef MRJFX_API_SERVER_ENABLED
 

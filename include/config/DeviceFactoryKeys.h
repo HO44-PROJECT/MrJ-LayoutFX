@@ -90,10 +90,18 @@ constexpr char kDevI2cPwmServo[] = "PCA9685Servo";
 constexpr char kDevI2cPwmMotor[] = "PCA9685Motor";
 
 // ── I2C device field keys ─────────────────────────────────────────────────────
-constexpr char kFI2cAddress[] = "i2c_address";
-constexpr char kFPositions[]  = "positions";  ///< Array of {angle, duration_ms} for PCA9685Servo.
+constexpr char kFI2cAddress[]   = "i2c_address";
+constexpr char kFOscillatorHz[] = "oscillator_hz";
+constexpr char kFPositions[]  = "positions";  ///< Array of {angle, duration_ms[, label]} for PCA9685Servo.
 constexpr char kFAngle[]      = "angle";       ///< Angle in degrees (0–180) for a servo position.
 constexpr char kFDurationMs[] = "duration_ms"; ///< Transition duration in ms for a servo position.
-constexpr char kFSpeed[]      = "speed";       ///< Motor speed [-100, +100] for PCA9685Motor.
+constexpr char kFEaseOut[]    = "ease_out";    ///< Quadratic ease-out on this slew (bool, default false).
+constexpr char kFSpeed[]      = "speed";        ///< Motor speed [-100, +100] for PCA9685Motor (backward-compat single-state).
+constexpr char kFNeutralUs[]  = "neutral_us";   ///< PWM µs for stop/neutral on PCA9685Motor (default 1500).
+constexpr char kFStates[]     = "states";        ///< Array of MotorState objects for PCA9685Motor.
+constexpr char kFRampUpMs[]   = "ramp_up_ms";   ///< Ramp-up duration in ms for a MotorState (default 0 = instant).
+constexpr char kFRampDownMs[] = "ramp_down_ms"; ///< Ramp-down duration in ms for a MotorState (default 0 = instant).
+constexpr char kFPulseMinUs[] = "pulse_min_us"; ///< PWM µs for −90° on PCA9685Servo (default 1000).
+constexpr char kFPulseMaxUs[] = "pulse_max_us"; ///< PWM µs for +90° on PCA9685Servo (default 2000).
 
 } // namespace factory_keys

@@ -2242,69 +2242,204 @@
       max-width: 280px
     }
 
-    /* ── Welcome modal ── */
-    #welcome-overlay {
+    /* ── Setup wizard modal ── */
+    #wizard-overlay {
       display: none;
       position: fixed; inset: 0;
       background: rgba(0,0,0,.65);
       z-index: 300
     }
-    #welcome-modal {
+    #wizard-modal {
       display: none;
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%,-50%);
       z-index: 301;
-      background: var(--b1);
-      border: 1px solid var(--b3);
+      background: var(--bg1);
+      border: 1px solid var(--bd);
       border-radius: 12px;
       flex-direction: column;
-      align-items: center;
-      gap: .75rem;
-      padding: 1.75rem 1.5rem 1.5rem;
-      width: min(360px, 92vw);
-      text-align: center
+      width: min(480px, 96vw);
+      max-height: 90vh;
+      overflow: hidden
     }
-    .welcome-icon {
-      font-size: 2.5rem;
-      line-height: 1;
-      color: #4a9ede
+    .wizard-header {
+      padding: 1.25rem 1.5rem .75rem;
+      background: var(--bg1);
+      border-bottom: 1px solid var(--bd);
+      flex-shrink: 0
     }
-    .welcome-title {
-      font-size: 1.05rem;
+    .wizard-progress-track {
+      height: 4px;
+      background: var(--bd);
+      border-radius: 2px;
+      margin-bottom: .75rem;
+      overflow: hidden
+    }
+    .wizard-progress-fill {
+      height: 100%;
+      background: #4a9ede;
+      border-radius: 2px;
+      transition: width .3s ease
+    }
+    .wizard-step-info {
+      font-size: .75rem;
+      color: var(--t3);
+      margin-bottom: .3rem
+    }
+    .wizard-title {
+      font-size: 1rem;
       font-weight: 700;
       color: var(--t1);
       margin: 0
     }
-    .welcome-body {
-      font-size: .82rem;
-      color: var(--t3);
-      margin: 0
+    .wizard-body {
+      padding: 1rem 1.5rem;
+      overflow-y: auto;
+      flex: 1
     }
-    .welcome-steps {
-      text-align: left;
-      font-size: .8rem;
-      color: var(--t2);
-      padding-left: 1.2rem;
-      margin: 0;
+    .wizard-footer {
+      padding: .75rem 1.5rem;
+      background: var(--bg2);
+      border-top: 1px solid var(--bd);
       display: flex;
-      flex-direction: column;
-      gap: .3rem;
-      width: 100%
+      align-items: center;
+      gap: .5rem;
+      flex-shrink: 0
     }
-    .welcome-steps li { line-height: 1.4 }
-    .welcome-btn {
-      margin-top: .25rem;
-      background: #4a9ede;
-      color: #fff;
+    .wizard-btn {
       border: none;
       border-radius: 6px;
-      padding: .55rem 1.4rem;
-      font-size: .88rem;
+      padding: .5rem 1.2rem;
+      font-size: .85rem;
       font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s
+    }
+    .wizard-btn:hover { opacity: .85 }
+    .wizard-btn:disabled { opacity: .45; cursor: not-allowed }
+    .wizard-btn-back {
+      background: var(--bg2);
+      color: var(--t2)
+    }
+    .wizard-btn-next {
+      background: #4a9ede;
+      color: #fff
+    }
+    .wizard-btn-finish {
+      background: #3aaa6a;
+      color: #fff
+    }
+    /* Bus toggle cards */
+    .wiz-bus-card {
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      margin-bottom: .6rem;
+      overflow: hidden;
+      transition: border-color .2s
+    }
+    .wiz-bus-card--on { border-color: #4a9ede }
+    .wiz-bus-header {
+      padding: .6rem .75rem;
+      background: var(--bg1)
+    }
+    .wiz-bus-toggle {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      cursor: pointer;
+      user-select: none
+    }
+    .wiz-bus-toggle input[type=checkbox] {
+      width: 1rem; height: 1rem;
+      accent-color: #4a9ede;
       cursor: pointer
     }
-    .welcome-btn:hover { opacity: .88 }
+    .wiz-bus-label {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--t1)
+    }
+    .wiz-bus-fields {
+      padding: .5rem .75rem .75rem;
+      display: flex;
+      flex-direction: column;
+      gap: .1rem
+    }
+    /* Expansion board rows */
+    .wiz-section-title {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--t2);
+      margin: .5rem 0 .4rem;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+    .wiz-expboard-section { margin-bottom: .75rem }
+    .wiz-expboard-row {
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      padding: .6rem .75rem;
+      margin-bottom: .4rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: .1rem
+    }
+    .wiz-add-board {
+      background: none;
+      border: 1px dashed var(--bd);
+      border-radius: 6px;
+      color: #4a9ede;
+      font-size: .82rem;
+      padding: .35rem .75rem;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: .4rem;
+      transition: background .15s
+    }
+    .wiz-add-board:hover { background: var(--bg1) }
+    .wiz-del-board {
+      position: absolute;
+      top: .4rem; right: .5rem;
+      background: none;
+      border: none;
+      color: var(--t3);
+      cursor: pointer;
+      font-size: .85rem;
+      padding: .1rem .3rem
+    }
+    .wiz-del-board:hover { color: #e05252 }
+    /* Summary */
+    .wiz-summary {
+      background: var(--bg1);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      margin-top: .75rem
+    }
+    .wiz-summary-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--t3);
+      margin: 0 0 .5rem
+    }
+    .wiz-summary-line {
+      font-size: .82rem;
+      color: var(--t2);
+      margin: .2rem 0
+    }
+    .wiz-err {
+      background: rgba(220,60,60,.08);
+      border: 1px solid rgba(220,60,60,.3);
+      border-radius: 6px;
+      color: #c0392b;
+      font-size: .82rem;
+      padding: .5rem .75rem;
+      margin-top: .5rem
+    }
 
     /* ── Bus cards (Buses tab) ── */
     #buses-list {
@@ -2400,8 +2535,8 @@
       top: 50%; left: 50%;
       transform: translate(-50%,-50%);
       z-index: 201;
-      background: var(--b1);
-      border: 1px solid var(--b3);
+      background: var(--bg1);
+      border: 1px solid var(--bd);
       border-radius: 10px;
       flex-direction: column;
       width: min(340px, 95vw);

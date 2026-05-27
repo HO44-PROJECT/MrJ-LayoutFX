@@ -215,13 +215,10 @@ var ICONS = {
     + E,
 
   'PCA9685Motor': S
-    // corps du moteur : rectangle arrondi
-    + '<rect x="3" y="8" width="12" height="8" rx="2" fill="none"/>'
-    // axe sortant
-    + '<circle cx="13" cy="12" r="2" fill="currentColor"/>'
-    // flèche de rotation continue (cercle presque complet)
-    + '<path d="M19 7a7 7 0 1 1-1.5 11"/>'
-    + '<polyline points="21 16 17 17 17 13"/>'
+    + '<rect x="3" y="8" width="14" height="8" rx="2" fill="none"/>'
+    + '<circle cx="14" cy="12" r="2" fill="currentColor"/>'
+    + '<circle cx="14" cy="12" r="7"/>'
+    + '<polyline points="12 3 14 5 12 7"/>'
     + E,
 
   'Led': S

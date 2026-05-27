@@ -106,6 +106,14 @@ public:
   static bool spiReady() { return _spiReady; }
   static bool i2cReady() { return _i2cReady; }
 
+  /**
+   * @brief Mark the I2C bus as already initialised (Wire.begin called externally).
+   *        Prevents activateI2c() from calling Wire.begin() a second time, which
+   *        corrupts the I2C peripheral on arduino-esp32 v3.x.
+   *        Must be called in MrJFX::init() right after Wire.begin().
+   */
+  static void preInitI2c() { _i2cReady = true; }
+
 private:
   static constexpr uint8_t BUS_KEY_LEN = 32; ///< Max length for a bus key string (incl. NUL).
 

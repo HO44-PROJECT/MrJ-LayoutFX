@@ -79,8 +79,8 @@
 
     <!-- Sub-tab bar -->
     <div class="cfg-tabs">
-      <button class="cfg-tab active" data-tab="files"  onclick="switchCfgTab('files')"  data-i18n="cfg.tab.files">Fichiers config</button>
-      <button class="cfg-tab" data-tab="boards" onclick="switchCfgTab('boards')" data-i18n="cfg.tab.boards">Cartes &amp; extensions</button>
+      <button class="cfg-tab active" data-tab="boards" onclick="switchCfgTab('boards')" data-i18n="cfg.tab.boards">Cartes &amp; extensions</button>
+      <button class="cfg-tab" data-tab="files"  onclick="switchCfgTab('files')"  data-i18n="cfg.tab.files">Fichiers config</button>
       <button class="cfg-tab" data-tab="buses"  onclick="switchCfgTab('buses')"  data-i18n="cfg.tab.buses">Bus</button>
       <button class="cfg-tab" data-tab="diag"   onclick="switchCfgTab('diag')"   data-i18n="cfg.tab.diag">Diagnostics</button>
       <input id="cfg-layout-name" type="text" class="cfg-tab-name-inp" data-i18n-placeholder="cfg.layout_name_ph" placeholder="Nom du réseau…" autocomplete="off" oninput="onLayoutNameInput()">
@@ -96,6 +96,7 @@
             <button class="abt-refresh" onclick="refreshDebug()" data-i18n="abt.refresh">Actualiser</button>
             <button class="abt-refresh abt-export" id="cfg-export-btn" onclick="exportCode()" data-i18n="cfg.export_btn" style="display:none">&#x2193; main.cpp</button>
             <span style="width:1px;height:1.2em;background:var(--bd);display:inline-block;margin:0 .1rem"></span>
+            <button class="abt-refresh" onclick="openWizard()" data-i18n="cfg.wizard_btn">Assistant</button>
             <button class="abt-refresh abt-danger" onclick="resetConfig()" data-i18n="cfg.reset_btn">Réinitialiser</button>
           </div>
         </div>
@@ -226,20 +227,9 @@
   <!-- ── Feature tooltip ──────────────────────────────────────────────── -->
   <div id="abt-tooltip"></div>
 
-  <!-- ── Welcome modal (first boot / no devices) ──────────────────────── -->
-  <div id="welcome-overlay"></div>
-  <div id="welcome-modal">
-    <div class="welcome-icon">&#9881;</div>
-    <p class="welcome-title" data-i18n="wlc.title">Aucun device configuré</p>
-    <p class="welcome-body" data-i18n="wlc.body">Commencez par déclarer les bus et les cartes, puis ajoutez vos devices.</p>
-    <ol class="welcome-steps">
-      <li data-i18n="wlc.step1">Onglet <strong>Bus</strong> — créez les bus (SPI, I²C, UART…)</li>
-      <li data-i18n="wlc.step2">Onglet <strong>Boards</strong> — ajoutez vos cartes</li>
-      <li data-i18n="wlc.step3">Cliquez sur une pin pour ajouter un device</li>
-      <li data-i18n="wlc.step4">Redémarrez pour appliquer la configuration</li>
-    </ol>
-    <button class="welcome-btn" onclick="closeWelcome()" data-i18n="wlc.btn">Ouvrir la configuration</button>
-  </div>
+  <!-- ── Setup wizard (first boot / no boards configured) ─────────────── -->
+  <div id="wizard-overlay"></div>
+  <div id="wizard-modal"></div>
 
   <!-- ── Reboot modal ─────────────────────────────────────────────────── -->
   <div id="reboot-overlay"></div>
@@ -271,6 +261,7 @@
         <select id="de-board"></select>
       </div>
       <div id="de-wiring-grp"></div>
+      <div id="de-extra-grp"></div>
       <div class="de-field">
         <label><span class="de-addr-lbl" data-i18n="de.lbl_addr">Adresse DCC</span> <span class="de-addr-hint" data-i18n="de.lbl_addr_hint" style="font-weight:400;text-transform:none;font-size:.9em">(optionnel, 1–10239)</span></label>
         <input type="number" id="de-addr" min="1" max="10239" placeholder="—">
@@ -314,6 +305,17 @@
       <div class="de-field" id="be-pincount-field">
         <label data-i18n="be.lbl_pincount">Sorties</label>
         <input type="number" id="be-pincount" min="1" max="128" placeholder="8">
+      </div>
+      <div class="de-field" id="be-i2c-field">
+        <label data-i18n="be.lbl_i2c_addr">Adresse I²C</label>
+        <input type="number" id="be-i2c-addr" min="0" max="127" placeholder="64">
+      </div>
+      <div class="de-field" id="be-osc-field">
+        <label data-i18n="be.lbl_osc_hz">Oscillateur (Hz)</label>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <input type="number" id="be-osc-hz" min="1000000" max="30000000" placeholder="25000000" style="width:9rem">
+          <span id="be-osc-hint" style="font-size:.75rem;color:var(--c-muted)"></span>
+        </div>
       </div>
       <div id="be-status" class="de-status" style="display:none"></div>
     </div>

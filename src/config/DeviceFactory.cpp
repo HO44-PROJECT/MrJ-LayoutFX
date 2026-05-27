@@ -143,7 +143,8 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       bcfg.spiRank = 0;
 
       if (bcfg.busType == BUS_I2C) {
-        bcfg.i2cAddress = (uint8_t)(bd[kFI2cAddress] | 0x40);
+        bcfg.i2cAddress   = (uint8_t)(bd[kFI2cAddress] | 0x40);
+        bcfg.oscillatorHz = bd[kFOscillatorHz] | 25000000U;
       }
 
       if (bcfg.busType == BUS_SPI_MASTER) {
@@ -218,6 +219,106 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
 void DeviceFactory::initAll() {
   for (size_t i = 0; i < _count; i++)
     _devices[i]->initPins();
+}
+
+/**
+ * @brief Unconditional full reset: detach and delete all running devices, then
+ *        clear all bus/board/port state so load() can be called again.
+ *
+ * Must be called from the Arduino loop() task (Core 1), strictly between two
+ * consecutive CoroutineScheduler::loop() calls.  The caller is responsible for
+ * calling CoroutineScheduler::setup() and BusRegistry::reset() afterwards.
+ */
+void DeviceFactory::fullReset() {
+  // Stop outputs, detach from AceRoutine scheduler, delete each Device.
+  for (size_t i = 0; i < _count; i++) {
+    Device *d = _devices[i];
+    if (!d) continue;
+    d->initPins();                // drive all pins to inactive state
+    d->suspend();                 // prevent the scheduler from calling it
+    d->detachFromScheduler();     // remove from linked list (safe from Core 1)
+    delete d;
+    _devices[i] = nullptr;
+  }
+  _count = 0;
+
+  // Delete PCA9685 I2C drivers (not coroutines, no scheduler involvement).
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++) {
+    if (_pwmDrivers[i]) { delete _pwmDrivers[i]; _pwmDrivers[i] = nullptr; }
+  }
+  #endif
+
+  // Detach and delete LobotServo coroutines (separate from the Device list).
+  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  for (size_t i = 0; i < _lobotCount; i++) {
+    if (_lobotServos[i]) {
+      Device::detachCoroutineFromScheduler(_lobotServos[i]);
+      delete (LobotServo *)_lobotServos[i];
+      _lobotServos[i] = nullptr;
+    }
+  }
+  _lobotCount = 0;
+  #endif
+
+  // Reset all config state.
+  _boardCount   = 0;
+  _busCount     = 0;
+  _portCount    = 0;
+  _spiCardCount = 0;
+  _dccPin       = -1;
+  _spiBus       = SpiBusCfg{};
+
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
+    _boards_cfg[i] = BoardCfg{};
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BUSES; i++)
+    _busEntries[i] = BusEntry{};
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_SPI_CARDS; i++)
+    _spiCards[i] = SpiCardCfg{};
+  for (size_t i = 0; i < MRJFX_FACTORY_MAX_PORTS; i++)
+    _ports[i] = PortCfg{};
+}
+
+/**
+ * @brief Clear all bus/board state so load() can be called again without reboot.
+ *
+ * Only safe when count() == 0 — no Device objects exist, so no coroutines are
+ * running and nothing needs to be stopped or deleted.  This is the case after
+ * a first-boot where the config was empty or had only boards but no devices.
+ *
+ * Does NOT touch hardware (BusRegistry::reset() must be called separately by
+ * the caller before the next load()).
+ *
+ * @return true if the state was cleared, false if devices are already running.
+ */
+bool DeviceFactory::resetIfEmpty() {
+  if (_count > 0) return false;
+
+  _boardCount   = 0;
+  _busCount     = 0;
+  _portCount    = 0;
+  _spiCardCount = 0;
+  _dccPin       = -1;
+  _spiBus       = SpiBusCfg{};
+
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
+    _boards_cfg[i] = BoardCfg{};
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BUSES; i++)
+    _busEntries[i] = BusEntry{};
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_SPI_CARDS; i++)
+    _spiCards[i] = SpiCardCfg{};
+  for (size_t i = 0; i < MRJFX_FACTORY_MAX_PORTS; i++)
+    _ports[i] = PortCfg{};
+
+  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
+    _pwmDrivers[i] = nullptr;
+  #endif
+  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  _lobotCount = 0;
+  #endif
+
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -664,6 +765,8 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       BusRegistry::activateI2c();
       _pwmDrivers[boardIdx - 1] = new Adafruit_PWMServoDriver(bcfg.i2cAddress);
       _pwmDrivers[boardIdx - 1]->begin();
+      if (bcfg.oscillatorHz != 25000000U)
+        _pwmDrivers[boardIdx - 1]->setOscillatorFrequency(bcfg.oscillatorHz);
       _pwmDrivers[boardIdx - 1]->setPWMFreq(50);
     }
     {
@@ -674,9 +777,15 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
         if (posCount >= I2cPwmServoDevice::MAX_POSITIONS) break;
         pos[posCount].angle       = (int16_t)(p[kFAngle]      | 90);
         pos[posCount].duration_ms = (uint32_t)(p[kFDurationMs] | 2000);
+        pos[posCount].ease_out    = (bool)(p[kFEaseOut]    | false);
+        const char *lbl = p[kFLabel] | "";
+        strncpy(pos[posCount].label, lbl, sizeof(pos[posCount].label) - 1);
+        pos[posCount].label[sizeof(pos[posCount].label) - 1] = '\0';
         posCount++;
       }
-      d = new I2cPwmServoDevice(_pwmDrivers[boardIdx - 1], channel, pos, posCount);
+      uint16_t pMin = (uint16_t)(obj[kFPulseMinUs] | 1000);
+      uint16_t pMax = (uint16_t)(obj[kFPulseMaxUs] | 2000);
+      d = new I2cPwmServoDevice(_pwmDrivers[boardIdx - 1], channel, pos, posCount, pMin, pMax);
     }
   #else
     LOG_PRINTLN(F("DeviceFactory: PCA9685Servo requires build_flags = -DI2C_CARDS"));
@@ -703,12 +812,39 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       BusRegistry::activateI2c();
       _pwmDrivers[boardIdx - 1] = new Adafruit_PWMServoDriver(bcfg.i2cAddress);
       _pwmDrivers[boardIdx - 1]->begin();
+      if (bcfg.oscillatorHz != 25000000U)
+        _pwmDrivers[boardIdx - 1]->setOscillatorFrequency(bcfg.oscillatorHz);
       _pwmDrivers[boardIdx - 1]->setPWMFreq(50);
     }
     {
-      uint8_t channel = (uint8_t)wiring.as<int>();
-      int8_t  speed   = (int8_t)(obj[kFSpeed] | 50);
-      d = new I2cPwmMotorDevice(_pwmDrivers[boardIdx - 1], channel, speed);
+      uint8_t  channel   = (uint8_t)wiring.as<int>();
+      uint16_t neutralUs = (uint16_t)(obj[kFNeutralUs] | 1500);
+
+      I2cPwmMotorDevice::MotorState states[I2cPwmMotorDevice::MAX_STATES];
+      uint8_t stateCount = 0;
+
+      if (obj[kFStates].is<JsonArray>()) {
+        for (JsonObject s : obj[kFStates].as<JsonArray>()) {
+          if (stateCount >= I2cPwmMotorDevice::MAX_STATES) break;
+          states[stateCount].speed        = (int8_t)(s[kFSpeed]     | 50);
+          states[stateCount].duration_ms  = (uint32_t)(s[kFDurationMs] | 0);
+          states[stateCount].ramp_up_ms   = (uint32_t)(s[kFRampUpMs]   | 0);
+          states[stateCount].ramp_down_ms = (uint32_t)(s[kFRampDownMs] | 0);
+          const char *lbl = s[kFLabel] | "";
+          strncpy(states[stateCount].label, lbl, sizeof(states[stateCount].label) - 1);
+          states[stateCount].label[sizeof(states[stateCount].label) - 1] = '\0';
+          stateCount++;
+        }
+      } else {
+        // Backward compat: old "speed" field → single perpetual state, no ramps.
+        states[0].speed        = (int8_t)(obj[kFSpeed] | 50);
+        states[0].duration_ms  = 0;
+        states[0].ramp_up_ms   = 0;
+        states[0].ramp_down_ms = 0;
+        states[0].label[0]     = '\0';
+        stateCount = 1;
+      }
+      d = new I2cPwmMotorDevice(_pwmDrivers[boardIdx - 1], channel, states, stateCount, neutralUs);
     }
   #else
     LOG_PRINTLN(F("DeviceFactory: PCA9685Motor requires build_flags = -DI2C_CARDS"));

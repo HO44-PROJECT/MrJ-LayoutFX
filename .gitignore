@@ -1,3 +1,6 @@
 .pio
 .vscode
 include/api/webui_html.h
+include/api/build_info.h
+include/api/build_info.old.h
+include/generated/

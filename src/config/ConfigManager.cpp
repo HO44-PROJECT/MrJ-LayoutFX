@@ -15,6 +15,7 @@
 
 DeviceFactory ConfigManager::_factory;
 const char *ConfigManager::_configPath = nullptr;
+volatile bool ConfigManager::_reloadPending = false;
 
 // ---------------------------------------------------------------------------
 // Public
@@ -103,6 +104,86 @@ bool ConfigManager::writeConfig(const String &json) {
   }
   f.close();
   return true;
+}
+
+/**
+ * @brief Reload config from LittleFS without rebooting.
+ *
+ * Only safe when no devices are running (factory.count() == 0).
+ * Resets bus registry and factory bus/board state, then re-parses the saved
+ * config and re-initialises all devices and DCC.
+ */
+bool ConfigManager::reload() {
+  if (!_factory.resetIfEmpty()) {
+    LOG_PRINTLN(F("[Factory] reload refused — devices are already running"));
+    return false;
+  }
+  BusRegistry::reset();
+
+  String boardTypes = _readFile("/board_types.json");
+  String json = readConfig();
+  if (json.isEmpty()) {
+    LOG_PRINTLN(F("[Factory] reload — no config"));
+    return false;
+  }
+
+  LOG_PRINTLN(F("[Factory] reloading config..."));
+  if (!_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
+    LOG_PRINTLN(F("[Factory] reload — JSON parse error"));
+    return false;
+  }
+  _factory.initAll();
+  LOG_PRINT(F("[Factory] reload — "));
+  LOG_PRINT(_factory.count());
+  LOG_PRINTLN(F(" device(s) ready"));
+
+  if (_factory.dccPin() >= 0)
+    DccDrivable::init((uint8_t)_factory.dccPin());
+
+  return true;
+}
+
+/** @brief Signal from Core 0 that a hot-reload is needed. */
+void ConfigManager::requestReload() {
+  _reloadPending = true;
+}
+
+/**
+ * @brief Execute a pending hot-reload (Core 1, between scheduler passes).
+ *
+ * Tears down all running devices via fullReset(), resets the AceRoutine
+ * scheduler and bus registry, then loads the saved config from LittleFS and
+ * starts all new devices.  No ESP.restart() — the system continues running.
+ */
+void ConfigManager::handlePendingReload() {
+  if (!_reloadPending) return;
+  _reloadPending = false;
+
+  LOG_PRINTLN(F("[Factory] hot-reload..."));
+  _factory.fullReset();
+  BusRegistry::reset();
+
+  String boardTypes = _readFile("/board_types.json");
+  String json = readConfig();
+  if (json.isEmpty()) {
+    LOG_PRINTLN(F("[Factory] hot-reload — no config"));
+    ace_routine::CoroutineScheduler::setup();
+    return;
+  }
+
+  if (!_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
+    LOG_PRINTLN(F("[Factory] hot-reload — JSON parse error"));
+    ace_routine::CoroutineScheduler::setup();
+    return;
+  }
+  _factory.initAll();
+  ace_routine::CoroutineScheduler::setup();
+  LOG_PRINT(F("[Factory] hot-reload — "));
+  LOG_PRINT(_factory.count());
+  LOG_PRINTLN(F(" device(s) ready"));
+
+  if (_factory.dccPin() >= 0)
+    DccDrivable::init((uint8_t)_factory.dccPin());
 }
 
 /** @brief Delete the active config file from LittleFS. Does nothing if absent. */
