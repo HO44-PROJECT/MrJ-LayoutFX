@@ -6,11 +6,19 @@
 
 @details
   Source layout:
-    src/web/webui.html   — HTML skeleton with %%STYLE%%, %%I18N%%, %%ICONS%%, %%APP%% markers
-    src/web/style.css    — all CSS
-    src/web/i18n.js      — translations (TOOLTIPS, TRANSLATIONS, _lang, t(), setLang(), applyLang())
-    src/web/icons.js     — SVG icon map (ICONS)
-    src/web/app.js       — application JS logic
+    src/web/webui.html          — HTML skeleton with %%STYLE%%, %%I18N%%, %%ICONS%%, %%APP%% markers
+    src/web/style.css           — all CSS
+    src/web/i18n.js             — translations (TOOLTIPS, TRANSLATIONS, _lang, t(), setLang(), applyLang())
+    src/web/icons.js            — SVG icon map (ICONS)
+    src/web/app-core.js         — globals, nav, cockpit cards, poll
+    src/web/app-wizard.js       — setup wizard, resetConfig, exportCode
+    src/web/app-config.js       — device toggles, config file management, debug data loading
+    src/web/app-boards.js       — I2C scanner, board/DIP rendering, GPIO/SPI test actions
+    src/web/app-about.js        — about page, params
+    src/web/app-device-editor.js — device add/edit modal
+    src/web/app-board-editor.js — board editor, bus editor, boot sequence
+
+  The APP_MODULES list is concatenated in order and minified as a single unit.
 
   Minification (Python packages, auto-installed on first build):
     rjsmin  — strips JS comments and collapses whitespace
@@ -58,13 +66,26 @@ def read(name):
 
 
 # ---------------------------------------------------------------------------
+# JS module list — concatenated in order into a single bundle
+# ---------------------------------------------------------------------------
+APP_MODULES = [
+    "app-core.js",
+    "app-wizard.js",
+    "app-config.js",
+    "app-boards.js",
+    "app-about.js",
+    "app-device-editor.js",
+    "app-board-editor.js",
+]
+
+# ---------------------------------------------------------------------------
 # Read and minify sources
 # ---------------------------------------------------------------------------
 html = read("webui.html")
 css = rcssmin.cssmin(read("style.css"))
 i18n = rjsmin.jsmin(read("i18n.js"))
 icons = rjsmin.jsmin(read("icons.js"))
-app = rjsmin.jsmin(read("app.js"))
+app = rjsmin.jsmin("\n".join(read(m) for m in APP_MODULES))
 
 # ---------------------------------------------------------------------------
 # Assemble, compress, emit header
