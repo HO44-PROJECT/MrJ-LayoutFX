@@ -1,0 +1,233 @@
+{
+  "$schema": "../schemas/device_types.schema.json",
+  "Beacon": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "CampFire": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "DefectLamp": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "DfAudio": {
+    "category": "audio",
+    "wires": 0,
+    "ctor_style": "audio"
+  },
+  "DoubleBeacon": {
+    "category": "light",
+    "wires": 2,
+    "ctor_style": "multi_pin"
+  },
+  "ElectricLamp": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "GasLamp": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "MrJDBBlocSignal": {
+    "category": "signal",
+    "wires": 2,
+    "ctor_style": "multi_pin",
+    "pin_count_const": "MrJDBBlocSignalState_PIN_COUNT",
+    "states": [
+      {
+        "v": 0,
+        "l": "OFF",
+        "c": "t-off"
+      },
+      {
+        "v": 1,
+        "l": "HP0",
+        "c": "t-stop"
+      },
+      {
+        "v": 2,
+        "l": "HP1",
+        "c": "t-go"
+      }
+    ]
+  },
+  "MrJDBEntrySignal": {
+    "category": "signal",
+    "wires": 3,
+    "ctor_style": "multi_pin",
+    "pin_count_const": "MrJDBEntrySignalState_PIN_COUNT",
+    "states": [
+      {
+        "v": 0,
+        "l": "OFF",
+        "c": "t-off"
+      },
+      {
+        "v": 1,
+        "l": "HP0",
+        "c": "t-stop"
+      },
+      {
+        "v": 2,
+        "l": "HP1",
+        "c": "t-go"
+      },
+      {
+        "v": 3,
+        "l": "HP2",
+        "c": "t-slow"
+      }
+    ]
+  },
+  "MrJDBExitSignal": {
+    "category": "signal",
+    "wires": 4,
+    "ctor_style": "multi_pin",
+    "pin_count_const": "MrJDBExitSignalState_PIN_COUNT",
+    "states": [
+      {
+        "v": 0,
+        "l": "OFF",
+        "c": "t-off"
+      },
+      {
+        "v": 1,
+        "l": "HP00",
+        "c": "t-stop"
+      },
+      {
+        "v": 2,
+        "l": "HP1",
+        "c": "t-go"
+      },
+      {
+        "v": 3,
+        "l": "HP2",
+        "c": "t-slow"
+      },
+      {
+        "v": 4,
+        "l": "HP0+Sh1",
+        "c": "t-sh1"
+      }
+    ]
+  },
+  "NeonSign": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "OilLamp": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "RailwayCrossingLights": {
+    "category": "light",
+    "wires": 2,
+    "ctor_style": "multi_pin"
+  },
+  "SerialServo": {
+    "category": "servo",
+    "wires": 0,
+    "ctor_style": "serial_servo",
+    "states": [
+      {
+        "v": 0,
+        "l": "STOP",
+        "c": "t-stop"
+      },
+      {
+        "v": 300,
+        "l": "SLOW",
+        "c": "t-slow"
+      },
+      {
+        "v": 600,
+        "l": "MID",
+        "c": "t-go"
+      },
+      {
+        "v": 1000,
+        "l": "FAST",
+        "c": "t-flash"
+      },
+      {
+        "v": "REV",
+        "l": "REV",
+        "c": "t-sh1"
+      }
+    ]
+  },
+  "SignalFlare": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "SolderLamp": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "StaticLow": {
+    "category": "static",
+    "wires": 1,
+    "ctor_style": "variable_pins",
+    "variable_pins": true
+  },
+  "Storm": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "Torch": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "TrafficLight3ph": {
+    "category": "traffic",
+    "wires": 3,
+    "ctor_style": "multi_pin"
+  },
+  "TrafficLight4ph": {
+    "category": "traffic",
+    "wires": 3,
+    "ctor_style": "multi_pin"
+  },
+  "TrainHeadLamp": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "TurnSignal": {
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
+  "PCA9685Servo": {
+    "category": "i2c_servo",
+    "wires": 1,
+    "ctor_style": "i2c_servo",
+    "label": {
+      "fr": "Servo I²C positionnel",
+      "en": "I²C Positional Servo"
+    }
+  },
+  "PCA9685Motor": {
+    "category": "i2c_motor",
+    "wires": 1,
+    "ctor_style": "i2c_motor",
+    "label": {
+      "fr": "Moteur I²C continu",
+      "en": "I²C Continuous Motor"
+    }
+  }
+}

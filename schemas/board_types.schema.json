@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "board_types.schema.json",
+  "title": "MrJ-ArduinoRailwayFX — board type catalogue",
+  "description": "Static catalogue of board hardware types served by /api/board-types. Each key is a board type identifier used in config.json boards[].type.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/boardTypeDef"
+  },
+  "$defs": {
+    "gpio": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 39,
+      "description": "ESP32 GPIO number (0-39)."
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "output",
+        "input",
+        "gnd",
+        "power",
+        "flash",
+        "strapping",
+        "bus_reserved"
+      ],
+      "description": "What the pin can be used for."
+    },
+    "pinDef": {
+      "type": "object",
+      "description": "One entry in the board's physical pin layout.",
+      "required": [
+        "label",
+        "side",
+        "row",
+        "capabilities"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "wiring": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 253,
+          "description": "Logical address: GPIO number for MCU boards, 1-based output channel for SPI boards. Absent for non-connectable pins (GND, power rails, etc.)."
+        },
+        "label": {
+          "type": "string",
+          "description": "Short text shown on the pin in the UI (e.g. 'IO23', 'Q1', 'GND')."
+        },
+        "side": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Physical side of the board where this pin header is located."
+        },
+        "col": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Column index for multi-column boards (e.g. ESP32Mini). Defaults to 1 when absent."
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Row position within the side/column, top-to-bottom."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capability"
+          },
+          "description": "Capability tags that control how the UI handles the pin."
+        }
+      }
+    },
+    "connectorPin": {
+      "type": "object",
+      "description": "A named GPIO in a pre-cabled connector header.",
+      "required": [
+        "label",
+        "gpio"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "gpio": {
+          "$ref": "#/$defs/gpio"
+        }
+      }
+    },
+    "connectorDef": {
+      "type": "object",
+      "description": "A dedicated connector header that pre-cables one bus (I²C, UART, etc.).",
+      "required": [
+        "side",
+        "label",
+        "busType",
+        "pins"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "side": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "busType": {
+          "type": "string",
+          "description": "Bus type this connector is wired to."
+        },
+        "pins": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/connectorPin"
+          }
+        }
+      }
+    },
+    "linkedBusDef": {
+      "description": "A bus that this board pre-wires and can suggest to the user. Extends a bus definition with a unique key and a display label.",
+      "type": "object",
+      "required": [
+        "key",
+        "type",
+        "label"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier used as the bus key in config.json buses{}."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable name shown in the bus suggestion UI."
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/linkedBusSpiMasterOnly"
+        },
+        {
+          "$ref": "#/$defs/linkedBusUart"
+        },
+        {
+          "$ref": "#/$defs/linkedBusI2c"
+        },
+        {
+          "$ref": "#/$defs/linkedBusDcc"
+        }
+      ]
+    },
+    "linkedBusSpiMasterOnly": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "spi_master_only"
+        },
+        "mosi": {
+          "$ref": "#/$defs/gpio"
+        },
+        "sclk": {
+          "$ref": "#/$defs/gpio"
+        },
+        "latch": {
+          "$ref": "#/$defs/gpio"
+        }
+      },
+      "required": [
+        "mosi",
+        "sclk",
+        "latch"
+      ]
+    },
+    "linkedBusUart": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "uart"
+        },
+        "tx": {
+          "$ref": "#/$defs/gpio"
+        },
+        "rx": {
+          "$ref": "#/$defs/gpio"
+        },
+        "baud": {
+          "type": "integer",
+          "minimum": 300
+        }
+      },
+      "required": [
+        "tx",
+        "rx",
+        "baud"
+      ]
+    },
+    "linkedBusI2c": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "i2c"
+        },
+        "sda": {
+          "$ref": "#/$defs/gpio"
+        },
+        "scl": {
+          "$ref": "#/$defs/gpio"
+        }
+      },
+      "required": [
+        "sda",
+        "scl"
+      ]
+    },
+    "linkedBusDcc": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "dcc"
+        },
+        "pin": {
+          "$ref": "#/$defs/gpio"
+        }
+      },
+      "required": [
+        "pin"
+      ]
+    },
+    "boardTypeDef": {
+      "type": "object",
+      "description": "Hardware description of one board type.",
+      "required": [
+        "label",
+        "rows",
+        "busType",
+        "pins"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Display name shown in the board-type picker."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description shown as a tooltip."
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of pin rows on each side. 0 for boards with no physical pin representation (UART-only, I²C-only)."
+        },
+        "busType": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "spi_master_only",
+                "spi_full_duplex",
+                "uart",
+                "i2c"
+              ],
+              "description": "Bus type this board connects to. Present for expansion boards; absent (null) for the root MCU board."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usb": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Which end of the board the USB connector is on. Used to orient the board diagram."
+        },
+        "connectors": {
+          "type": "array",
+          "description": "Dedicated connector headers on this board (pre-cabled buses).",
+          "items": {
+            "$ref": "#/$defs/connectorDef"
+          }
+        },
+        "pins": {
+          "type": "array",
+          "description": "All pin positions: GPIO pins, power rails, GND, etc.",
+          "items": {
+            "$ref": "#/$defs/pinDef"
+          }
+        },
+        "linkedBuses": {
+          "type": "array",
+          "description": "Buses this board's MCU pre-wires. The UI offers to add them to the config when the board is selected.",
+          "items": {
+            "$ref": "#/$defs/linkedBusDef"
+          }
+        }
+      }
+    }
+  }
+}

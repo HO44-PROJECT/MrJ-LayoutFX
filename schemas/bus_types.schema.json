@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "bus_types.schema.json",
+  "title": "MrJ-ArduinoRailwayFX — bus type catalogue",
+  "description": "UI descriptor for each bus type served by /api/bus-types. Defines the editable fields shown in the bus editor. Each key is a bus type identifier matching config.json buses[].type.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/busTypeDef"
+  },
+  "$defs": {
+    "fieldType": {
+      "type": "string",
+      "enum": [
+        "gpio",
+        "number"
+      ],
+      "description": "gpio: integer 0-39 (GPIO pin). number: generic integer with its own min/max range."
+    },
+    "fieldDef": {
+      "type": "object",
+      "description": "Descriptor for one editable field in the bus editor form.",
+      "required": [
+        "key",
+        "label",
+        "type",
+        "min",
+        "max",
+        "placeholder"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "JSON key used in config.json buses[busKey][key] (e.g. 'mosi', 'tx', 'baud')."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label shown next to the input field in the UI."
+        },
+        "type": {
+          "$ref": "#/$defs/fieldType"
+        },
+        "min": {
+          "type": "integer",
+          "description": "Minimum accepted value."
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum accepted value."
+        },
+        "placeholder": {
+          "type": "integer",
+          "description": "Default / suggested value pre-filled when adding a new bus."
+        }
+      }
+    },
+    "busTypeDef": {
+      "type": "object",
+      "description": "UI descriptor for one bus type.",
+      "required": [
+        "label",
+        "fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Display name shown in the bus-type picker and bus card header."
+        },
+        "fields": {
+          "type": "array",
+          "description": "Ordered list of editable fields for this bus type. Controls what the bus editor renders.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/fieldDef"
+          }
+        }
+      }
+    }
+  }
+}

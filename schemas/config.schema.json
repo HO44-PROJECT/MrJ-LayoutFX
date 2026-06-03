@@ -1,0 +1,822 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "config.schema.json",
+  "title": "MrJ-ArduinoRailwayFX — device configuration",
+  "description": "Configuration loaded by DeviceFactory at boot. Stored in LittleFS as /config.json.",
+  "type": "object",
+  "required": [],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of this layout configuration."
+    },
+    "buses": {
+      "type": "object",
+      "description": "Named communication buses. Keys are user-defined identifiers referenced by boards[].bus. Omit for a purely GPIO setup.",
+      "additionalProperties": {
+        "$ref": "#/$defs/busDef"
+      }
+    },
+    "boards": {
+      "type": "array",
+      "description": "Physical boards connected to the system. Must include the root MCU board (e.g. ESP32DevkitC). SPI boards are in daisy-chain order (position = 1-based rank).",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/boardDef"
+      }
+    },
+    "devices": {
+      "type": "array",
+      "description": "List of devices to instantiate via DeviceFactory.",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/$defs/device"
+      }
+    },
+    "idle_pins": {
+      "type": "array",
+      "description": "GPIO pin numbers to drive OUTPUT LOW at boot. Prevents floating unassigned output pins from causing LED flicker via capacitive crosstalk. Recomputed automatically by the WebUI on every config save — do not edit manually.",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/gpio"
+      }
+    }
+  },
+  "$defs": {
+    "gpio": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 39,
+      "description": "ESP32 GPIO pin number (0-39)."
+    },
+    "wiringScalar": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 253,
+      "description": "Single value whose meaning depends on the board type: GPIO pin (ESP32DevkitC), output bit 1-based (HC595), or servo ID (LobotChain)."
+    },
+    "wiringArray": {
+      "type": "array",
+      "description": "Array of wiring values for multi-pin devices.",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/wiringScalar"
+      }
+    },
+    "busDef": {
+      "description": "One bus entry. Type determines required properties.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/busDcc"
+        },
+        {
+          "$ref": "#/$defs/busSpiMasterOnly"
+        },
+        {
+          "$ref": "#/$defs/busSpiFullDuplex"
+        },
+        {
+          "$ref": "#/$defs/busUart"
+        },
+        {
+          "$ref": "#/$defs/busI2c"
+        }
+      ]
+    },
+    "busDcc": {
+      "type": "object",
+      "description": "DCC signal input bus. Input-only — no boards attach to it. Configures the GPIO pin that receives the DCC signal.",
+      "required": [
+        "type",
+        "pin"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "dcc"
+        },
+        "pin": {
+          "$ref": "#/$defs/gpio",
+          "description": "GPIO pin connected to the DCC track signal (via optocoupler)."
+        }
+      }
+    },
+    "busSpiMasterOnly": {
+      "type": "object",
+      "description": "SPI master output-only bus (3-wire). Used for HC595 daisy-chains.",
+      "required": [
+        "type",
+        "mosi",
+        "sclk",
+        "latch"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "spi_master_only"
+        },
+        "mosi": {
+          "$ref": "#/$defs/gpio",
+          "description": "Data out pin (DS of first register in chain)."
+        },
+        "sclk": {
+          "$ref": "#/$defs/gpio",
+          "description": "Clock pin (SH_CP, shared by all registers)."
+        },
+        "latch": {
+          "$ref": "#/$defs/gpio",
+          "description": "Latch pin (ST_CP, shared) — pulses once to commit the full bit stream to all outputs."
+        }
+      }
+    },
+    "busSpiFullDuplex": {
+      "type": "object",
+      "description": "SPI full-duplex bus (4-wire). Bidirectional — MOSI, MISO, SCLK, CS.",
+      "required": [
+        "type",
+        "mosi",
+        "miso",
+        "sclk",
+        "cs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "spi_full_duplex"
+        },
+        "mosi": {
+          "$ref": "#/$defs/gpio",
+          "description": "Master Out Slave In."
+        },
+        "miso": {
+          "$ref": "#/$defs/gpio",
+          "description": "Master In Slave Out."
+        },
+        "sclk": {
+          "$ref": "#/$defs/gpio",
+          "description": "Clock."
+        },
+        "cs": {
+          "$ref": "#/$defs/gpio",
+          "description": "Chip Select (active low)."
+        }
+      }
+    },
+    "busUart": {
+      "type": "object",
+      "description": "UART serial bus. Used for servo chains (LobotChain) and audio modules (DfPlayerMini).",
+      "required": [
+        "type",
+        "tx",
+        "rx",
+        "baud"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "uart"
+        },
+        "tx": {
+          "$ref": "#/$defs/gpio",
+          "description": "TX GPIO pin."
+        },
+        "rx": {
+          "$ref": "#/$defs/gpio",
+          "description": "RX GPIO pin."
+        },
+        "baud": {
+          "type": "integer",
+          "enum": [
+            9600,
+            19200,
+            38400,
+            57600,
+            115200
+          ],
+          "description": "Baud rate."
+        }
+      }
+    },
+    "busI2c": {
+      "type": "object",
+      "description": "I²C bus. Used for OLED displays (SSD1306), port expanders (MCP23017), etc.",
+      "required": [
+        "type",
+        "sda",
+        "scl"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "i2c"
+        },
+        "sda": {
+          "$ref": "#/$defs/gpio",
+          "description": "I²C SDA pin."
+        },
+        "scl": {
+          "$ref": "#/$defs/gpio",
+          "description": "I²C SCL pin."
+        }
+      }
+    },
+    "boardDef": {
+      "type": "object",
+      "description": "One physical board. The root MCU board (e.g. ESP32DevkitC) has no bus. All other boards reference a bus key.",
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique identifier referenced by devices[].board."
+        },
+        "type": {
+          "type": "string",
+          "description": "Board hardware type (known to the library).",
+          "enum": [
+            "ESP32DevkitC",
+            "ESP32Mini",
+            "HC595",
+            "HC595x2_biface",
+            "HC595x2_uniface",
+            "LobotChain",
+            "DfPlayerMini",
+            "SSD1306",
+            "PCA9685"
+          ]
+        },
+        "bus": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Key of the bus this board is connected to. Absent for the root MCU board (ESP32DevkitC)."
+        },
+        "pin_count": {
+          "type": "integer",
+          "enum": [
+            8,
+            16,
+            24,
+            32
+          ],
+          "description": "Number of output pins on this board. Optional for known types (HC595=8, HC595x2_biface=16 are implied); required for custom types."
+        },
+        "label": {
+          "type": "string",
+          "description": "Optional human-readable name shown in the technical view."
+        },
+        "flipped": {
+          "type": "boolean",
+          "description": "Display this board rotated 180° in the technical view."
+        },
+        "i2c_address": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127,
+          "description": "I²C address of the board chip (e.g. 64 = 0x40 for PCA9685). Defaults to 0x40 if omitted."
+        },
+        "oscillator_hz": {
+          "type": "integer",
+          "minimum": 1000000,
+          "maximum": 30000000,
+          "description": "PCA9685 actual oscillator frequency in Hz. Default 25000000. Adjust if servos/motors drift at neutral (e.g. 22059000 if neutral is 1700 µs instead of 1500 µs)."
+        }
+      },
+      "allOf": [
+        {
+          "description": "HC595 and HC595x2_biface require bus (pin_count is implied by the type, override optional).",
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "HC595",
+                  "HC595x2_biface"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "bus"
+            ]
+          }
+        },
+        {
+          "description": "LobotChain requires bus.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "LobotChain"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "bus"
+            ]
+          }
+        },
+        {
+          "description": "DfPlayerMini requires bus.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "DfPlayerMini"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "bus"
+            ]
+          }
+        },
+        {
+          "description": "SSD1306 requires bus.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "SSD1306"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "bus"
+            ]
+          }
+        },
+        {
+          "description": "PCA9685 requires bus.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "PCA9685"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "bus"
+            ]
+          }
+        }
+      ]
+    },
+    "device": {
+      "type": "object",
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique identifier for the device (for logging and DCC lookup)."
+        },
+        "type": {
+          "type": "string",
+          "description": "C++ class name to instantiate. Maps directly to a library class.",
+          "enum": [
+            "Beacon",
+            "CampFire",
+            "DefectLamp",
+            "DfAudio",
+            "DoubleBeacon",
+            "ElectricLamp",
+            "GasLamp",
+            "MrJDBBlocSignal",
+            "MrJDBEntrySignal",
+            "MrJDBExitSignal",
+            "NeonSign",
+            "OilLamp",
+            "PCA9685Motor",
+            "PCA9685Servo",
+            "RailwayCrossingLights",
+            "SerialServo",
+            "SignalFlare",
+            "SolderLamp",
+            "StaticLow",
+            "Storm",
+            "Torch",
+            "TrafficLight3Phase",
+            "TrafficLight4Phase",
+            "TrainHeadLamp",
+            "TurnSignal"
+          ]
+        },
+        "board": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Board id referencing an entry in the top-level 'boards' array. Determines wiring semantics: GPIO for ESP32DevkitC, output bit (1-based) for HC595, servo ID for LobotChain."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1,
+          "pattern": "^[A-Za-z0-9]$",
+          "description": "Single alphanumeric character shown on the OLED status display."
+        },
+        "wiring": {
+          "description": "Pin(s) or ID. Scalar for single-pin/single-servo devices; array for multi-pin devices. Semantics depend on the referenced board type.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/wiringScalar"
+            },
+            {
+              "$ref": "#/$defs/wiringArray"
+            }
+          ]
+        },
+        "address": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10239,
+          "description": "DCC decoder address. Omit to skip DCC registration. Independent of wiring — DCC is a control layer, not a wiring layer."
+        },
+        "default_state": {
+          "type": "string",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "description": "Initial state applied at boot. Omit or 'off' to start inactive."
+        },
+        "positions": {
+          "type": "array",
+          "description": "PCA9685Servo: list of named positions. State 0 = emergency stop; states 1..N map to positions[0..N-1].",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": [
+              "angle",
+              "duration_ms"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Optional display name shown on the cockpit position button."
+              },
+              "angle": {
+                "type": "integer",
+                "minimum": -90,
+                "maximum": 90,
+                "description": "Target servo angle in degrees (0 = neutral/centre, −90 = anti-clockwise, +90 = clockwise)."
+              },
+              "duration_ms": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Slew duration in milliseconds (0 = instantaneous)."
+              },
+              "ease_out": {
+                "type": "boolean",
+                "description": "Quadratic ease-out on this slew: fast start, decelerates at end. Suitable for doors, gates, barriers."
+              }
+            }
+          }
+        },
+        "pulse_min_us": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 2500,
+          "description": "PCA9685Servo: PWM pulse width in µs for −90° position. Default 1000 µs (SG90/MG90S). Use 500 µs for extended-range servos."
+        },
+        "pulse_max_us": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 2500,
+          "description": "PCA9685Servo: PWM pulse width in µs for +90° position. Default 2000 µs (SG90/MG90S). Use 2500 µs for extended-range servos."
+        },
+        "speed": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 100,
+          "description": "PCA9685Motor (legacy): single-state speed. Replaced by 'states' array for multi-state configs."
+        },
+        "neutral_us": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 2000,
+          "description": "PCA9685Motor: PWM pulse width in µs for the stop/neutral position. Default 1500 µs. Adjust if the motor drifts at rest (e.g. 1480 or 1520)."
+        },
+        "states": {
+          "type": "array",
+          "description": "PCA9685Motor: list of named motor states. State 0 = OFF (ramp to neutral); states 1..N map to states[0..N-1].",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": ["speed"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Optional display name shown on the cockpit button."
+              },
+              "speed": {
+                "type": "integer",
+                "minimum": -100,
+                "maximum": 100,
+                "description": "Running speed [-100..+100]; sign = direction. Maps to µs via neutral_us - speed×10."
+              },
+              "duration_ms": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Run duration in ms. 0 = perpetual (runs until next newState command)."
+              },
+              "ramp_up_ms": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Ramp-up duration in ms from current PWM to target speed (0 = instant)."
+              },
+              "ramp_down_ms": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Ramp-down duration in ms to neutral at end of run or on OFF (0 = instant)."
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "description": "SerialServo requires board and wiring (servo ID in the LobotChain).",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "SerialServo"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "board",
+              "wiring"
+            ]
+          }
+        },
+        {
+          "description": "DfAudio requires board (must be a DfPlayerMini board). No wiring.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "DfAudio"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "board"
+            ]
+          }
+        },
+        {
+          "description": "PCA9685Servo requires board and wiring (I²C channel).",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "PCA9685Servo"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "board",
+              "wiring"
+            ]
+          }
+        },
+        {
+          "description": "PCA9685Motor requires board and wiring (I²C channel).",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "PCA9685Motor"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "board",
+              "wiring"
+            ]
+          }
+        },
+        {
+          "description": "All other types require wiring.",
+          "if": {
+            "properties": {
+              "type": {
+                "not": {
+                  "enum": [
+                    "DfAudio",
+                    "SerialServo"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "wiring"
+            ]
+          }
+        },
+        {
+          "description": "StaticLow accepts any number of wiring values (scalar or array of any length).",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "StaticLow"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wiring": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/wiringScalar"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "#/$defs/wiringScalar"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "description": "DoubleBeacon and RailwayCrossingLights need exactly 2 wiring values.",
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "DoubleBeacon",
+                  "RailwayCrossingLights"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wiring": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        {
+          "description": "MrJDBBlocSignal needs exactly 2 wiring values.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "MrJDBBlocSignal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wiring": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        {
+          "description": "MrJDBEntrySignal and TrafficLight3Phase need exactly 3 wiring values.",
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "MrJDBEntrySignal",
+                  "TrafficLight3Phase"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wiring": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          }
+        },
+        {
+          "description": "MrJDBExitSignal needs exactly 4 wiring values.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "MrJDBExitSignal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wiring": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4
+              }
+            }
+          }
+        },
+        {
+          "description": "TrafficLight4Phase needs exactly 3 wiring values.",
+          "if": {
+            "properties": {
+              "type": {
+                "const": "TrafficLight4Phase"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wiring": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

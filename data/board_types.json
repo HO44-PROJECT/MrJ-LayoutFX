@@ -1,0 +1,1667 @@
+{
+  "$schema": "../schemas/board_types.schema.json",
+  "MrJRailwayFX_v1": {
+    "label": "MrJRailwayFX v1.0",
+    "description": "Custom PCB MrJRailwayFX v1.0 — ESP32 DevKit C underneath. 2 rows: top (rangée haute) + bottom (rangée bas). I²C precabled on GPIO 21/22, UART2 on GPIO 16/17. USB on right.",
+    "usb": "right",
+    "rows": 20,
+    "busType": null,
+    "connectors": [
+      {
+        "side": "left",
+        "label": "I2C",
+        "busType": "i2c",
+        "pins": [
+          {
+            "label": "SDA",
+            "gpio": 21
+          },
+          {
+            "label": "SCL",
+            "gpio": 22
+          }
+        ]
+      },
+      {
+        "side": "right",
+        "label": "Serial",
+        "busType": "uart",
+        "pins": [
+          {
+            "label": "TX",
+            "gpio": 17
+          },
+          {
+            "label": "RX",
+            "gpio": 16
+          }
+        ]
+      }
+    ],
+    "pins": [
+      {
+        "label": "GND",
+        "side": "left",
+        "row": 1,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "row": 2,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 23,
+        "label": "IO23",
+        "side": "left",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 22,
+        "label": "IO22",
+        "side": "left",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 1,
+        "label": "TXD0",
+        "side": "left",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "RXD0",
+        "side": "left",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 21,
+        "label": "IO21",
+        "side": "left",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 19,
+        "label": "IO19",
+        "side": "left",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 18,
+        "label": "IO18",
+        "side": "left",
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "IO5",
+        "side": "left",
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 17,
+        "label": "IO17",
+        "side": "left",
+        "row": 11,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 16,
+        "label": "IO16",
+        "side": "left",
+        "row": 12,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "IO4",
+        "side": "left",
+        "row": 13,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "IO2",
+        "side": "left",
+        "row": 14,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "row": 15,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "row": 16,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 36,
+        "label": "VP",
+        "side": "right",
+        "row": 1,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 39,
+        "label": "VN",
+        "side": "right",
+        "row": 2,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 34,
+        "label": "DCC",
+        "side": "right",
+        "row": 3,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 35,
+        "label": "IO35",
+        "side": "right",
+        "row": 4,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "label": "5V",
+        "side": "right",
+        "row": 5,
+        "capabilities": [
+          "power"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "right",
+        "row": 6,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "right",
+        "row": 7,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 32,
+        "label": "IO32",
+        "side": "right",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 33,
+        "label": "IO33",
+        "side": "right",
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 25,
+        "label": "IO25",
+        "side": "right",
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 26,
+        "label": "IO26",
+        "side": "right",
+        "row": 11,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 27,
+        "label": "IO27",
+        "side": "right",
+        "row": 12,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 14,
+        "label": "IO14",
+        "side": "right",
+        "row": 13,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 12,
+        "label": "IO12",
+        "side": "right",
+        "row": 14,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 13,
+        "label": "IO13",
+        "side": "right",
+        "row": 15,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 15,
+        "label": "IO15",
+        "side": "right",
+        "row": 16,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "right",
+        "row": 17,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "right",
+        "row": 18,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "right",
+        "row": 19,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "3V3",
+        "side": "right",
+        "row": 20,
+        "capabilities": [
+          "power"
+        ]
+      }
+    ],
+    "linkedBuses": [
+      {
+        "key": "spi",
+        "type": "spi_master_only",
+        "label": "SPI",
+        "mosi": 23,
+        "sclk": 18,
+        "latch": 5
+      },
+      {
+        "key": "uart2",
+        "type": "uart",
+        "label": "Serial 2",
+        "tx": 17,
+        "rx": 16,
+        "baud": 115200
+      },
+      {
+        "key": "i2c",
+        "type": "i2c",
+        "label": "I2C",
+        "sda": 21,
+        "scl": 22
+      }
+    ]
+  },
+  "ESP32DevkitC": {
+    "label": "ESP32 DevKit C",
+    "description": "Espressif ESP32-WROOM-32 Development Kit V4 — 38 pins (2×19), USB on right end",
+    "usb": "right",
+    "rows": 19,
+    "busType": null,
+    "pins": [
+      {
+        "label": "3V3",
+        "side": "right",
+        "row": 1,
+        "capabilities": [
+          "power"
+        ]
+      },
+      {
+        "label": "EN",
+        "side": "right",
+        "row": 2,
+        "capabilities": []
+      },
+      {
+        "wiring": 36,
+        "label": "VP",
+        "side": "right",
+        "row": 3,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 39,
+        "label": "VN",
+        "side": "right",
+        "row": 4,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 34,
+        "label": "IO34",
+        "side": "right",
+        "row": 5,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 35,
+        "label": "IO35",
+        "side": "right",
+        "row": 6,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 32,
+        "label": "IO32",
+        "side": "right",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 33,
+        "label": "IO33",
+        "side": "right",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 25,
+        "label": "IO25",
+        "side": "right",
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 26,
+        "label": "IO26",
+        "side": "right",
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 27,
+        "label": "IO27",
+        "side": "right",
+        "row": 11,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 14,
+        "label": "IO14",
+        "side": "right",
+        "row": 12,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 12,
+        "label": "IO12",
+        "side": "right",
+        "row": 13,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "right",
+        "row": 14,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 13,
+        "label": "IO13",
+        "side": "right",
+        "row": 15,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "D2",
+        "side": "right",
+        "row": 16,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "label": "D3",
+        "side": "right",
+        "row": 17,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "label": "CMD",
+        "side": "right",
+        "row": 18,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "label": "5V",
+        "side": "right",
+        "row": 19,
+        "capabilities": [
+          "power"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "row": 1,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 23,
+        "label": "IO23",
+        "side": "left",
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 22,
+        "label": "IO22",
+        "side": "left",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 1,
+        "label": "TXD0",
+        "side": "left",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "RXD0",
+        "side": "left",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 21,
+        "label": "IO21",
+        "side": "left",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "row": 7,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 19,
+        "label": "IO19",
+        "side": "left",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 18,
+        "label": "IO18",
+        "side": "left",
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "IO5",
+        "side": "left",
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 17,
+        "label": "IO17",
+        "side": "left",
+        "row": 11,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 16,
+        "label": "IO16",
+        "side": "left",
+        "row": 12,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "IO4",
+        "side": "left",
+        "row": 13,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "IO0",
+        "side": "left",
+        "row": 14,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "IO2",
+        "side": "left",
+        "row": 15,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 15,
+        "label": "IO15",
+        "side": "left",
+        "row": 16,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "D1",
+        "side": "left",
+        "row": 17,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "label": "D0",
+        "side": "left",
+        "row": 18,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "label": "CLK",
+        "side": "left",
+        "row": 19,
+        "capabilities": [
+          "flash"
+        ]
+      }
+    ]
+  },
+  "ESP32Mini": {
+    "label": "ESP32 Mini (MH-ET LIVE)",
+    "description": "ESP32 Mini (MH-ET LIVE D1 Mini) — 40 pins (4×10). col:1=inner, col:2=outer. USB on right end. GPIO7/8/9/11 input-only. GPIO12 boot-sensitive.",
+    "usb": "right",
+    "rows": 10,
+    "busType": null,
+    "pins": [
+      {
+        "label": "GND",
+        "side": "right",
+        "col": 2,
+        "row": 1,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "NC",
+        "side": "right",
+        "col": 2,
+        "row": 2,
+        "capabilities": []
+      },
+      {
+        "wiring": 39,
+        "label": "VN",
+        "side": "right",
+        "col": 2,
+        "row": 3,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 35,
+        "label": "IO35",
+        "side": "right",
+        "col": 2,
+        "row": 4,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 33,
+        "label": "IO33",
+        "side": "right",
+        "col": 2,
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 34,
+        "label": "IO34",
+        "side": "right",
+        "col": 2,
+        "row": 6,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 14,
+        "label": "TMS/IO14",
+        "side": "right",
+        "col": 2,
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "NC",
+        "side": "right",
+        "col": 2,
+        "row": 8,
+        "capabilities": []
+      },
+      {
+        "wiring": 9,
+        "label": "IO9",
+        "side": "right",
+        "col": 2,
+        "row": 9,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 11,
+        "label": "IO11",
+        "side": "right",
+        "col": 2,
+        "row": 10,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "label": "RST",
+        "side": "right",
+        "col": 1,
+        "row": 1,
+        "capabilities": []
+      },
+      {
+        "wiring": 36,
+        "label": "VP",
+        "side": "right",
+        "col": 1,
+        "row": 2,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 26,
+        "label": "IO26",
+        "side": "right",
+        "col": 1,
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 18,
+        "label": "IO18",
+        "side": "right",
+        "col": 1,
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 19,
+        "label": "IO19",
+        "side": "right",
+        "col": 1,
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 23,
+        "label": "IO23",
+        "side": "right",
+        "col": 1,
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "IO5",
+        "side": "right",
+        "col": 1,
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "3V3",
+        "side": "right",
+        "col": 1,
+        "row": 8,
+        "capabilities": [
+          "power"
+        ]
+      },
+      {
+        "wiring": 13,
+        "label": "TCK/IO13",
+        "side": "right",
+        "col": 1,
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 10,
+        "label": "IO10",
+        "side": "right",
+        "col": 1,
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "TXD0",
+        "side": "left",
+        "col": 1,
+        "row": 1,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 1,
+        "label": "RXD0",
+        "side": "left",
+        "col": 1,
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 22,
+        "label": "IO22",
+        "side": "left",
+        "col": 1,
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 21,
+        "label": "IO21",
+        "side": "left",
+        "col": 1,
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 17,
+        "label": "IO17",
+        "side": "left",
+        "col": 1,
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 16,
+        "label": "IO16",
+        "side": "left",
+        "col": 1,
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "col": 1,
+        "row": 7,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "label": "5V",
+        "side": "left",
+        "col": 1,
+        "row": 8,
+        "capabilities": [
+          "power"
+        ]
+      },
+      {
+        "wiring": 15,
+        "label": "TDO/IO15",
+        "side": "left",
+        "col": 1,
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 7,
+        "label": "IO7",
+        "side": "left",
+        "col": 1,
+        "row": 10,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "label": "GND",
+        "side": "left",
+        "col": 2,
+        "row": 1,
+        "capabilities": [
+          "gnd"
+        ]
+      },
+      {
+        "wiring": 27,
+        "label": "IO27",
+        "side": "left",
+        "col": 2,
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 25,
+        "label": "IO25",
+        "side": "left",
+        "col": 2,
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 32,
+        "label": "IO32",
+        "side": "left",
+        "col": 2,
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 12,
+        "label": "TDI/IO12",
+        "side": "left",
+        "col": 2,
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "IO4",
+        "side": "left",
+        "col": 2,
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "label": "IO0",
+        "side": "left",
+        "col": 2,
+        "row": 7,
+        "capabilities": [
+          "flash"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "IO2",
+        "side": "left",
+        "col": 2,
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 8,
+        "label": "IO8",
+        "side": "left",
+        "col": 2,
+        "row": 9,
+        "capabilities": [
+          "input"
+        ]
+      },
+      {
+        "wiring": 6,
+        "label": "CLK",
+        "side": "left",
+        "col": 2,
+        "row": 10,
+        "capabilities": []
+      }
+    ]
+  },
+  "HC595x2_uniface": {
+    "label": "HC595 ×2 — 16 single-sided outputs",
+    "description": "2×74HC595 daisy-chain — 16 outputs on one side, Q1…Q16 top to bottom",
+    "rows": 16,
+    "busType": "spi_master_only",
+    "pins": [
+      {
+        "wiring": 1,
+        "label": "Q1",
+        "side": "left",
+        "row": 1,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "Q2",
+        "side": "left",
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "Q3",
+        "side": "left",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "Q4",
+        "side": "left",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "Q5",
+        "side": "left",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 6,
+        "label": "Q6",
+        "side": "left",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 7,
+        "label": "Q7",
+        "side": "left",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 8,
+        "label": "Q8",
+        "side": "left",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 9,
+        "label": "Q9",
+        "side": "left",
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 10,
+        "label": "Q10",
+        "side": "left",
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 11,
+        "label": "Q11",
+        "side": "left",
+        "row": 11,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 12,
+        "label": "Q12",
+        "side": "left",
+        "row": 12,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 13,
+        "label": "Q13",
+        "side": "left",
+        "row": 13,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 14,
+        "label": "Q14",
+        "side": "left",
+        "row": 14,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 15,
+        "label": "Q15",
+        "side": "left",
+        "row": 15,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 16,
+        "label": "Q16",
+        "side": "left",
+        "row": 16,
+        "capabilities": [
+          "output"
+        ]
+      }
+    ]
+  },
+  "HC595": {
+    "label": "HC595 — 8 outputs",
+    "description": "74HC595 daughter board — 8 outputs on one side",
+    "rows": 8,
+    "busType": "spi_master_only",
+    "pins": [
+      {
+        "wiring": 1,
+        "label": "Q1",
+        "side": "left",
+        "row": 1,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "Q2",
+        "side": "left",
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "Q3",
+        "side": "left",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "Q4",
+        "side": "left",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "Q5",
+        "side": "left",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 6,
+        "label": "Q6",
+        "side": "left",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 7,
+        "label": "Q7",
+        "side": "left",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 8,
+        "label": "Q8",
+        "side": "left",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      }
+    ]
+  },
+  "HC595x2_biface": {
+    "label": "HC595 ×2 — 16 dual-sided outputs",
+    "description": "Custom PCB — 2×74HC595 daisy-chain, 8 outputs left + 8 outputs right",
+    "rows": 8,
+    "busType": "spi_master_only",
+    "pins": [
+      {
+        "wiring": 1,
+        "label": "Q1",
+        "side": "left",
+        "row": 1,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "Q2",
+        "side": "left",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "Q3",
+        "side": "left",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "Q4",
+        "side": "left",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "Q5",
+        "side": "left",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 6,
+        "label": "Q6",
+        "side": "left",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 7,
+        "label": "Q7",
+        "side": "left",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 8,
+        "label": "Q8",
+        "side": "left",
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 9,
+        "label": "Q9",
+        "side": "right",
+        "row": 1,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 10,
+        "label": "Q10",
+        "side": "right",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 11,
+        "label": "Q11",
+        "side": "right",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 12,
+        "label": "Q12",
+        "side": "right",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 13,
+        "label": "Q13",
+        "side": "right",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 14,
+        "label": "Q14",
+        "side": "right",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 15,
+        "label": "Q15",
+        "side": "right",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 16,
+        "label": "Q16",
+        "side": "right",
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      }
+    ]
+  },
+  "LobotChain": {
+    "label": "Lobot servo chain",
+    "description": "LX-16A controller on UART bus — servo ID addressing, no physical pin representation",
+    "rows": 0,
+    "busType": "uart",
+    "pins": []
+  },
+  "DfPlayerMini": {
+    "label": "DFPlayer Mini",
+    "description": "UART MP3 audio module — rx/tx from bus, no physical pin representation",
+    "rows": 0,
+    "busType": "uart",
+    "pins": []
+  },
+  "SSD1306": {
+    "label": "OLED SSD1306 128×64",
+    "description": "I²C OLED display — driven by SSD1306, no physical pin representation",
+    "rows": 0,
+    "busType": "i2c",
+    "pins": []
+  },
+  "PCA9685": {
+    "label": "PCA9685 — 16ch servo I²C",
+    "description": "PCA9685 16-channel PWM/servo controller — I²C, address 0x40-0x4F (A0-A5 jumpers). Each channel drives one positional servo.",
+    "rows": 16,
+    "busType": "i2c",
+    "pins": [
+      {
+        "wiring": 0,
+        "label": "CH0",
+        "side": "left",
+        "row": 1,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 1,
+        "label": "CH1",
+        "side": "left",
+        "row": 2,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 2,
+        "label": "CH2",
+        "side": "left",
+        "row": 3,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 3,
+        "label": "CH3",
+        "side": "left",
+        "row": 4,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 4,
+        "label": "CH4",
+        "side": "left",
+        "row": 5,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 5,
+        "label": "CH5",
+        "side": "left",
+        "row": 6,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 6,
+        "label": "CH6",
+        "side": "left",
+        "row": 7,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 7,
+        "label": "CH7",
+        "side": "left",
+        "row": 8,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 8,
+        "label": "CH8",
+        "side": "left",
+        "row": 9,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 9,
+        "label": "CH9",
+        "side": "left",
+        "row": 10,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 10,
+        "label": "CH10",
+        "side": "left",
+        "row": 11,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 11,
+        "label": "CH11",
+        "side": "left",
+        "row": 12,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 12,
+        "label": "CH12",
+        "side": "left",
+        "row": 13,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 13,
+        "label": "CH13",
+        "side": "left",
+        "row": 14,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 14,
+        "label": "CH14",
+        "side": "left",
+        "row": 15,
+        "capabilities": [
+          "output"
+        ]
+      },
+      {
+        "wiring": 15,
+        "label": "CH15",
+        "side": "left",
+        "row": 16,
+        "capabilities": [
+          "output"
+        ]
+      }
+    ]
+  }
+}
