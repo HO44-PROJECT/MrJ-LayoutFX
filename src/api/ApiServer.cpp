@@ -8,9 +8,9 @@
  */
 
 #include "api/ApiServer.h"
-#include <DNSServer.h>
 
-#ifdef MRJFX_WEBUI_ENABLED
+#ifdef MRJFX_API_SERVER_ENABLED
+#include <DNSServer.h>
 
 using namespace http_status;
 
@@ -209,4 +209,4 @@ void ApiServer::init(const char *ssid, const char *password,
       "system", kTaskStackBytes, nullptr, kTaskPriority, nullptr, kTaskCore);
 }
 
-#endif // MRJFX_WEBUI_ENABLED
+#endif // MRJFX_API_SERVER_ENABLED

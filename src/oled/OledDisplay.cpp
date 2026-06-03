@@ -21,6 +21,7 @@
 // Static members
 // ---------------------------------------------------------------------------
 
+char OledDisplay::_configName[32] = {};
 char OledDisplay::_evtType[24] = {};
 char OledDisplay::_evtId[24] = {};
 int OledDisplay::_evtState = 0;
@@ -55,13 +56,17 @@ void OledDisplay::init() {
 }
 
 bool OledDisplay::_begin() {
-  // U8G2 full-buffer begin() always returns true even when no display is connected.
-  // Probe the two standard SSD1306 I2C addresses first so we fail fast.
-  Wire.beginTransmission(0x3C);
-  bool found = (Wire.endTransmission() == 0);
-  if (!found) {
-    Wire.beginTransmission(0x3D);
+  // SSD1306 needs up to ~100 ms to power up before it ACKs on I2C.
+  // Retry up to 5 times (250 ms max) so an early boot doesn't miss the display.
+  bool found = false;
+  for (uint8_t attempt = 0; attempt < 5 && !found; attempt++) {
+    if (attempt > 0) delay(50);
+    Wire.beginTransmission(0x3C);
     found = (Wire.endTransmission() == 0);
+    if (!found) {
+      Wire.beginTransmission(0x3D);
+      found = (Wire.endTransmission() == 0);
+    }
   }
   if (!found)
     return false;
@@ -70,7 +75,10 @@ bool OledDisplay::_begin() {
   _u8g2.clearBuffer();
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(0, 12, "MrJ RailwayFX");
-  _u8g2.drawStr(0, 26, "Starting...");
+  _u8g2.setFont(u8g2_font_5x7_tr);
+  _u8g2.drawStr(0, 22, MRJFX_FIRMWARE_VERSION);
+  _u8g2.setFont(u8g2_font_6x10_tr);
+  _u8g2.drawStr(0, 34, "Starting...");
   _u8g2.sendBuffer();
   return true;
 }
@@ -93,6 +101,11 @@ void OledDisplay::log(const char *msg) {
   strncpy(_logMsg, msg ? msg : "", sizeof(_logMsg) - 1);
   _logMsg[sizeof(_logMsg) - 1] = '\0';
   _hasLog = true;
+}
+
+void OledDisplay::setConfigName(const char *name) {
+  strncpy(_configName, name ? name : "", sizeof(_configName) - 1);
+  _configName[sizeof(_configName) - 1] = '\0';
 }
 
 void OledDisplay::log(const __FlashStringHelper *msg) {
@@ -168,10 +181,12 @@ void OledDisplay::_drawTrain(int tx, int frame) {
   _u8g2.drawHLine(0, yb + 2, W);
   _u8g2.drawHLine(0, yb + 4, W);
 
-  // Title
+  // Title + version
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.setCursor(22, 11);
   _u8g2.print(F("MrJ Railway FX"));
+  _u8g2.setFont(u8g2_font_5x7_tr);
+  _u8g2.drawStr(22, 21, MRJFX_FIRMWARE_VERSION);
 
   // Cowcatcher (only when tx-7 >= 0 to avoid negative drawLine coords)
   if (tx >= 7 && tx < W) {
@@ -289,12 +304,12 @@ void OledDisplay::_drawIdle() {
   _u8g2.clearBuffer();
 
   #if OLED_HEIGHT >= 64
-  // Title + separator
+  // ── Line 1 (y=10): config name or project name ────────────────────────────
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 10, "MrJ RailwayFX");
+  _u8g2.drawStr(0, 10, _configName[0] ? _configName : "MrJ RailwayFX");
   _u8g2.drawHLine(0, 13, 128);
 
-  // IP address — STA IP, AP IP, or placeholder
+  // ── Line 2 (y=25): IP address + WiFi signal bars (right-aligned) ──────────
   char ip[20] = "No WiFi";
     #ifdef MRJFX_WIFI_ENABLED
   if (WiFi.status() == WL_CONNECTED) {
@@ -304,14 +319,57 @@ void OledDisplay::_drawIdle() {
     strncpy(ip, apStr != "0.0.0.0" ? apStr.c_str() : "Connecting...", sizeof(ip) - 1);
   }
     #endif
-  _u8g2.drawStr(0, 26, ip);
+  _u8g2.drawStr(0, 25, ip);
 
-  // Uptime
+    #ifdef MRJFX_WIFI_ENABLED
+  // WiFi bars: 4 bars right-aligned, anchored at bottom y=24
+  {
+    int rssi = (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : -100;
+    int bars = (rssi >= -60) ? 4 : (rssi >= -70) ? 3 : (rssi >= -80) ? 2 : 1;
+    for (int b = 0; b < 4; b++) {
+      uint8_t bh = (uint8_t)(3 + b * 2); // heights: 3, 5, 7, 9
+      uint8_t bx = (uint8_t)(107 + b * 5);
+      uint8_t by = (uint8_t)(24 - bh + 1);
+      if (b < bars) {
+        _u8g2.drawBox(bx, by, 4, bh);
+      } else {
+        _u8g2.drawFrame(bx, by, 4, bh);
+      }
+    }
+  }
+    #endif
+
+  // ── Line 3 (y=39): uptime ─────────────────────────────────────────────────
   char uptime[20];
-  unsigned long s = millis() / 1000UL;
-  snprintf(uptime, sizeof(uptime), "up %02lu:%02lu:%02lu",
-           s / 3600UL, (s % 3600UL) / 60UL, s % 60UL);
-  _u8g2.drawStr(0, 54, uptime);
+  {
+    unsigned long s = millis() / 1000UL;
+    snprintf(uptime, sizeof(uptime), "up %02lu:%02lu:%02lu",
+             s / 3600UL, (s % 3600UL) / 60UL, s % 60UL);
+  }
+  _u8g2.drawStr(0, 39, uptime);
+
+  // ── Line 4 (y=52): active features — compile-time constant ────────────────
+  {
+    static const char kFeats[] =
+    #ifdef MRJFX_WIFI_ENABLED
+      "WiFi "
+    #endif
+    #ifdef MRJFX_CONFIG_ENABLED
+      "CFG "
+    #endif
+    #ifdef MRJFX_I2C_DEVICES_ENABLED
+      "I2C "
+    #endif
+    #ifdef MRJFX_SPI_CARDS_ENABLED
+      "SPI "
+    #endif
+    #ifdef MRJFX_DCC_ENABLED
+      "DCC"
+    #endif
+      "";
+    _u8g2.setFont(u8g2_font_5x7_tr);
+    _u8g2.drawStr(0, 52, kFeats);
+  }
 
   #else // 128×32
   _u8g2.setFont(u8g2_font_6x10_tr);

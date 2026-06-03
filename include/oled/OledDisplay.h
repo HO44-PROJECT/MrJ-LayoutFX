@@ -90,6 +90,13 @@ public:
   static void log(const char *msg);
   static void log(const __FlashStringHelper *msg);
 
+  /**
+   * @brief Store the active configuration name for display on the idle screen.
+   * Called by ConfigManager after every load / hot-reload.
+   * Pass an empty string or nullptr to fall back to "MrJ RailwayFX".
+   */
+  static void setConfigName(const char *name);
+
 private:
   bool _begin(); ///< Returns false if no display ACKs on the I²C bus — suppresses task creation.
   void _drawIdle();
@@ -107,6 +114,9 @@ private:
   static constexpr int kSplashWidthPx = 96;    ///< Full train width (px).
   static constexpr int kSplashSpokeFrames = 3; ///< Frames per spoke orientation.
   #endif
+
+  // Config name shown on idle screen (set by ConfigManager via setConfigName()).
+  static char _configName[32];
 
   // Event state — shared through the single global instance via static storage.
   static char _evtType[24];

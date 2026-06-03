@@ -168,6 +168,21 @@ public:
   void initAll();
 
   /**
+   * @brief Apply default states to all devices (from config["devices"][i]["default_state"]).
+   *        Call after initAll() to override the hardcoded OFF_STATE from initPins().
+   */
+  void applyDefaultStates();
+
+  /**
+   * @brief Drive every GPIO listed in config["idle_pins"] to OUTPUT LOW.
+   *
+   * Called after initAll() to silence unassigned output pins that would
+   * otherwise float and cause LED flicker via crosstalk.  Safe to call when
+   * idle_pins is empty (no-op).
+   */
+  void initIdlePins();
+
+  /**
    * @brief Unconditional full reset: suspend, detach and delete every running
    *        Device (and its associated LobotServo / PCA9685 driver), then clear
    *        all bus/board/port state.
@@ -213,6 +228,7 @@ public:
   uint8_t boardCount() const { return _boardCount; }
   uint8_t spiCardCount() const { return _spiCardCount; }
   int dccPin() const { return _dccPin; }
+  const char *configName() const { return _configName; }
 
   /**
    * @brief Access a board configuration by 1-based index.
@@ -238,7 +254,10 @@ private:
   Device *_devices[MRJFX_FACTORY_MAX_DEVICES];
   char _ids[MRJFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
   uint8_t _boards[MRJFX_FACTORY_MAX_DEVICES];
+  STATE_TYPE _deviceDefaultStates[MRJFX_FACTORY_MAX_DEVICES]; ///< Default states from JSON config.
   size_t _count = 0;
+
+  char _configName[FACTORY_LABEL_LEN] = {}; ///< Config "name" field, for OLED display.
 
   int _dccPin = -1;
   SpiBusCfg _spiBus;
@@ -268,6 +287,10 @@ private:
   #ifdef MRJFX_I2C_DEVICES_ENABLED
   Adafruit_PWMServoDriver *_pwmDrivers[MRJFX_FACTORY_MAX_BOARDS] = {};
   #endif
+
+  static constexpr uint8_t MAX_IDLE_PINS = 32; ///< Max entries in idle_pins[].
+  uint8_t _idlePins[MAX_IDLE_PINS] = {};        ///< GPIO pin numbers to drive OUTPUT LOW.
+  uint8_t _idlePinCount = 0;
 
   bool _parseBuses(JsonObject buses);
   BusType _resolveBusType(const char *busKey) const;

@@ -12,6 +12,12 @@
 
 #ifdef MRJFX_API_SERVER_ENABLED
 
+// Embedded JSON catalogs (PROGMEM, gzipped)
+#include "api/embedded_board_types.h"
+#include "api/embedded_device_types.h"
+#include "api/embedded_bus_types.h"
+#include "api/embedded_i2c_known.h"
+
 using namespace api_keys;
 using namespace http_status;
 
@@ -181,35 +187,32 @@ void DeviceApi::_onGetBoards() {
   ApiServer::sendJson(kOk, json);
 }
 
-/** @brief Stream a JSON file from LittleFS. Sends 404 if the file is absent. */
-static void _streamJsonFile(const char *path, const char *filename) {
-  if (!LittleFS.exists(path)) {
-    String err = F("{\"error\":\"");
-    err += filename;
-    err += F(" not found\"}");
-    ApiServer::sendJson(kNotFound, err);
-    return;
-  }
-  File f = LittleFS.open(path, "r");
-  ApiServer::server().streamFile(f, "application/json");
-  f.close();
+/**
+ * @brief Serve embedded gzipped JSON from PROGMEM.
+ * @param data Pointer to gzipped JSON data in PROGMEM
+ * @param len  Length of gzipped data
+ */
+static void _serveEmbeddedJson(const uint8_t *data, size_t len) {
+  ApiServer::server().sendHeader("Cache-Control", "max-age=86400"); // 24h cache
+  ApiServer::server().sendHeader("Content-Encoding", "gzip");
+  ApiServer::server().send_P(200, "application/json", (const char *)data, len);
 }
 
 void DeviceApi::_onGetBoardTypes() {
-  LOG_PRINTLN(F("API: GET /api/board-types"));
-  _streamJsonFile(kPathBoardTypes, kFileBoardTypes);
+  LOG_PRINTLN(F("API: GET /api/board-types (PROGMEM)"));
+  _serveEmbeddedJson(BOARD_TYPES_GZ, BOARD_TYPES_GZ_LEN);
 }
 void DeviceApi::_onGetDeviceTypes() {
-  LOG_PRINTLN(F("API: GET /api/device-types"));
-  _streamJsonFile(kPathDeviceTypes, kFileDeviceTypes);
+  LOG_PRINTLN(F("API: GET /api/device-types (PROGMEM)"));
+  _serveEmbeddedJson(DEVICE_TYPES_GZ, DEVICE_TYPES_GZ_LEN);
 }
 void DeviceApi::_onGetBusTypes() {
-  LOG_PRINTLN(F("API: GET /api/bus-types"));
-  _streamJsonFile(kPathBusTypes, kFileBusTypes);
+  LOG_PRINTLN(F("API: GET /api/bus-types (PROGMEM)"));
+  _serveEmbeddedJson(BUS_TYPES_GZ, BUS_TYPES_GZ_LEN);
 }
 void DeviceApi::_onGetI2cKnown() {
-  LOG_PRINTLN(F("API: GET /api/i2c-known"));
-  _streamJsonFile(kPathI2cKnown, kFileI2cKnown);
+  LOG_PRINTLN(F("API: GET /api/i2c-known (PROGMEM)"));
+  _serveEmbeddedJson(I2C_KNOWN_GZ, I2C_KNOWN_GZ_LEN);
 }
 
 // ---------------------------------------------------------------------------

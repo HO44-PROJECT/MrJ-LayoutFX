@@ -17,14 +17,16 @@ I2cPwmServoDevice::I2cPwmServoDevice(Adafruit_PWMServoDriver *pwm, uint8_t chann
       _pulseMinUs(pulseMinUs), _pulseMaxUs(pulseMaxUs) {
   for (uint8_t i = 0; i < _posCount; i++)
     _positions[i] = positions[i];
-  if (_posCount > 0)
-    _currentAngle = _positions[0].angle;
+  // _currentAngle stays at 0 (member default) — do NOT copy positions[0].angle here.
+  // After de-energize the servo is limp and its physical angle is unknown; starting
+  // every slew from 0° ensures the slew loop always runs and produces visible motion.
 }
 
 bool I2cPwmServoDevice::initPins() {
   // Start de-energized: full-OFF on PCA9685, no PWM sent until a position is commanded.
+  // Use INIT_STATE instead of OFF_STATE so applyDefaultStates() triggers the coroutine.
   if (_pwm) _pwm->setPWM(_channel, 0, 4096);
-  setState(OFF_STATE);
+  setState(INIT_STATE);
   return true;
 }
 
@@ -52,6 +54,9 @@ int I2cPwmServoDevice::runCoroutine() {
       // Stop: cut PWM so the servo de-energizes (goes limp).
       // 4096 sets the PCA9685 channel to full-OFF (permanently inactive).
       if (_pwm) _pwm->setPWM(_channel, 0, 4096);
+      // Physical angle is now unknown (servo is limp). Reset to neutral so the
+      // next position command always produces a full slew from 0°.
+      _currentAngle = 0;
       setState(OFF_STATE);
     } else {
       uint8_t s = (uint8_t)getTargetState();

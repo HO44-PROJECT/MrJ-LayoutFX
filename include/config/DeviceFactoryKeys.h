@@ -20,6 +20,7 @@ namespace factory_keys {
 constexpr char kSecBuses[] = "buses";
 constexpr char kSecBoards[] = "boards";
 constexpr char kSecDevices[] = "devices";
+constexpr char kSecIdlePins[] = "idle_pins"; ///< GPIO pins to drive OUTPUT LOW at boot (prevents floating)
 constexpr char kSecPins[] = "pins"; ///< board_types.json only
 
 // ── Fields shared across sections ─────────────────────────────────────────

@@ -153,6 +153,11 @@ public:
     Serial.begin(115200);
 #endif
 
+    // StatusOled lightweight display (AVR) — initialises Wire + display.
+    // Applies config (contrast, flip mode) and shows splash screen.
+    // No-op when OLED_STATUS is not defined.
+    STATUS_INIT();
+
     // 0. Initialise I²C bus (OLED, I2C_CARDS, I2C_SCAN all depend on it).
 #ifdef MRJFX_I2C_CARDS_ENABLED
     Wire.begin(I2C_SDA, I2C_SCL);
@@ -208,6 +213,7 @@ public:
    * @brief Drive all active subsystems each iteration of the Arduino loop:
    *          1. CoroutineScheduler  (all platforms)
    *          2. Spi595Bus::flush()  (if MRJFX_SPI_CARDS_ENABLED is defined)
+   *          3. StatusOled::loop()  (if OLED_STATUS is defined)
    */
   static void loop() {
     ace_routine::CoroutineScheduler::loop();
@@ -221,5 +227,8 @@ public:
     // Drive the DCC decoder state machine and callbacks.
     DccDrivable::loop();
 #endif
+
+    // StatusOled auto-update (metrics, event timeouts, etc.)
+    STATUS_LOOP();
   }
 };

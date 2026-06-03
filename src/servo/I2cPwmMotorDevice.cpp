@@ -43,16 +43,18 @@ I2cPwmMotorDevice::I2cPwmMotorDevice(Adafruit_PWMServoDriver *pwm, uint8_t chann
 }
 
 /**
- * @brief Initialises the PCA9685 channel and sets the device to OFF.
+ * @brief Initialises the PCA9685 channel and sets the device to INIT_STATE.
  *
- * Sends the neutral pulse immediately so the motor holds the stop position at
- * power-up.  Contrast with I2cPwmServoDevice which sends full-OFF to de-energize.
+ * Sends full-OFF (4096) to de-energize the motor completely at boot.
+ * Does NOT call setState(OFF_STATE) — leaves the device in INIT_STATE so that
+ * applyDefaultStates() can trigger the coroutine transition to the actual default.
+ * This ensures the neutral pulse is sent even when default_state is "off".
  *
  * @return true (always succeeds if the PCA9685 driver was initialised beforehand).
  */
 bool I2cPwmMotorDevice::initPins() {
-  if (_pwm) _pwm->writeMicroseconds(_channel, _neutralUs);
-  setState(OFF_STATE);
+  if (_pwm) _pwm->setPWM(_channel, 0, 4096); // Full-OFF (de-energize)
+  setState(INIT_STATE); // Transitional state — will transition to defaultState
   return true;
 }
 
