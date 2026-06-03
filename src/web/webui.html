@@ -82,7 +82,8 @@
       <button class="cfg-tab active" data-tab="boards" onclick="switchCfgTab('boards')" data-i18n="cfg.tab.boards">Cartes &amp; extensions</button>
       <button class="cfg-tab" data-tab="files"  onclick="switchCfgTab('files')"  data-i18n="cfg.tab.files">Fichiers config</button>
       <button class="cfg-tab" data-tab="buses"  onclick="switchCfgTab('buses')"  data-i18n="cfg.tab.buses">Bus</button>
-      <button class="cfg-tab" data-tab="diag"   onclick="switchCfgTab('diag')"   data-i18n="cfg.tab.diag">Diagnostics</button>
+      <button class="cfg-tab" data-tab="diag"      onclick="switchCfgTab('diag')"      data-i18n="cfg.tab.diag">Diagnostics</button>
+      <button class="cfg-tab" data-tab="interface" onclick="switchCfgTab('interface')" data-i18n="cfg.tab.interface">Interface</button>
       <input id="cfg-layout-name" type="text" class="cfg-tab-name-inp" data-i18n-placeholder="cfg.layout_name_ph" placeholder="Nom du réseau…" autocomplete="off" oninput="onLayoutNameInput()">
     </div>
 
@@ -171,33 +172,37 @@
       </div>
     </div>
 
+    <!-- ── Tab: Interface ────────────────────────────────────────────── -->
+    <div id="cfg-tab-interface" class="cfg-tabpanel">
+      <div class="dbg-panel">
+        <div class="prm-section">
+          <div class="prm-section-title" data-i18n="prm.interface">Interface</div>
+          <div class="prm-row">
+            <span class="prm-label" data-i18n="prm.language">Langue</span>
+            <div class="prm-lang-btns">
+              <button class="prm-lang-btn active" id="lang-fr" onclick="setLang('fr')">FR</button>
+              <button class="prm-lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+              <button class="prm-lang-btn" id="lang-de" onclick="setLang('de')">DE</button>
+              <button class="prm-lang-btn" id="lang-es" onclick="setLang('es')">ES</button>
+            </div>
+          </div>
+          <div class="prm-row">
+            <span class="prm-label" data-i18n="prm.poll_interval">Rafraîchissement</span>
+            <div class="prm-field">
+              <input type="number" id="prm-poll" min="500" max="30000" step="500"
+                class="prm-input prm-input-sm" onchange="savePollInterval()">
+              <span class="prm-unit">ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── View: À propos ───────────────────────────────────────────────── -->
   <div id="view-about" class="view">
     <div class="abt-panel">
-
-      <!-- Settings (formerly Paramètres) -->
-      <div class="prm-section abt-settings-section">
-        <div class="prm-section-title" data-i18n="prm.interface">Interface</div>
-        <div class="prm-row">
-          <span class="prm-label" data-i18n="prm.language">Langue</span>
-          <div class="prm-lang-btns">
-            <button class="prm-lang-btn active" id="lang-fr" onclick="setLang('fr')">FR</button>
-            <button class="prm-lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
-            <button class="prm-lang-btn" id="lang-de" onclick="setLang('de')">DE</button>
-            <button class="prm-lang-btn" id="lang-es" onclick="setLang('es')">ES</button>
-          </div>
-        </div>
-        <div class="prm-row">
-          <span class="prm-label" data-i18n="prm.poll_interval">Rafraîchissement</span>
-          <div class="prm-field">
-            <input type="number" id="prm-poll" min="500" max="30000" step="500"
-              class="prm-input prm-input-sm" onchange="savePollInterval()">
-            <span class="prm-unit">ms</span>
-          </div>
-        </div>
-      </div>
 
       <div class="abt-top">
         <div class="abt-title" data-i18n="nav.about">À propos</div>

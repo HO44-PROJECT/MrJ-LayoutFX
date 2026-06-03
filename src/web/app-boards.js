@@ -1,4 +1,14 @@
-// ── I2C scanner ──────────────────────────────────────────────────────────
+/**
+ * @file app-boards.js
+ * @brief I2C scanner and board management for the configuration view.
+ *
+ * Handles I2C device detection, board listing, and bus configuration in the
+ * WebUI config panel.
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ */
 
 // Trigger an I2C bus scan on the ESP32 and display found addresses with chip names from _i2cKnown.
 function scanI2c() {
@@ -82,7 +92,10 @@ function onLayoutNameInput() {
 }
 
 // Persist the full config object to /api/config; clears dirty on success.
+// idle_pins is recomputed from cfg before every save so it always reflects the
+// current device/bus assignments — no manual button needed.
 function saveCfg(cfg) {
+  cfg.idle_pins = computeIdlePins(cfg);
   fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) })
     .then(function (r) { if (r.ok) { clearDirty(); _reloadAfterSave(); } })
     .catch(function () { });
@@ -517,6 +530,62 @@ function dbgAll(boardApiIdx, state) {
     post('/api/all', { state: state, board: boardApiIdx + 1 })
       .then(function () { loadDebug(); });
   });
+}
+
+// ── Idle pins ────────────────────────────────────────────────────────
+
+/**
+ * Compute free output GPIO pins on the root MCU board for a given config.
+ * Called automatically by saveCfg() — result is stored as cfg.idle_pins so
+ * the firmware drives them OUTPUT LOW at boot without any manual step.
+ *
+ * Excluded: system/bus pins (_dbgSysPins), strapping pins,
+ *           input-only pins, and pins already used by a device or bus in cfg.
+ *
+ * @param {object} cfg  Config object to inspect (falls back to _dbgCfg).
+ * @returns {number[]} Sorted array of GPIO numbers to drive OUTPUT LOW.
+ */
+function computeIdlePins(cfg) {
+  cfg = cfg || _dbgCfg;
+  if (!cfg) return [];
+  // Find root board (first board without a bus).
+  var rootBoard = null;
+  var cfgBoards = cfg.boards || [];
+  for (var i = 0; i < cfgBoards.length; i++) {
+    if (!cfgBoards[i].bus) { rootBoard = cfgBoards[i]; break; }
+  }
+  if (!rootBoard) return [];
+  var def = _boardTypes[rootBoard.type];
+  if (!def || !def.pins) return [];
+
+  // Collect all GPIO numbers already committed: device wiring + bus signal pins.
+  var usedPins = {};
+  (cfg.devices || []).forEach(function (dev) {
+    var w = dev.wiring;
+    if (Array.isArray(w)) w.forEach(function (p) { usedPins[p] = true; });
+    else if (w !== undefined && w !== null) usedPins[w] = true;
+  });
+  var buses = cfg.buses || {};
+  Object.keys(buses).forEach(function (k) {
+    var b = buses[k];
+    ['pin', 'mosi', 'sclk', 'latch', 'tx', 'rx', 'sda', 'scl'].forEach(function (f) {
+      if (b[f] !== undefined) usedPins[b[f]] = true;
+    });
+  });
+
+  var idle = [];
+  def.pins.forEach(function (p) {
+    if (p.wiring === undefined) return;
+    var num = p.wiring;
+    var caps = p.capabilities || [];
+    if (caps.indexOf('output') < 0) return;       // not an output pin
+    if (caps.indexOf('strapping') >= 0) return;    // boot-strapping pin — skip
+    if (_dbgSysPins[num]) return;                  // reserved by a bus (runtime)
+    if (usedPins[num]) return;                     // already used by a device or bus
+    idle.push(num);
+  });
+  idle.sort(function (a, b) { return a - b; });
+  return idle;
 }
 
 // ALL test: turn off all devices on the card, then light every testable pin.

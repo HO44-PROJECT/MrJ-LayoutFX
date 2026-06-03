@@ -1,8 +1,13 @@
-
 /**
- * @file  app-core.js
+ * @file app-core.js
  * @brief Cockpit view: globals, navigation, device card renderers, filter, grid, poll.
- *        Bundled with the other app-*.js modules by build_webui.py.
+ *
+ * Core WebUI module bundled with other app-*.js modules by build_webui.py.
+ * Manages device cards, real-time polling, and main navigation.
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  *
  * @project MrJ-ArduinoRailwayFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
@@ -69,7 +74,7 @@ function switchView(name) {
   if (name === 'config') { renderDirtyBanner(); switchCfgTab(_currentCfgTab); }
 }
 
-var _currentCfgTab = 'files';
+var _currentCfgTab = 'boards';
 
 // Activate a tab within the config view (files | boards | buses).
 // Triggers a loadDebug() for boards/buses tabs to ensure fresh data.
@@ -361,11 +366,9 @@ function render(devs) {
   var grid = document.getElementById('grid');
   if (devs.length === 0) {
     toolbar.style.display = 'none';
-    // If boards are already configured, guide to config/boards instead of reopening the wizard.
     var hasBoards = _dbgCfg && _dbgCfg.boards && _dbgCfg.boards.length > 0;
-    var ctaBtn = hasBoards
-      ? '<button class="ck-empty-btn" onclick="goToBoards()">' + t('ck.empty_btn') + '</button>'
-      : '<button class="ck-empty-btn" onclick="openWizard()">' + t('ck.setup_btn') + '</button>';
+    var ctaBtn = (hasBoards ? '<button class="ck-empty-btn" onclick="goToBoards()">' + t('ck.empty_btn') + '</button>' : '')
+      + '<button class="ck-empty-btn" onclick="openWizard()">' + t('ck.setup_btn') + '</button>';
     grid.innerHTML = '<div class="ck-empty">'
       + '<div class="ck-empty-ico">🎛</div>'
       + '<div class="ck-empty-title">' + t('ck.empty_title') + '</div>'

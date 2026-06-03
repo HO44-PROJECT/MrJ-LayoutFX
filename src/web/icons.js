@@ -1,4 +1,15 @@
-/* ── SVG Icons ──────────────────────────────────────────────────────── */
+/**
+ * @file icons.js
+ * @brief SVG icon definitions for railway devices (signals, lamps, beacons, etc.).
+ *
+ * Contains inline SVG paths for all device types displayed in the WebUI.
+ * Used for device cards and type selection.
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ */
+
 var S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">';
 var E = '</svg>';
 // Mini LED SVG for the raw-GPIO test sub-button

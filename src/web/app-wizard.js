@@ -1,8 +1,13 @@
 /**
- * @file  app-wizard.js
- * @brief First-boot setup wizard + manual openWizard() + resetConfig() + exportCode().
+ * @file app-wizard.js
+ * @brief First-boot setup wizard and configuration utilities.
+ *
+ * Provides initial setup wizard, manual configuration reset, and code export
+ * functionality for the WebUI.
  *
  * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
@@ -15,6 +20,46 @@
 var _wiz = null;          // null = wizard closed
 var _wizExpIdx = 0;       // monotonic counter for expansion-board _idx
 
+/**
+ * @brief Get default I2C address for a board type.
+ * Uses i2c_known.json (address → device types) to find the first matching address.
+ * @param boardType Board type key (e.g. "OLED SSD1306 128x64", "PCA9685")
+ * @return Default I2C address (decimal), or 64 if not found
+ */
+function _wizGetDefaultI2cAddress(boardType) {
+  if (!boardType) return 64;
+
+  // Normalize board type for matching (remove special chars, case-insensitive)
+  var btNorm = boardType.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Search i2c_known for first address that matches this board type
+  for (var addr in _i2cKnown) {
+    var devices = _i2cKnown[addr].toLowerCase();
+    // Check if board type appears in the device list (e.g. "ssd1306" in "SSD1306/SH1106")
+    if (devices.indexOf(btNorm.substring(0, 7)) !== -1 || // prefix match (e.g. "ssd1306")
+        devices.indexOf(btNorm.substring(0, 6)) !== -1 || // (e.g. "pca968")
+        devices.indexOf(btNorm.substring(0, 5)) !== -1) { // (e.g. "pcf85")
+      return parseInt(addr, 10);
+    }
+  }
+
+  // Fallback defaults based on common patterns
+  if (btNorm.indexOf('oled') !== -1 || btNorm.indexOf('ssd1306') !== -1 || btNorm.indexOf('sh1106') !== -1) {
+    return 60; // 0x3C
+  }
+  if (btNorm.indexOf('pca9685') !== -1) {
+    return 64; // 0x40
+  }
+  if (btNorm.indexOf('pcf8574a') !== -1) {
+    return 56; // 0x38
+  }
+  if (btNorm.indexOf('pcf8574') !== -1) {
+    return 32; // 0x20
+  }
+
+  return 64; // Default fallback
+}
+
 // Entry point — called by showWelcome() after config + status + board-types are loaded.
 function _wizOpen(status) {
   var env = ((status && status.env) || '').toLowerCase().replace(/[_\s-]/g, '');
@@ -23,7 +68,7 @@ function _wizOpen(status) {
 
   _wizExpIdx = 0;
   _wiz = {
-    step: 1,
+    step: 0,
     mainBoardType: defaultType,
     mainBoardId: boardId,
     buses: {
@@ -46,19 +91,38 @@ function _wizClose() {
   _wiz = null;
 }
 
-// How many steps total (3 when no buses enabled — step 3 expansion is skipped).
+// How many steps total (step 0=lang always present; step 3=expansion skipped when no buses).
 function _wizTotalSteps() {
-  if (!_wiz) return 4;
-  return (_wiz.buses.i2c.enabled || _wiz.buses.spi.enabled || _wiz.buses.uart.enabled) ? 4 : 3;
+  if (!_wiz) return 5;
+  return (_wiz.buses.i2c.enabled || _wiz.buses.spi.enabled || _wiz.buses.uart.enabled) ? 5 : 4;
 }
 
-// Map actual step number to display step number (step 4 becomes "3" when total=3).
+// Map internal step (0-4) to display step (1-based); handles expansion skip.
 function _wizDisplayStep(step) {
-  if (_wizTotalSteps() === 3 && step === 4) return 3;
-  return step;
+  return (step === 4 && _wizTotalSteps() === 4) ? 4 : step + 1;
 }
 
 // ── Step renderers ───────────────────────────────────────────────────────────
+
+function _wizRenderStep0() {
+  var langs = [
+    { code: 'fr', label: 'Français' },
+    { code: 'en', label: 'English' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'es', label: 'Español' }
+  ];
+  return '<p style="margin:0 0 .5rem;font-size:.9rem;color:var(--t2)">' + t('wiz.lang_intro') + '</p>'
+    + '<div class="wiz-lang-grid">'
+    + langs.map(function (l) {
+      var active = (typeof _lang !== 'undefined' && _lang === l.code) ? ' wiz-lang-active' : '';
+      return '<button class="wiz-lang-btn' + active + '" onclick="wizSetLang(\'' + l.code + '\')">' + l.label + '</button>';
+    }).join('')
+    + '</div>';
+}
+
+function wizSetLang(lang) {
+  if (typeof setLang === 'function') setLang(lang);
+}
 
 function _wizRenderStep1() {
   var mcuTypes = Object.keys(_boardTypes).filter(function (k) {
@@ -71,12 +135,12 @@ function _wizRenderStep1() {
       + (def.label || k) + '</option>';
   }).join('');
   return '<div class="de-field">'
-    + '<label>Type de carte</label>'
+    + '<label>' + t('wiz.board_type_lbl') + '</label>'
     + '<select id="wiz-board-type" onchange="wizUpdateBoardId()">' + opts + '</select>'
     + '</div>'
     + '<div class="de-field">'
-    + '<label>Identifiant</label>'
-    + '<input type="text" id="wiz-board-id" value="' + _wiz.mainBoardId + '" autocomplete="off" placeholder="ex: mainboard">'
+    + '<label>' + t('wiz.board_id_lbl') + '</label>'
+    + '<input type="text" id="wiz-board-id" value="' + _wiz.mainBoardId + '" autocomplete="off" placeholder="' + t('wiz.board_id_ph') + '">'
     + '</div>';
 }
 
@@ -119,7 +183,7 @@ function _wizRenderStep2() {
       { fk: 'latch', label: 'LATCH (GPIO)', min: 0, max: 39, ph: 5 }
     ]);
   }
-  html += _wizBusCard('uart', 'Série (UART)', [
+  html += _wizBusCard('uart', t('wiz.uart_label'), [
     { fk: 'tx', label: 'TX (GPIO)', min: 0, max: 39, ph: 17 },
     { fk: 'rx', label: 'RX (GPIO)', min: 0, max: 39, ph: 16 },
     { fk: 'baud', label: 'Baud', min: 300, max: 921600, ph: 115200 }
@@ -143,7 +207,7 @@ function _wizRenderExpBoardRow(b) {
   }).join('');
   var i2cField = b.busLocalKey === 'i2c'
     ? '<div class="de-field" style="margin-top:.3rem">'
-    + '<label style="font-size:.8rem">Adresse I²C</label>'
+    + '<label style="font-size:.8rem">' + t('wiz.i2c_addr_lbl') + '</label>'
     + '<input type="number" value="' + b.i2cAddress + '" min="0" max="127" '
     + 'onchange="wizUpdateExpBoard(' + b._idx + ',\'i2cAddress\',+this.value)">'
     + '</div>'
@@ -151,12 +215,12 @@ function _wizRenderExpBoardRow(b) {
   return '<div class="wiz-expboard-row">'
     + '<button class="wiz-del-board" onclick="wizDeleteExpBoard(' + b._idx + ')">✕</button>'
     + '<div class="de-field">'
-    + '<label style="font-size:.8rem">Type</label>'
+    + '<label style="font-size:.8rem">' + t('wiz.board_type_lbl') + '</label>'
     + '<select onchange="wizUpdateExpBoard(' + b._idx + ',\'type\',this.value)">' + typeOpts + '</select>'
     + '</div>'
     + '<div class="de-field">'
     + '<label style="font-size:.8rem">ID</label>'
-    + '<input type="text" value="' + b.id + '" placeholder="ex: pca1" '
+    + '<input type="text" value="' + b.id + '" placeholder="' + t('wiz.exp_id_ph') + '" '
     + 'onchange="wizUpdateExpBoard(' + b._idx + ',\'id\',this.value)">'
     + '</div>'
     + i2cField
@@ -173,7 +237,7 @@ function _wizRenderExpSection(busLocalKey, busLabel) {
     + '<p class="wiz-section-title">' + busLabel + '</p>'
     + '<div id="wiz-expboards-' + busLocalKey + '">' + rows + '</div>'
     + '<button class="wiz-add-board" onclick="wizAddExpBoard(\'' + busLocalKey + '\')">'
-    + '+ Ajouter une carte</button>'
+    + t('wiz.exp_add') + '</button>'
     + '</div>';
 }
 
@@ -181,9 +245,9 @@ function _wizRenderStep3() {
   var html = '';
   if (_wiz.buses.i2c.enabled) html += _wizRenderExpSection('i2c', 'Bus I²C (' + _wiz.buses.i2c.key + ')');
   if (_wiz.buses.spi.enabled) html += _wizRenderExpSection('spi', 'Bus SPI (' + _wiz.buses.spi.key + ')');
-  if (_wiz.buses.uart.enabled) html += _wizRenderExpSection('uart', 'Bus Série (' + _wiz.buses.uart.key + ')');
+  if (_wiz.buses.uart.enabled) html += _wizRenderExpSection('uart', t('wiz.uart_label') + ' (' + _wiz.buses.uart.key + ')');
   if (!html) {
-    html = '<p style="color:var(--t3);font-size:.85rem">Aucune carte d\'extension disponible pour les bus configurés.</p>';
+    html = '<p style="color:var(--t3);font-size:.85rem">' + t('wiz.exp_none') + '</p>';
   }
   return html;
 }
@@ -191,24 +255,25 @@ function _wizRenderStep3() {
 function _wizRenderStep4() {
   var lines = [];
   var bt = _boardTypes[_wiz.mainBoardType];
-  lines.push('<strong>Carte :</strong> ' + ((bt && bt.label) || _wiz.mainBoardType)
+  lines.push('<strong>' + t('wiz.board_lbl') + '</strong> ' + ((bt && bt.label) || _wiz.mainBoardType)
     + ' <span style="color:var(--t3)">(id: ' + _wiz.mainBoardId + ')</span>');
   var b = _wiz.buses;
   if (b.i2c.enabled) lines.push('<strong>I²C :</strong> SDA=' + b.i2c.sda + ', SCL=' + b.i2c.scl);
   if (b.spi.enabled) lines.push('<strong>SPI :</strong> MOSI=' + b.spi.mosi + ', SCLK=' + b.spi.sclk + ', LATCH=' + b.spi.latch);
-  if (b.uart.enabled) lines.push('<strong>Série :</strong> TX=' + b.uart.tx + ', RX=' + b.uart.rx + ', Baud=' + b.uart.baud);
+  if (b.uart.enabled) lines.push('<strong>' + t('wiz.serial_lbl') + '</strong> TX=' + b.uart.tx + ', RX=' + b.uart.rx + ', Baud=' + b.uart.baud);
   _wiz.expansionBoards.forEach(function (eb) {
     var def = _boardTypes[eb.type] || {};
-    lines.push('<strong>Extension :</strong> ' + (def.label || eb.type)
+    lines.push('<strong>' + t('wiz.ext_lbl') + '</strong> ' + (def.label || eb.type)
       + ' <span style="color:var(--t3)">(id: ' + eb.id + ', bus: ' + eb.busKey + ')</span>');
   });
+  var ph = t('wiz.cfg_name_ph');
   return '<div class="de-field">'
-    + '<label>Nom de la configuration</label>'
-    + '<input type="text" id="wiz-cfg-name" value="' + (_wiz.configName || 'ma-maquette') + '" '
-    + 'placeholder="ma-maquette" autocomplete="off">'
+    + '<label>' + t('wiz.cfg_name_lbl') + '</label>'
+    + '<input type="text" id="wiz-cfg-name" value="' + (_wiz.configName || ph) + '" '
+    + 'placeholder="' + ph + '" autocomplete="off">'
     + '</div>'
     + '<div class="wiz-summary">'
-    + '<p class="wiz-summary-title">Résumé</p>'
+    + '<p class="wiz-summary-title">' + t('wiz.summary_title') + '</p>'
     + lines.map(function (l) { return '<p class="wiz-summary-line">' + l + '</p>'; }).join('')
     + '</div>'
     + '<div id="wiz-err" class="wiz-err" style="display:none"></div>';
@@ -226,32 +291,34 @@ function _wizRender() {
   var display = _wizDisplayStep(step);
   var pct = Math.round(display / total * 100);
 
-  var titles = ['Carte principale', 'Bus de communication', 'Cartes d\'extension', 'Nom et résumé'];
-  var title = step <= 4 ? titles[step - 1] : '';
-  if (total === 3 && step === 4) title = titles[3]; // summary when step 3 skipped
+  var titles = [t('wiz.lang_title'), t('wiz.title_board'), t('wiz.title_buses'), t('wiz.title_exp'), t('wiz.title_summary')];
+  var title = step <= 4 ? titles[step] : '';
+  if (total === 4 && step === 4) title = titles[4];
 
   var body = '';
-  if (step === 1) body = _wizRenderStep1();
+  if (step === 0) body = _wizRenderStep0();
+  else if (step === 1) body = _wizRenderStep1();
   else if (step === 2) body = _wizRenderStep2();
   else if (step === 3) body = _wizRenderStep3();
   else if (step === 4) body = _wizRenderStep4();
 
-  var isFirst = (step === 1);
+  var isFirst = (step === 0);
   var isLast = (step === 4);
 
   modal.innerHTML =
     '<div class="wizard-header">'
     + '<div class="wizard-progress-track"><div class="wizard-progress-fill" style="width:' + pct + '%"></div></div>'
-    + '<div class="wizard-step-info">Étape ' + display + ' / ' + total + '</div>'
+    + '<div class="wizard-step-info">' + t('wiz.step_label') + ' ' + display + ' / ' + total + '</div>'
     + '<h2 class="wizard-title">' + title + '</h2>'
     + '</div>'
     + '<div class="wizard-body">' + body + '</div>'
     + '<div class="wizard-footer">'
-    + (isFirst ? '' : '<button class="wizard-btn wizard-btn-back" onclick="wizBack()">← Précédent</button>')
+    + '<button class="wizard-btn wizard-btn-cancel" onclick="_wizClose()">' + t('wiz.cancel') + '</button>'
+    + (isFirst ? '' : '<button class="wizard-btn wizard-btn-back" onclick="wizBack()">' + t('wiz.back') + '</button>')
     + '<span style="flex:1"></span>'
     + (isLast
-      ? '<button class="wizard-btn wizard-btn-finish" id="wiz-finish-btn" onclick="wizFinish()">✓ Appliquer</button>'
-      : '<button class="wizard-btn wizard-btn-next" onclick="wizNext()">Suivant →</button>')
+      ? '<button class="wizard-btn wizard-btn-finish" id="wiz-finish-btn" onclick="wizFinish()">' + t('wiz.finish') + '</button>'
+      : '<button class="wizard-btn wizard-btn-next" onclick="wizNext()">' + t('wiz.next') + '</button>')
     + '</div>';
 }
 
@@ -293,8 +360,7 @@ function wizBack() {
   if (!_wiz) return;
   _wizSaveCurrent();
   _wiz.step--;
-  // Skip step 3 if no buses (going backward)
-  if (_wiz.step === 3 && _wizTotalSteps() === 3) _wiz.step--;
+  if (_wiz.step === 3 && _wizTotalSteps() === 4) _wiz.step--;
   _wizRender();
 }
 
@@ -302,8 +368,7 @@ function wizNext() {
   if (!_wiz) return;
   _wizSaveCurrent();
   _wiz.step++;
-  // Skip step 3 if no buses enabled
-  if (_wiz.step === 3 && _wizTotalSteps() === 3) _wiz.step++;
+  if (_wiz.step === 3 && _wizTotalSteps() === 4) _wiz.step++;
   _wizRender();
 }
 
@@ -344,9 +409,26 @@ function wizAddExpBoard(busLocalKey) {
   var busKey = _wiz.buses[busLocalKey].key;
   var type = compat[0];
   var id = type.toLowerCase().replace(/[^a-z0-9]/g, '') + (_wizExpIdx + 1);
+
+  // Get default I2C address based on board type (uses i2c_known.json)
+  var i2cAddr = 64;
+  if (busLocalKey === 'i2c') {
+    i2cAddr = _wizGetDefaultI2cAddress(type);
+    // If this address is already used, try to find next available
+    var usedAddrs = _wiz.expansionBoards
+      .filter(function (b) { return b.busLocalKey === 'i2c' && b.i2cAddress; })
+      .map(function (b) { return b.i2cAddress; });
+    if (usedAddrs.indexOf(i2cAddr) !== -1) {
+      // Address collision — increment until free
+      while (usedAddrs.indexOf(i2cAddr) !== -1 && i2cAddr < 127) {
+        i2cAddr++;
+      }
+    }
+  }
+
   _wiz.expansionBoards.push({
     _idx: _wizExpIdx++, busLocalKey: busLocalKey, busKey: busKey,
-    type: type, id: id, i2cAddress: 64
+    type: type, id: id, i2cAddress: i2cAddr
   });
   var cont = document.getElementById('wiz-expboards-' + busLocalKey);
   if (cont) {
@@ -363,6 +445,21 @@ function wizUpdateExpBoard(idx, field, value) {
   board[field] = value;
   if (field === 'type') {
     board.id = value.toLowerCase().replace(/[^a-z0-9]/g, '') + (idx + 1);
+    // Update I2C address to match new board type
+    if (board.busLocalKey === 'i2c') {
+      var newAddr = _wizGetDefaultI2cAddress(value);
+      // Check if new address conflicts with existing boards
+      var usedAddrs = _wiz.expansionBoards
+        .filter(function (b) { return b.busLocalKey === 'i2c' && b._idx !== idx && b.i2cAddress; })
+        .map(function (b) { return b.i2cAddress; });
+      if (usedAddrs.indexOf(newAddr) !== -1) {
+        // Conflict — increment until free
+        while (usedAddrs.indexOf(newAddr) !== -1 && newAddr < 127) {
+          newAddr++;
+        }
+      }
+      board.i2cAddress = newAddr;
+    }
     var cont = document.getElementById('wiz-expboards-' + board.busLocalKey);
     if (cont) {
       cont.innerHTML = _wiz.expansionBoards
@@ -417,6 +514,21 @@ function _wizBuildConfig() {
 function wizFinish() {
   if (!_wiz) return;
   _wizSaveCurrent();
+
+  // Validate: check for duplicate I2C addresses
+  var i2cBoards = _wiz.expansionBoards.filter(function (b) { return b.busLocalKey === 'i2c'; });
+  var i2cAddrs = i2cBoards.map(function (b) { return b.i2cAddress; });
+  var duplicates = i2cAddrs.filter(function (addr, idx) { return i2cAddrs.indexOf(addr) !== idx; });
+  if (duplicates.length > 0) {
+    var errEl = document.getElementById('wiz-err');
+    if (errEl) {
+      errEl.textContent = t('wiz.err_duplicate_i2c') || 'Erreur : adresses I2C en double (0x'
+        + duplicates[0].toString(16) + ')';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
   var cfg = _wizBuildConfig();
 
   var btn = document.getElementById('wiz-finish-btn');

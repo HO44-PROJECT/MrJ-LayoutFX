@@ -2089,9 +2089,22 @@
     }
 
     .abt-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
       gap: 1rem
+    }
+
+    .abt-section-hdr {
+      flex-basis: 100%;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--t3);
+      padding-bottom: .3rem;
+      border-bottom: 1px solid var(--bd);
+      margin-top: .25rem
     }
 
     .abt-card {
@@ -2101,7 +2114,8 @@
       padding: 1rem 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: .55rem
+      gap: .55rem;
+      min-width: 200px
     }
 
     .abt-card-title {
@@ -2124,7 +2138,7 @@
     .abt-label {
       font-size: .75rem;
       color: var(--t2);
-      white-space: nowrap
+      word-break: break-word
     }
 
     .abt-value {
@@ -2143,6 +2157,29 @@
 
     .abt-link:hover {
       color: var(--acc)
+    }
+
+    .abt-url-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem
+    }
+
+    .abt-url-label {
+      font-size: .75rem;
+      color: var(--t2);
+      min-width: 3.5rem
+    }
+
+    .abt-url-val {
+      font-size: .75rem;
+      color: var(--acc);
+      text-decoration: none;
+      word-break: break-all
+    }
+
+    .abt-url-val:hover {
+      text-decoration: underline
     }
 
     .abt-bar-wrap {
@@ -2329,6 +2366,34 @@
     .wizard-btn-finish {
       background: #3aaa6a;
       color: #fff
+    }
+    .wizard-btn-cancel {
+      background: transparent;
+      color: var(--t3);
+      border: 1px solid var(--bd)
+    }
+    .wiz-lang-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      padding: .5rem 0 1rem
+    }
+    .wiz-lang-btn {
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      padding: .9rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg1);
+      color: var(--t0);
+      transition: border-color .15s, background .15s
+    }
+    .wiz-lang-btn:hover { border-color: #4a9ede }
+    .wiz-lang-btn.wiz-lang-active {
+      border-color: #4a9ede;
+      background: rgba(74,158,222,.12);
+      color: #4a9ede
     }
     /* Bus toggle cards */
     .wiz-bus-card {

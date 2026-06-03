@@ -1,8 +1,30 @@
-/* ── Device editor ──────────────────────────────────────────────────── */
+/**
+ * @file app-device-editor.js
+ * @brief Device editor modal for creating and editing individual devices in the WebUI.
+ *
+ * Handles device creation/modification with pin selection, type picker, and parameter
+ * configuration. Supports both GPIO and bus-based devices (I2C, SPI).
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ */
 
 var _deEditId = null;    // id of the device currently being edited, null = new
 var _deFixedPin = undefined;          // pin/channel locked from context (pin click), undefined = free
 var _deFixedBoardApiIdx = undefined;  // board index locked from context (I2C boards)
+
+// Look up a device entry in the persisted config (_dbgCfg) by id, or null.
+// _dbgCfg is the source of truth for default_state (the boot state), which is
+// NOT reported by the runtime /api/devices endpoint.
+function _deCfgDevById(id) {
+  if (_dbgCfg && _dbgCfg.devices) {
+    for (var i = 0; i < _dbgCfg.devices.length; i++) {
+      if (_dbgCfg.devices[i].id === id) return _dbgCfg.devices[i];
+    }
+  }
+  return null;
+}
 
 // Opens the device editor for an existing device, looking up the best available data source.
 // Bus devices come from _busDev (config-sourced, has servoId); GPIO devices come from _dbgDevs.
@@ -25,6 +47,19 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
       addr: bd.addr,
       pins: bd.pins
     };
+    // Carry config-sourced servo/motor params (from _busDev) so editing then
+    // re-saving a bus device does NOT silently drop them (neutral_us, states…).
+    if (bd.positions !== undefined) merged.positions = bd.positions;
+    if (bd.pulse_min_us !== undefined) merged.pulse_min_us = bd.pulse_min_us;
+    if (bd.pulse_max_us !== undefined) merged.pulse_max_us = bd.pulse_max_us;
+    if (bd.speed !== undefined) merged.speed = bd.speed;
+    if (bd.states !== undefined) merged.states = bd.states;
+    if (bd.neutral_us !== undefined) merged.neutral_us = bd.neutral_us;
+    if (bd.angle_a !== undefined) merged.angle_a = bd.angle_a;
+    if (bd.angle_b !== undefined) merged.angle_b = bd.angle_b;
+    // default_state = persisted boot state — read from config, never from runtime desired.
+    var cfgBd = _deCfgDevById(id);
+    if (cfgBd && cfgBd.default_state !== undefined) merged.default_state = cfgBd.default_state;
     openDevEditor(boardApiIdx, pin, merged, typeFilter);
     return;
   }
@@ -32,20 +67,13 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
   for (var j = 0; j < _dbgDevs.length; j++) {
     if (_dbgDevs[j].id === id) {
       var rtDev = _dbgDevs[j];
-      var cfgLookup = null;
-      if (_dbgCfg && _dbgCfg.devices) {
-        for (var k = 0; k < _dbgCfg.devices.length; k++) {
-          if (_dbgCfg.devices[k].id === id) { cfgLookup = _dbgCfg.devices[k]; break; }
-        }
-      }
-      if (cfgLookup && (cfgLookup.angle_a !== undefined || cfgLookup.angle_b !== undefined
-        || cfgLookup.positions !== undefined || cfgLookup.speed !== undefined
-        || cfgLookup.states !== undefined || cfgLookup.neutral_us !== undefined)) {
-        var mDev = {
-          id: rtDev.id, type: rtDev.type, board: rtDev.board,
-          desired: rtDev.desired, state: rtDev.state, addr: rtDev.addr,
-          pins: rtDev.pins, label: rtDev.label
-        };
+      var cfgLookup = _deCfgDevById(id);
+      var mDev = {
+        id: rtDev.id, type: rtDev.type, board: rtDev.board,
+        desired: rtDev.desired, state: rtDev.state, addr: rtDev.addr,
+        pins: rtDev.pins, label: rtDev.label
+      };
+      if (cfgLookup) {
         if (cfgLookup.angle_a !== undefined) mDev.angle_a = cfgLookup.angle_a;
         if (cfgLookup.angle_b !== undefined) mDev.angle_b = cfgLookup.angle_b;
         if (cfgLookup.positions !== undefined) mDev.positions = cfgLookup.positions;
@@ -54,10 +82,10 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
         if (cfgLookup.speed !== undefined) mDev.speed = cfgLookup.speed;
         if (cfgLookup.states !== undefined) mDev.states = cfgLookup.states;
         if (cfgLookup.neutral_us !== undefined) mDev.neutral_us = cfgLookup.neutral_us;
-        openDevEditor(boardApiIdx, pin, mDev, typeFilter);
-      } else {
-        openDevEditor(boardApiIdx, pin, rtDev, typeFilter);
+        // default_state = persisted boot state — read from config, never from runtime desired.
+        if (cfgLookup.default_state !== undefined) mDev.default_state = cfgLookup.default_state;
       }
+      openDevEditor(boardApiIdx, pin, mDev, typeFilter);
       return;
     }
   }
@@ -81,6 +109,7 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
         if (cfgDev.neutral_us !== undefined) cfgOnlyDev.neutral_us = cfgDev.neutral_us;
         if (cfgDev.angle_a !== undefined) cfgOnlyDev.angle_a = cfgDev.angle_a;
         if (cfgDev.angle_b !== undefined) cfgOnlyDev.angle_b = cfgDev.angle_b;
+        if (cfgDev.default_state !== undefined) cfgOnlyDev.default_state = cfgDev.default_state;
         openDevEditor(boardApiIdx, pin, cfgOnlyDev, typeFilter);
         return;
       }
@@ -129,7 +158,10 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
       boardEl.value = bIdx >= 0 ? bIdx : (boardApiIdx !== undefined ? boardApiIdx : 0);
     }
     document.getElementById('de-addr').value = dev.addr > 0 ? dev.addr : '';
-    document.getElementById('de-defstate').value = dev.desired > 0 ? 'on' : '';
+    // Boot state comes from the persisted config (default_state), NOT the current
+    // runtime state (desired). Using desired here silently baked default_state:"on"
+    // into the config whenever a device was edited while running (e.g. a tested motor).
+    document.getElementById('de-defstate').value = (dev.default_state === 'on') ? 'on' : '';
     document.getElementById('de-del-btn').style.display = '';
   } else {
     document.getElementById('de-title').textContent = t('de.new');
@@ -207,8 +239,8 @@ function deUpdateWiring(prefillPin, dev) {
     return '<div class="de-pos-row">'
       + '<input type="text" class="de-mst-lbl" placeholder="' + t('de.mst_lbl_ph') + '" value="' + (lbl || '') + '" style="width:5rem">'
       + '<input type="number" class="de-mst-spd" min="-100" max="100" value="' + (spd !== undefined ? spd : 50) + '" style="width:4rem" title="' + t('de.mst_spd_tip') + '">'
-      + '<input type="number" class="de-mst-dur" min="0" max="300000" value="' + (dur !== undefined ? dur : 0) + '" style="width:5rem" title="' + t('de.mst_dur_tip') + '">'
       + '<input type="number" class="de-mst-up"  min="0" max="30000"  value="' + (rampUp || 0) + '" style="width:4rem" title="' + t('de.mst_up_tip') + '">'
+      + '<input type="number" class="de-mst-dur" min="0" max="300000" value="' + (dur !== undefined ? dur : 0) + '" style="width:5rem" title="' + t('de.mst_dur_tip') + '">'
       + '<input type="number" class="de-mst-dn"  min="0" max="30000"  value="' + (rampDown || 0) + '" style="width:4rem" title="' + t('de.mst_dn_tip') + '">'
       + '<button type="button" class="de-pos-del" onclick="deRemoveMotorState(this)">×</button>'
       + '</div>';
@@ -251,8 +283,8 @@ function deUpdateWiring(prefillPin, dev) {
         + '<div style="display:flex;gap:.3rem;font-size:.75rem;margin-bottom:.2rem;color:var(--c-muted)">'
         + '<span style="width:5rem">Label</span>'
         + '<span style="width:4rem">Vit.</span>'
-        + '<span style="width:5rem">Durée ms</span>'
         + '<span style="width:4rem">↑ ms</span>'
+        + '<span style="width:5rem">Durée ms</span>'
         + '<span style="width:4rem">↓ ms</span>'
         + '</div>'
         + '<div id="de-motor-states-list">' + mRowsHtml + '</div>'
@@ -396,8 +428,8 @@ function deAddMotorState() {
   row.className = 'de-pos-row';
   row.innerHTML = '<input type="text" class="de-mst-lbl" placeholder="' + t('de.mst_lbl_ph') + '" style="width:5rem">'
     + '<input type="number" class="de-mst-spd" min="-100" max="100" value="50" style="width:4rem" title="' + t('de.mst_spd_tip') + '">'
-    + '<input type="number" class="de-mst-dur" min="0" max="300000" value="0" style="width:5rem" title="' + t('de.mst_dur_tip') + '">'
     + '<input type="number" class="de-mst-up"  min="0" max="30000"  value="0" style="width:4rem" title="' + t('de.mst_up_tip') + '">'
+    + '<input type="number" class="de-mst-dur" min="0" max="300000" value="0" style="width:5rem" title="' + t('de.mst_dur_tip') + '">'
     + '<input type="number" class="de-mst-dn"  min="0" max="30000"  value="0" style="width:4rem" title="' + t('de.mst_dn_tip') + '">'
     + '<button type="button" class="de-pos-del" onclick="deRemoveMotorState(this)">×</button>';
   list.appendChild(row);

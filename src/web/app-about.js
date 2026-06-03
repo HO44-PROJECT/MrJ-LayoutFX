@@ -1,3 +1,21 @@
+/**
+ * @file app-about.js
+ * @brief About panel with system information and project links.
+ *
+ * Displays firmware version, hardware info, memory usage, and provides
+ * links to project resources (GitHub, wiki, issues).
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ */
+
+var PROJECT_URLS = {
+  git:    'https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX',
+  issues: 'https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX/issues',
+  wiki:   '' // placeholder — to be filled when wiki is published
+};
+
 /* ── About ──────────────────────────────────────────────────────────── */
 
 // Zero-pad (duplicate of the one in app-core.js — kept here to avoid cross-section dependency).
@@ -5,47 +23,36 @@ function pad2(n) { return n < 10 ? '0' + n : String(n); }
 
 var _featTipEl = null;
 
-// Show a positioned tooltip for a feature badge; auto-flips above if it would go off-screen.
-function showFeatTip(e, text) {
-  e.stopPropagation();
-  if (!_featTipEl) _featTipEl = document.getElementById('abt-tooltip');
-  _featTipEl.textContent = text;
-  _featTipEl.style.display = 'block';
+function showFeatTip(e, msg) {
+  if (_featTipEl) { hideFeatTip(); return; }
+  _featTipEl = document.createElement('div');
+  _featTipEl.className = 'abt-feat-tip';
+  _featTipEl.textContent = msg;
+  document.body.appendChild(_featTipEl);
   var r = e.target.getBoundingClientRect();
-  var tw = _featTipEl.offsetWidth;
-  var left = Math.min(r.left, window.innerWidth - tw - 8);
-  var top = r.bottom + 6;
-  if (top + _featTipEl.offsetHeight > window.innerHeight - 8)
-    top = r.top - _featTipEl.offsetHeight - 6;
-  _featTipEl.style.left = Math.max(8, left) + 'px';
-  _featTipEl.style.top = top + 'px';
+  _featTipEl.style.left = r.left + 'px';
+  _featTipEl.style.top = (r.bottom + 6) + 'px';
+  setTimeout(function () { document.addEventListener('click', hideFeatTip, { once: true }); }, 0);
 }
-// Hide the feature tooltip (bound to document click to auto-dismiss).
-function hideFeatTip() {
-  if (_featTipEl) _featTipEl.style.display = 'none';
-}
-document.addEventListener('click', hideFeatTip);
 
-// Format a byte count as a human-readable string (B / KB / MB).
+function hideFeatTip() {
+  if (_featTipEl) { _featTipEl.remove(); _featTipEl = null; }
+}
+
 function fmtBytes(b) {
   if (b === undefined || b === null) return '—';
-  if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
-  if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
-  return b + ' B';
+  if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
+  if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
+  return b + ' B';
 }
 
-// Format an uptime in seconds as "Dj HH:MM:SS" (day part omitted if d=0).
 function fmtUptime(s) {
-  var d = Math.floor(s / 86400);
-  var h = Math.floor((s % 86400) / 3600);
+  var h = Math.floor(s / 3600);
   var m = Math.floor((s % 3600) / 60);
   var sec = s % 60;
-  var str = pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
-  return d > 0 ? d + t('abt.day_unit') + ' ' + str : str;
+  return pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
 }
 
-// Render a titled status card with label/value rows and optional percentage progress bars.
-// bar ≥ 85 → red (crit), ≥ 65 → yellow (warn).
 function abtCard(title, rows) {
   return '<div class="abt-card">'
     + '<div class="abt-card-title">' + title + '</div>'
@@ -78,70 +85,42 @@ function loadAbout() {
 }
 
 // Build the about page from a /api/status response object.
-// Cards shown conditionally: filesystem only if s.fs_total present, WiFi only if s.wifi_ssid present, etc.
+// Three sections: runtime (live values), build (compile-time), project (structural/links).
 function renderAbout(s) {
   var html = '';
 
-  // Firmware
-  html += abtCard(t('abt.firmware'), [
-    { label: t('abt.version'), value: s.version || '—' },
-    { label: t('abt.build'), value: s.build_date || '—' },
-    { label: t('abt.env'), value: s.env || '—' },
-  ]);
+  // ── Instantané ─────────────────────────────────────────────────────────────
+  html += '<div class="abt-section-hdr">' + t('abt.sec_runtime') + '</div>';
 
-  // System
-  var chip = (s.chip || 'ESP32') + ' rev. ' + (s.chip_rev !== undefined ? s.chip_rev : '?');
+  // System (chip, CPU, uptime)
+  var chip = (s.chip || 'ESP32') + ' rev. ' + (s.chip_rev !== undefined ? s.chip_rev : '?');
   html += abtCard(t('abt.system'), [
     { label: t('abt.chip'), value: chip },
-    { label: t('abt.cpu_freq'), value: (s.cpu_mhz || '—') + ' MHz' },
+    { label: t('abt.cpu_freq'), value: (s.cpu_mhz || '—') + ' MHz' },
     { label: t('abt.uptime'), value: fmtUptime(s.uptime_s || 0) },
   ]);
 
   // Memory
   var heapPct = s.heap_total ? Math.round((1 - s.heap_free / s.heap_total) * 100) : 0;
   html += abtCard(t('abt.memory'), [
-    {
-      label: t('abt.heap_free'),
-      value: fmtBytes(s.heap_free) + ' / ' + fmtBytes(s.heap_total),
-      bar: heapPct
-    },
+    { label: t('abt.heap_free'), value: fmtBytes(s.heap_free) + ' / ' + fmtBytes(s.heap_total), bar: heapPct },
     { label: t('abt.heap_min'), value: fmtBytes(s.heap_min) },
-  ]);
-
-  // Flash
-  var fwUsed = s.sketch_size || 0;
-  var fwTotal = fwUsed + (s.sketch_free || 0);
-  var fwPct = fwTotal ? Math.round(fwUsed / fwTotal * 100) : 0;
-  html += abtCard(t('abt.flash'), [
-    {
-      label: t('abt.firmware_size'),
-      value: fmtBytes(fwUsed) + ' / ' + fmtBytes(fwTotal),
-      bar: fwPct
-    },
   ]);
 
   // Filesystem
   if (s.fs_total !== undefined) {
     var fsPct = s.fs_total ? Math.round(s.fs_used / s.fs_total * 100) : 0;
     html += abtCard(t('abt.fs'), [
-      {
-        label: 'LittleFS',
-        value: fmtBytes(s.fs_used) + ' / ' + fmtBytes(s.fs_total),
-        bar: fsPct
-      },
+      { label: 'LittleFS', value: fmtBytes(s.fs_used) + ' / ' + fmtBytes(s.fs_total), bar: fsPct },
     ]);
   }
 
-  // Configuration
+  // Config / devices
   if (s.devices !== undefined) {
     var devMax = s.devices_max || 0;
     var devPct = devMax ? Math.round(s.devices / devMax * 100) : 0;
     html += abtCard(t('abt.config'), [
-      {
-        label: t('abt.devices'),
-        value: s.devices + ' / ' + devMax,
-        bar: devPct
-      },
+      { label: t('abt.devices'), value: s.devices + ' / ' + devMax, bar: devPct },
     ]);
   }
 
@@ -149,11 +128,7 @@ function renderAbout(s) {
   if (s.temp_c !== undefined) {
     var tempPct = Math.min(100, Math.max(0, Math.round((s.temp_c - 20) * 100 / 80)));
     html += abtCard(t('abt.temp'), [
-      {
-        label: 'CPU',
-        value: s.temp_c.toFixed(1) + ' °C',
-        bar: tempPct
-      },
+      { label: 'CPU', value: s.temp_c.toFixed(1) + ' °C', bar: tempPct },
     ]);
   }
 
@@ -164,20 +139,30 @@ function renderAbout(s) {
     var rssiLabel = rssi >= -60 ? '🟢' : rssi >= -75 ? '🟡' : '🔴';
     html += abtCard(t('abt.wifi'), [
       { label: t('abt.wifi_ssid'), value: s.wifi_ssid || '—' },
-      { label: t('abt.wifi_rssi'), value: rssiLabel + ' ' + rssi + ' dBm', bar: rssiPct },
+      { label: t('abt.wifi_rssi'), value: rssiLabel + ' ' + rssi + ' dBm', bar: rssiPct },
       { label: t('abt.wifi_mac'), value: s.wifi_mac || '—' },
     ]);
   }
 
-  // Libraries
-  if (s.libs) {
-    var libRows = Object.keys(s.libs).map(function (k) {
-      return { label: k, value: s.libs[k] || '—' };
-    });
-    html += abtCard(t('abt.libs'), libRows);
-  }
+  // ── Compilation ────────────────────────────────────────────────────────────
+  html += '<div class="abt-section-hdr">' + t('abt.sec_build') + '</div>';
 
-  // Features
+  // Firmware (version, build date, env)
+  html += abtCard(t('abt.firmware'), [
+    { label: t('abt.version'), value: s.version || '—' },
+    { label: t('abt.build'), value: s.build_date || '—' },
+    { label: t('abt.env'), value: s.env || '—' },
+  ]);
+
+  // Flash (binary size)
+  var fwUsed = s.sketch_size || 0;
+  var fwTotal = fwUsed + (s.sketch_free || 0);
+  var fwPct = fwTotal ? Math.round(fwUsed / fwTotal * 100) : 0;
+  html += abtCard(t('abt.flash'), [
+    { label: t('abt.firmware_size'), value: fmtBytes(fwUsed) + ' / ' + fmtBytes(fwTotal), bar: fwPct },
+  ]);
+
+  // Features (build flags)
   if (s.features) {
     var FEAT_LABELS = {
       api: 'API', audio: 'Audio', config: 'Config', dcc: 'DCC',
@@ -193,6 +178,36 @@ function renderAbout(s) {
     });
     html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.features') + '</div>'
       + '<div class="abt-feat-row">' + badges + '</div></div>';
+  }
+
+  // Libraries
+  if (s.libs) {
+    var libRows = Object.keys(s.libs).map(function (k) {
+      return { label: k, value: s.libs[k] || '—' };
+    });
+    html += abtCard(t('abt.libs'), libRows);
+  }
+
+  // ── Projet ─────────────────────────────────────────────────────────────────
+  html += '<div class="abt-section-hdr">' + t('abt.sec_project') + '</div>';
+
+  // Project links
+  var urlLinks = [
+    { label: t('abt.proj_git'),    url: PROJECT_URLS.git },
+    { label: t('abt.proj_issues'), url: PROJECT_URLS.issues },
+    { label: t('abt.proj_wiki'),   url: PROJECT_URLS.wiki },
+  ].filter(function (r) { return r.url; });
+
+  if (urlLinks.length) {
+    var linkRows = urlLinks.map(function (r) {
+      return '<div class="abt-url-row">'
+        + '<span class="abt-url-label">' + r.label + '</span>'
+        + '<a class="abt-url-val" href="' + r.url + '" target="_blank" rel="noopener">'
+        + r.url.replace(/^https?:\/\//, '') + '</a>'
+        + '</div>';
+    }).join('');
+    html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.project') + '</div>'
+      + linkRows + '</div>';
   }
 
   document.getElementById('abt-grid').innerHTML = html;
@@ -215,5 +230,4 @@ function savePollInterval() {
 
 // Placeholder — params are now stored in localStorage only, nothing to load from server.
 function loadParams() {
-  // Nothing to load from server anymore — only local UI settings
 }

@@ -1,4 +1,14 @@
-/* ── Board editor ───────────────────────────────────────────────────── */
+/**
+ * @file app-board-editor.js
+ * @brief Board editor modal for managing I2C/SPI expansion boards.
+ *
+ * Handles creation and editing of expansion boards (PCA9685, MCP23017, 74HC595)
+ * in the WebUI configuration panel.
+ *
+ * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ */
 
 var _beEditIdx = -1; // index in _dbgCfg.boards[] being edited; -1 means new board
 

@@ -1,8 +1,13 @@
 /**
- * @file  app-config.js
- * @brief Device state actions (cockpit), config-file management, loadDebug(), I2C scanner.
+ * @file app-config.js
+ * @brief Configuration management and device state actions.
+ *
+ * Handles config file upload/download, device state management from cockpit,
+ * and debug data loading for the WebUI.
  *
  * @project MrJ-ArduinoRailwayFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
