@@ -23,7 +23,7 @@
 #endif
 
 #ifdef OLED_STATUS
-  #include "StatusOled.h"
+  #include "oled/StatusOled.h"
 #endif
 
 /**
@@ -161,18 +161,39 @@ void debugPrintln(size_t value);
 extern StatusOled oled_status;
 
   #define STATUS_BEGIN() oled_status.begin()
+  #define STATUS_INIT() _statusOledInit()
+  #define STATUS_LOOP() oled_status.loop()
   #define STATUS_PRINT(msg) oled_status.print(msg)
   #define STATUS_PRINTLN(msg) oled_status.print(msg, true)
   #define STATUS(id, status) oled_status.updateVisibleStatus(id, status)
   #define STATUS_LABEL(id, value) oled_status.label(id, value)
+  #define STATUS_REGISTER_DEVICE(id, label) oled_status.registerDevice(id, label)
+  #define STATUS_UPDATE_DEVICE(id, state) oled_status.updateDevice(id, state)
+
+  // Internal init helper (called by MrJFX::init())
+  inline void _statusOledInit() {
+    oled_status.begin();
+    #ifdef OLED_CONTRAST
+      oled_status.setContrast(OLED_CONTRAST);
+    #endif
+    #ifdef OLED_FLIP_MODE
+      oled_status.setFlipMode(true);
+    #endif
+    oled_status.showSplash(F("MrJ Railway"), F("v1.0"));
+    delay(2000);
+  }
 
 #else
 
   #define STATUS_BEGIN()
+  #define STATUS_INIT()
+  #define STATUS_LOOP()
   #define STATUS_PRINT(msg)
   #define STATUS_PRINTLN(msg)
   #define STATUS(id, status)
   #define STATUS_LABEL(id, value)
+  #define STATUS_REGISTER_DEVICE(id, label)
+  #define STATUS_UPDATE_DEVICE(id, state)
 
 #endif
 

@@ -121,6 +121,13 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
     return false;
   }
 
+  // Extract config name (for OLED idle screen).
+  {
+    const char *name = doc[kName] | "";
+    strncpy(_configName, name, sizeof(_configName) - 1);
+    _configName[sizeof(_configName) - 1] = '\0';
+  }
+
   // Pass 1 — buses.
   if (doc[kSecBuses].is<JsonObject>())
     _parseBuses(doc[kSecBuses].as<JsonObject>());
@@ -193,6 +200,18 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
   }
 
   // Pass 3 — devices. Bus hardware is activated lazily on first device creation.
+  // Parse idle_pins before iterating devices so _idlePinCount is ready before initAll().
+  _idlePinCount = 0;
+  if (doc[kSecIdlePins].is<JsonArray>()) {
+    for (JsonVariant v : doc[kSecIdlePins].as<JsonArray>()) {
+      if (_idlePinCount >= MAX_IDLE_PINS) {
+        LOG_PRINTLN(F("DeviceFactory: MAX_IDLE_PINS reached — remaining idle_pins ignored"));
+        break;
+      }
+      _idlePins[_idlePinCount++] = (uint8_t)v.as<int>();
+    }
+  }
+
   for (JsonObject obj : doc[kSecDevices].as<JsonArray>()) {
     if (_count >= MRJFX_FACTORY_MAX_DEVICES) {
       LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_DEVICES reached"));
@@ -204,6 +223,8 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       strncpy(_ids[_count], id, sizeof(_ids[0]) - 1);
       _ids[_count][sizeof(_ids[0]) - 1] = '\0';
       _boards[_count] = _resolveBoardIdx(obj[kFBoard]);
+      // Store default state from JSON (will be applied after initPins())
+      _deviceDefaultStates[_count] = (strcmp(obj[kFDefaultState] | "", kVOn) == 0) ? 1 : 0;
       _devices[_count++] = d;
     }
   }
@@ -219,6 +240,46 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
 void DeviceFactory::initAll() {
   for (size_t i = 0; i < _count; i++)
     _devices[i]->initPins();
+}
+
+/**
+ * @brief Apply default states to all devices.
+ *
+ * Must be called after initAll() to override the hardcoded OFF_STATE that
+ * initPins() sets on all devices.  Reads the stored default states from
+ * config["devices"][i]["default_state"] (parsed during load()).
+ *
+ * IMPORTANT: Always call newState(), even for OFF_STATE, to trigger the
+ * coroutine and ensure proper hardware initialization (e.g. motors need to
+ * send neutral pulse, even when OFF).
+ */
+void DeviceFactory::applyDefaultStates() {
+  for (size_t i = 0; i < _count; i++) {
+    // Always call newState() to trigger coroutine, even for OFF (state 0)
+    _devices[i]->newState(_deviceDefaultStates[i]);
+  }
+}
+
+/**
+ * @brief Drive every GPIO listed in config["idle_pins"] to OUTPUT LOW.
+ *
+ * Must be called after initAll() — device initPins() may also drive some of
+ * these pins, and the last write wins.  In practice the lists should be
+ * disjoint (WebUI enforces this), but a redundant write is harmless.
+ *
+ * This silences unassigned output pins that would otherwise float and cause
+ * LED flicker via capacitive crosstalk from adjacent active pins.
+ */
+void DeviceFactory::initIdlePins() {
+  for (uint8_t i = 0; i < _idlePinCount; i++) {
+    pinMode(_idlePins[i], OUTPUT);
+    digitalWrite(_idlePins[i], LOW);
+  }
+  if (_idlePinCount > 0) {
+    LOG_PRINT(F("[Factory] idle_pins: "));
+    LOG_PRINT(_idlePinCount);
+    LOG_PRINTLN(F(" pin(s) set OUTPUT LOW"));
+  }
 }
 
 /**
@@ -267,6 +328,7 @@ void DeviceFactory::fullReset() {
   _portCount    = 0;
   _spiCardCount = 0;
   _dccPin       = -1;
+  _idlePinCount = 0;
   _spiBus       = SpiBusCfg{};
 
   for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
@@ -299,6 +361,7 @@ bool DeviceFactory::resetIfEmpty() {
   _portCount    = 0;
   _spiCardCount = 0;
   _dccPin       = -1;
+  _idlePinCount = 0;
   _spiBus       = SpiBusCfg{};
 
   for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
@@ -765,6 +828,12 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       BusRegistry::activateI2c();
       _pwmDrivers[boardIdx - 1] = new Adafruit_PWMServoDriver(bcfg.i2cAddress);
       _pwmDrivers[boardIdx - 1]->begin();
+      // Silence all 16 channels BEFORE setPWMFreq(50) so that the RESTART
+      // sequence inside setPWMFreq finds FULL_OFF values and outputs nothing.
+      // (begin() leaves channels at ON=0,OFF=0 which is unpredictable per
+      // the PCA9685 datasheet and can produce a high signal at 50 Hz.)
+      for (uint8_t ch = 0; ch < 16; ch++)
+        _pwmDrivers[boardIdx - 1]->setPWM(ch, 0, 4096);
       if (bcfg.oscillatorHz != 25000000U)
         _pwmDrivers[boardIdx - 1]->setOscillatorFrequency(bcfg.oscillatorHz);
       _pwmDrivers[boardIdx - 1]->setPWMFreq(50);
@@ -812,6 +881,9 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       BusRegistry::activateI2c();
       _pwmDrivers[boardIdx - 1] = new Adafruit_PWMServoDriver(bcfg.i2cAddress);
       _pwmDrivers[boardIdx - 1]->begin();
+      // Same pre-setPWMFreq silencing as for PCA9685Servo — see comment above.
+      for (uint8_t ch = 0; ch < 16; ch++)
+        _pwmDrivers[boardIdx - 1]->setPWM(ch, 0, 4096);
       if (bcfg.oscillatorHz != 25000000U)
         _pwmDrivers[boardIdx - 1]->setOscillatorFrequency(bcfg.oscillatorHz);
       _pwmDrivers[boardIdx - 1]->setPWMFreq(50);
@@ -865,8 +937,9 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     d->setLabel(label[0]);
   if (address > 0)
     d->registerDccDrivableDevice((ADDRESS)address);
-  if (strcmp(obj[kFDefaultState] | "", kVOn) == 0)
-    d->newState(1);
+
+  // Default state will be applied after initPins() via applyDefaultStates().
+  // Do NOT call newState() here — initPins() hasn't been called yet.
 
   LOG_PRINT(F("DeviceFactory: created "));
   LOG_PRINT(type);

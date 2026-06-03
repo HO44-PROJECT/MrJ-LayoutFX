@@ -9,6 +9,10 @@
 
 #ifdef MRJFX_CONFIG_ENABLED
 
+#ifdef MRJFX_OLED_ENABLED
+  #include "oled/OledDisplay.h"
+#endif
+
 // ---------------------------------------------------------------------------
 // Static member definitions
 // ---------------------------------------------------------------------------
@@ -39,29 +43,29 @@ void ConfigManager::init(const char *configPath) {
   // Check for required files before any open() to suppress noisy vfs_api errors.
   // Boot-critical messages go directly to Serial, not through LOG_PRINTLN,
   // so they are always visible even when LOG_SERIAL is not defined.
-  bool boardTypesMissing = !LittleFS.exists("/board_types.json");
+  // NOTE: board_types.json is now embedded in firmware (PROGMEM), not in LittleFS.
   bool configMissing = !LittleFS.exists(_configPath);
 
-  if (boardTypesMissing || configMissing) {
+  if (configMissing) {
     Serial.println(F("[FS] WARNING: filesystem is empty or incomplete."));
     Serial.println(F("[FS]   -> In PlatformIO: run 'Upload Filesystem Image' (littlefs) to upload the data/ folder."));
-    if (boardTypesMissing)
-      Serial.println(F("[FS]   missing: board_types.json"));
-    if (configMissing)
-      Serial.println(F("[FS]   missing: config.json"));
-  }
-
-  if (configMissing) {
+    Serial.println(F("[FS]   missing: config.json"));
     Serial.println(F("[Factory] no config — skipping device load"));
     return;
   }
 
-  String boardTypes = _readFile("/board_types.json");
+  // board_types.json is now embedded in firmware (PROGMEM) and served via API.
+  // DeviceFactory can work without it (uses default pin counts).
   String json = readConfig();
   if (!json.isEmpty()) {
     LOG_PRINTLN(F("[Factory] loading config..."));
-    if (_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
+    if (_factory.load(json.c_str(), nullptr)) {
       _factory.initAll();
+      _factory.applyDefaultStates();
+      _factory.initIdlePins();
+      #ifdef MRJFX_OLED_ENABLED
+      OledDisplay::setConfigName(_factory.configName());
+      #endif
       LOG_PRINT(F("[Factory] "));
       LOG_PRINT(_factory.count());
       LOG_PRINTLN(F(" device(s) ready"));
@@ -120,7 +124,6 @@ bool ConfigManager::reload() {
   }
   BusRegistry::reset();
 
-  String boardTypes = _readFile("/board_types.json");
   String json = readConfig();
   if (json.isEmpty()) {
     LOG_PRINTLN(F("[Factory] reload — no config"));
@@ -128,11 +131,12 @@ bool ConfigManager::reload() {
   }
 
   LOG_PRINTLN(F("[Factory] reloading config..."));
-  if (!_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
+  if (!_factory.load(json.c_str(), nullptr)) {
     LOG_PRINTLN(F("[Factory] reload — JSON parse error"));
     return false;
   }
   _factory.initAll();
+  _factory.applyDefaultStates();
   LOG_PRINT(F("[Factory] reload — "));
   LOG_PRINT(_factory.count());
   LOG_PRINTLN(F(" device(s) ready"));
@@ -163,7 +167,6 @@ void ConfigManager::handlePendingReload() {
   _factory.fullReset();
   BusRegistry::reset();
 
-  String boardTypes = _readFile("/board_types.json");
   String json = readConfig();
   if (json.isEmpty()) {
     LOG_PRINTLN(F("[Factory] hot-reload — no config"));
@@ -171,12 +174,13 @@ void ConfigManager::handlePendingReload() {
     return;
   }
 
-  if (!_factory.load(json.c_str(), boardTypes.isEmpty() ? nullptr : boardTypes.c_str())) {
+  if (!_factory.load(json.c_str(), nullptr)) {
     LOG_PRINTLN(F("[Factory] hot-reload — JSON parse error"));
     ace_routine::CoroutineScheduler::setup();
     return;
   }
   _factory.initAll();
+  _factory.applyDefaultStates();
   ace_routine::CoroutineScheduler::setup();
   LOG_PRINT(F("[Factory] hot-reload — "));
   LOG_PRINT(_factory.count());

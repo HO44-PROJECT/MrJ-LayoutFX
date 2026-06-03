@@ -16,6 +16,9 @@
 
 namespace factory_keys {
 
+// ── Document-level fields ──────────────────────────────────────────────────
+constexpr char kName[] = "name"; ///< Config display name (shown on OLED idle screen).
+
 // ── Document sections ──────────────────────────────────────────────────────
 constexpr char kSecBuses[] = "buses";
 constexpr char kSecBoards[] = "boards";
