@@ -13,6 +13,11 @@
   #include "oled/OledDisplay.h"
 #endif
 
+// Structural pin-count map (board type → pin count) for SPI cards, generated
+// from board_types.json. Passed to DeviceFactory::load() so SPI boards that omit
+// "pin_count" are sized correctly. (board_types.json itself is gzipped in PROGMEM.)
+#include "api/embedded_board_pincounts.h"
+
 // ---------------------------------------------------------------------------
 // Static member definitions
 // ---------------------------------------------------------------------------
@@ -54,12 +59,13 @@ void ConfigManager::init(const char *configPath) {
     return;
   }
 
-  // board_types.json is now embedded in firmware (PROGMEM) and served via API.
-  // DeviceFactory can work without it (uses default pin counts).
+  // board_types.json is embedded in firmware (PROGMEM) and served via API; the
+  // SPI pin counts it implies are passed to load() via BOARD_PIN_COUNTS so SPI
+  // cards are sized even when a board config omits "pin_count".
   String json = readConfig();
   if (!json.isEmpty()) {
     LOG_PRINTLN(F("[Factory] loading config..."));
-    if (_factory.load(json.c_str(), nullptr)) {
+    if (_factory.load(json.c_str(), BOARD_PIN_COUNTS, BOARD_PIN_COUNTS_LEN)) {
       _factory.initAll();
       _factory.applyDefaultStates();
       _factory.initIdlePins();
@@ -131,7 +137,7 @@ bool ConfigManager::reload() {
   }
 
   LOG_PRINTLN(F("[Factory] reloading config..."));
-  if (!_factory.load(json.c_str(), nullptr)) {
+  if (!_factory.load(json.c_str(), BOARD_PIN_COUNTS, BOARD_PIN_COUNTS_LEN)) {
     LOG_PRINTLN(F("[Factory] reload — JSON parse error"));
     return false;
   }
@@ -174,7 +180,7 @@ void ConfigManager::handlePendingReload() {
     return;
   }
 
-  if (!_factory.load(json.c_str(), nullptr)) {
+  if (!_factory.load(json.c_str(), BOARD_PIN_COUNTS, BOARD_PIN_COUNTS_LEN)) {
     LOG_PRINTLN(F("[Factory] hot-reload — JSON parse error"));
     ace_routine::CoroutineScheduler::setup();
     return;

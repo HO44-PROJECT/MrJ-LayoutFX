@@ -343,19 +343,18 @@ function renderPin(board, boardApiIdx, pin) {
 
   // Build a small LED toggle button for a free MCU GPIO (direct hardware test).
   function mkLedBtn(gpio) {
-    var ts = _dbgTest['g' + gpio] ? 1 : 0;
-    return '<button class="dbg-led-btn ' + (ts ? 'on' : 'off') + '"'
-      + ' onclick="event.stopPropagation();dbgTestGpio(' + gpio + ',' + (1 - ts) + ')"'
-      + ' title="GPIO ' + gpio + ' direct">' + LED_ICO + '</button>';
+    var on = _dbgIdentify === ('g' + gpio);
+    return '<button class="dbg-led-btn ' + (on ? 'on' : 'off') + '"'
+      + ' onclick="event.stopPropagation();dbgIdentifyGpio(' + gpio + ')"'
+      + ' title="' + t('dbg.identify_tip') + '">' + LED_ICO + '</button>';
   }
 
   // Build a small LED toggle button for a SPI expansion card channel (direct hardware test).
   function mkSpiLedBtn(card, ch) {
-    var key = 'c' + card + '_p' + ch;
-    var ts = _dbgTestSpi[key] ? 1 : 0;
-    return '<button class="dbg-led-btn ' + (ts ? 'on' : 'off') + '"'
-      + ' onclick="event.stopPropagation();dbgTestSpi(' + card + ',' + ch + ',' + (1 - ts) + ')"'
-      + ' title="card ' + card + ' ch ' + ch + '">' + LED_ICO + '</button>';
+    var on = _dbgIdentify === ('c' + card + '_p' + ch);
+    return '<button class="dbg-led-btn ' + (on ? 'on' : 'off') + '"'
+      + ' onclick="event.stopPropagation();dbgIdentifySpi(' + card + ',' + ch + ')"'
+      + ' title="' + t('dbg.identify_tip') + '">' + LED_ICO + '</button>';
   }
 
   var i2cTypeFilter = isI2c ? ',I2C_SERVO_TYPES.concat(I2C_MOTOR_TYPES)' : '';
@@ -408,18 +407,15 @@ function renderPin(board, boardApiIdx, pin) {
       cls = 'nc';
       inner = '<span class="dbg-pin-num">' + num + '</span>';
     } else {
-      var ts2 = _dbgTest['g' + num] ? 1 : 0;
-      cls = ts2 ? 'test-on' : '';
-      onclick = ' onclick="dbgTestGpio(' + num + ',' + (1 - ts2) + ')"';
+      cls = _dbgIdentify === ('g' + num) ? 'test-on' : '';
+      onclick = ' onclick="dbgIdentifyGpio(' + num + ')"';
       inner = '<span class="dbg-pin-num">' + num + '</span>';
       ledBtn = mkLedBtn(num);
       editBtn = '<button class="dbg-edit-btn" title="' + t('de.add_tip') + '" onclick="event.stopPropagation();openDevEditor(' + boardApiIdx + ',' + num + ',null)">+</button>';
     }
   } else {
-    var spiKey = 'c' + board.spiRank + '_p' + num;
-    var spiTs = _dbgTestSpi[spiKey] ? 1 : 0;
-    cls = spiTs ? 'test-on' : '';
-    onclick = ' onclick="dbgTestSpi(' + board.spiRank + ',' + num + ',' + (1 - spiTs) + ')"';
+    cls = _dbgIdentify === ('c' + board.spiRank + '_p' + num) ? 'test-on' : '';
+    onclick = ' onclick="dbgIdentifySpi(' + board.spiRank + ',' + num + ')"';
     inner = '<span class="dbg-pin-num">' + num + '</span>';
     ledBtn = mkSpiLedBtn(board.spiRank, num);
     editBtn = '<button class="dbg-edit-btn" title="' + t('de.add_tip') + '" onclick="event.stopPropagation();openDevEditor(' + boardApiIdx + ',' + num + ',null)">+</button>';
@@ -455,6 +451,41 @@ function setTheme(name) {
     var match = b.classList.contains('theme-dot-' + name);
     b.classList.toggle('active', match);
   });
+}
+
+// Start (or stop, if already active) the recognizable "identify" blink on a GPIO,
+// so the user can physically locate the connected LED. One target at a time.
+function dbgIdentifyGpio(pin) {
+  var key = 'g' + pin;
+  var stop = _dbgIdentify === key;
+  fetch('/api/test/identify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(stop ? {} : { pin: pin })
+  })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      _dbgIdentify = stop ? null : key;
+      renderDebugBoards();
+    })
+    .catch(function (e) { console.error('dbgIdentifyGpio', e); });
+}
+
+// Same identify blink for a 74HC595 SPI channel.
+function dbgIdentifySpi(card, channel) {
+  var key = 'c' + card + '_p' + channel;
+  var stop = _dbgIdentify === key;
+  fetch('/api/test/identify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(stop ? {} : { card: card, channel: channel })
+  })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      _dbgIdentify = stop ? null : key;
+      renderDebugBoards();
+    })
+    .catch(function (e) { console.error('dbgIdentifySpi', e); });
 }
 
 // Drive a single GPIO directly via /api/test/gpio (for hardware testing, bypasses device layer).

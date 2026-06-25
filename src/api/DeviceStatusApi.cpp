@@ -98,6 +98,11 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatAudio] = false;
   #endif
+  #ifdef MRJFX_OTA_ENABLED
+  feat[kFeatOta] = true;
+  #else
+  feat[kFeatOta] = false;
+  #endif
 
   #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_DCC_ENABLED)
   {

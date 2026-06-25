@@ -162,12 +162,20 @@ function renderAbout(s) {
     { label: t('abt.firmware_size'), value: fmtBytes(fwUsed) + ' / ' + fmtBytes(fwTotal), bar: fwPct },
   ]);
 
+  // Firmware update over-the-air — only shown when compiled in (#define OTA)
+  if (s.features && s.features.ota) {
+    html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.ota') + '</div>'
+      + '<div style="font-size:.72rem;color:var(--t2);margin:.1rem 0 .6rem">' + t('abt.ota_hint') + '</div>'
+      + '<a class="abt-refresh" style="display:inline-block;text-decoration:none" href="/update">'
+      + t('abt.ota_btn') + '</a></div>';
+  }
+
   // Features (build flags)
   if (s.features) {
     var FEAT_LABELS = {
       api: 'API', audio: 'Audio', config: 'Config', dcc: 'DCC',
       lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo',
-      i2c: 'I²C', oled: 'OLED', spi: 'SPI', webui: 'WebUI', wifi: 'WiFi'
+      i2c: 'I²C', oled: 'OLED', ota: 'OTA', spi: 'SPI', webui: 'WebUI', wifi: 'WiFi'
     };
     var badges = '';
     Object.keys(FEAT_LABELS).forEach(function (k) {

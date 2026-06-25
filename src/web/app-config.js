@@ -425,6 +425,7 @@ var _dbgStatus = null; // from /api/status — firmware build info + features + 
 var _busDev = {};  // merged bus-device cache { id → mergedDev }, for openDevEditorById
 var _dbgTest = {};  // client-side GPIO test state { 'g17': 0|1 } — not from firmware
 var _dbgTestSpi = {};  // client-side SPI test state { 'c1_p9': 0|1 }
+var _dbgIdentify = null;  // key of the pin currently being identified ('g17' | 'c1_p9'), or null
 var _dbgSysPins = {};  // GPIO → label for pins reserved by buses: { 23:'MOSI', 18:'SCLK', … }
 var _dbgFirmwarePins = {}; // GPIO → label from compile-time features (/api/status sys_pins)
 

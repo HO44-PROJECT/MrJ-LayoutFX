@@ -59,6 +59,7 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/health", HTTP_GET, _onGetHealth);
   ApiServer::on("/api/test/gpio", HTTP_POST, _onTestGpio);
   ApiServer::on("/api/test/spi", HTTP_POST, _onTestSpi);
+  ApiServer::on("/api/test/identify", HTTP_POST, _onIdentify);
   ApiServer::on("/api/restart", HTTP_POST, _onRestart);
   ApiServer::on("/api/reload",  HTTP_POST, _onReload);
   ApiServer::on("/api/servo", HTTP_POST, _onServo);

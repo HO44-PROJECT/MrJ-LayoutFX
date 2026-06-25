@@ -51,6 +51,7 @@ constexpr char kFeatLobotServo[] = "lobot_servo";
 constexpr char kFeatLx16aServo[] = "lx16a_servo";
 constexpr char kFeatDcc[] = "dcc";
 constexpr char kFeatAudio[] = "audio";
+constexpr char kFeatOta[] = "ota";
 
 // ── "sys_pins" sub-object ─────────────────────────────────────────────────
 constexpr char kSysPins[] = "sys_pins";

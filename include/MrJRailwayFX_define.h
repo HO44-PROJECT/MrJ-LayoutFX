@@ -147,8 +147,11 @@
 #endif // End AUDIO check
 
 // ── I2C scanner (ESP32 only) ──────────────────────────────────────────────────
-// Define I2C_SCAN in config.h to expose GET /api/scan/i2c in the web UI.
-#if defined(ESP32) && defined(I2C_SCAN)
+// GET /api/scan/i2c (web UI "Scan I2C" button) is available as soon as the I2C
+// bus is up — it only walks addresses on an already-initialised Wire bus, so it
+// has no dependency of its own. Enabled by I2C_CARDS, OLED or an explicit
+// I2C_SCAN (all three drive MRJFX_I2C_CARDS_ENABLED above).
+#if defined(MRJFX_I2C_CARDS_ENABLED)
   #define MRJFX_I2C_SCAN_ENABLED 1
 #else
   #undef MRJFX_I2C_SCAN_ENABLED
@@ -160,6 +163,17 @@
   #define MRJFX_I2C_DEVICES_ENABLED 1
 #else
   #undef MRJFX_I2C_DEVICES_ENABLED
+#endif
+
+// ── OTA firmware update (ESP32 only) ──────────────────────────────────────────
+// Define OTA in config.h to enable wireless firmware updates, both:
+//   • ArduinoOTA / espota  → `pio run -t upload` over WiFi (from a dev machine)
+//   • web endpoint /update → upload a .bin from a browser (field updates, no PC)
+// Needs WiFi (brought up by the API server) — enable alongside WEBUI / API.
+#if defined(ESP32) && defined(OTA)
+  #define MRJFX_OTA_ENABLED 1
+#else
+  #undef MRJFX_OTA_ENABLED
 #endif
 
 // ── Serial servo support (conditionally compiled) ─────────────────────────────

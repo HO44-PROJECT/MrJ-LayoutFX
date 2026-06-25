@@ -67,24 +67,9 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
   for (var j = 0; j < _dbgDevs.length; j++) {
     if (_dbgDevs[j].id === id) {
       var rtDev = _dbgDevs[j];
-      var cfgLookup = _deCfgDevById(id);
-      var mDev = {
-        id: rtDev.id, type: rtDev.type, board: rtDev.board,
-        desired: rtDev.desired, state: rtDev.state, addr: rtDev.addr,
-        pins: rtDev.pins, label: rtDev.label
-      };
-      if (cfgLookup) {
-        if (cfgLookup.angle_a !== undefined) mDev.angle_a = cfgLookup.angle_a;
-        if (cfgLookup.angle_b !== undefined) mDev.angle_b = cfgLookup.angle_b;
-        if (cfgLookup.positions !== undefined) mDev.positions = cfgLookup.positions;
-        if (cfgLookup.pulse_min_us !== undefined) mDev.pulse_min_us = cfgLookup.pulse_min_us;
-        if (cfgLookup.pulse_max_us !== undefined) mDev.pulse_max_us = cfgLookup.pulse_max_us;
-        if (cfgLookup.speed !== undefined) mDev.speed = cfgLookup.speed;
-        if (cfgLookup.states !== undefined) mDev.states = cfgLookup.states;
-        if (cfgLookup.neutral_us !== undefined) mDev.neutral_us = cfgLookup.neutral_us;
-        // default_state = persisted boot state — read from config, never from runtime desired.
-        if (cfgLookup.default_state !== undefined) mDev.default_state = cfgLookup.default_state;
-      }
+      // Overlay the persisted config (source of truth for servo/motor params +
+      // default_state) onto the runtime device. See app-pure.js / test/web/.
+      var mDev = mergeDeviceForEditor(rtDev, _deCfgDevById(id));
       openDevEditor(boardApiIdx, pin, mDev, typeFilter);
       return;
     }
@@ -161,7 +146,7 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
     // Boot state comes from the persisted config (default_state), NOT the current
     // runtime state (desired). Using desired here silently baked default_state:"on"
     // into the config whenever a device was edited while running (e.g. a tested motor).
-    document.getElementById('de-defstate').value = (dev.default_state === 'on') ? 'on' : '';
+    document.getElementById('de-defstate').value = deDefaultStateValue(dev);
     document.getElementById('de-del-btn').style.display = '';
   } else {
     document.getElementById('de-title').textContent = t('de.new');

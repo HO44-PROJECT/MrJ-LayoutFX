@@ -170,6 +170,8 @@ private:
   static void _onTestGpio();
   /** @brief POST /api/test/spi   — Raw SPI channel write. Body: {"card":<n>,"channel":<n>,"state":<0|1>}. */
   static void _onTestSpi();
+  /** @brief POST /api/test/identify — Blink a pin to locate its LED. Body: {"pin":<n>} | {"card":<n>,"channel":<n>} | {} to stop. */
+  static void _onIdentify();
   #ifdef MRJFX_I2C_SCAN_ENABLED
   /** @brief GET /api/scan/i2c   — Scan I2C bus and return found addresses. */
   static void _onScanI2c();

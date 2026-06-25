@@ -117,7 +117,8 @@ int I2cPwmMotorDevice::runCoroutine() {
         _rampFromUs  = _currentUs;
         _rampStartMs = millis();
         while (getTargetState() == OFF_STATE) {
-          uint32_t elapsed = millis() - _rampStartMs;
+          uint32_t elapsed;
+          elapsed = millis() - _rampStartMs;
           if (elapsed >= _stopRampDownMs) { _currentUs = _neutralUs; break; }
           _currentUs = (uint16_t)((int32_t)_rampFromUs +
             (int32_t)(_neutralUs - _rampFromUs) * (int32_t)elapsed / (int32_t)_stopRampDownMs);
@@ -132,7 +133,12 @@ int I2cPwmMotorDevice::runCoroutine() {
 
     } else {
       // ── Active state 1..N ─────────────────────────────────────────────────
-      uint8_t s = (uint8_t)getTargetState();
+      // NB: scalars touched inside this coroutine body are declared WITHOUT an
+      // initializer then assigned, so the AceRoutine resume (computed goto) may
+      // legally jump past them (C++ forbids jumping over an initialized scalar;
+      // gcc tolerates it, clang does not). They are always assigned before use.
+      uint8_t s;
+      s = (uint8_t)getTargetState();
       if (s < 1 || s > _stateCount) {
         setState(s); // out-of-range — commit without running
       } else {
@@ -150,7 +156,8 @@ int I2cPwmMotorDevice::runCoroutine() {
           _rampFromUs  = _currentUs;
           _rampStartMs = millis();
           while (getState() > OFF_STATE) {
-            uint32_t elapsed = millis() - _rampStartMs;
+            uint32_t elapsed;
+            elapsed = millis() - _rampStartMs;
             if (elapsed >= _rampDurMs) { _currentUs = _targetUs; break; }
             _currentUs = (uint16_t)((int32_t)_rampFromUs +
               (int32_t)(_targetUs - _rampFromUs) * (int32_t)elapsed / (int32_t)_rampDurMs);
@@ -178,7 +185,8 @@ int I2cPwmMotorDevice::runCoroutine() {
               _rampFromUs  = _currentUs;
               _rampStartMs = millis();
               while (getState() > OFF_STATE) {
-                uint32_t elapsed = millis() - _rampStartMs;
+                uint32_t elapsed;
+                elapsed = millis() - _rampStartMs;
                 if (elapsed >= _stopRampDownMs) { _currentUs = _neutralUs; break; }
                 _currentUs = (uint16_t)((int32_t)_rampFromUs +
                   (int32_t)(_neutralUs - _rampFromUs) * (int32_t)elapsed / (int32_t)_stopRampDownMs);

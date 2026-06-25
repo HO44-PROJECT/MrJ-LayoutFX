@@ -1,59 +1,45 @@
 """
 gen_build_info.py — PlatformIO pre-build script.
 
-Reads platformio.ini, extracts lib_deps for the active environment (resolving
-${section.option} interpolation), parses each entry into (shortName, constraint),
-and writes include/api/build_info.h so that DeviceStatusApi can expose the
-dependency list at runtime via /api/status.
+Writes include/generated/build_info.h with the declared library dependencies
+(name + version constraint) so DeviceStatusApi can expose them at runtime via
+/api/status (web UI "Libraries" card).
+
+The dependency list comes straight from PlatformIO's *resolved* project options
+via env.GetProjectOption("lib_deps"). PlatformIO itself handles `extends`,
+${section.option} interpolation and the global [env] defaults — so this script
+never parses platformio.ini by hand and can't drift from how the build actually
+resolves the environment.
 """
 
 Import("env")  # noqa: F821 — PlatformIO global
 
-import configparser
 import os
-import re
 
 _LIB = os.path.join(env.subst("$PROJECT_DIR"), "lib", "MrJ-RailwayFX.local")  # noqa: F821
 _OUT = os.path.join(_LIB, "include", "generated", "build_info.h")
-_INI = os.path.join(env.subst("$PROJECT_DIR"), "platformio.ini")  # noqa: F821
-_ENV = env.subst("$PIOENV")  # noqa: F821
 
 
-def _resolve(text, cfg):
-    """Expand ${section.option} placeholders in text using cfg."""
-    def replace(m):
-        sec, opt = m.group(1), m.group(2)
-        try:
-            return cfg.get(sec, opt)
-        except (configparser.NoSectionError, configparser.NoOptionError):
-            return m.group(0)
-    return re.sub(r"\$\{(\w+)\.(\w+)\}", replace, text)
-
-
-def _parse_dep(line):
+def _parse_dep(spec):
     """'owner/Name@constraint' → ('Name', 'constraint') or (None, None)."""
-    line = line.strip()
-    if not line or line.startswith(";") or line.startswith("#"):
+    spec = spec.strip()
+    if not spec or spec.startswith((";", "#")):
         return None, None
-    at_idx = line.find("@")
-    constraint = line[at_idx + 1:].strip() if at_idx >= 0 else ""
-    base = line[:at_idx].strip() if at_idx >= 0 else line
+    at = spec.find("@")
+    constraint = spec[at + 1:].strip() if at >= 0 else ""
+    base = spec[:at].strip() if at >= 0 else spec
     slash = base.rfind("/")
     name = base[slash + 1:].strip() if slash >= 0 else base.strip()
     return name, constraint
 
 
-cfg = configparser.RawConfigParser()
-cfg.read(_INI)
+# Resolved by PlatformIO for the active env: follows `extends`, expands ${...},
+# merges [env]. Returns a list on current PlatformIO; tolerate a string too.
+deps = env.GetProjectOption("lib_deps", [])  # noqa: F821
+if isinstance(deps, str):
+    deps = deps.splitlines()
 
-raw_lines = []
-for section in ["env:" + _ENV, "env"]:
-    if cfg.has_option(section, "lib_deps"):
-        raw = _resolve(cfg.get(section, "lib_deps"), cfg)
-        raw_lines.extend(raw.splitlines())
-        break
-
-entries = [_parse_dep(l) for l in raw_lines]
+entries = [_parse_dep(s) for s in deps]
 entries = sorted([(n, c) for n, c in entries if n], key=lambda x: x[0].lower())
 
 os.makedirs(os.path.dirname(_OUT), exist_ok=True)
@@ -66,4 +52,5 @@ with open(_OUT, "w") as f:
     f.write("  { nullptr, nullptr }\n")
     f.write("};\n")
 
-print("[gen_build_info] {} entries → {}".format(len(entries), _OUT))
+print("[gen_build_info] {} entries (env={}) → {}".format(
+    len(entries), env.subst("$PIOENV"), _OUT))  # noqa: F821

@@ -74,7 +74,11 @@ private:
   static constexpr uint8_t  kWifiRetries      = 20;   ///< Max STA connection attempts before AP fallback.
   static constexpr uint16_t kWifiRetryMs      = 500;  ///< Delay between each attempt (ms).
 
+  #ifdef MRJFX_OTA_ENABLED
+  static constexpr uint32_t kTaskStackBytes   = 8192; ///< Larger: web /update (Update.write) runs in this task.
+  #else
   static constexpr uint32_t kTaskStackBytes   = 4096; ///< Stack size for the Core-0 system task.
+  #endif
   static constexpr uint8_t  kTaskPriority     = 1;    ///< FreeRTOS priority of the system task.
   static constexpr uint8_t  kTaskCore         = 0;    ///< CPU core for the system task (same as WiFi stack).
   static constexpr uint8_t  kTaskYieldTicks   = 1;    ///< vTaskDelay ticks between handleClient() calls.
