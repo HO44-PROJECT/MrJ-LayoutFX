@@ -69,6 +69,7 @@ def read(name):
 # JS module list — concatenated in order into a single bundle
 # ---------------------------------------------------------------------------
 APP_MODULES = [
+    "app-pure.js",
     "app-core.js",
     "app-wizard.js",
     "app-config.js",
@@ -96,7 +97,9 @@ html = html.replace("%%ICONS%%", icons)
 html = html.replace("%%APP%%", app)
 
 raw = html.encode("utf-8")
-gz = gzip.compress(raw, compresslevel=9)
+# mtime=0 → reproducible output (no embedded timestamp); the header only changes
+# when the bundled web sources actually change, not on every build.
+gz = gzip.compress(raw, compresslevel=9, mtime=0)
 
 hex_list = [f"0x{b:02x}" for b in gz]
 rows = ["  " + ", ".join(hex_list[i : i + 16]) for i in range(0, len(hex_list), 16)]
