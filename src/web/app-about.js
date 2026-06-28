@@ -196,15 +196,15 @@ function renderAbout(s) {
   // Features (build flags)
   if (s.features) {
     var FEAT_LABELS = {
-      config: 'Config', api: 'API', webui: 'WebUI', wifi: 'WiFi', wifi_force_ap: 'AP forcé', ota: 'OTA',
+      config: 'Config', api: 'API', webui: 'WebUI', wifi: 'WiFi', wifi_force_ap: 'Force AP', ota: 'OTA',
       dcc: 'DCC', dcc_audit: 'DCC audit',
-      spi: 'SPI', i2c: 'I²C', i2c_scan: 'Scan I²C',
-      lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo', servo_dir: 'Servo direction',
+      spi: 'SPI', i2c: 'I²C', i2c_scan: 'I²C scan',
+      lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo', servo_dir: 'Servo dir',
       audio: 'Audio',
-      oled: 'OLED', oled_status: 'OLED statut', oled_splash: 'OLED splash',
-      oled_metrics: 'OLED métriques', oled_events: 'OLED events',
-      log_serial: 'Log série', debug_serial: 'Debug série', log_oled: 'Log OLED', debug_oled: 'Debug OLED',
-      jtag: 'JTAG', demo: 'Démo'
+      oled: 'OLED', oled_status: 'OLED status', oled_splash: 'OLED splash',
+      oled_metrics: 'OLED metrics', oled_events: 'OLED events',
+      log_serial: 'Serial log', debug_serial: 'Serial debug', log_oled: 'OLED log', debug_oled: 'OLED debug',
+      jtag: 'JTAG', demo: 'Demo'
     };
     // Grouped by category (mirrors MrJRailwayFX_define.h) — one labelled row each,
     // so 26 badges read as 5 tidy lines instead of one blob.
