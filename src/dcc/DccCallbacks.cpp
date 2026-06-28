@@ -113,6 +113,23 @@ void notifyDccMsg(DCC_MSG *Msg)
     if (Msg->Size < 2)
         return;
 
+#ifdef MRJFX_DCC_AUDIT_ENABLED
+    // Heartbeat: prove the DCC input is alive. If this never prints when a command
+    // station is connected, the problem is hardware (pin/opto/wiring), not software.
+    {
+        static uint16_t _pktCount = 0;
+        static unsigned long _lastBeat = 0;
+        _pktCount++;
+        if (millis() - _lastBeat >= 2000) {
+            Serial.print(F("[DCC] "));
+            Serial.print(_pktCount);
+            Serial.println(F(" packets in last 2s (bus alive)"));
+            _pktCount = 0;
+            _lastBeat = millis();
+        }
+    }
+#endif
+
     // Extract the first and second bytes of the DCC packet
     uint8_t b1 = Msg->Data[0]; // First byte
     uint8_t b2 = Msg->Data[1]; // Second byte
@@ -155,6 +172,13 @@ void notifyDccMsg(DCC_MSG *Msg)
         // Calculate the accessory address: ((boardAddr - 1) * 4) + pair + 1
         uint16_t addr = (((boardAddr - 1) << 2) | pair) + 1;
 
+#ifdef MRJFX_DCC_AUDIT_ENABLED
+        Serial.print(F("[DCC] accessory addr "));
+        Serial.print(addr);
+        Serial.print(F(" state "));
+        Serial.println(state);
+#endif
+
         // Debug: Print Basic Accessory packet details (commented out)
         // DEBUG_PRINT("Basic Packet: BoardAddr="); LOG_PRINT(boardAddr);
         // DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
@@ -188,6 +212,13 @@ void notifyDccMsg(DCC_MSG *Msg)
         uint8_t pair = ddd >> 1; // Pair (0 to 1)
         // Calculate the accessory address: ((boardAddr - 1) * 4) + pair + 1
         uint16_t addr = (((boardAddr - 1) << 2) | pair) + 1;
+
+#ifdef MRJFX_DCC_AUDIT_ENABLED
+        Serial.print(F("[DCC] signal addr "));
+        Serial.print(addr);
+        Serial.print(F(" aspect "));
+        Serial.println(aspect);
+#endif
 
         // Debug: Print Extended Accessory packet details (commented out)
         // DEBUG_PRINT("Extended Packet: BoardAddr="); LOG_PRINT(boardAddr);

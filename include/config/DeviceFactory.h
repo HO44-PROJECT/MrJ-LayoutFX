@@ -57,6 +57,7 @@
 #ifdef MRJFX_CONFIG_ENABLED
 
   #include "bus/BusRegistry.h"
+  #include "config/BoardPinCount.h"
   #include "config/DeviceFactoryKeys.h"
   #include "devices/Device.h"
   #include "utils/utils.h"
@@ -157,12 +158,15 @@ public:
 
   /**
    * @brief Parse a JSON config document and instantiate all buses, boards and devices.
-   * @param json           Null-terminated JSON string (device config).
-   * @param boardTypesJson Optional null-terminated JSON string (board_types.json).
-   *                       Used to infer SPI board pin counts when "pin_count" is absent.
+   * @param json         Null-terminated JSON string (device config).
+   * @param btPinCounts  Optional structural pin-count map (board type → pin count),
+   *                     generated from board_types.json into
+   *                     embedded_board_pincounts.h.  Used to size SPI daisy-chain
+   *                     cards when a board entry omits "pin_count".
+   * @param btCount      Number of entries in @p btPinCounts.
    * @return true on success, false if the main JSON fails to parse.
    */
-  bool load(const char *json, const char *boardTypesJson = nullptr);
+  bool load(const char *json, const BtPinCount *btPinCounts = nullptr, uint8_t btCount = 0);
 
   /** @brief Call initPins() on every Device created by load(). */
   void initAll();
@@ -227,8 +231,19 @@ public:
   const SpiBusCfg &spiBus() const { return _spiBus; }
   uint8_t boardCount() const { return _boardCount; }
   uint8_t spiCardCount() const { return _spiCardCount; }
+  // DCC pin from the config "dcc" bus (-1 when absent). DCC is activated by ADDING
+  // the dcc bus in the WebUI (like the uart0 log bus), not by the compile flag alone.
   int dccPin() const { return _dccPin; }
   const char *configName() const { return _configName; }
+
+  /// @brief How the loaded config addresses the UART0 serial-log bus.
+  ///   ON      = a "uart0" bus is declared  → keep serial logging, reserve GPIO1/3.
+  ///   OFF     = a "buses" section exists without uart0 → release the log + GPIO1/3.
+  ///   DEFAULT = no "buses" section at all   → keep the compiled LOG_SERIAL default.
+  enum LogBusReq { LOG_BUS_DEFAULT, LOG_BUS_ON, LOG_BUS_OFF };
+  LogBusReq logBusRequest() const {
+    return _uart0LogBus ? LOG_BUS_ON : (_busesSection ? LOG_BUS_OFF : LOG_BUS_DEFAULT);
+  }
 
   /**
    * @brief Access a board configuration by 1-based index.
@@ -278,6 +293,8 @@ private:
   };
   BusEntry _busEntries[MRJFX_FACTORY_MAX_BUSES];
   uint8_t _busCount = 0;
+  bool _busesSection = false; ///< A "buses" object was present in the loaded config.
+  bool _uart0LogBus = false;  ///< Config declares the uart0 serial-log bus (keep logging + reserve 1/3).
 
   #ifdef MRJFX_LOBOT_SERVO_ENABLED
   ace_routine::Coroutine *_lobotServos[MRJFX_FACTORY_MAX_DEVICES];

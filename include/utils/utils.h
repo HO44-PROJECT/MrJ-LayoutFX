@@ -123,12 +123,29 @@ void debugPrintln(size_t value);
 // ---------------------------------------------------------------------------
 
 #ifdef LOG_SERIAL
-  #define _LOG_S_PRINT(x) Serial.print(x)
-  #define _LOG_S_PRINTLN(x) Serial.println(x)
+  // Runtime gate for Tier-2 (operational/API) serial logging. Boot-critical
+  // Tier-1 messages bypass this and print directly to Serial. Set false — via the
+  // uart0 "log" bus in config — to silence Tier-2 and free GPIO1/3 as plain GPIO.
+  extern bool g_mrjfxLogActive;
+  #define _LOG_S_PRINT(x) do { if (g_mrjfxLogActive) Serial.print(x); } while (0)
+  #define _LOG_S_PRINTLN(x) do { if (g_mrjfxLogActive) Serial.println(x); } while (0)
 #else
   #define _LOG_S_PRINT(x)
   #define _LOG_S_PRINTLN(x)
 #endif
+
+// True when GPIO1/3 are owned by the UART0 console and must not be driven as
+// plain GPIO. False once the uart0 log bus is disabled (pins freed for effects),
+// so hardware tests and effects can use them. Compile-time false when no serial.
+inline bool mrjfxUart0Reserved() {
+#if defined(LOG_SERIAL)
+  return g_mrjfxLogActive;
+#elif defined(DEBUG_SERIAL)
+  return true;
+#else
+  return false;
+#endif
+}
 
 #if defined(LOG_OLED) && defined(MRJFX_OLED_ENABLED)
   #include "oled/OledDisplay.h"
@@ -151,7 +168,7 @@ void debugPrintln(size_t value);
     _LOG_O_PRINTLN(__VA_ARGS__); \
   } while (0)
 #ifdef LOG_SERIAL
-  #define LOG_PRINTF(fmt, ...) Serial.printf(fmt, ##__VA_ARGS__)
+  #define LOG_PRINTF(fmt, ...) do { if (g_mrjfxLogActive) Serial.printf(fmt, ##__VA_ARGS__); } while (0)
 #else
   #define LOG_PRINTF(fmt, ...)
 #endif

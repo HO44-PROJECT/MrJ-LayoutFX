@@ -63,11 +63,11 @@ public:
     dcc.init(MAN_ID_DIY, 3, 0, 0);   // Version 3, OpsModeAddressBaseCV=0
 #endif
     forceLinkDccCallbacks();
-    DEBUG_PRINT(F("DCC ready, pin "));
-    DEBUG_PRINTLN(pin_id);
+    LOG_PRINT(F("[DCC] ready, pin "));
+    LOG_PRINTLN(pin_id);
 
 #ifdef MRJFX_DCC_AUDIT_ENABLED
-    DEBUG_PRINTLN(F("DCC Audit mode Activated"));
+    LOG_PRINTLN(F("[DCC] audit mode active"));
     resetSeenMessages();
 #endif
   }

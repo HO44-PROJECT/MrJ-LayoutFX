@@ -24,7 +24,7 @@ NmraDcc DccDrivable::dcc;
 DccDrivable *DccDrivable::DccDrivableDevices[MAX_PIN_NUMBER] = {nullptr};
 ADDRESS DccDrivable::DccDrivableAddresses[MAX_PIN_NUMBER] = {0};
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED_AUDIT_ENABLED_AUDIT_ENABLED_AUDIT_ENABLED
+#ifdef MRJFX_DCC_AUDIT_ENABLED
 uint8_t DccDrivable::dccSeenSpeed[DccDrivable::BITMAP_SIZE];
 uint8_t DccDrivable::dccSeenFunc[DccDrivable::BITMAP_SIZE];
 unsigned long DccDrivable::lastResetTime = 0;

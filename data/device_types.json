@@ -56,6 +56,10 @@
         "l": "HP1",
         "c": "t-go"
       }
+    ],
+    "wire_aspects": [
+      { "l": "red", "c": "#e74c3c" },
+      { "l": "green", "c": "#27ae60" }
     ]
   },
   "MrJDBEntrySignal": {
@@ -84,6 +88,11 @@
         "l": "HP2",
         "c": "t-slow"
       }
+    ],
+    "wire_aspects": [
+      { "l": "red", "c": "#e74c3c" },
+      { "l": "green", "c": "#27ae60" },
+      { "l": "amber", "c": "#e67e22" }
     ]
   },
   "MrJDBExitSignal": {
@@ -117,6 +126,12 @@
         "l": "HP0+Sh1",
         "c": "t-sh1"
       }
+    ],
+    "wire_aspects": [
+      { "l": "amber", "c": "#e67e22" },
+      { "l": "red_left", "c": "#c0392b" },
+      { "l": "red_right", "c": "#e74c3c" },
+      { "l": "two_white_green", "c": "#27ae60" }
     ]
   },
   "NeonSign": {
@@ -195,12 +210,34 @@
   "TrafficLight3ph": {
     "category": "traffic",
     "wires": 3,
-    "ctor_style": "multi_pin"
+    "ctor_style": "multi_pin",
+    "states": [
+      { "v": 0, "l": "OFF", "c": "t-off" },
+      { "v": 1, "l": "STOP", "c": "t-stop" },
+      { "v": 2, "l": "GO", "c": "t-go" },
+      { "v": 3, "l": "FLASH", "c": "t-flash" }
+    ],
+    "wire_aspects": [
+      { "l": "red", "c": "#e74c3c" },
+      { "l": "green", "c": "#27ae60" },
+      { "l": "amber", "c": "#e67e22" }
+    ]
   },
   "TrafficLight4ph": {
     "category": "traffic",
     "wires": 3,
-    "ctor_style": "multi_pin"
+    "ctor_style": "multi_pin",
+    "states": [
+      { "v": 0, "l": "OFF", "c": "t-off" },
+      { "v": 1, "l": "STOP", "c": "t-stop" },
+      { "v": 2, "l": "GO", "c": "t-go" },
+      { "v": 3, "l": "FLASH", "c": "t-flash" }
+    ],
+    "wire_aspects": [
+      { "l": "red", "c": "#e74c3c" },
+      { "l": "green", "c": "#27ae60" },
+      { "l": "amber", "c": "#e67e22" }
+    ]
   },
   "TrainHeadLamp": {
     "category": "light",

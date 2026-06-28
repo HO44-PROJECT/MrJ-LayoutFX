@@ -52,6 +52,24 @@ constexpr char kFeatLx16aServo[] = "lx16a_servo";
 constexpr char kFeatDcc[] = "dcc";
 constexpr char kFeatAudio[] = "audio";
 constexpr char kFeatOta[] = "ota";
+constexpr char kFeatSerial[] = "serial"; // legacy (kept; superseded by the two below)
+// Logging sinks
+constexpr char kFeatLogSerial[]   = "log_serial";
+constexpr char kFeatDebugSerial[] = "debug_serial";
+constexpr char kFeatLogOled[]     = "log_oled";
+constexpr char kFeatDebugOled[]   = "debug_oled";
+// OLED options
+constexpr char kFeatOledStatus[]  = "oled_status";
+constexpr char kFeatOledSplash[]  = "oled_splash";
+constexpr char kFeatOledMetrics[] = "oled_metrics";
+constexpr char kFeatOledEvents[]  = "oled_events";
+// Network / bus / behaviour options
+constexpr char kFeatWifiForceAp[] = "wifi_force_ap";
+constexpr char kFeatDccAudit[]    = "dcc_audit";
+constexpr char kFeatServoDir[]    = "servo_dir";
+constexpr char kFeatI2cScan[]     = "i2c_scan";
+constexpr char kFeatJtag[]        = "jtag";
+constexpr char kFeatDemo[]        = "demo";
 
 // ── "sys_pins" sub-object ─────────────────────────────────────────────────
 constexpr char kSysPins[] = "sys_pins";
@@ -99,6 +117,7 @@ constexpr char kSpeed[]  = "speed";  ///< Servo speed value (POST /api/servo).
 constexpr char kPin[]     = "pin";     ///< GPIO pin number (POST /api/test/gpio).
 constexpr char kCard[]    = "card";    ///< SPI card index (POST /api/test/spi).
 constexpr char kChannel[] = "channel"; ///< SPI channel index (POST /api/test/spi).
+constexpr char kLow[]     = "low";     ///< Other GPIOs to hold LOW for a charlieplex wiring test.
 
 // ── I2C scan — response fields ─────────────────────────────────────────────
 constexpr char kSda[]   = "sda";   ///< SDA pin used for scan (lowercase, not the sys_pin label).

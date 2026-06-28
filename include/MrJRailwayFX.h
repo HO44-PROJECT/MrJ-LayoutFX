@@ -86,15 +86,21 @@
 #ifdef MRJFX_CONFIG_ENABLED
   #include "bus/BusRegistry.h"
   #include "config/ConfigManager.h"
+  #include "utils/SafeMode.h"
 #endif
 
 #ifdef MRJFX_API_SERVER_ENABLED
   #include "api/ApiServer.h"
   #include "api/DeviceApi.h"
+  #include "api/Identify.h"
 #endif
 
 #ifdef MRJFX_WEBUI_ENABLED
   #include "api/WebUI.h"
+#endif
+
+#ifdef MRJFX_OTA_ENABLED
+  #include "api/OtaUpdater.h"
 #endif
 
 // ── Coroutine scheduler (AceRoutine — all platforms) ─────────────────────────
@@ -153,6 +159,17 @@ public:
     Serial.begin(115200);
 #endif
 
+    // 0a-bis. Double-reset recovery. Two quick resets / power-cycles (bulb-style)
+    //         latch "safe mode" for this session: config is NOT loaded (no devices,
+    //         GPIO/UART untouched) and WiFi is forced to the SoftAP, so the WebUI is
+    //         always reachable to repair a config that crashes or locks you out.
+    //         Non-persistent — the next normal boot loads the config again.
+#ifdef MRJFX_CONFIG_ENABLED
+    SafeMode::begin();
+    if (SafeMode::active())
+      Serial.println(F("[SafeMode] double-reset → config bypass + SoftAP (this session only)"));
+#endif
+
     // StatusOled lightweight display (AVR) — initialises Wire + display.
     // Applies config (contrast, flip mode) and shows splash screen.
     // No-op when OLED_STATUS is not defined.
@@ -179,9 +196,24 @@ public:
     OledDisplay::init();
 #endif
 
-    // 1. Load config from LittleFS and init devices.
+    // 1. Load config from LittleFS and init devices — SKIPPED in safe mode so a
+    //    broken config can never re-crash the boot; devices stay unloaded.
 #ifdef MRJFX_CONFIG_ENABLED
-    ConfigManager::init("/" CONFIG);
+    if (!SafeMode::active())
+      ConfigManager::init("/" CONFIG);
+
+  #ifdef LOG_SERIAL
+    // 1a. Resolve the UART0 "log" bus state and set the Tier-2 gate now, so the rest
+    //     of boot honours it. Tier-1 (banner/IP/config — direct Serial) keeps printing
+    //     regardless. Actually closing UART0 to free GPIO1/3 is DEFERRED to end-of-init
+    //     (below) so the boot IP still reaches the console even when the bus is off.
+    {
+      DeviceFactory::LogBusReq req = ConfigManager::factory().logBusRequest();
+      g_mrjfxLogActive = (req == DeviceFactory::LOG_BUS_ON)  ? true
+                       : (req == DeviceFactory::LOG_BUS_OFF) ? false
+                       : g_mrjfxLogActive; // DEFAULT (no "buses" section) → compiled value
+    }
+  #endif
 #endif
 
     // 1b. First-boot hint on OLED when config is empty (no devices configured).
@@ -205,7 +237,31 @@ public:
 
     // 5. Connect WiFi and start HTTP server on Core 0.
 #ifdef MRJFX_API_SERVER_ENABLED
-    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, WIFI_AP_SSID, WIFI_AP_PASSWORD, MRJFX_API_HTTP_PORT);
+  #ifdef MRJFX_OTA_ENABLED
+    // Register /update on the WebServer before it starts.
+    OtaUpdater::registerWebRoutes();
+  #endif
+  #ifdef MRJFX_CONFIG_ENABLED
+    const bool _forceApSafe = SafeMode::active(); // safe mode → SoftAP, always reachable
+  #else
+    const bool _forceApSafe = false;
+  #endif
+    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, WIFI_AP_SSID, WIFI_AP_PASSWORD, MRJFX_API_HTTP_PORT, _forceApSafe);
+  #ifdef MRJFX_OTA_ENABLED
+    // ArduinoOTA (espota) + mDNS — after WiFi is up (works in STA and AP).
+    OtaUpdater::beginArduinoOta();
+  #endif
+#endif
+
+#ifdef LOG_SERIAL
+    // Boot complete. If the uart0 log bus is disabled, close UART0 now: Tier-1 logs
+    // (banner, config, IP above) have all been emitted, so this only releases GPIO1/3
+    // for use as effect outputs and silences the console for steady-state operation.
+    if (!g_mrjfxLogActive) {
+      Serial.println(F("[Log] uart0 bus off — releasing GPIO1/3, serial console now silent"));
+      Serial.flush();
+      Serial.end();
+    }
 #endif
   }
 
@@ -218,7 +274,19 @@ public:
   static void loop() {
     ace_routine::CoroutineScheduler::loop();
 
+#ifdef MRJFX_OTA_ENABLED
+    // Poll ArduinoOTA (no-op unless an espota push is in progress).
+    OtaUpdater::handle();
+#endif
+
+#ifdef MRJFX_API_SERVER_ENABLED
+    // Advance the LED identify blinker (no-op unless a target is active).
+    // Before BusRegistry::flush() so an SPI target is propagated this iteration.
+    Identify::loop();
+#endif
+
 #ifdef MRJFX_CONFIG_ENABLED
+    SafeMode::loop(); // clears the reset counter once past the multi-tap window
     ConfigManager::handlePendingReload();
     BusRegistry::flush();
 #endif

@@ -21,22 +21,40 @@ var PROJECT_URLS = {
 // Zero-pad (duplicate of the one in app-core.js — kept here to avoid cross-section dependency).
 function pad2(n) { return n < 10 ? '0' + n : String(n); }
 
-var _featTipEl = null;
 
-function showFeatTip(e, msg) {
-  if (_featTipEl) { hideFeatTip(); return; }
-  _featTipEl = document.createElement('div');
-  _featTipEl.className = 'abt-feat-tip';
-  _featTipEl.textContent = msg;
-  document.body.appendChild(_featTipEl);
-  var r = e.target.getBoundingClientRect();
-  _featTipEl.style.left = r.left + 'px';
-  _featTipEl.style.top = (r.bottom + 6) + 'px';
-  setTimeout(function () { document.addEventListener('click', hideFeatTip, { once: true }); }, 0);
+// ── OTA firmware upload (inline in the About card) ───────────────────────────
+// Reflects the chosen file name and enables the send button.
+function otaPick() {
+  var f = document.getElementById('ota-file').files[0];
+  document.getElementById('ota-name').textContent = f ? f.name : t('abt.ota_nofile');
+  document.getElementById('ota-send').disabled = !f;
 }
 
-function hideFeatTip() {
-  if (_featTipEl) { _featTipEl.remove(); _featTipEl = null; }
+// Streams the selected .bin to POST /update with a progress bar, then reboots.
+function otaUpload() {
+  var f = document.getElementById('ota-file').files[0];
+  if (!f) return;
+  var prog = document.getElementById('ota-prog');
+  var status = document.getElementById('ota-status');
+  var send = document.getElementById('ota-send');
+  var fd = new FormData();
+  fd.append('firmware', f);
+  var x = new XMLHttpRequest();
+  send.disabled = true;
+  prog.hidden = false;
+  prog.value = 0;
+  status.textContent = '';
+  x.upload.onprogress = function (ev) {
+    if (ev.lengthComputable) prog.value = ev.loaded / ev.total * 100;
+  };
+  x.onload = function () {
+    status.textContent = x.responseText;
+    if (x.status === 200) setTimeout(function () { location = '/ui'; }, 7000);
+    else send.disabled = false;
+  };
+  x.onerror = function () { status.textContent = t('abt.ota_neterr'); send.disabled = false; };
+  x.open('POST', '/update');
+  x.send(fd);
 }
 
 function fmtBytes(b) {
@@ -128,7 +146,7 @@ function renderAbout(s) {
   if (s.temp_c !== undefined) {
     var tempPct = Math.min(100, Math.max(0, Math.round((s.temp_c - 20) * 100 / 80)));
     html += abtCard(t('abt.temp'), [
-      { label: 'CPU', value: s.temp_c.toFixed(1) + ' °C', bar: tempPct },
+      { label: 'CPU', value: s.temp_c.toFixed(1) + ' °C / ' + (s.temp_c * 9 / 5 + 32).toFixed(1) + ' °F', bar: tempPct },
     ]);
   }
 
@@ -162,30 +180,53 @@ function renderAbout(s) {
     { label: t('abt.firmware_size'), value: fmtBytes(fwUsed) + ' / ' + fmtBytes(fwTotal), bar: fwPct },
   ]);
 
-  // Firmware update over-the-air — only shown when compiled in (#define OTA)
+  // Firmware update over-the-air — inline uploader, only when compiled in (#define OTA)
   if (s.features && s.features.ota) {
     html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.ota') + '</div>'
       + '<div style="font-size:.72rem;color:var(--t2);margin:.1rem 0 .6rem">' + t('abt.ota_hint') + '</div>'
-      + '<a class="abt-refresh" style="display:inline-block;text-decoration:none" href="/update">'
-      + t('abt.ota_btn') + '</a></div>';
+      + '<input type="file" id="ota-file" accept=".bin" hidden onchange="otaPick()">'
+      + '<label class="abt-refresh" for="ota-file" style="display:inline-block">' + t('abt.ota_choose') + '</label>'
+      + ' <span id="ota-name" style="font-size:.72rem;color:var(--t2)">' + t('abt.ota_nofile') + '</span>'
+      + '<div style="margin-top:.6rem"><button class="abt-refresh" id="ota-send" onclick="otaUpload()" disabled>' + t('abt.ota_btn') + '</button></div>'
+      + '<progress id="ota-prog" value="0" max="100" hidden style="width:100%;margin-top:.6rem"></progress>'
+      + '<div id="ota-status" style="font-size:.72rem;margin-top:.4rem;white-space:pre-wrap"></div>'
+      + '</div>';
   }
 
   // Features (build flags)
   if (s.features) {
     var FEAT_LABELS = {
-      api: 'API', audio: 'Audio', config: 'Config', dcc: 'DCC',
-      lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo',
-      i2c: 'I²C', oled: 'OLED', ota: 'OTA', spi: 'SPI', webui: 'WebUI', wifi: 'WiFi'
+      config: 'Config', api: 'API', webui: 'WebUI', wifi: 'WiFi', wifi_force_ap: 'AP forcé', ota: 'OTA',
+      dcc: 'DCC', dcc_audit: 'DCC audit',
+      spi: 'SPI', i2c: 'I²C', i2c_scan: 'Scan I²C',
+      lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo', servo_dir: 'Servo direction',
+      audio: 'Audio',
+      oled: 'OLED', oled_status: 'OLED statut', oled_splash: 'OLED splash',
+      oled_metrics: 'OLED métriques', oled_events: 'OLED events',
+      log_serial: 'Log série', debug_serial: 'Debug série', log_oled: 'Log OLED', debug_oled: 'Debug OLED',
+      jtag: 'JTAG', demo: 'Démo'
     };
-    var badges = '';
-    Object.keys(FEAT_LABELS).forEach(function (k) {
-      if (s.features[k] === undefined) return;
-      var on = s.features[k];
-      var tip = t('abt.feat.' + k).replace(/'/g, '&#39;');
-      badges += '<span class="abt-feat' + (on ? ' on' : ' off') + '" onclick="showFeatTip(event,\'' + tip + '\')">' + FEAT_LABELS[k] + '</span>';
-    });
-    html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.features') + '</div>'
-      + '<div class="abt-feat-row">' + badges + '</div></div>';
+    // Grouped by category (mirrors MrJRailwayFX_define.h) — one labelled row each,
+    // so 26 badges read as 5 tidy lines instead of one blob.
+    var FEAT_GROUPS = [
+      ['abt.featgrp.core',   ['config', 'api', 'webui', 'wifi', 'wifi_force_ap', 'ota']],
+      ['abt.featgrp.bus',    ['dcc', 'dcc_audit', 'spi', 'i2c', 'i2c_scan', 'lobot_servo', 'lx16a_servo', 'servo_dir', 'audio']],
+      ['abt.featgrp.oled',   ['oled', 'oled_status', 'oled_splash', 'oled_metrics', 'oled_events']],
+      ['abt.featgrp.log',    ['log_serial', 'debug_serial', 'log_oled', 'debug_oled']],
+      ['abt.featgrp.behave', ['jtag', 'demo']]
+    ];
+    var groups = FEAT_GROUPS.map(function (g) {
+      var keys = g[1].filter(function (k) { return s.features[k] !== undefined; });
+      if (!keys.length) return '';
+      var badges = keys.map(function (k) {
+        var tip = t('abt.feat.' + k).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        return '<span class="abt-feat' + (s.features[k] ? ' on' : ' off') + '" data-tip="' + tip + '">' + FEAT_LABELS[k] + '</span>';
+      }).join('');
+      return '<div class="abt-feat-grp"><span class="abt-feat-grp-lbl">' + t(g[0]) + '</span>'
+        + '<div class="abt-feat-row">' + badges + '</div></div>';
+    }).join('');
+    html += '<div class="abt-card abt-feat-card"><div class="abt-card-title">' + t('abt.features') + '</div>'
+      + groups + '</div>';
   }
 
   // Libraries

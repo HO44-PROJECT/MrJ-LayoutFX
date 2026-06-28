@@ -18,7 +18,7 @@
 
 // Predefined pin state arrays for different signal states.
 // These arrays define the HIGH/LOW state for each LED of the signal.
-const PIN_STATE MrJDBEntrySignal::PIN_STATE_OFF[MrJDBEntrySignalState_PIN_COUNT] = {Z, Z, Z};
+const PIN_STATE MrJDBEntrySignal::PIN_STATE_OFF[MrJDBEntrySignalState_PIN_COUNT] = {L, L, L};
 const PIN_STATE MrJDBEntrySignal::PIN_STATE_HP0[MrJDBEntrySignalState_PIN_COUNT] = {H, L, L};
 const PIN_STATE MrJDBEntrySignal::PIN_STATE_HP1[MrJDBEntrySignalState_PIN_COUNT] = {L, H, L};
 const PIN_STATE MrJDBEntrySignal::PIN_STATE_HP2[MrJDBEntrySignalState_PIN_COUNT] = {L, H, H};

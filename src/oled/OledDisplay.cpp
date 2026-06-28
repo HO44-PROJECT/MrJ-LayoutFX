@@ -485,14 +485,14 @@ void OledDisplay::_drawLog() {
 // ---------------------------------------------------------------------------
 
 const char *OledDisplay::_stateName(const char *type, int state) {
-  if (strcmp(type, "DBBlocSignal") == 0) {
+  if (strcmp(type, "MrJDBBlocSignal") == 0) {
     switch (state) {
     case 1:
       return "HP0";
     case 2:
       return "HP1";
     }
-  } else if (strcmp(type, "DBEntrySignal") == 0) {
+  } else if (strcmp(type, "MrJDBEntrySignal") == 0) {
     switch (state) {
     case 1:
       return "HP0";
@@ -501,7 +501,7 @@ const char *OledDisplay::_stateName(const char *type, int state) {
     case 3:
       return "HP2";
     }
-  } else if (strcmp(type, "DBExitSignal") == 0) {
+  } else if (strcmp(type, "MrJDBExitSignal") == 0) {
     switch (state) {
     case 1:
       return "HP00";
@@ -539,18 +539,18 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── DB signals ───────────────────────────────────────────────────────────
   // SVG: rect x=8 y=1 w=8 h=20 rx=2  →  x=11 y=1 w=11 h=27 rx=3
   //      mast: line (12,22)-(12,21)   →  (16,29)-(16,28)
-  if (strcmp(type, "DBBlocSignal") == 0 ||
-      strcmp(type, "DBEntrySignal") == 0 ||
-      strcmp(type, "DBExitSignal") == 0) {
+  if (strcmp(type, "MrJDBBlocSignal") == 0 ||
+      strcmp(type, "MrJDBEntrySignal") == 0 ||
+      strcmp(type, "MrJDBExitSignal") == 0) {
     _u8g2.drawRFrame(ox + 11, oy + 1, 11, 27, 3);
     _u8g2.drawVLine(ox + 16, oy + 28, 3);
 
-    if (strcmp(type, "DBBlocSignal") == 0) {
+    if (strcmp(type, "MrJDBBlocSignal") == 0) {
       // cx=10,cy=15 r=1.5 → cx=13,cy=20 r=2
       // cx=14,cy=15 r=1.5 → cx=19,cy=20 r=2
       _u8g2.drawDisc(ox + 13, oy + 20, 2);
       _u8g2.drawDisc(ox + 19, oy + 20, 2);
-    } else if (strcmp(type, "DBEntrySignal") == 0) {
+    } else if (strcmp(type, "MrJDBEntrySignal") == 0) {
       // cx=14,cy=6  r=1.5 → cx=19,cy=8  r=2  (top-right)
       // cx=10,cy=15 r=1.5 → cx=13,cy=20 r=2  (bottom-left)
       // cx=14,cy=15 r=1.5 → cx=19,cy=20 r=2  (bottom-right)

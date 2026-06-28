@@ -17,6 +17,7 @@
 #include "api/embedded_device_types.h"
 #include "api/embedded_bus_types.h"
 #include "api/embedded_i2c_known.h"
+#include "utils/utils.h" // g_mrjfxLogActive (runtime UART0 log-bus state)
 
 using namespace api_keys;
 using namespace http_status;
@@ -103,11 +104,91 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatOta] = false;
   #endif
+  // Each badge below mirrors a compile flag (see MrJRailwayFX_define.h) — "built",
+  // not "active". The uart0 bus card shows whether serial logging is live.
+  // ── Logging sinks ──
+  #ifdef LOG_SERIAL
+  feat[kFeatLogSerial] = true;
+  #else
+  feat[kFeatLogSerial] = false;
+  #endif
+  #ifdef DEBUG_SERIAL
+  feat[kFeatDebugSerial] = true;
+  #else
+  feat[kFeatDebugSerial] = false;
+  #endif
+  #ifdef LOG_OLED
+  feat[kFeatLogOled] = true;
+  #else
+  feat[kFeatLogOled] = false;
+  #endif
+  #ifdef DEBUG_OLED
+  feat[kFeatDebugOled] = true;
+  #else
+  feat[kFeatDebugOled] = false;
+  #endif
+  // ── OLED options ──
+  #ifdef OLED_STATUS
+  feat[kFeatOledStatus] = true;
+  #else
+  feat[kFeatOledStatus] = false;
+  #endif
+  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  feat[kFeatOledSplash] = true;
+  #else
+  feat[kFeatOledSplash] = false;
+  #endif
+  #ifdef OLED_DEBUG_METRICS
+  feat[kFeatOledMetrics] = true;
+  #else
+  feat[kFeatOledMetrics] = false;
+  #endif
+  #ifdef OLED_DEBUG_EVENTS
+  feat[kFeatOledEvents] = true;
+  #else
+  feat[kFeatOledEvents] = false;
+  #endif
+  // ── Network / bus / behaviour options ──
+  #ifdef MRJFX_WIFI_FORCE_AP
+  feat[kFeatWifiForceAp] = true;
+  #else
+  feat[kFeatWifiForceAp] = false;
+  #endif
+  #ifdef MRJFX_DCC_AUDIT_ENABLED
+  feat[kFeatDccAudit] = true;
+  #else
+  feat[kFeatDccAudit] = false;
+  #endif
+  #ifdef SERVO_PRESERVE_DIRECTION
+  feat[kFeatServoDir] = true;
+  #else
+  feat[kFeatServoDir] = false;
+  #endif
+  #ifdef MRJFX_I2C_SCAN_ENABLED
+  feat[kFeatI2cScan] = true;
+  #else
+  feat[kFeatI2cScan] = false;
+  #endif
+  #ifdef USE_JTAG
+  feat[kFeatJtag] = true;
+  #else
+  feat[kFeatJtag] = false;
+  #endif
+  #ifdef DEMO
+  feat[kFeatDemo] = true;
+  #else
+  feat[kFeatDemo] = false;
+  #endif
 
   #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_DCC_ENABLED)
   {
     JsonObject sp = doc[kSysPins].to<JsonObject>();
-    #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
+    #if defined(LOG_SERIAL)
+    if (g_mrjfxLogActive) { // runtime: 1/3 reserved only while the uart0 log bus is active
+      sp[String(1)] = kPinTx0;
+      sp[String(3)] = kPinRx0;
+    }
+    #elif defined(DEBUG_SERIAL)
     sp[String(1)] = kPinTx0;
     sp[String(3)] = kPinRx0;
     #endif

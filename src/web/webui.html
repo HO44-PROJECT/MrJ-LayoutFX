@@ -248,7 +248,7 @@
   <!-- ── Device editor modal ──────────────────────────────────────────── -->
   <div id="de-overlay" onclick="closeDevEditor()"></div>
   <div id="de-modal">
-    <div class="de-hdr">
+    <div class="de-hdr" onmousedown="deDragStart(event)">
       <span id="de-title">Nouveau device</span>
       <button class="de-close" onclick="closeDevEditor()">✕</button>
     </div>
@@ -259,7 +259,7 @@
       </div>
       <div class="de-field">
         <label data-i18n="de.lbl_type">Type</label>
-        <select id="de-type" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder()"></select>
+        <select id="de-type" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder();deUpdateDefState()"></select>
       </div>
       <div class="de-field" id="de-board-field">
         <label data-i18n="de.lbl_board">Board</label>

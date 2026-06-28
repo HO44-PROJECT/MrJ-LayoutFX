@@ -19,7 +19,10 @@
 // baked default_state:"on" into configs whenever a device was edited while
 // running (e.g. a tested motor) — the 2026-06 "servo starts on its own" bug.
 function deDefaultStateValue(dev) {
-  return (dev && dev.default_state === 'on') ? 'on' : '';
+  var ds = dev && dev.default_state;
+  if (ds === undefined || ds === '' || ds === 'off') return '';
+  if (ds === 'on') return 'on';
+  return String(ds); // numeric state value (signals/servos)
 }
 
 // Build the editor's working device object from a runtime device (/api/devices)

@@ -143,7 +143,7 @@ var ICONS = {
     + '<line x1="10" y1="18" x2="14" y2="18"/>'
     + E,
 
-  'DBBlocSignal': S
+  'MrJDBBlocSignal': S
     // Mât
     + '<line x1="12" y1="22" x2="12" y2="21"/>'
     // Boîtier commun aux 3 signaux : x=8 w=8 h=20 rx=2
@@ -153,7 +153,7 @@ var ICONS = {
     + '<circle cx="14" cy="15" r="1.5" fill="currentColor" stroke="none"/>'
     + E,
 
-  'DBEntrySignal': S
+  'MrJDBEntrySignal': S
     // Mât
     + '<line x1="12" y1="22" x2="12" y2="21"/>'
     // Boîtier commun aux 3 signaux : x=8 w=8 h=20 rx=2
@@ -165,7 +165,7 @@ var ICONS = {
     + '<circle cx="14" cy="15" r="1.5" fill="currentColor" stroke="none"/>'
     + E,
 
-  'DBExitSignal': S
+  'MrJDBExitSignal': S
     // Mât
     + '<line x1="12" y1="22" x2="12" y2="21"/>'
     // Boîtier commun aux 3 signaux : x=8 w=8 h=20 rx=2

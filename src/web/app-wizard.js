@@ -499,6 +499,20 @@ function _wizBuildConfig() {
   if (b.spi.enabled) cfg.buses[b.spi.key] = { type: 'spi_master_only', mosi: b.spi.mosi, sclk: b.spi.sclk, latch: b.spi.latch };
   if (b.uart.enabled) cfg.buses[b.uart.key] = { type: 'uart', tx: b.uart.tx, rx: b.uart.rx, baud: b.uart.baud };
 
+  // Compile-time buses — auto-included so a wizard config matches what the firmware
+  // can do: the DCC decoder (pin from DCC_PIN) and the uart0 serial-log console.
+  // Both remain removable afterwards from the Bus tab.
+  var feat = (_dbgStatus && _dbgStatus.features) || {};
+  var sp = (_dbgStatus && _dbgStatus.sys_pins) || {};
+  if (feat.dcc) {
+    var dccPin = null;
+    Object.keys(sp).forEach(function (g) { if (sp[g] === 'DCC') dccPin = parseInt(g, 10); });
+    if (dccPin !== null) cfg.buses.dcc = { type: 'dcc', pin: dccPin };
+  }
+  if (feat.log_serial || feat.debug_serial) {
+    cfg.buses.uart0 = { type: 'uart', tx: 1, rx: 3, baud: 115200 };
+  }
+
   // Expansion boards
   _wiz.expansionBoards.forEach(function (eb) {
     var entry = { id: eb.id, type: eb.type, bus: eb.busKey };

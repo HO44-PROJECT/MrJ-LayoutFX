@@ -105,7 +105,7 @@ void ApiServer::on(const char *path, HTTPMethod method,
  */
 void ApiServer::init(const char *ssid, const char *password,
                      const char *apSsid, const char *apPassword,
-                     uint16_t port) {
+                     uint16_t port, bool forceAp) {
   Serial.setDebugOutput(false); // prevent ESP-IDF binary logs leaking on UART0
 
   // Ensure server exists with the requested port (first call wins).
@@ -148,32 +148,38 @@ void ApiServer::init(const char *ssid, const char *password,
     }
   };
 
+  // Force AP when the caller asks (safe mode) or when compiled-in.
+  bool startApDirect = forceAp;
 #ifdef MRJFX_WIFI_FORCE_AP
-  // --- AP forced ---
-  Serial.println(F("[WiFi] AP mode forced"));
-  _startAP();
-#else
-  // --- STA ---
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  LOG_PRINT(F("[WiFi] connecting to "));
-  LOG_PRINTLN(ssid);
-  for (int i = 0; i < kWifiRetries && WiFi.status() != WL_CONNECTED; i++) {
-    delay(kWifiRetryMs);
-    LOG_PRINT('.');
-  }
-  LOG_PRINTLN();
-
-  if (WiFi.status() == WL_CONNECTED) {
-    _isAP = false;
-    Serial.print(F("[WiFi] STA IP: "));
-    Serial.println(WiFi.localIP());
-  } else {
-    // --- AP fallback ---
-    Serial.println(F("[WiFi] STA failed — starting AP"));
-    _startAP();
-  }
+  startApDirect = true;
 #endif
+
+  if (startApDirect) {
+    // --- AP forced ---
+    Serial.println(F("[WiFi] AP mode forced"));
+    _startAP();
+  } else {
+    // --- STA ---
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    LOG_PRINT(F("[WiFi] connecting to "));
+    LOG_PRINTLN(ssid);
+    for (int i = 0; i < kWifiRetries && WiFi.status() != WL_CONNECTED; i++) {
+      delay(kWifiRetryMs);
+      LOG_PRINT('.');
+    }
+    LOG_PRINTLN();
+
+    if (WiFi.status() == WL_CONNECTED) {
+      _isAP = false;
+      Serial.print(F("[WiFi] STA IP: "));
+      Serial.println(WiFi.localIP());
+    } else {
+      // --- AP fallback ---
+      Serial.println(F("[WiFi] STA failed — starting AP"));
+      _startAP();
+    }
+  }
 
   // --- Not-found handler: CORS preflight + captive-portal redirect in AP mode ---
   _server->onNotFound([]() {

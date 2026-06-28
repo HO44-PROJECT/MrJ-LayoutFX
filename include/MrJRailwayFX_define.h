@@ -11,17 +11,70 @@
  *   void setup() { MrJFX::init(); }
  *   void loop()  { MrJFX::loop(); }
  *
- * Behaviour of MrJFX is driven by #defines in the user's config.h:
+ * ───────────────────────────────────────────────────────────────────────────
+ * USER FLAGS — every #define the user may set in config.h. Presence enables the
+ * feature unless a <value> is shown. Each maps to an internal MRJFX_*_ENABLED
+ * macro below, or is consumed directly where noted. KEEP THIS LIST IN SYNC with
+ * the WebUI feature badges (DeviceStatusApi.cpp `feat[...]`).
+ * Toggle flags default to OFF (undefined); value flags show their default.
+ * Full reference with every default → doc/configuration-flags.md.
+ * ───────────────────────────────────────────────────────────────────────────
  *
- *   CONFIG   "file.json"  Load device config from LittleFS (ESP32 only).
- *                         The value is the filename without leading '/'.
- *   WEBUI                 Enable the web control panel (/ui, /api/).
- *   WIFI_SSID  "…"  \
- *   WIFI_PASSWORD  "…"   Connect to WiFi and start the HTTP server.
- *   HTTP_PORT  <n>        HTTP port — defaults to 80 if not defined.
- *   SPI_CARDS             Enable the 74HC595 SPI shift-register bus.
- *   DEBUG                 Enable DEBUG_PRINT / DEBUG_PRINTLN output.
- *   LOBOT                 Enable the Lobot LX-16A servo protocol.
+ * Core / config / network (ESP32 only):
+ *   CONFIG "file.json"    Load the device config from LittleFS (filename, no '/').
+ *   API                   REST API server (/api/…). Requires WIFI + CONFIG.
+ *   WEBUI                 Web control panel (/ui). Implies API. Requires WIFI + CONFIG.
+ *   WIFI_SSID "…"     \   STA credentials — BOTH required to join WiFi and start
+ *   WIFI_PASSWORD "…" /   the HTTP server.
+ *   WIFI_AP_SSID "…"      AP-fallback SSID     (default "MrJ-RailwayFX").
+ *   WIFI_AP_PASSWORD "…"  AP-fallback password (default "mrjfx1234", min 8 chars).
+ *   WIFI_FORCE_AP         Skip STA entirely, boot straight into access-point mode.
+ *   HTTP_PORT <n>         HTTP port (default 80).
+ *   OTA                   Wireless firmware update: espota (pio upload) + web /update.
+ *   OTA_HOSTNAME "…"      mDNS name prefix (default "mrjfx") → "<name>-<MAC>".
+ *   OTA_PASSWORD "…"      Optional auth for espota and the web uploader.
+ *
+ * Buses / hardware:
+ *   DCC_PIN <n>           NMRA DCC decoder on GPIO <n> (its presence enables DCC).
+ *   DCC_AUDIT             Log every received DCC packet (diagnostics).
+ *   SPI_CARDS             74HC595 SPI shift-register bus (chained digital outputs).
+ *   I2C_CARDS             I²C device drivers (PCA9685 servo boards…); brings up I²C.
+ *   I2C_SCAN              Expose GET /api/scan/i2c; also brings up the I²C bus.
+ *   I2C_SDA <n> / I2C_SCL <n>   I²C bus pins (default 21 / 22).
+ *   LOBOT                 Lobot LX-16A serial-servo protocol (implies LX16A).
+ *   LX16A                 LX-16A serial servo without the full Lobot stack.
+ *   AUDIO                 DFPlayer-style serial audio device support.
+ *   USE_JTAG              Do NOT drive GPIO 5/10/12-15 LOW at boot (keep JTAG usable).
+ *
+ * OLED display:
+ *   OLED                  SSD1306 OLED over I²C (brings up the I²C bus).
+ *   OLED_STATUS           Lightweight status screen via StatusOled (also on AVR).
+ *   OLED_SPLASH           Show a boot splash screen.
+ *   OLED_CONTRAST <n>     Contrast 0-255 (default: display default, not applied).
+ *   OLED_FLIP_MODE <n>    Rotation / flip mode (default: no flip).
+ *   OLED_HEIGHT <64|32>   Panel height in px (default 64; 32 for a 0.91" panel).
+ *   OLED_SDA <n> / OLED_SCL <n>   OLED on a separate bus (default = I2C_SDA / I2C_SCL).
+ *   OLED_EVENT_MS <n>     Event-screen display time (default 3000 ms).
+ *   OLED_DEBUG_METRICS    Show runtime metrics (heap, uptime…) on the OLED.
+ *   OLED_DEBUG_EVENTS     Show event traces on the OLED.
+ *
+ * Logging — independent sinks, NOT mutually exclusive. Three serial situations:
+ *   (boot default)        Serial.begin() at boot prints STRUCTURAL Tier-1 logs
+ *                         (banner, IP, config). Always on — NOT config-toggleable.
+ *   LOG_SERIAL            Operational Tier-2 logs on UART0 (LOG_PRINT…). Runtime-
+ *                         gated by the uart0 bus; remove it to free GPIO1/3.
+ *   DEBUG_SERIAL          Verbose debug logs on UART0 (DEBUG_PRINT…).
+ *   LOG_OLED              Mirror operational logs to the OLED.
+ *   DEBUG_OLED            Send debug logs to the OLED instead of serial.
+ *
+ * Behaviour:
+ *   SERVO_PRESERVE_DIRECTION  Servo keeps its last travel direction across moves.
+ *   DEMO                  Built-in demo sequences (traffic, signals, servo, LED FX).
+ *
+ * Capacity limits (override the default shown):
+ *   BUS_MAX_SPI_CARDS 8    BUS_MAX_UART 4    BUS_MAX_I2C 2
+ *   FACTORY_MAX_DEVICES 256    FACTORY_MAX_BOARDS 12    FACTORY_MAX_BUSES 8
+ *   FACTORY_MAX_PORTS 4    FACTORY_MAX_BOARD_TYPES 16    FACTORY_MAX_SPI_CARDS 8
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX

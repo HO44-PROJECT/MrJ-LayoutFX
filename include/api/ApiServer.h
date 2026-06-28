@@ -62,10 +62,12 @@ public:
    * @param apSsid      AP fallback SSID (default: WIFI_AP_SSID).
    * @param apPassword  AP fallback password (default: WIFI_AP_PASSWORD, min 8 chars or "").
    * @param port        HTTP port (default: MRJFX_API_HTTP_PORT).
+   * @param forceAp     Skip STA and start the SoftAP directly (recovery/safe mode).
    */
   static void init(const char *ssid, const char *password,
                    const char *apSsid, const char *apPassword,
-                   uint16_t port = MRJFX_API_HTTP_PORT);
+                   uint16_t port = MRJFX_API_HTTP_PORT,
+                   bool forceAp = false);
 
   /** @brief Return true if the server is running in AP (access-point) mode. */
   static bool isAP() { return _isAP; }

@@ -299,6 +299,45 @@ function addLinkedBus(btType, lbKey) {
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 
+// (Re)enable the uart0 serial-log bus: keeps Tier-2 logging on and reserves GPIO1/3.
+// Removing it (deleteBus('uart0')) frees those pins for use as effect outputs.
+function addLogBus() {
+  fetch('/api/config')
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (cfg) {
+      if (!cfg.buses) cfg.buses = {};
+      if (cfg.buses.uart0) return Promise.resolve(null); // already present
+      cfg.buses.uart0 = { type: 'uart', tx: 1, rx: 3, baud: 115200 };
+      return fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg)
+      });
+    })
+    .then(function (r) { if (r && !r.ok) throw new Error('HTTP ' + r.status); _reloadAfterSave(); loadDebug(); })
+    .catch(function (e) { alert(t('de.err_prefix') + e.message); });
+}
+
+// Add the DCC bus → arms the NmraDcc decoder on its pin (compile-time DCC_PIN,
+// read from sys_pins). Removing it (deleteBus('dcc')) disables DCC. Like the log bus.
+function addDccBus(pin) {
+  if (pin === null || pin === undefined) { alert(t('de.err_prefix') + 'DCC pin?'); return; }
+  fetch('/api/config')
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (cfg) {
+      if (!cfg.buses) cfg.buses = {};
+      if (cfg.buses.dcc) return Promise.resolve(null); // already present
+      cfg.buses.dcc = { type: 'dcc', pin: parseInt(pin, 10) };
+      return fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg)
+      });
+    })
+    .then(function (r) { if (r && !r.ok) throw new Error('HTTP ' + r.status); _reloadAfterSave(); loadDebug(); })
+    .catch(function (e) { alert(t('de.err_prefix') + e.message); });
+}
+
 // Render the buses tab, which shows three layers:
 //   1. Structural buses — read-only, deduced from /api/status sys_pins + features
 //      (uart0 debug, DCC).  These are compile-time and cannot be edited here.
@@ -329,20 +368,34 @@ function renderBusesTab() {
     return '<div class="bus-row"><span class="bus-lbl">' + lbl + '</span><span class="bus-val">' + (val !== undefined && val !== null ? val : '—') + '</span></div>';
   }
 
-  if (sp['1'] === 'TX0' || sp['3'] === 'RX0') {
-    html += '<div class="bus-card bus-structural">'
-      + busTitle('uart0 (debug)', 'uart')
+  // ── Bus log UART0 (actionnable) ──
+  // Présent dans cfg.buses → rendu plus bas (carte éditable + bouton Supprimer).
+  // Absent mais supporté (log/debug série compilé) → suggestion pour le (ré)activer en 1 clic.
+  if ((feat.log_serial || feat.debug_serial) && !(cfg.buses && cfg.buses.uart0)) {
+    html += '<div class="bus-card bus-suggestion">'
+      + busTitle('uart0 (log)', 'uart')
       + busRow('TX', 1)
       + busRow('RX', 3)
+      + '<div style="font-size:.7rem;color:var(--t2);margin:.3rem 0">' + t('bue.log_hint') + '</div>'
+      + '<div class="bus-card-actions">'
+      + '<button class="dbg-hbtn" onclick="addLogBus()">' + t('bue.add') + '</button>'
+      + '</div>'
       + '</div>';
   }
 
-  if (feat.dcc) {
+  // ── Bus DCC (actionnable, comme uart0) ──
+  // Présent dans cfg.buses → rendu plus bas (éditable + Supprimer).
+  // Absent mais compilé (feat.dcc) → suggestion "+ Ajouter" pour armer le décodeur.
+  if (feat.dcc && !(cfg.buses && cfg.buses.dcc)) {
     var dccPin = null;
     Object.keys(sp).forEach(function (g) { if (sp[g] === 'DCC') dccPin = g; });
-    html += '<div class="bus-card bus-structural">'
+    html += '<div class="bus-card bus-suggestion">'
       + busTitle('dcc', 'dcc')
       + busRow('PIN', dccPin)
+      + '<div style="font-size:.7rem;color:var(--t2);margin:.3rem 0">' + t('bue.dcc_hint') + '</div>'
+      + '<div class="bus-card-actions">'
+      + '<button class="dbg-hbtn" onclick="addDccBus(' + (dccPin !== null ? dccPin : 'null') + ')">' + t('bue.add') + '</button>'
+      + '</div>'
       + '</div>';
   }
 
@@ -357,16 +410,20 @@ function renderBusesTab() {
 
   html += keys.map(function (k) {
     var bus = buses[k];
+    // uart0 is the serial-log console: fixed pins (1/3), no Edit — only Remove
+    // (which frees GPIO1/3). Other buses keep Edit + Remove.
+    var isLog = (k === 'uart0');
     var fields = (_busTypes[bus.type] || {}).fields || [];
     var rows = fields.map(function (f) {
       return busRow(f.label.split(' ')[0], bus[f.key]);
     }).join('');
     var ks = k.replace(/'/g, "\\'");
     return '<div class="bus-card">'
-      + busTitle(k, bus.type || '?')
+      + busTitle(isLog ? 'uart0 (log)' : k, bus.type || '?')
       + rows
+      + (isLog ? '<div style="font-size:.7rem;color:var(--t2);margin:.3rem 0">' + t('bue.log_active_hint') + '</div>' : '')
       + '<div class="bus-card-actions">'
-      + '<button class="dbg-hbtn" onclick="openBusEditor(\'' + ks + '\')">' + t('bue.edit') + '</button>'
+      + (isLog ? '' : '<button class="dbg-hbtn" onclick="openBusEditor(\'' + ks + '\')">' + t('bue.edit') + '</button>')
       + '<button class="dbg-hbtn off" onclick="deleteBus(\'' + ks + '\')">' + t('de.del') + '</button>'
       + '</div>'
       + '</div>';

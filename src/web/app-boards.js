@@ -143,7 +143,6 @@ function renderDbgBoard(board, boardApiIdx) {
     + '<div class="dbg-board-actions">'
     + '<button class="dbg-hbtn on"  onclick="dbgAll(' + boardApiIdx + ',1)">' + t('dbg.all_on') + '</button>'
     + '<button class="dbg-hbtn off" onclick="dbgAll(' + boardApiIdx + ',0)">' + t('dbg.all_off') + '</button>'
-    + (def && def.rows > 0 ? '<button class="dbg-hbtn test" onclick="dbgAllTest(' + boardApiIdx + ')">' + t('dbg.all_test') + '</button>' : '')
     + (cfgIdx >= 0 ? '<button class="dbg-hbtn" onclick="openBoardEditor(' + cfgIdx + ')">' + t('be.edit') + '</button>' : '')
     + (cfgIdx >= 0 ? '<button class="dbg-hbtn off" onclick="deleteBoard(\'' + board.id.replace(/'/g, "\\'") + '\')">' + t('de.del') + '</button>' : '')
     + '</div></div>'
@@ -367,9 +366,12 @@ function renderPin(board, boardApiIdx, pin) {
     editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
   } else if (dev) {
     var isDevI2cServo = I2C_SERVO_TYPES.indexOf(dev.type) >= 0;
+    var sc = dev.stateCount || 2;
+    // Round-robin through every state for any multi-state device (signals,
+    // I2C servos, …); plain on/off toggle for binary devices.
+    var multi = isDevI2cServo || sc > 2;
     cls = dev.desired > 0 ? 'on' : 'off';
-    if (isDevI2cServo) {
-      var sc = dev.stateCount || 2;
+    if (multi) {
       onclick = ' onclick="dbgCycleDev(\'' + dev.id + '\',' + dev.desired + ',' + sc + ')"';
     } else {
       var ns = dev.desired > 0 ? 0 : 1;
@@ -377,7 +379,7 @@ function renderPin(board, boardApiIdx, pin) {
     }
     var ico = ICONS[dev.type] || ICONS['_'];
     var tip = tooltip(dev.type);
-    var stateLabel = isDevI2cServo && dev.desired > 0 ? '<span class="dbg-pin-state">P' + dev.desired + '</span>' : '';
+    var stateLabel = multi && dev.desired > 0 ? '<span class="dbg-pin-state">' + (isDevI2cServo ? 'P' : '') + dev.desired + '</span>' : '';
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
       + '<span class="dbg-pin-num">' + pin.label + '</span>' + stateLabel;
     if (!isI2c) ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
@@ -619,44 +621,3 @@ function computeIdlePins(cfg) {
   return idle;
 }
 
-// ALL test: turn off all devices on the card, then light every testable pin.
-function dbgAllTest(boardApiIdx) {
-  var board = _dbgBoards[boardApiIdx];
-  if (!board) return;
-  post('/api/all', { state: 0, board: boardApiIdx + 1 })
-    .then(function () {
-      var calls = [];
-      if (board.spiRank > 0) {
-        // SPI board: test all channels 1..pinCount
-        var card = board.spiRank;
-        var pinCount = board.pinCount || 16;
-        for (var p = 1; p <= pinCount; p++) {
-          _dbgTestSpi['c' + card + '_p' + p] = 1;
-          calls.push(fetch('/api/test/spi', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ card: card, channel: p, state: 1 })
-          }));
-        }
-      } else {
-        // GPIO board: test all output pins that are not system pins
-        var def = _boardTypes[board.type];
-        var pins = (def && def.pins) ? def.pins : [];
-        pins.forEach(function (pin) {
-          if (pin.wiring === undefined) return;
-          if (_dbgSysPins[pin.wiring]) return;
-          var caps = pin.capabilities || [];
-          if (caps.indexOf('output') < 0) return;
-          _dbgTest['g' + pin.wiring] = 1;
-          calls.push(fetch('/api/test/gpio', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin: pin.wiring, state: 1 })
-          }));
-        });
-      }
-      return Promise.all(calls);
-    })
-    .then(function () { renderDebugBoards(); })
-    .catch(function (e) { console.error('dbgAllTest', e); });
-}

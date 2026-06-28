@@ -70,62 +70,19 @@ void handle() { ArduinoOTA.handle(); }
 
 namespace {
 
-// Minimal self-contained upload page (no WebUI rebuild needed; works in AP mode).
-const char _FORM[] PROGMEM =
-    "<!doctype html><meta charset=utf-8>"
-    "<meta name=viewport content='width=device-width,initial-scale=1'>"
-    "<title>MrJFX OTA</title>"
-    "<style>body{font-family:sans-serif;max-width:30em;margin:2em auto;padding:0 1em}"
-    "progress{width:100%}"
-    ".btn{display:inline-block;padding:.5em 1em;border:1px solid #888;border-radius:6px;"
-    "background:#f4f4f4;cursor:pointer}.btn:hover{background:#e8e8e8}"
-    "#fn{margin-left:.6em;color:#555;font-size:.9em}"
-    ".hint{font-size:.8em;color:#777;margin:.4em 0 1em}</style>"
-    "<h2>Mise à jour firmware</h2>"
-    "<form id=f>"
-    "<p><label class=btn for=fw>Choisir un fichier .bin</label>"
-    "<span id=fn>Aucun fichier sélectionné</span>"
-    "<input id=fw type=file name=firmware accept=.bin required hidden>"
-    "<p class=hint>Fichier : .pio/build/&lt;env&gt;/firmware.bin</p>"
-    "<p><button id=go disabled>Envoyer</button></form>"
-    "<progress id=p value=0 max=100 hidden></progress><pre id=o></pre>"
-    "<script>"
-    "fw.onchange=function(){var n=fw.files[0];fn.textContent=n?n.name:'Aucun fichier sélectionné';"
-    "go.disabled=!n};"
-    "f.onsubmit=function(e){e.preventDefault();"
-    "var fd=new FormData(f),x=new XMLHttpRequest();p.hidden=false;o.textContent='';go.disabled=true;"
-    "x.upload.onprogress=function(ev){if(ev.lengthComputable)p.value=ev.loaded/ev.total*100};"
-    "x.onload=function(){o.textContent=x.responseText;"
-    "if(x.status==200)setTimeout(function(){location='/ui'},7000)};"
-    "x.onerror=function(){o.textContent='Erreur réseau'};"
-    "x.open('POST','/update');x.send(fd)};"
-    "</script>";
-
-bool _denied = false; // set when an upload fails auth, to refuse the write/restart
-
-// Basic-auth gate, only when OTA_PASSWORD is set. Sends 401 on failure.
-bool _authOk(WebServer &s) {
-  #ifdef OTA_PASSWORD
-  if (!s.authenticate(OTA_HOSTNAME, OTA_PASSWORD)) {
-    s.requestAuthentication();
-    return false;
-  }
-  #else
-  (void)s;
-  #endif
-  return true;
-}
+bool _denied = false; // set when a web upload fails auth, to refuse the write/restart
 
 } // namespace
 
 void registerWebRoutes() {
   WebServer &srv = ApiServer::server();
 
-  // Upload form.
+  // The upload UI now lives in the WebUI "About" page (which POSTs here). A
+  // direct GET /update just bounces to the app instead of serving a bare page.
   srv.on("/update", HTTP_GET, []() {
     WebServer &s = ApiServer::server();
-    if (!_authOk(s)) return;
-    s.send_P(200, "text/html", _FORM);
+    s.sendHeader("Location", "/ui");
+    s.send(302);
   });
 
   // Firmware upload: completion handler + streamed upload handler.

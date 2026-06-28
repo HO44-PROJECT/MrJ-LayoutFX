@@ -145,14 +145,13 @@ function meta(d) {
 // Render a traffic-light device card with fixed OFF / GO / FLASH / STOP buttons.
 function cardTraffic(d) {
   var c = clsTraffic(d);
-  var busy = d.state < 0;
-  var dis = busy ? 'disabled' : '';
   var ico = ICONS[d.type] || ICONS['_'];
   var tip = tooltip(d.type);
-  // Build one traffic-light button; marks it active when d.desired matches state st.
+  // Build one traffic-light button. Buttons stay clickable during a transition
+  // (busy): the firmware is interruptible and converges to the last request.
   function tbtn(label, cls, st) {
-    var act = (d.desired === st && !busy) ? 'active' : '';
-    return '<button class="tbtn t-' + cls + ' ' + act + '" onclick="setTraffic(\'' + d.id + '\',' + st + ')" ' + dis + '>' + label + '</button>';
+    var act = (d.desired === st) ? 'active' : '';
+    return '<button class="tbtn t-' + cls + ' ' + act + '" onclick="setTraffic(\'' + d.id + '\',' + st + ')">' + label + '</button>';
   }
   return '<div class="card ' + c + '">'
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
@@ -168,14 +167,14 @@ function cardTraffic(d) {
 function cardSignal(d) {
   var states = (_deviceTypes[d.type] || {}).states;
   var c = d.state < 0 ? 'busy' : (d.desired > 0 ? 'on' : 'off');
-  var busy = d.state < 0;
-  var dis = busy ? 'disabled' : '';
   var ico = ICONS[d.type] || ICONS['_'];
   var tip = tooltip(d.type);
   // Build one signal state button; s carries {v: value, c: css-class, l: label}.
+  // Buttons stay clickable during the POV transition (busy): newState() updates
+  // the target unconditionally, so the firmware converges to the last request.
   function sbtn(s) {
-    var act = (d.desired === s.v && !busy) ? 'active' : '';
-    return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + s.v + ')" ' + dis + '>' + s.l + '</button>';
+    var act = (d.desired === s.v) ? 'active' : '';
+    return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + s.v + ')">' + s.l + '</button>';
   }
   return '<div class="card ' + c + '">'
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
@@ -183,7 +182,7 @@ function cardSignal(d) {
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
     + '<span class="badge">' + d.type + '</span>'
     + meta(d)
-    + '<div class="tbtns">' + states.map(sbtn).join('') + '</div>'
+    + '<div class="tbtns">' + (states || []).map(sbtn).join('') + '</div>'
     + '</div>';
 }
 
@@ -191,18 +190,17 @@ function cardSignal(d) {
 // Only the STOP button shows as "active" (speed is not reported in /api/devices responses).
 function cardServo(d) {
   var busy = d.state < 0;
-  var dis = busy ? 'disabled' : '';
   var ico = ICONS[d.type] || ICONS['_'];
   var tip = tooltip(d.type);
   var c = busy ? 'busy' : (d.desired > 0 ? 'on' : 'off');
   // Build one servo speed button; s carries {v: speed-value, c: css-class, l: label}.
-  // active = STOP button when off, no active highlight for speed buttons (speed not in /api/devices response)
+  // Buttons stay clickable during a transition (interruptible, last request wins).
   function sbtn(s) {
-    var act = (s.v === 0 && d.desired === 0 && !busy) ? 'active' : '';
+    var act = (s.v === 0 && d.desired === 0) ? 'active' : '';
     var onclick = s.v === 'REV'
       ? 'revServo(\'' + d.id + '\')'
       : 'setServo(\'' + d.id + '\',' + s.v + ')';
-    return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="' + onclick + '" ' + dis + '>' + s.l + '</button>';
+    return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="' + onclick + '">' + s.l + '</button>';
   }
   return '<div class="card ' + c + '">'
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
@@ -276,7 +274,9 @@ function card(d) {
   if (I2C_MOTOR_TYPES.indexOf(d.type) >= 0) return cardI2cMotor(d);
   if ((_deviceTypes[d.type] || {}).category === 'signal') return cardSignal(d);
   var c = cls(d);
-  var dis = (c === 'busy' || c === 'static') ? 'disabled' : '';
+  // 'static' devices are read-only; 'busy' (mid-transition) stays clickable — the
+  // firmware is interruptible and converges to the last request.
+  var dis = (c === 'static') ? 'disabled' : '';
   var ico = ICONS[d.type] || ICONS['_'];
   var tip = tooltip(d.type);
   return '<div class="card ' + c + '">'

@@ -11,6 +11,9 @@
 
 #ifdef MRJFX_API_SERVER_ENABLED
 
+#include "api/Identify.h"
+#include "utils/utils.h" // mrjfxUart0Reserved() — 1/3 testable when the log bus is off
+
 using namespace api_keys;
 using namespace http_status;
 
@@ -39,7 +42,7 @@ void DeviceApi::_onTestGpio() {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"invalid pin\"}"));
     return;
   }
-  if (pin == kUart0TxPin || pin == kUart0RxPin) {
+  if (mrjfxUart0Reserved() && (pin == kUart0TxPin || pin == kUart0RxPin)) {
     ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved UART pin\"}"));
     return;
   }
@@ -84,6 +87,96 @@ void DeviceApi::_onTestSpi() {
   (void)state;
   ApiServer::sendJson(kNotImplemented, F("{\"error\":\"SPI not enabled\"}"));
   #endif
+}
+
+// ---------------------------------------------------------------------------
+// Identify — locate a wired LED by blinking it with a distinctive pattern
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Start or stop the identify blink.
+ *        Body: {"pin":<n>} (GPIO), {"card":<n>,"channel":<n>} (SPI), or {} to stop.
+ *        The target blinks a recognizable pattern until stopped (no timeout).
+ */
+void DeviceApi::_onIdentify() {
+  if (!ApiServer::server().hasArg(kArgPlain)) {
+    ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
+    return;
+  }
+  JsonDocument doc;
+  if (deserializeJson(doc, ApiServer::server().arg(kArgPlain))) {
+    ApiServer::sendJson(kBadRequest, F("{\"error\":\"invalid JSON\"}"));
+    return;
+  }
+  // Silence any device driving GPIO `p` so it doesn't fight the blink: an ON
+  // device re-asserts its pin every loop (e.g. Led ON keeps calling outputActive)
+  // and would relight steady as identify moves on. switchOff() parks its coroutine
+  // in await(), leaving the pin to identify and dark afterwards.
+  auto silence = [](int p) {
+    if (!_factory) return;
+    for (size_t i = 0; i < _factory->count(); i++) {
+      Device *d = _factory->device(i);
+      for (size_t j = 0; j < d->getPinCount(); j++) {
+  #ifdef MRJFX_SPI_CARDS_ENABLED
+        PIN_ID gp = d->getPin(j);
+        if (!gp.isSpi() && (int)gp.pin == p) d->switchOff();
+  #else
+        if ((int)d->getPin(j) == p) d->switchOff();
+  #endif
+      }
+    }
+  };
+
+  if (doc[kPin].is<int>()) {
+    int pin = doc[kPin].as<int>();
+    if (pin < 0 || pin > kGpioPinMax) {
+      ApiServer::sendJson(kBadRequest, F("{\"error\":\"invalid pin\"}"));
+      return;
+    }
+    if (mrjfxUart0Reserved() && (pin == kUart0TxPin || pin == kUart0RxPin)) {
+      ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved UART pin\"}"));
+      return;
+    }
+    if (doc[kLow].is<JsonArray>()) {
+      // Charlieplex wiring test ({"pin":n,"low":[...]}): blink `pin` HIGH while
+      // holding the signal's other candidate wires LOW, so one LED lights
+      // predictably even before the device is saved.
+      uint8_t low[8];
+      uint8_t n = 0;
+      for (JsonVariant v : doc[kLow].as<JsonArray>()) {
+        int lp = v.as<int>();
+        if (lp < 0 || lp > kGpioPinMax || lp == pin) continue;
+        if (mrjfxUart0Reserved() && (lp == kUart0TxPin || lp == kUart0RxPin)) continue;
+        silence(lp);
+        if (n < sizeof(low)) low[n++] = (uint8_t)lp;
+      }
+      silence(pin);
+      Identify::startCharlieplex((uint8_t)pin, low, n);
+    } else {
+      silence(pin);
+      Identify::startGpio((uint8_t)pin);
+    }
+  } else if (doc[kCard].is<int>() && doc[kChannel].is<int>()) {
+  #ifdef MRJFX_SPI_CARDS_ENABLED
+    int card = doc[kCard].as<int>(), ch = doc[kChannel].as<int>();
+    if (_factory) {
+      for (size_t i = 0; i < _factory->count(); i++) {
+        Device *d = _factory->device(i);
+        for (size_t j = 0; j < d->getPinCount(); j++) {
+          PIN_ID sp = d->getPin(j);
+          if (sp.isSpi() && (int)sp.card == card && (int)sp.pin == ch) d->switchOff();
+        }
+      }
+    }
+    Identify::startSpi((uint8_t)card, (uint8_t)ch);
+  #else
+    ApiServer::sendJson(kNotImplemented, F("{\"error\":\"SPI not enabled\"}"));
+    return;
+  #endif
+  } else {
+    Identify::stop(); // empty body / no target -> stop
+  }
+  ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }
 
 // ---------------------------------------------------------------------------

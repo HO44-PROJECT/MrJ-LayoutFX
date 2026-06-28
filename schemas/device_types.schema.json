@@ -89,6 +89,20 @@
             "$ref": "#/$defs/stateDef"
           }
         },
+        "wire_aspects": {
+          "type": "array",
+          "description": "Per-position wiring-test aspects (DB signals), in canonical pin order: what identifying each pin position should light. Drives the device editor's wiring assistant.",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["l"],
+            "properties": {
+              "l": { "type": "string", "description": "Aspect label shown to the user (e.g. 'Rouge', 'Orange')." },
+              "c": { "type": "string", "description": "CSS color hint for the radio swatch (e.g. '#e74c3c')." }
+            }
+          }
+        },
         "pin_count_const": {
           "type": "string",
           "description": "C++ constant name for the pin-array size (e.g. 'MrJDBBlocSignalState_PIN_COUNT'). Code-generation only — absent for most types."

@@ -4,3 +4,11 @@ include/api/webui_html.h
 include/api/build_info.h
 include/api/build_info.old.h
 include/generated/
+
+# Generated embedded data catalogs (JSON → gzipped PROGMEM in flash).
+# Regenerated on every build by tools/build_embedded_data.py; source = data/*.json.
+src/api/embedded_board_types.h
+src/api/embedded_bus_types.h
+src/api/embedded_device_types.h
+src/api/embedded_i2c_known.h
+src/api/embedded_board_pincounts.h

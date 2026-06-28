@@ -429,8 +429,8 @@
             "StaticLow",
             "Storm",
             "Torch",
-            "TrafficLight3Phase",
-            "TrafficLight4Phase",
+            "TrafficLight3ph",
+            "TrafficLight4ph",
             "TrainHeadLamp",
             "TurnSignal"
           ]
@@ -748,13 +748,13 @@
           }
         },
         {
-          "description": "MrJDBEntrySignal and TrafficLight3Phase need exactly 3 wiring values.",
+          "description": "MrJDBEntrySignal and TrafficLight3ph need exactly 3 wiring values.",
           "if": {
             "properties": {
               "type": {
                 "enum": [
                   "MrJDBEntrySignal",
-                  "TrafficLight3Phase"
+                  "TrafficLight3ph"
                 ]
               }
             },
@@ -795,11 +795,11 @@
           }
         },
         {
-          "description": "TrafficLight4Phase needs exactly 3 wiring values.",
+          "description": "TrafficLight4ph needs exactly 3 wiring values.",
           "if": {
             "properties": {
               "type": {
-                "const": "TrafficLight4Phase"
+                "const": "TrafficLight4ph"
               }
             },
             "required": [

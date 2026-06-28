@@ -18,7 +18,7 @@
 /**
  * @brief Pin configuration for OFF state (all LEDs off).
  */
-const PIN_STATE TrafficLight3Phases::PIN_STATE_OFF[TRAFFICLIGHT_PIN_COUNT] = {Z, Z, Z};
+const PIN_STATE TrafficLight3Phases::PIN_STATE_OFF[TRAFFICLIGHT_PIN_COUNT] = {L, L, L};
 
 /**
  * @brief Pin configuration for STOP state (red ON, others OFF).

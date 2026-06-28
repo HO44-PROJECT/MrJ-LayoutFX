@@ -88,30 +88,10 @@ static HardwareSerial *serialFromBusKey(const char *key) {
  *                       Used to infer SPI board pin counts when "pin_count" is absent.
  * @return true on success, false if the main JSON fails to parse.
  */
-bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
-  // Pre-index pin counts from board_types.json (count pins with a wiring field).
-  // Stored in parallel arrays to avoid dynamic allocation on embedded targets.
-  char _btTypeNames[MRJFX_FACTORY_MAX_BOARD_TYPES][FACTORY_ID_LEN] = {};
-  uint8_t _btPinCounts[MRJFX_FACTORY_MAX_BOARD_TYPES] = {};
-  uint8_t _btCount = 0;
-
-  if (boardTypesJson) {
-    JsonDocument btDoc;
-    if (deserializeJson(btDoc, boardTypesJson) == DeserializationError::Ok) {
-      for (JsonPair kv : btDoc.as<JsonObject>()) {
-        if (_btCount >= MRJFX_FACTORY_MAX_BOARD_TYPES)
-          break;
-        strncpy(_btTypeNames[_btCount], kv.key().c_str(), FACTORY_ID_LEN - 1);
-        uint8_t cnt = 0;
-        for (JsonObject p : kv.value()[kSecPins].as<JsonArray>()) {
-          if (!p[kFWiring].isNull())
-            cnt++;
-        }
-        _btPinCounts[_btCount] = cnt;
-        _btCount++;
-      }
-    }
-  }
+bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_t btCount) {
+  // SPI boards that omit an explicit "pin_count" derive their size from the
+  // caller-supplied structural map (board type → number of wiring pins),
+  // generated from board_types.json into embedded_board_pincounts.h.
 
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, json);
@@ -128,8 +108,11 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
     _configName[sizeof(_configName) - 1] = '\0';
   }
 
-  // Pass 1 — buses.
-  if (doc[kSecBuses].is<JsonObject>())
+  // Pass 1 — buses. Remember whether a "buses" section exists at all: it lets
+  // init() tell "config manages buses, uart0 absent → log off" from "legacy/empty
+  // config → keep the compiled LOG_SERIAL default" (see logBusRequest()).
+  _busesSection = doc[kSecBuses].is<JsonObject>();
+  if (_busesSection)
     _parseBuses(doc[kSecBuses].as<JsonObject>());
 
   // Pass 2 — boards.
@@ -161,11 +144,11 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
           continue;
         }
 
-        // Derive pin count from board_types.json; an explicit kFPinCount overrides.
+        // Derive pin count from the structural map; an explicit kFPinCount overrides.
         uint8_t structural = 0;
-        for (uint8_t t = 0; t < _btCount; t++) {
-          if (strcmp(_btTypeNames[t], bcfg.typeStr) == 0) {
-            structural = _btPinCounts[t];
+        for (uint8_t t = 0; btPinCounts && t < btCount; t++) {
+          if (strcmp(btPinCounts[t].type, bcfg.typeStr) == 0) {
+            structural = btPinCounts[t].pins;
             break;
           }
         }
@@ -223,8 +206,12 @@ bool DeviceFactory::load(const char *json, const char *boardTypesJson) {
       strncpy(_ids[_count], id, sizeof(_ids[0]) - 1);
       _ids[_count][sizeof(_ids[0]) - 1] = '\0';
       _boards[_count] = _resolveBoardIdx(obj[kFBoard]);
-      // Store default state from JSON (will be applied after initPins())
-      _deviceDefaultStates[_count] = (strcmp(obj[kFDefaultState] | "", kVOn) == 0) ? 1 : 0;
+      // Store default state from JSON (applied after initPins()). Accept a numeric
+      // state value (signals/servos: 0,1,2,…) or the legacy "on"/"off" string.
+      JsonVariantConst _ds = obj[kFDefaultState];
+      _deviceDefaultStates[_count] = _ds.is<int>()
+          ? (uint8_t)_ds.as<int>()
+          : ((strcmp(_ds | "", kVOn) == 0) ? 1 : 0);
       _devices[_count++] = d;
     }
   }
@@ -407,6 +394,15 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
     const char *busKey = kv.key().c_str();
     JsonObject bus = kv.value().as<JsonObject>();
     const char *type = bus[kFType] | "";
+
+    // uart0 is the console/log bus, not a device port: its presence keeps Tier-2
+    // serial logging on and reserves GPIO1/3. Never register it as a device UART
+    // (no device drives the console) — just flag it and move on.
+    if (strcmp(busKey, kUartKey0) == 0) {
+      _uart0LogBus = true;
+      LOG_PRINTLN(F("DeviceFactory: bus uart0 (log) — serial logging ON, GPIO1/3 reserved"));
+      continue;
+    }
 
     // Register key in the catalog before branching so it is reachable by
     // _resolveBusType() regardless of which branch runs below.

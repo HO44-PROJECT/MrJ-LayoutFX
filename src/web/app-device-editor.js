@@ -84,7 +84,11 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
           board: boardApiIdx + 1,
           desired: 0, state: 0,
           addr: cfgDev.address || 0,
-          pins: [pin], label: cfgDev.label
+          // Full wiring from config (not just the clicked pin) so a multi-pin device
+          // edited before the firmware reloads still shows ALL its pins.
+          pins: Array.isArray(cfgDev.wiring) ? cfgDev.wiring.slice()
+              : (cfgDev.wiring !== undefined ? [cfgDev.wiring] : [pin]),
+          label: cfgDev.label
         };
         if (cfgDev.positions !== undefined) cfgOnlyDev.positions = cfgDev.positions;
         if (cfgDev.pulse_min_us !== undefined) cfgOnlyDev.pulse_min_us = cfgDev.pulse_min_us;
@@ -146,32 +150,126 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
     // Boot state comes from the persisted config (default_state), NOT the current
     // runtime state (desired). Using desired here silently baked default_state:"on"
     // into the config whenever a device was edited while running (e.g. a tested motor).
-    document.getElementById('de-defstate').value = deDefaultStateValue(dev);
+    // The default-state select itself is (re)built by deUpdateDefState(dev) below.
     document.getElementById('de-del-btn').style.display = '';
   } else {
     document.getElementById('de-title').textContent = t('de.new');
     document.getElementById('de-id').value = '';
     if (boardApiIdx !== undefined) boardEl.value = boardApiIdx;
     document.getElementById('de-addr').value = '';
-    document.getElementById('de-defstate').value = '';
     document.getElementById('de-del-btn').style.display = 'none';
   }
 
   deUpdateWiring(prefillPin, dev);
   deUpdateAddrLabel();
+  deUpdateDefState(dev);
   deStatus('', '');
   document.getElementById('de-save-btn').disabled = false;
 
   document.getElementById('de-overlay').style.display = 'block';
+  deResetModalPos();
   document.getElementById('de-modal').style.display = 'flex';
   applyLang();
 }
 
 // Close the device editor modal without saving.
 function closeDevEditor() {
+  deWireTestStop();
   document.getElementById('de-overlay').style.display = 'none';
   document.getElementById('de-modal').style.display = 'none';
 }
+
+// ── DB-signal wiring assistant ───────────────────────────────────────────────
+var _deWireTesting = null; // index of the pin position currently being identified
+
+// Charlieplex test of the pin selected in dropdown `idx`: blink it while holding
+// the other selected wires LOW, so one LED lights even before the device is saved.
+// Clicking the active test again stops it.
+function deWireTest(idx) {
+  var sels = document.querySelectorAll('#de-wiring-grp .de-w');
+  var pin = parseInt(sels[idx] && sels[idx].value, 10);
+  if (isNaN(pin)) { deStatus(t('de.err_wire_nopin'), 'err'); return; }
+  var stop = _deWireTesting === idx;
+  var low = [];
+  if (!stop) {
+    for (var i = 0; i < sels.length; i++) {
+      if (i === idx) continue;
+      var p = parseInt(sels[i].value, 10);
+      if (!isNaN(p) && p !== pin) low.push(p);
+    }
+  }
+  post('/api/test/identify', stop ? {} : { pin: pin, low: low })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      _deWireTesting = stop ? null : idx;
+      var btns = document.querySelectorAll('#de-wiring-grp .de-wire-test');
+      for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', _deWireTesting === i);
+      deStatus('', '');
+    })
+    .catch(function (e) { console.error('deWireTest', e); deStatus(t('de.err_wire_test'), 'err'); });
+}
+
+// Stop any active wiring-test blink (called on editor close / after save).
+function deWireTestStop() {
+  if (_deWireTesting === null) return;
+  _deWireTesting = null;
+  post('/api/test/identify', {}).catch(function () {});
+}
+
+// ── Draggable editor modal (grab the header bar) ─────────────────────────────
+var _deOffX = 0, _deOffY = 0, _deDrag = null;
+
+function deDragStart(e) {
+  if (e.target.closest('.de-close')) return; // ✕ button: don't start a drag
+  _deDrag = { sx: e.clientX, sy: e.clientY, ox: _deOffX, oy: _deOffY };
+  document.addEventListener('mousemove', deDragMove);
+  document.addEventListener('mouseup', deDragEnd);
+  e.preventDefault();
+}
+function deDragMove(e) {
+  if (!_deDrag) return;
+  _deOffX = _deDrag.ox + (e.clientX - _deDrag.sx);
+  _deOffY = _deDrag.oy + (e.clientY - _deDrag.sy);
+  document.getElementById('de-modal').style.transform =
+    'translate(calc(-50% + ' + _deOffX + 'px), calc(-50% + ' + _deOffY + 'px))';
+}
+function deDragEnd() {
+  _deDrag = null;
+  document.removeEventListener('mousemove', deDragMove);
+  document.removeEventListener('mouseup', deDragEnd);
+}
+
+// Re-center the modal (clear any drag offset) — called when (re)opening the editor.
+function deResetModalPos() {
+  _deOffX = _deOffY = 0;
+  var m = document.getElementById('de-modal');
+  if (m) m.style.transform = '';
+}
+
+// Keyboard shortcuts for the editor modals: ESC = Cancel, Enter = Save.
+// Covers all three editors (device, board, bus).
+(function () {
+  var modals = [
+    { id: 'de-modal',  close: function () { closeDevEditor(); },   save: function () { saveDevEditor(); } },
+    { id: 'be-modal',  close: function () { closeBoardEditor(); }, save: function () { saveBoardEditor(); } },
+    { id: 'bue-modal', close: function () { closeBusEditor(); },   save: function () { saveBusEditor(); } }
+  ];
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' && e.key !== 'Enter') return;
+    var open = null;
+    for (var i = 0; i < modals.length; i++) {
+      var el = document.getElementById(modals[i].id);
+      if (el && el.style.display && el.style.display !== 'none') { open = modals[i]; break; }
+    }
+    if (!open) return;
+    if (e.key === 'Escape') { open.close(); return; }
+    // Enter = Save, but let a focused button (Cancel/Delete/Save) or textarea act normally.
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'BUTTON' || ae.tagName === 'TEXTAREA')) return;
+    e.preventDefault();
+    open.save();
+  });
+})();
 
 // Update addr/board field visibility and labels based on the currently selected device type.
 // Servo devices (UART): board selector hidden (bus board is implicit from the chain).
@@ -197,6 +295,28 @@ function deUpdateAddrLabel() {
 
 // Rebuild the wiring input(s) for the currently selected device type.
 // UART servo: free-text number input (bus ID 1-253).
+// Rebuild the "default state" select for the current device type. Multi-state
+// types (signals, servos) list every state from the catalog (OFF/HP0/HP1/…);
+// binary devices keep off/on. Pre-selects dev's stored default_state.
+// Called on modal open (dev provided) and on type change (no args).
+function deUpdateDefState(dev) {
+  var sel = document.getElementById('de-defstate');
+  if (!sel) return;
+  var type = document.getElementById('de-type').value;
+  var states = (_deviceTypes[type] || {}).states;
+  var v = deDefaultStateValue(dev); // '', 'on', or a numeric-string state value
+  if (states && states.length) {
+    // Map legacy 'on'/'off' onto state values; default to the first state (OFF).
+    var sv = v === 'on' ? '1' : (v === '' ? String(states[0].v) : v);
+    sel.innerHTML = states.map(function (s) {
+      return '<option value="' + s.v + '"' + (String(s.v) === sv ? ' selected' : '') + '>' + s.l + '</option>';
+    }).join('');
+  } else {
+    sel.innerHTML = '<option value=""' + (v === '' ? ' selected' : '') + '>off</option>'
+      + '<option value="on"' + (v === 'on' ? ' selected' : '') + '>on</option>';
+  }
+}
+
 // I2C servo (PCA9685): channel is fixed from pin-click context — shown as a badge.
 // GPIO/SPI: <select> dropdown filtered to available output pins.
 // Called on modal open (prefillPin/dev provided) and on type/board change (no args).
@@ -206,6 +326,9 @@ function deUpdateWiring(prefillPin, dev) {
   var isI2cServo = I2C_SERVO_TYPES.indexOf(type) >= 0;
   var isI2cMotor = I2C_MOTOR_TYPES.indexOf(type) >= 0;
   var count = (_deviceTypes[type] || {}).wires !== undefined ? (_deviceTypes[type] || {}).wires : 1;
+  // Serial servos declare wires:0 (they live on a UART bus, not a GPIO pin) but the
+  // editor still needs one field for the bus ID — force a single input.
+  if (isServo && count < 1) count = 1;
   var grp = document.getElementById('de-wiring-grp');
   var extraGrp = document.getElementById('de-extra-grp');
 
@@ -323,7 +446,17 @@ function deUpdateWiring(prefillPin, dev) {
   }
 
   var wiringLabel = isServo ? t('de.lbl_wiring_servo') : t('de.lbl_wiring');
-  var html = '<div class="de-field"><label>' + wiringLabel + '</label><div class="de-wiring-row">';
+  // DB signals expose per-position "wire_aspects" → show the wiring assistant
+  // (a Test button + aspect radios under each pin); pins are reordered on save.
+  var wa = !isServo ? ((_deviceTypes[type] || {}).wire_aspects || null) : null;
+  // showTest: GPIO output device on a GPIO board → per-pin Test button (identify
+  // the wire). wa (DB signals, traffic lights) adds aspect radios + reorder on save.
+  var _wBoard = _dbgBoards[parseInt(document.getElementById('de-board').value, 10)];
+  var _wBt = _wBoard ? _boardTypes[_wBoard.type] : null;
+  var showTest = !isServo && !isI2cServo && !isI2cMotor && !(_wBt && _wBt.busType);
+  var html = '<div class="de-field"><label>' + wiringLabel + '</label>';
+  if (showTest) html += '<div class="de-wire-hint">' + t(wa ? 'de.wire_hint' : 'de.wire_hint_test') + '</div>';
+  html += '<div class="' + (showTest ? 'de-wiring-col' : 'de-wiring-row') + '">';
 
   if (isServo) {
     for (var i = 0; i < count; i++) {
@@ -366,6 +499,7 @@ function deUpdateWiring(prefillPin, dev) {
     for (var i = 0; i < count; i++) {
       var curVal = pins[i] !== undefined ? pins[i] : '';
       var selLabel = count > 1 ? ' (' + (i + 1) + ')' : '';
+      if (showTest) html += '<div class="de-wire-block"><div class="de-wire-head">';
       html += '<select class="de-w" onchange="deUpdateIdPlaceholder()">';
       html += '<option value="">— pin' + selLabel + ' —</option>';
       availOpts.forEach(function (o) {
@@ -374,6 +508,23 @@ function deUpdateWiring(prefillPin, dev) {
         html += '<option value="' + o.val + '"' + sel + '>' + o.val + '</option>';
       });
       html += '</select>';
+      if (showTest) {
+        html += '<button type="button" class="de-wire-test" onclick="deWireTest(' + i + ')">'
+          + t('de.wire_test') + '</button></div>';
+        if (wa) {
+          html += '<div class="de-wire-aspects">';
+          wa.forEach(function (a, ai) {
+            // On edit, pins are stored in canonical order → slot i shows aspect i,
+            // so pre-check that radio to reflect the saved wiring.
+            var chk = (dev && ai === i) ? ' checked' : '';
+            html += '<label class="de-wire-asp"><input type="radio" name="de-wa-' + i + '" value="' + ai + '"' + chk + '>'
+              + '<span class="de-wire-sw" style="background:' + (a.c || '#888') + '"></span>'
+              + t('wa.' + a.l) + '</label>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      }
     }
   }
 
@@ -474,6 +625,7 @@ function saveDevEditor() {
   var isServo = SERVO_TYPES.indexOf(type) >= 0;
   var isI2cServo2 = I2C_SERVO_TYPES.indexOf(type) >= 0;
   var isI2cMotor2 = I2C_MOTOR_TYPES.indexOf(type) >= 0;
+  if (isServo && count < 1) count = 1; // serial servo: the single wiring value is the bus ID
   var wiring = [];
   if (count > 0) {
     var wInputs = document.querySelectorAll('.de-w');
@@ -488,6 +640,32 @@ function saveDevEditor() {
     }
   }
 
+  // Wiring assistant: if the user answered the aspect radios, reorder the pins so
+  // each lands at the position whose canonical aspect matches what they observed.
+  var waSave = (_deviceTypes[type] || {}).wire_aspects;
+  if (waSave && wiring.length > 1) {
+    var chosen = [], anyChecked = false;
+    for (var wi = 0; wi < wiring.length; wi++) {
+      var r = document.querySelector('input[name="de-wa-' + wi + '"]:checked');
+      chosen.push(r ? parseInt(r.value, 10) : -1);
+      if (r) anyChecked = true;
+    }
+    if (anyChecked) {
+      var seen = {};
+      for (var wj = 0; wj < wiring.length; wj++) {
+        if (chosen[wj] < 0 || chosen[wj] >= wiring.length || seen[chosen[wj]]) {
+          deStatus(t('de.err_wire_aspects'), 'err');
+          document.getElementById('de-save-btn').disabled = false;
+          return;
+        }
+        seen[chosen[wj]] = true;
+      }
+      var reordered = new Array(wiring.length);
+      for (var wk = 0; wk < wiring.length; wk++) reordered[chosen[wk]] = wiring[wk];
+      wiring = reordered;
+    }
+  }
+
   var board = _dbgBoards[boardIdx];
   // Fallback: runtime board list may be stale — try config boards (source of truth for id).
   if (!board && isI2cType && _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardIdx])
@@ -498,7 +676,10 @@ function saveDevEditor() {
   if (count === 1) dev.wiring = wiring[0];
   else if (count > 1) dev.wiring = wiring;
   if (addrStr) { var addr = parseInt(addrStr, 10); if (addr >= 1 && addr <= 10239) dev.address = addr; }
-  if (defState) dev.default_state = defState;
+  if (defState) {
+    var dsn = parseInt(defState, 10);
+    dev.default_state = isNaN(dsn) ? defState : dsn; // number for state values, 'on' for binary
+  }
 
   if (isI2cServo2) {
     var rows = document.querySelectorAll('#de-positions-list .de-pos-row');

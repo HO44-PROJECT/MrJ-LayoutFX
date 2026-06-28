@@ -510,13 +510,22 @@
       box-shadow: 0 0 6px #27ae60
     }
 
+    /* OFF: hollow thin ring (shape = empty/inactive), distinct from the solid
+       "stable" disc and the spinning "transition" ring — no colour needed. */
     .dot.off {
-      background: #3d3d3d
+      background: none;
+      border: 1.5px solid var(--t3);
+      box-sizing: border-box
     }
 
+    /* Transition indicator: a spinning ring (shape, not colour) — unambiguous
+       regardless of theme/colour and distinct from the orange FLASH state. */
     .dot.busy {
-      background: #e67e22;
-      animation: pulse .7s infinite alternate
+      background: none;
+      border: 2px solid var(--bd);
+      border-top-color: var(--t1);
+      box-sizing: border-box;
+      animation: spin .6s linear infinite
     }
 
     .dot.stop {
@@ -536,6 +545,12 @@
 
       to {
         box-shadow: 0 0 10px #e67e22
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
       }
     }
 
@@ -1898,7 +1913,7 @@
       background: var(--d1);
       border: 1px solid var(--d2);
       border-radius: 10px;
-      width: min(430px, 93vw);
+      width: min(560px, 95vw);
       flex-direction: column;
       box-shadow: 0 8px 32px rgba(0,0,0,.6)
     }
@@ -1909,8 +1924,11 @@
       padding: .75rem 1rem;
       border-bottom: 1px solid var(--d2);
       font-weight: 700;
-      font-size: .92rem
+      font-size: .92rem;
+      cursor: move;
+      user-select: none
     }
+    .de-hdr .de-close { cursor: pointer }
     .de-close {
       background: none;
       border: none;
@@ -1949,6 +1967,20 @@
     .de-wiring-row { display: flex; gap: .35rem }
     .de-wiring-row input { flex: 1 }
     .de-wiring-fixed { padding: .28rem .65rem; background: var(--d2); border-radius: 4px; font-weight: bold; font-size: .95em }
+    /* DB-signal wiring assistant */
+    .de-wiring-col { display: flex; flex-direction: column; gap: .5rem }
+    .de-wire-hint { font-size: .72rem; color: var(--t2); margin-bottom: .3rem }
+    .de-wire-block { border: 1px solid var(--bd); border-radius: 6px; padding: .4rem .5rem }
+    .de-wire-head { display: flex; gap: .35rem; align-items: center }
+    .de-wire-head select { flex: 1 }
+    .de-wire-test { padding: .28rem .7rem; border: 1px solid var(--bd); border-radius: 5px;
+      background: var(--bg3); color: var(--t2); cursor: pointer; font-size: .72rem; font-weight: 700; white-space: nowrap }
+    .de-wire-test:hover { color: var(--t0) }
+    .de-wire-test.on { background: #e67e22; color: #fff; border-color: #e67e22 }
+    /* Aspect radios: forced onto a single, condensed line. */
+    .de-wire-aspects { display: flex; flex-wrap: nowrap; gap: .45rem; margin-top: .35rem; white-space: nowrap }
+    .de-wire-asp { display: inline-flex; align-items: center; gap: .18rem; font-size: .66rem; cursor: pointer; white-space: nowrap }
+    .de-wire-sw { width: .66rem; height: .66rem; border-radius: 50%; border: 1px solid rgba(0,0,0,.3); display: inline-block; flex: none }
     .de-footer {
       display: flex;
       gap: .45rem;
@@ -2212,6 +2244,15 @@
       padding-top: .2rem
     }
 
+    /* Grouped Features card: one labelled row per category (Core / Bus / OLED …). */
+    .abt-feat-card { max-width: 34rem }
+    .abt-feat-grp { display: flex; align-items: baseline; gap: .5rem; margin-top: .45rem }
+    .abt-feat-grp-lbl {
+      flex: 0 0 4.2rem; text-align: right; font-size: .6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em; color: var(--t3)
+    }
+    .abt-feat-grp .abt-feat-row { flex: 1; padding-top: 0; margin: 0 }
+
     .abt-feat {
       font-size: .72rem;
       font-weight: 600;
@@ -2248,6 +2289,31 @@
       border: 1px solid var(--bd);
       text-decoration: line-through;
       opacity: .65
+    }
+
+    /* Feature description shown on hover (replaces the old click popup). */
+    .abt-feat[data-tip] { position: relative }
+    .abt-feat[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: max-content;
+      max-width: 230px;
+      white-space: normal;
+      text-align: left;
+      background: var(--d1);
+      color: var(--t0);
+      border: 1px solid var(--d2);
+      border-radius: 6px;
+      padding: .4rem .55rem;
+      font-size: .7rem;
+      font-weight: 400;
+      line-height: 1.35;
+      box-shadow: 0 4px 14px rgba(0,0,0,.5);
+      pointer-events: none
     }
 
     /* ── Placeholder views ───────────────────────────────────────────────── */

@@ -18,11 +18,11 @@
 
 // Predefined pin state arrays for different signal states.
 // These arrays define the HIGH/LOW state for each LED of the signal.
-const PIN_STATE MrJDBExitSignal::PIN_STATE_OFF[MrJDBExitSignalState_PIN_COUNT] = {Z, Z, Z, Z};
+const PIN_STATE MrJDBExitSignal::PIN_STATE_OFF[MrJDBExitSignalState_PIN_COUNT] = {L, L, L, L};
 const PIN_STATE MrJDBExitSignal::PIN_STATE_HP00[MrJDBExitSignalState_PIN_COUNT] = {L, H, H, L};
-const PIN_STATE MrJDBExitSignal::PIN_STATE_HP1[MrJDBExitSignalState_PIN_COUNT] = {Z, L, Z, H};
+const PIN_STATE MrJDBExitSignal::PIN_STATE_HP1[MrJDBExitSignalState_PIN_COUNT] = {H, L, H, H};
 const PIN_STATE MrJDBExitSignal::PIN_STATE_HP2[MrJDBExitSignalState_PIN_COUNT] = {H, L, L, H};
-const PIN_STATE MrJDBExitSignal::PIN_STATE_HP0_SH1[MrJDBExitSignalState_PIN_COUNT] = {L, H, Z, H};
+const PIN_STATE MrJDBExitSignal::PIN_STATE_HP0_SH1[MrJDBExitSignalState_PIN_COUNT] = {L, H, H, H};
 
 /**
  * @brief Sets the LED state based on a DCC accessory command.

@@ -14,6 +14,12 @@
 
 #include "utils/utils.h"
 
+#ifdef LOG_SERIAL
+// Tier-2 serial logging is ON by default (matches the compiled LOG_SERIAL flag);
+// the uart0 "log" bus in config may flip it off at boot to free GPIO1/3.
+bool g_mrjfxLogActive = true;
+#endif
+
 /// @brief Allocates memory and duplicates the contents of a source buffer.
 /// @param in A pointer to the source memory buffer.
 /// @param size The size of the memory buffer to duplicate.
