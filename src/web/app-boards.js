@@ -431,7 +431,7 @@ function renderPin(board, boardApiIdx, pin) {
 // Toggle a device on/off from the boards tab (uses /api/switch, then reloads).
 function dbgToggleDev(id, on) {
   post('/api/switch', { id: id, on: !!on })
-    .then(function () { loadDebug(); })
+    .then(poll) // state-only change: refresh devices (RAM), not boards/config (flash) — avoids POV jitter
     .catch(function (e) { console.error('dbgToggleDev', e); });
 }
 
@@ -440,7 +440,7 @@ function dbgToggleDev(id, on) {
 function dbgCycleDev(id, desired, stateCount) {
   var next = (desired + 1) % stateCount;
   post('/api/device', { id: id, state: next })
-    .then(function () { loadDebug(); })
+    .then(poll) // state-only change: refresh devices (RAM), not boards/config (flash) — avoids POV jitter
     .catch(function (e) { console.error('dbgCycleDev', e); });
 }
 
@@ -561,7 +561,7 @@ function dbgAll(boardApiIdx, state) {
   }
   Promise.all(clearCalls).then(function () {
     post('/api/all', { state: state, board: boardApiIdx + 1 })
-      .then(function () { loadDebug(); });
+      .then(poll); // refresh devices only (RAM), not boards/config (flash) — avoids POV jitter
   });
 }
 
