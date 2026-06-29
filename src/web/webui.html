@@ -259,11 +259,14 @@
       </div>
       <div class="de-field">
         <label data-i18n="de.lbl_type">Type</label>
-        <select id="de-type" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder();deUpdateDefState()"></select>
+        <div class="de-type-row">
+          <select id="de-type" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder();deUpdateDefState();deUpdateTypeIcon()"></select>
+          <span id="de-type-icon" class="de-type-ico"></span>
+        </div>
       </div>
       <div class="de-field" id="de-board-field">
         <label data-i18n="de.lbl_board">Board</label>
-        <select id="de-board"></select>
+        <select id="de-board" onchange="deOnBoardChange()"></select>
       </div>
       <div id="de-wiring-grp"></div>
       <div id="de-extra-grp"></div>

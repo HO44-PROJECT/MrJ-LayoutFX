@@ -13,6 +13,65 @@
 var _deEditId = null;    // id of the device currently being edited, null = new
 var _deFixedPin = undefined;          // pin/channel locked from context (pin click), undefined = free
 var _deFixedBoardApiIdx = undefined;  // board index locked from context (I2C boards)
+var _deTypeFilter = null;             // explicit type-list override (e.g. SERVO_TYPES), else by-board
+
+// Pin-count hint shown in the type picker. Serial servos use a bus ID, not GPIO pins.
+function _dePinHint(tp) {
+  var dt = _deviceTypes[tp] || {};
+  if (dt.category === 'servo') return t('de.bus_id');
+  var n = dt.wires !== undefined ? dt.wires : 1;
+  return n + ' ' + (n === 1 ? t('de.pin_one') : t('de.pins'));
+}
+
+// Device types a board can host, by its bus kind: GPIO/SPI = digital output effects,
+// I2C = PCA9685 servo/motor, UART = serial servo / audio.
+function _deAllowedTypes(boardIdx) {
+  var b = (boardIdx !== undefined && _dbgBoards[boardIdx]) ? _dbgBoards[boardIdx] : null;
+  var bt = b ? (_boardTypes[b.type] || {}) : {};
+  var busType = (b && b.spiRank > 0) ? 'spi' : bt.busType; // null/undefined = GPIO
+  var allow;
+  if (busType === 'i2c') allow = ['i2c_servo', 'i2c_motor'];
+  else if (busType === 'uart') allow = ['servo', 'audio'];
+  else allow = ['light', 'signal', 'traffic', 'static']; // GPIO + SPI digital outputs
+  return Object.keys(_deviceTypes).filter(function (k) {
+    return allow.indexOf((_deviceTypes[k] || {}).category) >= 0;
+  });
+}
+
+// (Re)build the type dropdown — filtered to the board capability (or _deTypeFilter).
+// forceType: the type being edited, which must stay selectable & selected even if
+// the board filter excludes it. For a NEW device pass null → the list resets to the
+// board's first allowed type (never carries over the previously-open device's type).
+function deRenderTypeList(typeFilter, forceType, boardIdx) {
+  var typeEl = document.getElementById('de-type');
+  if (!typeEl) return;
+  if (boardIdx === undefined) {
+    var be = document.getElementById('de-board');
+    boardIdx = (be && be.value !== '') ? parseInt(be.value, 10) : _deFixedBoardApiIdx;
+  }
+  var typeList = typeFilter || _deAllowedTypes(boardIdx);
+  if (forceType && typeList.indexOf(forceType) < 0) typeList = [forceType].concat(typeList);
+  if (!typeList.length) typeList = Object.keys(_deviceTypes); // safety net
+  typeEl.innerHTML = typeList.map(function (tp) {
+    return '<option value="' + tp + '">' + tp + ' — ' + tooltip(tp) + ' · ' + _dePinHint(tp) + '</option>';
+  }).join('');
+  typeEl.value = forceType || (typeList[0] || '');
+  typeEl.disabled = typeList.length === 1;
+  deUpdateTypeIcon();
+}
+
+// Show the selected type's icon next to the picker (a native <option> can't render SVG).
+function deUpdateTypeIcon() {
+  var el = document.getElementById('de-type-icon');
+  var typeEl = document.getElementById('de-type');
+  if (el && typeEl) el.innerHTML = ICONS[typeEl.value] || ICONS['_'] || '';
+}
+
+// Board changed in the editor → refilter the type list to the new board's capability
+// (resets to the first allowed type for that board).
+function deOnBoardChange() {
+  deRenderTypeList(_deTypeFilter, null);
+}
 
 // Look up a device entry in the persisted config (_dbgCfg) by id, or null.
 // _dbgCfg is the source of truth for default_state (the boot state), which is
@@ -115,14 +174,11 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
   _deFixedPin = prefillPin;
   _deFixedBoardApiIdx = boardApiIdx;
 
-  // Type select — filtered if typeFilter provided (e.g. SERVO_TYPES for bus boards)
+  // Type select — filtered to the context board's capability (or an explicit typeFilter),
+  // keeping the edited device's type selectable. Shows pin count + icon per option.
   var typeEl = document.getElementById('de-type');
-  var typeList = typeFilter || Object.keys(_deviceTypes);
-  typeEl.innerHTML = typeList.map(function (tp) {
-    return '<option value="' + tp + '">' + tp + ' — ' + tooltip(tp) + '</option>';
-  }).join('');
-  // Lock type when there is only one option (e.g. PCA9685Servo on an I²C board)
-  typeEl.disabled = typeList.length === 1;
+  _deTypeFilter = typeFilter || null;
+  deRenderTypeList(_deTypeFilter, dev ? dev.type : null, _deFixedBoardApiIdx);
 
   // Board select
   var boardEl = document.getElementById('de-board');
@@ -279,9 +335,11 @@ function deUpdateAddrLabel() {
   var isServo = SERVO_TYPES.indexOf(type) >= 0;
   var isI2cServo = I2C_SERVO_TYPES.indexOf(type) >= 0;
   var isI2cMotor = I2C_MOTOR_TYPES.indexOf(type) >= 0;
-  // Board field: hide for UART servos and I2C boards (board is implicit from context)
+  // Board field: the board is always fixed by the context (the board/pin that was
+  // clicked), so hide this redundant picker. It used to show for GPIO devices, where
+  // it served no purpose and — with the type refilter on change — was disruptive.
   var boardField = document.getElementById('de-board-field');
-  if (boardField) boardField.style.display = (isServo || isI2cServo || isI2cMotor) ? 'none' : '';
+  if (boardField) boardField.style.display = (_deFixedBoardApiIdx !== undefined) ? 'none' : '';
   // Addr field: always show — DCC address for both LED devices and servos
   var addrField = document.querySelector('#de-modal #de-addr');
   var addrFieldRow = addrField ? addrField.closest('.de-field') : null;

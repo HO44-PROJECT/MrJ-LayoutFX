@@ -1503,6 +1503,7 @@
     "description": "UART MP3 audio module — rx/tx from bus, no physical pin representation",
     "rows": 0,
     "busType": "uart",
+    "no_devices": true,
     "pins": []
   },
   "SSD1306": {
@@ -1510,6 +1511,7 @@
     "description": "I²C OLED display — driven by SSD1306, no physical pin representation",
     "rows": 0,
     "busType": "i2c",
+    "no_devices": true,
     "pins": []
   },
   "PCA9685": {

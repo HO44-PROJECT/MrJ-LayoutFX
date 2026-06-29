@@ -159,9 +159,16 @@ function cardTraffic(d) {
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
     + '<span class="badge">' + d.type + '</span>'
     + meta(d)
-    + '<div class="tbtns">' + tbtn('OFF', 'off', 0) + tbtn('GO', 'go', 2) + tbtn('FLASH', 'flash', 3) + tbtn('STOP', 'stop', 1) + '</div>'
+    + '<div class="tbtns">' + tbtn('OFF', 'off', 0) + tbtn(t('aspect.go'), 'go', 2) + tbtn(t('aspect.caution'), 'flash', 3) + tbtn(t('aspect.stop'), 'stop', 1) + '</div>'
     + '</div>';
 }
+
+// Railway aspect code -> i18n meaning key, for domain-meaningful cockpit buttons
+// (e.g. HP1 -> "Voie libre"). Codes without a meaning fall back to the raw label.
+var ASPECT_MEANING = {
+  HP0: 'aspect.stop', HP00: 'aspect.stop',
+  HP1: 'aspect.clear', HP2: 'aspect.slow', 'HP0+Sh1': 'aspect.shunting'
+};
 
 // Render a railway signal card with dynamic state buttons from device_types.json.
 function cardSignal(d) {
@@ -170,11 +177,14 @@ function cardSignal(d) {
   var ico = ICONS[d.type] || ICONS['_'];
   var tip = tooltip(d.type);
   // Build one signal state button; s carries {v: value, c: css-class, l: label}.
+  // Label shows "code · meaning" (e.g. HP1 · Voie libre); meaning is internationalised.
   // Buttons stay clickable during the POV transition (busy): newState() updates
   // the target unconditionally, so the firmware converges to the last request.
   function sbtn(s) {
     var act = (d.desired === s.v) ? 'active' : '';
-    return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + s.v + ')">' + s.l + '</button>';
+    var mk = ASPECT_MEANING[s.l];
+    var lbl = mk ? (s.l + ' · ' + t(mk)) : s.l;
+    return '<button class="tbtn ' + s.c + ' ' + act + '" title="' + (mk ? t(mk) : s.l) + '" onclick="setSig(\'' + d.id + '\',' + s.v + ')">' + lbl + '</button>';
   }
   return '<div class="card ' + c + '">'
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
