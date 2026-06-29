@@ -66,7 +66,9 @@ function dbgFindDev(boardApiIdx, wiring) {
     if (cd.board !== boardId) continue;
     var w = cd.wiring;
     var match = Array.isArray(w) ? w.indexOf(wiring) >= 0 : w === wiring;
-    if (match) return { id: cd.id, type: cd.type, desired: -1, pins: [wiring], _cfgOnly: true };
+    // Expose the FULL wiring (not just the matched pin) so multi-pin devices can
+    // compute their anchor/linked pins in the board view.
+    if (match) return { id: cd.id, type: cd.type, desired: -1, pins: Array.isArray(w) ? w.slice() : [w], _cfgOnly: true };
   }
   return null;
 }
@@ -105,6 +107,7 @@ function saveCfg(cfg) {
 // _dbgCfg.boards is the source of truth so newly saved boards appear without reboot.
 // Runtime data (spiRank, pinCount) from _dbgBoards is overlaid when available.
 function renderDebugBoards() {
+  _grpInitDelegation(); // wire up linked-pins hover/click highlighting (once)
   // Use config boards as source of truth (reflects saves immediately).
   // Overlay runtime data (spiRank, pinCount) from _dbgBoards when available.
   var cfgBoards = (_dbgCfg && _dbgCfg.boards) || [];
@@ -322,6 +325,46 @@ function deleteBusDev(id) {
 //   (GPIO)    — free GPIO output; toggleable via /api/test/gpio
 // Note: _dbgSysPins is only applied to MCU boards (busType===null).
 //       SPI expansion cards use logical channels 1-16 that would collide with MCU GPIO numbers.
+// Linked-pins group highlight: hovering or clicking one tile of a multi-pin device
+// lights up the whole set (a single-colour 3D lift — colour-blind friendly, no
+// per-device hues). A click pins it for 3 s. _grpHi is the group id currently lit;
+// renderPin re-applies it on every board re-render so a pinned highlight survives polling.
+var _grpHi = null;
+var _grpPinTimer = null;
+var _grpDelegated = false;
+function _grpApply() {
+  var els = document.querySelectorAll('.dbg-pin[data-grp]');
+  for (var i = 0; i < els.length; i++) {
+    els[i].classList.toggle('grp-hi', !!_grpHi && els[i].getAttribute('data-grp') === _grpHi);
+  }
+}
+function grpHi(id) { if (!_grpPinTimer) { _grpHi = id; _grpApply(); } }
+function grpOut() { if (!_grpPinTimer) { _grpHi = null; _grpApply(); } }
+function grpPin(id) {
+  _grpHi = id; _grpApply();
+  clearTimeout(_grpPinTimer);
+  _grpPinTimer = setTimeout(function () { _grpPinTimer = null; _grpHi = null; _grpApply(); }, 3000);
+}
+// One delegated set of listeners (survives the board re-render on every poll).
+function _grpInitDelegation() {
+  if (_grpDelegated) return;
+  _grpDelegated = true;
+  document.addEventListener('mouseover', function (e) {
+    var c = e.target.closest ? e.target.closest('.dbg-pin[data-grp]') : null;
+    if (c) grpHi(c.getAttribute('data-grp'));
+  });
+  document.addEventListener('mouseout', function (e) {
+    var c = e.target.closest ? e.target.closest('.dbg-pin[data-grp]') : null;
+    if (!c) return;
+    var to = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('.dbg-pin[data-grp]') : null;
+    if (!to) grpOut(); // left the group (not moving to another grouped tile)
+  });
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest ? e.target.closest('.dbg-pin[data-grp]') : null;
+    if (c) grpPin(c.getAttribute('data-grp'));
+  });
+}
+
 function renderPin(board, boardApiIdx, pin) {
   var caps = pin.capabilities || [];
 
@@ -339,6 +382,10 @@ function renderPin(board, boardApiIdx, pin) {
   var isI2c = !isSpi && btDef.busType === 'i2c';
   var dev = dbgFindDev(boardApiIdx, num);
   var cls = '', onclick = '', inner = '', ledBtn = '', editBtn = '';
+
+  // Pins of a multi-pin device share a group key (the device id) so hovering or clicking
+  // one tile highlights the whole set (see grpHi / grpPin). Single-pin → no group.
+  var grp = (dev && dev.pins && dev.pins.length > 1) ? dev.id : null;
 
   // Build a small LED toggle button for a free MCU GPIO (direct hardware test).
   function mkLedBtn(gpio) {
@@ -423,7 +470,9 @@ function renderPin(board, boardApiIdx, pin) {
     editBtn = '<button class="dbg-edit-btn" title="' + t('de.add_tip') + '" onclick="event.stopPropagation();openDevEditor(' + boardApiIdx + ',' + num + ',null)">+</button>';
   }
 
-  return '<div class="dbg-pin' + (cls ? ' ' + cls : '') + '"' + onclick + '>' + inner + ledBtn + editBtn + '</div>';
+  var grpAttr = grp ? ' data-grp="' + grp + '"' : '';
+  var grpHiCls = (grp && _grpHi === grp) ? ' grp-hi' : '';
+  return '<div class="dbg-pin' + grpHiCls + (cls ? ' ' + cls : '') + '"' + grpAttr + onclick + '>' + inner + ledBtn + editBtn + '</div>';
 }
 
 // ── Actions ──────────────────────────────────────────────────────────
