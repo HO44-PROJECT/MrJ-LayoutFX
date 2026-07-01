@@ -52,19 +52,93 @@ function deRenderTypeList(typeFilter, forceType, boardIdx) {
   var typeList = typeFilter || _deAllowedTypes(boardIdx);
   if (forceType && typeList.indexOf(forceType) < 0) typeList = [forceType].concat(typeList);
   if (!typeList.length) typeList = Object.keys(_deviceTypes); // safety net
+  // Hidden <select> holds the value (read by all the existing code); the rich,
+  // icon-carrying options live in the custom panel below.
   typeEl.innerHTML = typeList.map(function (tp) {
-    return '<option value="' + tp + '">' + tp + ' — ' + tooltip(tp) + ' · ' + _dePinHint(tp) + '</option>';
+    return '<option value="' + tp + '">' + tp + '</option>';
   }).join('');
   typeEl.value = forceType || (typeList[0] || '');
   typeEl.disabled = typeList.length === 1;
-  deUpdateTypeIcon();
+  var panel = document.getElementById('de-type-panel');
+  if (panel) {
+    panel.innerHTML = typeList.map(function (tp) {
+      return '<div class="de-type-opt" data-tp="' + tp + '" onclick="deSelectType(\'' + tp + '\')">'
+        + '<span class="de-type-opt-ico">' + (ICONS[tp] || ICONS['_'] || '') + '</span>'
+        + '<span class="de-type-opt-name">' + tp + ' — ' + tooltip(tp) + '</span>'
+        + '<span class="de-type-opt-pins">' + _dePinHint(tp) + '</span>'
+        + '</div>';
+    }).join('');
+  }
+  deSyncTypeTrigger();
 }
 
-// Show the selected type's icon next to the picker (a native <option> can't render SVG).
-function deUpdateTypeIcon() {
-  var el = document.getElementById('de-type-icon');
+// Update the picker trigger (icon + name) from the hidden <select>'s current value.
+function deSyncTypeTrigger() {
+  var trg = document.getElementById('de-type-trigger');
   var typeEl = document.getElementById('de-type');
-  if (el && typeEl) el.innerHTML = ICONS[typeEl.value] || ICONS['_'] || '';
+  if (!trg || !typeEl) return;
+  var tp = typeEl.value;
+  trg.innerHTML = '<span class="de-type-opt-ico">' + (ICONS[tp] || ICONS['_'] || '') + '</span>'
+    + '<span class="de-type-opt-name">' + (tp ? tp + ' — ' + tooltip(tp) : '') + '</span>'
+    + '<span class="de-type-caret">▾</span>';
+  trg.disabled = typeEl.disabled;
+}
+
+// Pick a type from the custom panel: set the hidden <select>, close, fire its change.
+function deSelectType(tp) {
+  var typeEl = document.getElementById('de-type');
+  if (!typeEl) return;
+  typeEl.value = tp;
+  deCloseTypeDd();
+  deSyncTypeTrigger();
+  typeEl.dispatchEvent(new Event('change')); // runs deUpdateWiring/… exactly as before
+}
+
+// Open/close the custom type panel.
+function deToggleTypeDd(event) {
+  if (event) event.stopPropagation();
+  var typeEl = document.getElementById('de-type');
+  if (typeEl && typeEl.disabled) return; // single option → non-interactive
+  var panel = document.getElementById('de-type-panel');
+  if (!panel) return;
+  if (panel.style.display !== 'none') { deCloseTypeDd(); return; }
+  panel.style.display = '';
+  var cur = typeEl ? typeEl.value : '';
+  var opts = panel.querySelectorAll('.de-type-opt');
+  for (var i = 0; i < opts.length; i++) {
+    opts[i].classList.toggle('sel', opts[i].getAttribute('data-tp') === cur);
+    opts[i].classList.remove('hl');
+  }
+  setTimeout(function () {
+    document.addEventListener('click', deCloseTypeDd);
+    document.addEventListener('keydown', deTypeDdKey);
+  }, 0);
+}
+function deCloseTypeDd() {
+  var panel = document.getElementById('de-type-panel');
+  if (panel) panel.style.display = 'none';
+  document.removeEventListener('click', deCloseTypeDd);
+  document.removeEventListener('keydown', deTypeDdKey);
+}
+// Keyboard: ↑/↓ move the highlight, Enter selects, Esc closes.
+function deTypeDdKey(e) {
+  var panel = document.getElementById('de-type-panel');
+  if (!panel || panel.style.display === 'none') return;
+  if (e.key === 'Escape') { deCloseTypeDd(); return; }
+  var opts = panel.querySelectorAll('.de-type-opt');
+  if (!opts.length) return;
+  var hi = -1;
+  for (var i = 0; i < opts.length; i++) if (opts[i].classList.contains('hl')) { hi = i; break; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    var ni = e.key === 'ArrowDown' ? (hi < 0 ? 0 : Math.min(hi + 1, opts.length - 1))
+                                   : (hi < 0 ? opts.length - 1 : Math.max(hi - 1, 0));
+    for (var j = 0; j < opts.length; j++) opts[j].classList.toggle('hl', j === ni);
+    opts[ni].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (hi >= 0) deSelectType(opts[hi].getAttribute('data-tp'));
+  }
 }
 
 // Board changed in the editor → refilter the type list to the new board's capability

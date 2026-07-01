@@ -262,9 +262,10 @@
       </div>
       <div class="de-field">
         <label data-i18n="de.lbl_type">Type</label>
-        <div class="de-type-row">
-          <select id="de-type" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder();deUpdateDefState();deUpdateTypeIcon()"></select>
-          <span id="de-type-icon" class="de-type-ico"></span>
+        <div class="de-type-dd" id="de-type-dd">
+          <select id="de-type" style="display:none" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder();deUpdateDefState();deSyncTypeTrigger()"></select>
+          <button type="button" class="de-type-trigger" id="de-type-trigger" onclick="deToggleTypeDd(event)"></button>
+          <div class="de-type-panel" id="de-type-panel" style="display:none"></div>
         </div>
       </div>
       <div class="de-field" id="de-board-field">
