@@ -661,6 +661,9 @@ renderDirtyBanner();
 document.querySelectorAll('.theme-dot').forEach(function (b) {
   b.classList.toggle('active', b.classList.contains('theme-dot-' + _th));
 });
+document.querySelectorAll('.pinlbl-btn').forEach(function (b) {
+  b.classList.toggle('active', b.getAttribute('data-mode') === _dbgPinLabel);
+});
 applyLang();
 (function () {
   var h = location.hash.slice(1);

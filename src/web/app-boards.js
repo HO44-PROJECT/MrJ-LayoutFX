@@ -68,7 +68,7 @@ function dbgFindDev(boardApiIdx, wiring) {
     var match = Array.isArray(w) ? w.indexOf(wiring) >= 0 : w === wiring;
     // Expose the FULL wiring (not just the matched pin) so multi-pin devices can
     // compute their anchor/linked pins in the board view.
-    if (match) return { id: cd.id, type: cd.type, desired: -1, pins: Array.isArray(w) ? w.slice() : [w], _cfgOnly: true };
+    if (match) return { id: cd.id, type: cd.type, desired: -1, addr: cd.address, pins: Array.isArray(w) ? w.slice() : [w], _cfgOnly: true };
   }
   return null;
 }
@@ -387,6 +387,10 @@ function renderPin(board, boardApiIdx, pin) {
   // one tile highlights the whole set (see grpHi / grpPin). Single-pin → no group.
   var grp = (dev && dev.pins && dev.pins.length > 1) ? dev.id : null;
 
+  // In DCC-label mode, a pin carrying a device with a DCC address shows "#<addr>"
+  // instead of its GPIO/channel number (see setPinLabel). Others keep the number.
+  var numLabel = (_dbgPinLabel === 'dcc' && dev && dev.addr > 0) ? '#' + dev.addr : pin.label;
+
   // Build a small LED toggle button for a free MCU GPIO (direct hardware test).
   function mkLedBtn(gpio) {
     var on = _dbgIdentify === ('g' + gpio);
@@ -409,7 +413,7 @@ function renderPin(board, boardApiIdx, pin) {
     var ico = ICONS[dev.type] || ICONS['_'];
     var tip = tooltip(dev.type);
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
-      + '<span class="dbg-pin-num">' + pin.label + '</span>';
+      + '<span class="dbg-pin-num">' + numLabel + '</span>';
     editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
   } else if (dev) {
     var isDevI2cServo = I2C_SERVO_TYPES.indexOf(dev.type) >= 0;
@@ -428,7 +432,7 @@ function renderPin(board, boardApiIdx, pin) {
     var tip = tooltip(dev.type);
     var stateLabel = multi && dev.desired > 0 ? '<span class="dbg-pin-state">' + (isDevI2cServo ? 'P' : '') + dev.desired + '</span>' : '';
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
-      + '<span class="dbg-pin-num">' + pin.label + '</span>' + stateLabel;
+      + '<span class="dbg-pin-num">' + numLabel + '</span>' + stateLabel;
     if (!isI2c) ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
     editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
   } else if (isI2c) {
@@ -502,6 +506,18 @@ function setTheme(name) {
     var match = b.classList.contains('theme-dot-' + name);
     b.classList.toggle('active', match);
   });
+}
+
+// Board view: switch pin-cell labels between the GPIO/channel number and the device's
+// DCC address ("#<addr>"). Persisted in localStorage; re-renders the pinout (RAM only).
+var _dbgPinLabel = localStorage.getItem('mrj-pinlabel') || 'gpio';
+function setPinLabel(mode) {
+  _dbgPinLabel = (mode === 'dcc') ? 'dcc' : 'gpio';
+  localStorage.setItem('mrj-pinlabel', _dbgPinLabel);
+  document.querySelectorAll('.pinlbl-btn').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-mode') === _dbgPinLabel);
+  });
+  if (_currentView === 'config') renderDebugBoards();
 }
 
 // Start (or stop, if already active) the recognizable "identify" blink on a GPIO,

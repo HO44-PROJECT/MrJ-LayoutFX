@@ -1197,6 +1197,12 @@
       color: #fff;
       border-color: var(--t3)
     }
+    /* GPIO ↔ DCC pin-label toggle (board view header) — active state. */
+    .pinlbl-btn.active {
+      background: var(--t3);
+      color: #fff;
+      border-color: var(--t3)
+    }
 
     .prm-save-row {
       display: flex;
