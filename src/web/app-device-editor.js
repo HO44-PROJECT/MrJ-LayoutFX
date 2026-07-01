@@ -320,15 +320,25 @@ function deWireTest(idx) {
   var pin = parseInt(sels[idx] && sels[idx].value, 10);
   if (isNaN(pin)) { deStatus(t('de.err_wire_nopin'), 'err'); return; }
   var stop = _deWireTesting === idx;
-  var low = [];
-  if (!stop) {
+  // On an SPI expansion card the pin value is a channel → drive the card/channel
+  // directly; on a GPIO board, blink the wire while holding the others LOW (charlieplex).
+  var board = _dbgBoards[parseInt(document.getElementById('de-board').value, 10)];
+  var isSpiBoard = board && board.spiRank > 0;
+  var body;
+  if (stop) {
+    body = {};
+  } else if (isSpiBoard) {
+    body = { card: board.spiRank, channel: pin };
+  } else {
+    var low = [];
     for (var i = 0; i < sels.length; i++) {
       if (i === idx) continue;
       var p = parseInt(sels[i].value, 10);
       if (!isNaN(p) && p !== pin) low.push(p);
     }
+    body = { pin: pin, low: low };
   }
-  post('/api/test/identify', stop ? {} : { pin: pin, low: low })
+  post('/api/test/identify', body)
     .then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       _deWireTesting = stop ? null : idx;
@@ -585,7 +595,9 @@ function deUpdateWiring(prefillPin, dev) {
   // the wire). wa (DB signals, traffic lights) adds aspect radios + reorder on save.
   var _wBoard = _dbgBoards[parseInt(document.getElementById('de-board').value, 10)];
   var _wBt = _wBoard ? _boardTypes[_wBoard.type] : null;
-  var showTest = !isServo && !isI2cServo && !isI2cMotor && !(_wBt && _wBt.busType);
+  // Per-pin Test on GPIO boards (identify) and SPI expansion cards (channel test);
+  // I2C servo/motor test differently, so keep it off there.
+  var showTest = !isServo && !isI2cServo && !isI2cMotor && (!_wBt || !_wBt.busType || _wBt.busType === 'spi_master_only');
   var html = '<div class="de-field"><label>' + wiringLabel + '</label>';
   if (showTest) html += '<div class="de-wire-hint">' + t(wa ? 'de.wire_hint' : 'de.wire_hint_test') + '</div>';
   html += '<div class="' + (showTest ? 'de-wiring-col' : 'de-wiring-row') + '">';
