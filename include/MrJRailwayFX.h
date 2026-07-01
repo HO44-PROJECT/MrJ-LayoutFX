@@ -167,7 +167,7 @@ public:
 #ifdef MRJFX_CONFIG_ENABLED
     SafeMode::begin();
     if (SafeMode::active())
-      Serial.println(F("[SafeMode] double-reset → config bypass + SoftAP (this session only)"));
+      Serial.println(F("[SafeMode] double-reset → config bypassed this session (devices/buses skipped)"));
 #endif
 
     // StatusOled lightweight display (AVR) — initialises Wire + display.
@@ -194,6 +194,9 @@ public:
     // 0b. Start OLED display early (shows boot context).
 #ifdef MRJFX_OLED_ENABLED
     OledDisplay::init();
+  #ifdef MRJFX_CONFIG_ENABLED
+    if (SafeMode::active()) OledDisplay::setSafeMode(); // persistent "SAFE MODE" screen
+  #endif
 #endif
 
     // 1. Load config from LittleFS and init devices — SKIPPED in safe mode so a
@@ -241,12 +244,10 @@ public:
     // Register /update on the WebServer before it starts.
     OtaUpdater::registerWebRoutes();
   #endif
-  #ifdef MRJFX_CONFIG_ENABLED
-    const bool _forceApSafe = SafeMode::active(); // safe mode → SoftAP, always reachable
-  #else
-    const bool _forceApSafe = false;
-  #endif
-    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, WIFI_AP_SSID, WIFI_AP_PASSWORD, MRJFX_API_HTTP_PORT, _forceApSafe);
+    // Safe mode only bypasses the config; it does NOT force the AP. WiFi is compile-time
+    // (config.h), so a bypassed config never breaks connectivity, and the normal
+    // STA→AP fallback already covers a genuinely unreachable network.
+    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, WIFI_AP_SSID, WIFI_AP_PASSWORD, MRJFX_API_HTTP_PORT, false);
   #ifdef MRJFX_OTA_ENABLED
     // ArduinoOTA (espota) + mDNS — after WiFi is up (works in STA and AP).
     OtaUpdater::beginArduinoOta();

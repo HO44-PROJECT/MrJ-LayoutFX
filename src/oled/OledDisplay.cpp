@@ -28,6 +28,7 @@ int OledDisplay::_evtState = 0;
 volatile bool OledDisplay::_hasEvent = false;
 char OledDisplay::_logMsg[44] = {};
 volatile bool OledDisplay::_hasLog = false;
+volatile bool OledDisplay::_safeMode = false;
 
 // ---------------------------------------------------------------------------
 // Global singleton — auto-registered with AceRoutine at construction.
@@ -281,7 +282,10 @@ void OledDisplay::_task(void *) {
   oledDisplay._drawSplash();
   #endif
   for (;;) {
-    if (_hasEvent) {
+    if (_safeMode) {
+      oledDisplay._drawSafeMode();
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    } else if (_hasEvent) {
       oledDisplay._drawEvent();
       _hasEvent = false;
       vTaskDelay(pdMS_TO_TICKS(OLED_EVENT_MS));
@@ -294,6 +298,33 @@ void OledDisplay::_task(void *) {
       vTaskDelay(pdMS_TO_TICKS(500));
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Screen: safe mode (config bypassed)
+// ---------------------------------------------------------------------------
+
+void OledDisplay::setSafeMode() { _safeMode = true; }
+
+void OledDisplay::_drawSafeMode() {
+  _u8g2.clearBuffer();
+  _u8g2.drawFrame(0, 0, 128, OLED_HEIGHT);
+  _u8g2.setFont(u8g2_font_8x13B_tr);
+  _u8g2.drawStr(6, 17, "SAFE MODE");
+  _u8g2.setFont(u8g2_font_6x10_tr);
+  _u8g2.drawStr(6, 33, "config bypassed");
+  #ifdef MRJFX_WIFI_ENABLED
+  char ip[24] = "No WiFi";
+  if (WiFi.status() == WL_CONNECTED) {
+    strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
+  } else {
+    String apStr = WiFi.softAPIP().toString();
+    strncpy(ip, apStr != "0.0.0.0" ? apStr.c_str() : "Connecting...", sizeof(ip) - 1);
+  }
+  ip[sizeof(ip) - 1] = '\0';
+  _u8g2.drawStr(6, 49, ip);
+  #endif
+  _u8g2.sendBuffer();
 }
 
 // ---------------------------------------------------------------------------

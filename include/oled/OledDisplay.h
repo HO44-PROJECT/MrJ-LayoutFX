@@ -97,9 +97,16 @@ public:
    */
   static void setConfigName(const char *name);
 
+  /**
+   * @brief Switch the OLED to a persistent "SAFE MODE" screen (config bypassed).
+   * Called once at boot when SafeMode is active; the render task keeps it shown.
+   */
+  static void setSafeMode();
+
 private:
   bool _begin(); ///< Returns false if no display ACKs on the I²C bus — suppresses task creation.
   void _drawIdle();
+  void _drawSafeMode();
   void _drawEvent();
   void _drawLog();
   void _drawIcon(const char *type, uint8_t ox, uint8_t oy);
@@ -127,6 +134,9 @@ private:
   // Log state
   static char _logMsg[44];
   static volatile bool _hasLog;
+
+  // Safe-mode screen (config bypassed) — persistent until reboot.
+  static volatile bool _safeMode;
 
   // U8g2 driver — selected at compile time by OLED_HEIGHT.
   // Pins (SCL, SDA) are passed at construction so U8G2 initialises Wire internally.
