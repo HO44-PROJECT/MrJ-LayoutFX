@@ -594,6 +594,13 @@ function dbgClearSpiTest(card, pinCount) {
 function dbgAll(boardApiIdx, state) {
   var board = _dbgBoards[boardApiIdx];
   var clearCalls = [];
+  // Stop a running pin identify (triple-blink) too, so ALL OFF/ON leaves nothing testing.
+  if (_dbgIdentify) {
+    clearCalls.push(fetch('/api/test/identify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+    }));
+    _dbgIdentify = null;
+  }
   if (board) {
     if (board.spiRank > 0) {
       // Explicitly reset every active test pin in _buf before /api/all
