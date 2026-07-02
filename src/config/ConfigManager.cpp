@@ -9,14 +9,14 @@
 
 #ifdef MRJFX_CONFIG_ENABLED
 
-#ifdef MRJFX_OLED_ENABLED
-  #include "oled/OledDisplay.h"
-#endif
+  #ifdef MRJFX_OLED_ENABLED
+    #include "oled/OledDisplay.h"
+  #endif
 
-// Structural pin-count map (board type → pin count) for SPI cards, generated
-// from board_types.json. Passed to DeviceFactory::load() so SPI boards that omit
-// "pin_count" are sized correctly. (board_types.json itself is gzipped in PROGMEM.)
-#include "api/embedded_board_pincounts.h"
+  // Structural pin-count map (board type → pin count) for SPI cards, generated
+  // from board_types.json. Passed to DeviceFactory::load() so SPI boards that omit
+  // "pin_count" are sized correctly. (board_types.json itself is gzipped in PROGMEM.)
+  #include "api/embedded_board_pincounts.h"
 
 // ---------------------------------------------------------------------------
 // Static member definitions
@@ -69,9 +69,9 @@ void ConfigManager::init(const char *configPath) {
       _factory.initAll();
       _factory.applyDefaultStates();
       _factory.initIdlePins();
-      #ifdef MRJFX_OLED_ENABLED
+  #ifdef MRJFX_OLED_ENABLED
       OledDisplay::setConfigName(_factory.configName());
-      #endif
+  #endif
       LOG_PRINT(F("[Factory] "));
       LOG_PRINT(_factory.count());
       LOG_PRINTLN(F(" device(s) ready"));
@@ -97,7 +97,10 @@ String ConfigManager::readConfig() {
  * @return true on success, false if the file could not be opened or a write stalled.
  */
 bool ConfigManager::writeConfig(const String &json) {
-  File f = LittleFS.open(_configPath, "w", true); // create=true required on arduino-esp32 3.x
+  // Atomic write: fill a temp file, then swap it in. A power cut mid-write can only
+  // corrupt the .tmp — the live config is replaced in one rename, never truncated.
+  String tmp = String(_configPath) + ".tmp";
+  File f = LittleFS.open(tmp.c_str(), "w", true); // create=true required on arduino-esp32 3.x
   if (!f)
     return false;
   const uint8_t *buf = (const uint8_t *)json.c_str();
@@ -108,11 +111,18 @@ bool ConfigManager::writeConfig(const String &json) {
     size_t w = f.write(buf + offset, toWrite);
     if (w == 0) {
       f.close();
+      LittleFS.remove(tmp.c_str()); // failed write → drop the temp, keep the old config
       return false;
     }
     offset += w;
   }
   f.close();
+  // Swap the temp over the live config; on failure keep the existing one intact.
+  LittleFS.remove(_configPath);
+  if (!LittleFS.rename(tmp.c_str(), _configPath)) {
+    LittleFS.remove(tmp.c_str());
+    return false;
+  }
   return true;
 }
 
@@ -166,7 +176,8 @@ void ConfigManager::requestReload() {
  * starts all new devices.  No ESP.restart() — the system continues running.
  */
 void ConfigManager::handlePendingReload() {
-  if (!_reloadPending) return;
+  if (!_reloadPending)
+    return;
   _reloadPending = false;
 
   // Block the HTTP handlers (Core 0) while devices are torn down + rebuilt, so a
