@@ -13,10 +13,10 @@
 #ifdef MRJFX_API_SERVER_ENABLED
 
 // Embedded JSON catalogs (PROGMEM, gzipped)
-#include "api/embedded_board_types.h"
-#include "api/embedded_device_types.h"
-#include "api/embedded_bus_types.h"
-#include "api/embedded_i2c_known.h"
+#include "generated/embedded_board_types.h"
+#include "generated/embedded_device_types.h"
+#include "generated/embedded_bus_types.h"
+#include "generated/embedded_i2c_known.h"
 #include "utils/utils.h" // g_mrjfxLogActive (runtime UART0 log-bus state)
 
 using namespace api_keys;

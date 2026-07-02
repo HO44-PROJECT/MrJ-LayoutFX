@@ -10,7 +10,7 @@
 #ifdef MRJFX_WEBUI_ENABLED
 
   #include "api/ApiServer.h"
-  #include "api/webui_html.h"
+  #include "generated/webui_html.h"
 
 static void _onGetRoot() {
   ApiServer::server().sendHeader("Location", "/ui");

@@ -16,7 +16,7 @@
   // Structural pin-count map (board type → pin count) for SPI cards, generated
   // from board_types.json. Passed to DeviceFactory::load() so SPI boards that omit
   // "pin_count" are sized correctly. (board_types.json itself is gzipped in PROGMEM.)
-  #include "api/embedded_board_pincounts.h"
+  #include "generated/embedded_board_pincounts.h"
 
 // ---------------------------------------------------------------------------
 // Static member definitions

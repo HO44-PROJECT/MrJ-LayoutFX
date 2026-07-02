@@ -3,7 +3,7 @@
 Build embedded data files (JSON types) as PROGMEM C++ headers.
 
 Converts structural JSON files to compressed byte arrays embedded in firmware:
-  - lib/MrJ-RailwayFX.local/data/*.json → lib/.../src/api/embedded_*.h
+  - lib/MrJ-RailwayFX.local/data/*.json → lib/.../include/generated/embedded_*.h
 
 Similar to build_webui.py but for JSON catalogs (types, i2c_known).
 Files are gzipped and served with Content-Encoding: gzip by the API.
@@ -161,7 +161,8 @@ def main():
         lib = Path(__file__).resolve().parent.parent  # tools/ → library root
 
     lib_data_dir = lib / "data"
-    output_dir = lib / "src" / "api"
+    output_dir = lib / "include" / "generated"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     files = [
         ("board_types.json",  "BOARD_TYPES"),
@@ -194,7 +195,7 @@ def main():
         )
 
     print("=" * 80)
-    print("Build complete! Headers ready in lib/src/api/")
+    print("Build complete! Headers ready in lib/include/generated/")
     print("=" * 80)
 
 # Run main function
