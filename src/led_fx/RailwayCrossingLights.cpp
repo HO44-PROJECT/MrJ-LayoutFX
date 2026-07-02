@@ -121,12 +121,25 @@ int RailwayCrossingLights::runCoroutine()
             else
             {
                 // Drive both pins simultaneously to avoid alternating flicker.
-                outputActive(getPin(0));
-                outputActive(getPin(1));
-                delayMicroseconds((uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
-                outputInactive(getPin(0));
-                outputInactive(getPin(1));
-                delayMicroseconds(RAILWAYCROSSLIGHTS_PWM_PERIOD_US - (uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
+                // NON-BLOCKING software PWM: COROUTINE_DELAY_MICROS yields to the
+                // scheduler between phases. A raw delayMicroseconds() here busy-blocks
+                // Core 1 for up to a full PWM period (~10 ms) on every pass, starving
+                // every other coroutine and shredding the software-PWM timing of all
+                // other fades (this was the real cause of backlog #48). `brightness`
+                // is a member, so it survives the yields. Mirrors simulatePWM / the
+                // FLASHING phase above.
+                if (brightness > 0)
+                {
+                    outputActive(getPin(0));
+                    outputActive(getPin(1));
+                    COROUTINE_DELAY_MICROS((uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
+                }
+                if (brightness < RAILWAYCROSSLIGHTS_MAX_INTENSITY)
+                {
+                    outputInactive(getPin(0));
+                    outputInactive(getPin(1));
+                    COROUTINE_DELAY_MICROS(RAILWAYCROSSLIGHTS_PWM_PERIOD_US - (uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
+                }
             }
             break;
         }
