@@ -16,7 +16,8 @@ which describes how the firmware *runs*; here we describe how it is *produced*.
   (reflash vs. filesystem upload).
 - [conventions.md](conventions.md) — the project conventions: the two-repository
   layout, the source tree (`src/` / `include/` / `data/` / `src/web/`), generated
-  files are never edited or committed, i18n by design, and the catalog/flag
-  consistency rules that span several files.
+  files are never edited or committed, the coroutine authoring rules (never block,
+  state in members), i18n by design, and the catalog/flag consistency rules that
+  span several files.
 
 _Add one focused `.md` per workshop topic here._

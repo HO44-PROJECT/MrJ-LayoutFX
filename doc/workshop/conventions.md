@@ -54,6 +54,34 @@ preference: it is what makes a single mutex sufficient for cross-core safety. Th
 full rationale and the concurrency model are in
 [`../architecture/concurrency.md`](../architecture/concurrency.md).
 
+## Writing device coroutines
+
+Device effects are AceRoutine **stackless coroutines**: cooperatively scheduled one
+step at a time, all on the same core, sharing it with every other effect. Two rules
+are non-negotiable — each was learned the hard way, because breaking either makes a
+*single* effect corrupt *every* other effect.
+
+**Never block. Never `delay()` / `delayMicroseconds()`.** A coroutine must *yield*
+time back to the scheduler, never *consume* it. Use the non-blocking primitives only —
+`COROUTINE_DELAY`, `COROUTINE_DELAY_MICROS`, `COROUTINE_AWAIT`, and the `simulatePWM*`
+macros (which wrap `COROUTINE_DELAY_MICROS`). A raw `delay()` / `delayMicroseconds()` —
+or any busy-wait, or a blocking bus read/write — freezes the **whole core** for its
+full duration: every other coroutine's software PWM stops dead, and because those PWMs
+are timing-critical the result is visible flicker/stutter across *all* effects at once,
+not just the offending one. A single blocking effect is enough to wreck every fade on
+the layout. Keep blocking peripheral I/O (a serial read with a timeout, a full I²C
+display refresh) off the coroutine path, or make it non-blocking.
+
+**State that must survive a yield lives in a member, not a local.** Stackless
+coroutines do not preserve the C++ stack across a yield: any local variable declared
+before a `COROUTINE_*` yield point holds garbage when the coroutine resumes. Every
+value that must persist across a yield — phase, brightness, timers, counters — must be
+a **private member** of the device class. A local is safe only for a value computed and
+fully consumed *between* two yields (never across one).
+
+See [`../architecture/concurrency.md`](../architecture/concurrency.md) for the
+single-core cooperative-scheduler model these two rules follow from.
+
 ## Memory frugality by design
 
 Types, allocation, and I/O are sized for the smallest target (the AVR Nano):
