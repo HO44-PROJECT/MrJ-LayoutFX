@@ -255,16 +255,6 @@ public:
     return (i >= 1 && i <= _boardCount) ? _boards_cfg[i - 1] : empty;
   }
 
-  /**
-   * @brief Access an SPI card configuration by 1-based index.
-   * @param i 1-based SPI card index.
-   * @return Reference to the SpiCardCfg, or an empty default if out of range.
-   */
-  const SpiCardCfg &spiCard(uint8_t i) const {
-    static const SpiCardCfg empty;
-    return (i >= 1 && i <= _spiCardCount) ? _spiCards[i - 1] : empty;
-  }
-
 private:
   Device *_devices[MRJFX_FACTORY_MAX_DEVICES];
   char _ids[MRJFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
@@ -280,7 +270,9 @@ private:
   BoardCfg _boards_cfg[MRJFX_FACTORY_MAX_BOARDS];
   uint8_t _boardCount = 0;
 
-  SpiCardCfg _spiCards[MRJFX_FACTORY_MAX_SPI_CARDS];
+  // SPI cards seen during parse — kept only to bound spiRank and enforce the
+  // FACTORY_MAX_SPI_CARDS cap. The actual pin-count table used by Spi595Bus::init
+  // lives in BusRegistry (fed via regSpiCard), so no per-card array is stored here.
   uint8_t _spiCardCount = 0;
 
   PortCfg _ports[MRJFX_FACTORY_MAX_PORTS];

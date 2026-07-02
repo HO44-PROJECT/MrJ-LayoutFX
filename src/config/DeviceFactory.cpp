@@ -154,10 +154,8 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
         }
         bcfg.pinCount = (uint8_t)(bd[kFPinCount] | (int)structural);
         bcfg.spiRank = _spiCardCount + 1; // 1-based daisy-chain rank.
-
-        _spiCards[_spiCardCount].type = SPI_CARD_HC595;
-        _spiCards[_spiCardCount].pinCount = bcfg.pinCount;
         _spiCardCount++;
+        // Feeds the pin-count table consumed by Spi595Bus::init (BusRegistry side).
         BusRegistry::regSpiCard(bcfg.pinCount);
       }
 
@@ -322,8 +320,6 @@ void DeviceFactory::fullReset() {
     _boards_cfg[i] = BoardCfg{};
   for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BUSES; i++)
     _busEntries[i] = BusEntry{};
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_SPI_CARDS; i++)
-    _spiCards[i] = SpiCardCfg{};
   for (size_t i = 0; i < MRJFX_FACTORY_MAX_PORTS; i++)
     _ports[i] = PortCfg{};
 }
@@ -355,8 +351,6 @@ bool DeviceFactory::resetIfEmpty() {
     _boards_cfg[i] = BoardCfg{};
   for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BUSES; i++)
     _busEntries[i] = BusEntry{};
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_SPI_CARDS; i++)
-    _spiCards[i] = SpiCardCfg{};
   for (size_t i = 0; i < MRJFX_FACTORY_MAX_PORTS; i++)
     _ports[i] = PortCfg{};
 
