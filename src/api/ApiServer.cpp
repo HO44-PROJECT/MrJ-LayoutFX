@@ -10,7 +10,7 @@
 #include "api/ApiServer.h"
 
 #ifdef MRJFX_API_SERVER_ENABLED
-#include <DNSServer.h>
+  #include <DNSServer.h>
 
 using namespace http_status;
 
@@ -19,8 +19,8 @@ using namespace http_status;
 // ---------------------------------------------------------------------------
 
 WebServer *ApiServer::_server = nullptr;
-bool       ApiServer::_isAP   = false;
-DNSServer *ApiServer::_dns    = nullptr;
+bool ApiServer::_isAP = false;
+DNSServer *ApiServer::_dns = nullptr;
 
 // ---------------------------------------------------------------------------
 // Private
@@ -115,9 +115,9 @@ void ApiServer::init(const char *ssid, const char *password,
   WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
     if (event == ARDUINO_EVENT_WIFI_AP_STACONNECTED) {
       Serial.printf("[WiFi] client connected   — MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
-        info.wifi_ap_staconnected.mac[0], info.wifi_ap_staconnected.mac[1],
-        info.wifi_ap_staconnected.mac[2], info.wifi_ap_staconnected.mac[3],
-        info.wifi_ap_staconnected.mac[4], info.wifi_ap_staconnected.mac[5]);
+                    info.wifi_ap_staconnected.mac[0], info.wifi_ap_staconnected.mac[1],
+                    info.wifi_ap_staconnected.mac[2], info.wifi_ap_staconnected.mac[3],
+                    info.wifi_ap_staconnected.mac[4], info.wifi_ap_staconnected.mac[5]);
     } else if (event == ARDUINO_EVENT_WIFI_AP_STADISCONNECTED) {
       Serial.println(F("[WiFi] client disconnected"));
     }
@@ -141,7 +141,7 @@ void ApiServer::init(const char *ssid, const char *password,
         _server->sendHeader(F("Location"), F("http://192.168.4.1/ui"));
         _server->send(302);
       };
-      _server->on("/generate_204",        HTTP_GET, _cpRedirect);
+      _server->on("/generate_204", HTTP_GET, _cpRedirect);
       _server->on("/hotspot-detect.html", HTTP_GET, _cpRedirect);
     } else {
       Serial.println(F("[WiFi] AP failed"));
@@ -150,9 +150,9 @@ void ApiServer::init(const char *ssid, const char *password,
 
   // Force AP when the caller asks (safe mode) or when compiled-in.
   bool startApDirect = forceAp;
-#ifdef MRJFX_WIFI_FORCE_AP
+  #ifdef MRJFX_WIFI_FORCE_AP
   startApDirect = true;
-#endif
+  #endif
 
   if (startApDirect) {
     // --- AP forced ---
@@ -207,8 +207,14 @@ void ApiServer::init(const char *ssid, const char *password,
   xTaskCreatePinnedToCore(
       [](void *) {
         for (;;) {
-          if (_dns) _dns->processNextRequest();
-          _server->handleClient();
+          if (_dns)
+            _dns->processNextRequest();
+          // Serialise request handlers (which read/mutate the device list) against
+          // the Core-1 hot-reload that deletes every Device (backlog #27).
+          {
+            MRJFX_DEVICE_LOCK();
+            _server->handleClient();
+          }
           vTaskDelay(kTaskYieldTicks);
         }
       },

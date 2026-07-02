@@ -169,6 +169,9 @@ void ConfigManager::handlePendingReload() {
   if (!_reloadPending) return;
   _reloadPending = false;
 
+  // Block the HTTP handlers (Core 0) while devices are torn down + rebuilt, so a
+  // concurrent request can never dereference a just-deleted Device (backlog #27).
+  MRJFX_DEVICE_LOCK();
   LOG_PRINTLN(F("[Factory] hot-reload..."));
   _factory.fullReset();
   BusRegistry::reset();

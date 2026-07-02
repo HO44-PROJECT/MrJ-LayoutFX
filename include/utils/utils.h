@@ -26,6 +26,24 @@
   #include "oled/StatusOled.h"
 #endif
 
+// --- Bi-core device-list lock (backlog #27) ------------------------------------
+// One mutex serialises the HTTP handlers (Core 0 system task) against the config
+// hot-reload that deletes every Device (Core 1). ESP32-only; a no-op elsewhere
+// (AVR is single-core with no HTTP server). Use MRJFX_DEVICE_LOCK() at the top of
+// a scope for RAII lock/unlock.
+#if defined(ESP32)
+  #include <freertos/FreeRTOS.h>
+  #include <freertos/semphr.h>
+extern SemaphoreHandle_t g_mrjfxDeviceMutex;
+struct MrjfxDeviceLock {
+  MrjfxDeviceLock() { if (g_mrjfxDeviceMutex) xSemaphoreTake(g_mrjfxDeviceMutex, portMAX_DELAY); }
+  ~MrjfxDeviceLock() { if (g_mrjfxDeviceMutex) xSemaphoreGive(g_mrjfxDeviceMutex); }
+};
+  #define MRJFX_DEVICE_LOCK() MrjfxDeviceLock _mrjfxDevLock
+#else
+  #define MRJFX_DEVICE_LOCK() ((void)0)
+#endif
+
 /**
  * @brief Allocates memory and duplicates the contents of a source buffer.
  * @param in A pointer to the source memory buffer.

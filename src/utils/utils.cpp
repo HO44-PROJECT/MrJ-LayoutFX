@@ -20,6 +20,12 @@
 bool g_mrjfxLogActive = true;
 #endif
 
+#if defined(ESP32)
+// Bi-core device-list mutex (backlog #27). Created at static init (FreeRTOS is up
+// well before the HTTP task starts), so lock/unlock are always safe.
+SemaphoreHandle_t g_mrjfxDeviceMutex = xSemaphoreCreateMutex();
+#endif
+
 /// @brief Allocates memory and duplicates the contents of a source buffer.
 /// @param in A pointer to the source memory buffer.
 /// @param size The size of the memory buffer to duplicate.
