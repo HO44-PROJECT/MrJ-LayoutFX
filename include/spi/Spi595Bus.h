@@ -4,8 +4,10 @@
  * @brief Library-level driver for a daisy-chain of 74HC595 shift registers on VSPI.
  *
  * @objective Provide a singleton write-only SPI bus usable by any Device coroutine.
- *            Maintains an in-memory image of all card outputs and flushes to hardware
- *            via a single SPI.transfer burst on every setPin() call.
+ *            Maintains an in-memory image of all card outputs; setPin() updates the
+ *            image and marks it dirty, and flush() (called once per loop iteration
+ *            from MrJFX::loop) pushes it to hardware in a single SPI.transfer burst
+ *            only when it actually changed.
  *
  * Daisy-chain byte order (MSBFIRST hardware):
  *   • Card 1 is closest to MOSI (first in the JSON spi_cards array).
@@ -19,7 +21,7 @@
  *   Spi595Bus::init(mosi, sclk, latch, counts, n);
  *
  * Per-tick usage (called by Device::pin_it / outputActive / simulatePWM_spi):
- *   Spi595Bus::setPin(card1based, bit, HIGH);  // updates image + flushes SPI
+ *   Spi595Bus::setPin(card1based, bit, HIGH);  // updates image + marks it dirty
  *
  * @note Only compiled when MRJFX_SPI_CARDS_ENABLED is defined.
  *
@@ -65,7 +67,14 @@ public:
    */
   static void setPin(uint8_t card1based, uint8_t bit, uint8_t value);
 
-  /** @brief Push the current image to hardware without changing any bit. */
+  /**
+   * @brief Push the current image to hardware without changing any bit.
+   *
+   * No-op when the image is unchanged since the last flush (dirty flag). Called
+   * every coroutine step from MrJFX::loop, so skipping the SPI transaction while
+   * the image is static is what keeps GPIO software-PWM effects jitter-free when
+   * an SPI bus is configured (backlog #48).
+   */
   static void flush();
 
   /**
@@ -92,6 +101,7 @@ private:
   static uint8_t _cardBitOffset[MAX_CARDS]; ///< Global bit offset of card[i] (0-based array).
   static uint8_t _cardPinCount [MAX_CARDS]; ///< Pin count for card[i].
   static uint8_t _buf          [MAX_BYTES]; ///< Output image (SPI transfer order).
+  static bool    _dirty;                    ///< _buf changed since last flush(); gates the SPI transaction.
 };
 
 /**
