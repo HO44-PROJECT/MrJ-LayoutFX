@@ -263,6 +263,26 @@ function deleteBoardEditor() {
 /* ── Bus editor ──────────────────────────────────────────────────────── */
 
 var _bueEditKey = null; // bus key currently being edited; null means new bus
+var _bueAutoKey = null; // last auto-suggested key — refresh only while the field still holds it
+
+// Suggest a bus key for the given type. UART keys must match a hardware serial
+// (uart0/uart1/uart2 — see serialFromBusKey in DeviceFactory); uart0 is the
+// console/log bus, so suggest the first free of uart1/uart2 (empty if both are
+// taken: the user must choose). Other types use their base name plus a numeric
+// suffix when already taken (i2c, i2c2, …).
+function bueSuggestKey(type) {
+  var existing = (_dbgCfg && _dbgCfg.buses) || {};
+  if (type === 'uart') {
+    if (!existing['uart1']) return 'uart1';
+    if (!existing['uart2']) return 'uart2';
+    return '';
+  }
+  var base = type.replace('_master_only', '').replace(/_.*/, '');
+  var suggested = base;
+  var n = 2;
+  while (existing[suggested]) { suggested = base + n++; }
+  return suggested;
+}
 
 // Add a pre-wired "linked bus" suggestion to cfg.buses (idempotent — skipped if already present).
 // Linked buses are defined in board_types.json linkedBuses[] with hard-coded pin values
@@ -475,12 +495,8 @@ function openBusEditor(key) {
     busData = null;
     document.getElementById('bue-del-btn').style.display = 'none';
     // Suggest a unique key derived from the selected type.
-    var existingBuses = (_dbgCfg && _dbgCfg.buses) || {};
-    var base = availTypes[0].replace('_master_only', '').replace(/_.*/, '');
-    var suggested = base;
-    var n = 2;
-    while (existingBuses[suggested]) { suggested = base + n++; }
-    document.getElementById('bue-key').value = suggested;
+    _bueAutoKey = bueSuggestKey(availTypes[0]);
+    document.getElementById('bue-key').value = _bueAutoKey;
   }
 
   bueUpdateFields(busData);
@@ -499,18 +515,18 @@ function bueUpdateFields(busData) {
   var type = document.getElementById('bue-type').value;
   var fields = (_busTypes[type] || {}).fields || [];
 
-  // In add mode, refresh the key suggestion when the type changes,
-  // but only if the key still looks auto-generated (matches a known type base).
+  // In add mode, refresh the key suggestion when the type changes — but only
+  // while the field is empty or still holds the LAST auto-suggestion (i.e. the
+  // user hasn't typed a custom key). The old "looks auto-generated" regex
+  // failed on 'i2c' itself (digit in the middle), so the initial suggestion
+  // was never refreshed (#61).
   if (!_bueEditKey) {
     var keyEl = document.getElementById('bue-key');
-    var existingBuses = (_dbgCfg && _dbgCfg.buses) || {};
-    var base = type.replace('_master_only', '').replace(/_.*/, '');
-    var suggested = base;
-    var n = 2;
-    while (existingBuses[suggested]) { suggested = base + n++; }
     var cur = keyEl.value;
-    var looksAuto = !cur || /^[a-z]+\d*$/.test(cur);
-    if (looksAuto) keyEl.value = suggested;
+    if (!cur || cur === _bueAutoKey) {
+      _bueAutoKey = bueSuggestKey(type);
+      keyEl.value = _bueAutoKey;
+    }
   }
 
   // Build set of GPIO pins already in use (sys_pins + existing buses, excluding the one being edited)
