@@ -88,6 +88,19 @@ PlatformIO has already applied `extends`, expanded `${...}`, and merged the glob
 `[env]` by then, so the table reflects exactly what the active environment builds
 against and cannot drift from the real configuration.
 
+## Brand substitution — one constant for the whole project
+
+The displayed brand name has a **single source of truth**:
+`MRJFX_PROJECT_NAME` in `include/MrJRailwayFX_default.h`. Firmware display
+strings (OLED screens, the AP-SSID default, API messages) use the macro
+directly. The web sources and the JSON catalogs carry a `%%BRAND%%` token
+instead of a literal name: `build_webui.py` substitutes it across the whole
+assembled bundle (HTML **and** bundled JS, so i18n labels are covered), and
+`build_embedded_data.py` substitutes it in each minified catalog before
+gzipping. Both scripts parse the same `#define`. Rebranding the display name is
+therefore a **one-line edit** — internal identifiers (type strings, macro
+prefixes, class names) are deliberately not covered.
+
 ## Reproducible output → minimal rebuild churn
 
 Both `build_embedded_data.py` and `build_webui.py` gzip with `mtime=0`. Gzip

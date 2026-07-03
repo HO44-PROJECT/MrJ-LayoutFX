@@ -23,13 +23,25 @@ except:
 
 import gzip
 import json
+import re
 from pathlib import Path
 
 def minify_json(data: dict) -> str:
     """Minify JSON (remove whitespace)."""
     return json.dumps(data, separators=(',', ':'), ensure_ascii=False)
 
-def json_to_progmem(input_path: Path, output_path: Path, var_name: str):
+def read_brand(lib: Path) -> str:
+    """Displayed brand name — parsed from MRJFX_PROJECT_NAME in the firmware
+    header (single source of truth, see MrJRailwayFX_default.h). Every %%BRAND%%
+    token in the JSON catalogs is substituted with it at embed time."""
+    hdr = lib / "include" / "MrJRailwayFX_default.h"
+    m = re.search(r'#define\s+MRJFX_PROJECT_NAME\s+"([^"]+)"',
+                  hdr.read_text(encoding='utf-8'))
+    if not m:
+        raise RuntimeError("MRJFX_PROJECT_NAME not found in MrJRailwayFX_default.h")
+    return m.group(1)
+
+def json_to_progmem(input_path: Path, output_path: Path, var_name: str, brand: str = ""):
     """Convert JSON file to gzipped PROGMEM C++ header."""
 
     # Read and minify JSON
@@ -37,6 +49,8 @@ def json_to_progmem(input_path: Path, output_path: Path, var_name: str):
         data = json.load(f)
 
     minified = minify_json(data)
+    if brand:
+        minified = minified.replace('%%BRAND%%', brand)
     original_size = len(minified.encode('utf-8'))
 
     # Gzip compress — mtime=0 so output is reproducible (no embedded timestamp
@@ -164,6 +178,8 @@ def main():
     output_dir = lib / "include" / "generated"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    brand = read_brand(lib)  # substituted into every %%BRAND%% token below
+
     files = [
         ("board_types.json",  "BOARD_TYPES"),
         ("device_types.json", "DEVICE_TYPES"),
@@ -183,7 +199,7 @@ def main():
             print(f"⚠️  WARNING: {input_path} not found, skipping")
             continue
 
-        json_to_progmem(input_path, output_path, var_name)
+        json_to_progmem(input_path, output_path, var_name, brand)
 
     # Firmware-side structural pin-count map (uncompressed — used by DeviceFactory
     # to size SPI cards when a board config omits "pin_count").

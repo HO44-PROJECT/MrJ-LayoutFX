@@ -75,7 +75,7 @@ bool OledDisplay::_begin() {
   _u8g2.begin();
   _u8g2.clearBuffer();
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 12, "MrJ RailwayFX");
+  _u8g2.drawStr(0, 12, MRJFX_PROJECT_NAME);
   _u8g2.setFont(u8g2_font_5x7_tr);
   _u8g2.drawStr(0, 22, MRJFX_FIRMWARE_VERSION);
   _u8g2.setFont(u8g2_font_6x10_tr);
@@ -185,7 +185,7 @@ void OledDisplay::_drawTrain(int tx, int frame) {
   // Title + version
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.setCursor(22, 11);
-  _u8g2.print(F("MrJ Railway FX"));
+  _u8g2.print(F(MRJFX_PROJECT_NAME));
   _u8g2.setFont(u8g2_font_5x7_tr);
   _u8g2.drawStr(22, 21, MRJFX_FIRMWARE_VERSION);
 
@@ -337,7 +337,7 @@ void OledDisplay::_drawIdle() {
   #if OLED_HEIGHT >= 64
   // ── Line 1 (y=10): config name or project name ────────────────────────────
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 10, _configName[0] ? _configName : "MrJ RailwayFX");
+  _u8g2.drawStr(0, 10, _configName[0] ? _configName : MRJFX_PROJECT_NAME);
   _u8g2.drawHLine(0, 13, 128);
 
   // ── Line 2 (y=25): IP address + WiFi signal bars (right-aligned) ──────────
@@ -404,7 +404,7 @@ void OledDisplay::_drawIdle() {
 
   #else // 128×32
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 8, "MrJ FX");
+  _u8g2.drawStr(0, 8, MRJFX_PROJECT_NAME);
 
   char ip[20] = "No WiFi";
     #ifdef MRJFX_WIFI_ENABLED

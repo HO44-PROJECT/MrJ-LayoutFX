@@ -214,7 +214,7 @@ extern StatusOled oled_status;
     #ifdef OLED_FLIP_MODE
       oled_status.setFlipMode(true);
     #endif
-    oled_status.showSplash(F("MrJ Railway"), F("v1.0"));
+    oled_status.showSplash(F(MRJFX_PROJECT_NAME), F(MRJFX_FIRMWARE_VERSION));
     delay(2000);
   }
 

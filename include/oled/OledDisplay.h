@@ -93,7 +93,7 @@ public:
   /**
    * @brief Store the active configuration name for display on the idle screen.
    * Called by ConfigManager after every load / hot-reload.
-   * Pass an empty string or nullptr to fall back to "MrJ RailwayFX".
+   * Pass an empty string or nullptr to fall back to MRJFX_PROJECT_NAME.
    */
   static void setConfigName(const char *name);
 

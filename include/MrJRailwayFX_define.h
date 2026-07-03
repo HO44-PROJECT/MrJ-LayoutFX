@@ -26,7 +26,7 @@
  *   WEBUI                 Web control panel (/ui). Implies API. Requires WIFI + CONFIG.
  *   WIFI_SSID "…"     \   STA credentials — BOTH required to join WiFi and start
  *   WIFI_PASSWORD "…" /   the HTTP server.
- *   WIFI_AP_SSID "…"      AP-fallback SSID     (default "MrJ-RailwayFX").
+ *   WIFI_AP_SSID "…"      AP-fallback SSID     (default: MRJFX_PROJECT_NAME).
  *   WIFI_AP_PASSWORD "…"  AP-fallback password (default "mrjfx1234", min 8 chars).
  *   WIFI_FORCE_AP         Skip STA entirely, boot straight into access-point mode.
  *   HTTP_PORT <n>         HTTP port (default 80).
@@ -113,7 +113,7 @@
   #endif                      // End WIFI check
   // AP fallback credentials — user may override in wifi.h / config.h.
   #ifndef WIFI_AP_SSID
-    #define WIFI_AP_SSID "MrJ-RailwayFX"
+    #define WIFI_AP_SSID MRJFX_PROJECT_NAME
   #endif
   #ifndef WIFI_AP_PASSWORD
     #define WIFI_AP_PASSWORD "mrjfx1234"

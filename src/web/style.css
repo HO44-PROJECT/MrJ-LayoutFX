@@ -1468,7 +1468,15 @@
       border: 1px solid var(--d2);
       border-radius: 6px;
       padding: .75rem;
-      overflow-x: auto
+      overflow-x: auto;
+      /* Shrink the green PCB block to its content and centre it in the card
+         instead of stretching to the parent width (avoids the green sliver on
+         the right of wrapped pin rows). max-width keeps overflow-x functional
+         on narrow screens. */
+      width: fit-content;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto
     }
 
     .dbg-extra-row {
@@ -1518,6 +1526,27 @@
       border: 1px solid var(--d2);
       border-left: none;
       border-radius: 0 4px 4px 0;
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--t3);
+      text-transform: uppercase;
+      flex-shrink: 0
+    }
+
+    /* Mirror of .dbg-usb-right — edge-connector badge on the left of the chip
+       strip (e.g. the SPI IN header of the LayoutFX SPI Child card). */
+    .dbg-usb-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .15rem;
+      padding: .2rem .5rem;
+      background: var(--d4);
+      border: 1px solid var(--d2);
+      border-right: none;
+      border-radius: 4px 0 0 4px;
       font-size: .5rem;
       font-weight: 700;
       letter-spacing: 1px;

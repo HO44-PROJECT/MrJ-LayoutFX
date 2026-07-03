@@ -1,8 +1,8 @@
 {
   "$schema": "../schemas/board_types.schema.json",
   "MrJRailwayFX_v1": {
-    "label": "MrJRailwayFX v1.0",
-    "description": "Custom PCB MrJRailwayFX v1.0 — ESP32 DevKit C underneath. 2 rows: top (rangée haute) + bottom (rangée bas). I²C precabled on GPIO 21/22, UART2 on GPIO 16/17. USB on right.",
+    "label": "%%BRAND%% v1.0",
+    "description": "Custom PCB %%BRAND%% v1.0 — ESP32 DevKit C underneath. 2 rows: top (rangée haute) + bottom (rangée bas). I²C precabled on GPIO 21/22, UART2 on GPIO 16/17. USB on right.",
     "usb": "right",
     "rows": 20,
     "busType": null,
@@ -1340,10 +1340,22 @@
     ]
   },
   "HC595x2_biface": {
-    "label": "HC595 ×2 — 16 dual-sided outputs",
-    "description": "Custom PCB — 2×74HC595 daisy-chain, 8 outputs left + 8 outputs right",
+    "label": "%%BRAND%% SPI Child v1.0 — 16 dual-sided outputs",
+    "description": "%%BRAND%% SPI daughter card — 2×74HC595, upstream SPI-in and downstream daisy-chain connectors, 8 outputs left + 8 right",
     "rows": 8,
     "busType": "spi_master_only",
+    "connectors": [
+      {
+        "side": "left",
+        "label": "SPI IN",
+        "busType": "spi_master_only"
+      },
+      {
+        "side": "right",
+        "label": "SPI OUT",
+        "busType": "spi_master_only"
+      }
+    ],
     "pins": [
       {
         "wiring": 1,

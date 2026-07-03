@@ -348,7 +348,7 @@ void DeviceApi::_onRestart() {
   LOG_PRINTLN(F("API: POST /api/restart"));
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
   #ifdef MRJFX_OLED_ENABLED
-  OledDisplay::showMessage("MrJ RailwayFX", "Redemarrage...");
+  OledDisplay::showMessage(MRJFX_PROJECT_NAME, "Redemarrage...");
   #endif
   delay(400);
   ESP.restart();

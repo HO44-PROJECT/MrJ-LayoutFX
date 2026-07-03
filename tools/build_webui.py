@@ -35,6 +35,7 @@ Import("env")  # noqa: F821
 
 import gzip
 import os
+import re
 import subprocess
 import sys
 
@@ -63,6 +64,18 @@ _HDR = os.path.join(_LIB, "include", "generated", "webui_html.h")
 def read(name):
     with open(os.path.join(_WEB, name), "r", encoding="utf-8") as f:
         return f.read()
+
+
+def brand():
+    """Displayed brand name — parsed from MRJFX_PROJECT_NAME in the firmware
+    header (single source of truth). Every %%BRAND%% token in the web sources
+    is substituted with it at bundle time."""
+    hdr = os.path.join(_LIB, "include", "MrJRailwayFX_default.h")
+    with open(hdr, "r", encoding="utf-8") as f:
+        m = re.search(r'#define\s+MRJFX_PROJECT_NAME\s+"([^"]+)"', f.read())
+    if not m:
+        raise RuntimeError("MRJFX_PROJECT_NAME not found in MrJRailwayFX_default.h")
+    return m.group(1)
 
 
 # ---------------------------------------------------------------------------
@@ -95,6 +108,8 @@ html = html.replace("%%STYLE%%", css)
 html = html.replace("%%I18N%%", i18n)
 html = html.replace("%%ICONS%%", icons)
 html = html.replace("%%APP%%", app)
+# Brand substitution LAST so it covers the html AND the bundled JS (i18n labels).
+html = html.replace("%%BRAND%%", brand())
 
 raw = html.encode("utf-8")
 # mtime=0 → reproducible output (no embedded timestamp); the header only changes

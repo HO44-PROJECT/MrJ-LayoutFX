@@ -153,6 +153,10 @@ function renderDbgBoard(board, boardApiIdx) {
     ? ' <span class="dbg-idx-badge">board ' + board.spiRank + '</span>'
     : ' <span class="dbg-idx-badge">GPIO</span>';
   var name = tbt(board.type, 'label', (def && def.label) ? def.label : board.type);
+  // Card header shows the SHORT product name (part before the em-dash): the full
+  // label is already repeated on the chip strip at the centre of the drawing.
+  // Boards without a PCB drawing (rows=0 bus boards) keep the full label.
+  if (def && def.rows) name = name.split('—')[0].trim();
 
   var cfgIdx = board._cfgIdx !== undefined ? board._cfgIdx : -1;
   return '<div class="dbg-board">'
@@ -229,13 +233,26 @@ function renderDipPcb(board, boardApiIdx, def) {
     + '</svg>';
   var usbElRight = '<div class="dbg-usb-right">' + usbSvg + '<span>USB</span></div>';
   var usbElBottom = '<div class="dbg-usb-bottom">' + usbSvg + '<span>USB</span></div>';
+  // Connector entries WITH a pins list render as informative pin blocks
+  // (renderBusConn, e.g. I2C/Serial on the LayoutFX v1 mother board); entries
+  // WITHOUT pins render as small edge-connector badges of the same nature as
+  // the USB symbol, flanking the chip strip (vertically centred) — e.g. the
+  // SPI IN / SPI OUT headers of the LayoutFX SPI Child daughter card.
+  var _allConns = def.connectors || [];
+  var _lSym = _allConns.filter(function (c) { return c.side === 'left' && !(c.pins && c.pins.length); });
+  var _rSym = _allConns.filter(function (c) { return c.side === 'right' && !(c.pins && c.pins.length); });
+  function connBadge(conn, cls) {
+    return '<div class="' + cls + '">' + usbSvg + '<span>' + conn.label + '</span></div>';
+  }
   var dip = '<div class="dbg-dip">';
-  // Wrap the chip label, attaching the USB connector SVG on the correct side when needed.
+  // Wrap the chip label, attaching edge-connector badges and the USB symbol
+  // on the correct sides when needed.
   function wrapChip(chipHtml) {
-    if (usbSide === 'right') {
-      return '<div class="dbg-chip-row"><div class="dbg-chip">' + chipHtml + '</div>' + usbElRight + '</div>';
-    }
-    return '<div class="dbg-chip">' + chipHtml + '</div>';
+    var left = _lSym.map(function (c) { return connBadge(c, 'dbg-usb-left'); }).join('');
+    var right = _rSym.map(function (c) { return connBadge(c, 'dbg-usb-right'); }).join('')
+      + (usbSide === 'right' ? usbElRight : '');
+    if (!left && !right) return '<div class="dbg-chip">' + chipHtml + '</div>';
+    return '<div class="dbg-chip-row">' + left + '<div class="dbg-chip">' + chipHtml + '</div>' + right + '</div>';
   }
   if (hasMultiCol) {
     // outer row first (col:2), then inner row (col:1), then chip, then inner, then outer
@@ -245,9 +262,9 @@ function renderDipPcb(board, boardApiIdx, def) {
     dip += '<div class="dbg-col">' + colRow('right', 1) + '</div>';
     dip += '<div class="dbg-col">' + colRow('right', 2) + '</div>';
   } else {
-    var _conns = def.connectors || [];
-    var _lcArr = _conns.filter(function (c) { return c.side === 'left'; });
-    var _rcArr = _conns.filter(function (c) { return c.side === 'right'; });
+    // Pin-list connector blocks only (symbol badges are handled by wrapChip).
+    var _lcArr = _allConns.filter(function (c) { return c.side === 'left' && c.pins && c.pins.length; });
+    var _rcArr = _allConns.filter(function (c) { return c.side === 'right' && c.pins && c.pins.length; });
     // Render one physical bus connector block (label + pin rows) for non-DIP boards.
     function renderBusConn(conn) {
       return '<div class="dbg-bus-conn">'
