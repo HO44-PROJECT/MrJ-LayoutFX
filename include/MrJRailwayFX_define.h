@@ -27,7 +27,7 @@
  *   WIFI_SSID "…"     \   STA credentials — BOTH required to join WiFi and start
  *   WIFI_PASSWORD "…" /   the HTTP server.
  *   WIFI_AP_SSID "…"      AP-fallback SSID     (default: MRJFX_PROJECT_NAME).
- *   WIFI_AP_PASSWORD "…"  AP-fallback password (default "mrjfx1234", min 8 chars).
+ *   WIFI_AP_PASSWORD "…"  AP-fallback password (default "layoutfx1234", min 8 chars).
  *   WIFI_FORCE_AP         Skip STA entirely, boot straight into access-point mode.
  *   HTTP_PORT <n>         HTTP port (default 80).
  *   OTA                   Wireless firmware update: espota (pio upload) + web /update.
@@ -116,7 +116,7 @@
     #define WIFI_AP_SSID MRJFX_PROJECT_NAME
   #endif
   #ifndef WIFI_AP_PASSWORD
-    #define WIFI_AP_PASSWORD "mrjfx1234"
+    #define WIFI_AP_PASSWORD "layoutfx1234"
   #endif
   // Define WIFI_FORCE_AP in config.h to skip STA entirely and start in AP mode.
   #ifdef WIFI_FORCE_AP

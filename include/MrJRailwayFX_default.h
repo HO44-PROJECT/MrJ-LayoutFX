@@ -147,7 +147,7 @@
 
 // OTA firmware update — used when OTA is defined in config.h.
 #ifndef OTA_HOSTNAME
-  #define OTA_HOSTNAME "mrjfx" ///< mDNS base name for ArduinoOTA; a MAC suffix is appended → mrjfx-xxxx.local
+  #define OTA_HOSTNAME "layoutfx" ///< mDNS base name for ArduinoOTA; a MAC suffix is appended → layoutfx-xxxx.local
 #endif
 // OTA_PASSWORD — optional. If defined in config.h, espota and the web /update
 // endpoint both require it. Strongly recommended on a shared/home network.
