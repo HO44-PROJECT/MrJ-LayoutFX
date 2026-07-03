@@ -70,11 +70,11 @@ def brand():
     """Displayed brand name — parsed from LFX_PROJECT_NAME in the firmware
     header (single source of truth). Every %%BRAND%% token in the web sources
     is substituted with it at bundle time."""
-    hdr = os.path.join(_LIB, "include", "MrJRailwayFX_default.h")
+    hdr = os.path.join(_LIB, "include", "LayoutFX_default.h")
     with open(hdr, "r", encoding="utf-8") as f:
         m = re.search(r'#define\s+LFX_PROJECT_NAME\s+"([^"]+)"', f.read())
     if not m:
-        raise RuntimeError("LFX_PROJECT_NAME not found in MrJRailwayFX_default.h")
+        raise RuntimeError("LFX_PROJECT_NAME not found in LayoutFX_default.h")
     return m.group(1)
 
 

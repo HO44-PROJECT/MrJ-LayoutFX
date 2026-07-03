@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #ifdef LFX_SPI_CARDS_ENABLED
   #include "devices/PinStateSPI.h"

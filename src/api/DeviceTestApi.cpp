@@ -186,7 +186,7 @@ void DeviceApi::_onIdentify() {
   #ifdef LFX_I2C_SCAN_ENABLED
 /**
  * @brief Scan all 7-bit I2C addresses and return those that ACK.
- *        Uses I2C_SDA/I2C_SCL (set in config.h or defaulted in MrJRailwayFX_default.h).
+ *        Uses I2C_SDA/I2C_SCL (set in config.h or defaulted in LayoutFX_default.h).
  *        Bus is already initialised by LayoutFX::init() via LFX_I2C_CARDS_ENABLED.
  *        Response: {"sda":<n>,"scl":<n>,"count":<n>,"found":[addr,…]}.
  */

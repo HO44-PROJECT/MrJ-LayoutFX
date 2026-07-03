@@ -32,13 +32,13 @@ def minify_json(data: dict) -> str:
 
 def read_brand(lib: Path) -> str:
     """Displayed brand name — parsed from LFX_PROJECT_NAME in the firmware
-    header (single source of truth, see MrJRailwayFX_default.h). Every %%BRAND%%
+    header (single source of truth, see LayoutFX_default.h). Every %%BRAND%%
     token in the JSON catalogs is substituted with it at embed time."""
-    hdr = lib / "include" / "MrJRailwayFX_default.h"
+    hdr = lib / "include" / "LayoutFX_default.h"
     m = re.search(r'#define\s+LFX_PROJECT_NAME\s+"([^"]+)"',
                   hdr.read_text(encoding='utf-8'))
     if not m:
-        raise RuntimeError("LFX_PROJECT_NAME not found in MrJRailwayFX_default.h")
+        raise RuntimeError("LFX_PROJECT_NAME not found in LayoutFX_default.h")
     return m.group(1)
 
 def json_to_progmem(input_path: Path, output_path: Path, var_name: str, brand: str = ""):

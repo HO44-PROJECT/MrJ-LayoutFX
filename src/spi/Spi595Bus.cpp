@@ -4,7 +4,7 @@
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #ifdef LFX_SPI_CARDS_ENABLED
 

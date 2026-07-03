@@ -115,7 +115,7 @@ Add or rename a device type → update all six.
 **Feature badges mirror compile-time flags.** The badges the UI shows are a
 compile-time reflection of the `#define`s set in a configuration's `config.h`.
 The authoritative inventory of those flags is
-`include/MrJRailwayFX_define.h`; adding a flag/badge means updating the coordinated
+`include/LayoutFX_define.h`; adding a flag/badge means updating the coordinated
 set of files that surface it, keeping the define, its badge, and its UI text in
 step. See [`../configuration-flags.md`](../configuration-flags.md) for the flag
 catalog.

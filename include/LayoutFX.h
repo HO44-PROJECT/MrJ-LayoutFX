@@ -1,11 +1,11 @@
 /**
- * @file MrJRailwayFX.h
+ * @file LayoutFX.h
  * @brief Single entry point for the MrJ-RailwayFX library.
  *
  * Aggregates all public headers and exposes LayoutFX::init() / LayoutFX::loop()
  * for a minimal user main.cpp:
  *
- *   #include <MrJRailwayFX.h>
+ *   #include <LayoutFX.h>
  *   #include "config.h"
  *
  *   void setup() { LayoutFX::init(); }
@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 // ── Devices ──────────────────────────────────────────────────────────────────
 #include "devices/StaticLow.h"

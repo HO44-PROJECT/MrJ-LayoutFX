@@ -1,11 +1,11 @@
 /**
- * @file MrJRailwayFX_define.h
+ * @file LayoutFX_define.h
  * @brief Feature-gate and size-limit defines for the MrJ-RailwayFX library.
  *
  * Aggregates all public headers and exposes LayoutFX::init() / LayoutFX::loop()
  * for a minimal user main.cpp:
  *
- *   #include <MrJRailwayFX.h>
+ *   #include <LayoutFX.h>
  *   #include "config.h"
  *
  *   void setup() { LayoutFX::init(); }
@@ -31,7 +31,7 @@
  *   WIFI_FORCE_AP         Skip STA entirely, boot straight into access-point mode.
  *   HTTP_PORT <n>         HTTP port (default 80).
  *   OTA                   Wireless firmware update: espota (pio upload) + web /update.
- *   OTA_HOSTNAME "…"      mDNS name prefix (default "mrjfx") → "<name>-<MAC>".
+ *   OTA_HOSTNAME "…"      mDNS name prefix (default "layoutfx") → "<name>-<MAC>".
  *   OTA_PASSWORD "…"      Optional auth for espota and the web uploader.
  *
  * Buses / hardware:
@@ -83,7 +83,7 @@
 
 #pragma once
 
-#include <MrJRailwayFX_default.h>
+#include <LayoutFX_default.h>
 
 // ── DCC ──────────────────────────────────────────────────────────────────────
 #ifdef DCC_PIN // DCC_PIN must be defined to enable DCC support.

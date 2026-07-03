@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #ifdef LFX_API_SERVER_ENABLED
 

@@ -1,5 +1,5 @@
 /**
- * @file MrJRailwayFX_default.h
+ * @file LayoutFX_default.h
  * @brief General configuration for the MrJ-ArduinoRailwayFX project.
  *
  * This header file defines configuration constants and preprocessor directives for the

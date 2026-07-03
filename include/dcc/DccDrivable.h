@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #include "utils/ArduinoBoard.h"
 #include <assert.h>

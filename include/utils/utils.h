@@ -16,7 +16,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #ifdef DEBUG_OLED
   #include "DebugOled.h"
@@ -35,11 +35,11 @@
   #include <freertos/FreeRTOS.h>
   #include <freertos/semphr.h>
 extern SemaphoreHandle_t g_lfxDeviceMutex;
-struct MrjfxDeviceLock {
-  MrjfxDeviceLock() { if (g_lfxDeviceMutex) xSemaphoreTake(g_lfxDeviceMutex, portMAX_DELAY); }
-  ~MrjfxDeviceLock() { if (g_lfxDeviceMutex) xSemaphoreGive(g_lfxDeviceMutex); }
+struct LfxDeviceLock {
+  LfxDeviceLock() { if (g_lfxDeviceMutex) xSemaphoreTake(g_lfxDeviceMutex, portMAX_DELAY); }
+  ~LfxDeviceLock() { if (g_lfxDeviceMutex) xSemaphoreGive(g_lfxDeviceMutex); }
 };
-  #define LFX_DEVICE_LOCK() MrjfxDeviceLock _mrjfxDevLock
+  #define LFX_DEVICE_LOCK() LfxDeviceLock _lfxDevLock
 #else
   #define LFX_DEVICE_LOCK() ((void)0)
 #endif

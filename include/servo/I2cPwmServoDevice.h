@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #ifdef LFX_I2C_DEVICES_ENABLED
 

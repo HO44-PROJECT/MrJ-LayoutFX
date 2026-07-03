@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <MrJRailwayFX_define.h>
+#include <LayoutFX_define.h>
 
 #ifdef LFX_OTA_ENABLED
 
@@ -33,7 +33,7 @@ void beginArduinoOta();
 void handle();
 
 /**
- * @brief mDNS / OTA hostname actually in use, e.g. "mrjfx-1a2b" (OTA_HOSTNAME +
+ * @brief mDNS / OTA hostname actually in use, e.g. "layoutfx-1a2b" (OTA_HOSTNAME +
  *        a per-device MAC suffix to avoid collisions). Valid after
  *        beginArduinoOta(); empty string before.
  */

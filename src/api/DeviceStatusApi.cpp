@@ -104,7 +104,7 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatOta] = false;
   #endif
-  // Each badge below mirrors a compile flag (see MrJRailwayFX_define.h) — "built",
+  // Each badge below mirrors a compile flag (see LayoutFX_define.h) — "built",
   // not "active". The uart0 bus card shows whether serial logging is live.
   // ── Logging sinks ──
   #ifdef LOG_SERIAL
