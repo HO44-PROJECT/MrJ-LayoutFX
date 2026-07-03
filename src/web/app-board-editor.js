@@ -388,7 +388,7 @@ function renderBusesTab() {
       + busTitle('uart0 (log)', 'uart')
       + busRow('TX', 1)
       + busRow('RX', 3)
-      + '<div style="font-size:.7rem;color:var(--t2);margin:.3rem 0">' + t('bue.log_hint') + '</div>'
+      + '<div class="bus-desc">' + t('bue.log_hint') + '</div>'
       + '<div class="bus-card-actions">'
       + '<button class="dbg-hbtn" onclick="addLogBus()">' + t('bue.add') + '</button>'
       + '</div>'
@@ -404,7 +404,7 @@ function renderBusesTab() {
     html += '<div class="bus-card bus-suggestion">'
       + busTitle('dcc', 'dcc')
       + busRow('PIN', dccPin)
-      + '<div style="font-size:.7rem;color:var(--t2);margin:.3rem 0">' + t('bue.dcc_hint') + '</div>'
+      + '<div class="bus-desc">' + t('bue.desc_dcc') + '</div>'
       + '<div class="bus-card-actions">'
       + '<button class="dbg-hbtn" onclick="addDccBus(' + (dccPin !== null ? dccPin : 'null') + ')">' + t('bue.add') + '</button>'
       + '</div>'
@@ -430,10 +430,17 @@ function renderBusesTab() {
       return busRow(f.label.split(' ')[0], bus[f.key]);
     }).join('');
     var ks = k.replace(/'/g, "\\'");
+    // Per-type description (bue.desc_<type>) — skipped for unknown types since
+    // t() falls back to the raw key. uart0 keeps its log-specific hint instead.
+    var desc = t('bue.desc_' + bus.type);
+    var descHtml = (!isLog && desc !== 'bue.desc_' + bus.type)
+      ? '<div class="bus-desc">' + desc + '</div>'
+      : '';
     return '<div class="bus-card">'
       + busTitle(isLog ? 'uart0 (log)' : k, bus.type || '?')
       + rows
-      + (isLog ? '<div style="font-size:.7rem;color:var(--t2);margin:.3rem 0">' + t('bue.log_active_hint') + '</div>' : '')
+      + descHtml
+      + (isLog ? '<div class="bus-desc">' + t('bue.log_active_hint') + '</div>' : '')
       + '<div class="bus-card-actions">'
       + (isLog ? '' : '<button class="dbg-hbtn" onclick="openBusEditor(\'' + ks + '\')">' + t('bue.edit') + '</button>')
       + '<button class="dbg-hbtn off" onclick="deleteBus(\'' + ks + '\')">' + t('de.del') + '</button>'
@@ -514,6 +521,14 @@ function openBusEditor(key) {
 function bueUpdateFields(busData) {
   var type = document.getElementById('bue-type').value;
   var fields = (_busTypes[type] || {}).fields || [];
+
+  // Live per-type description under the Type select (empty for unknown types —
+  // t() falls back to the raw key).
+  var descEl = document.getElementById('bue-type-desc');
+  if (descEl) {
+    var desc = t('bue.desc_' + type);
+    descEl.innerHTML = (desc !== 'bue.desc_' + type) ? desc : '';
+  }
 
   // In add mode, refresh the key suggestion when the type changes — but only
   // while the field is empty or still holds the LAST auto-suggestion (i.e. the

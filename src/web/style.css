@@ -2708,12 +2708,26 @@
       color: var(--t0);
       font-variant-numeric: tabular-nums
     }
+    /* Per-type description — pinned to the BOTTOM of the card (margin-top:auto
+       eats the free space) so texts and buttons line up across cards of the
+       same grid row, whatever the field-row count above. */
+    .bus-desc {
+      font-size: .7rem;
+      color: var(--t2);
+      margin-top: auto;
+      padding-top: .3rem
+    }
     .bus-card-actions {
       display: flex;
       gap: .3rem;
-      margin-top: .15rem;
+      margin-top: auto; /* pins the buttons down on cards WITHOUT a .bus-desc */
       padding-top: .4rem;
       border-top: 1px solid var(--bd)
+    }
+    /* When a description is present it already carries the auto margin —
+       keep the buttons snug underneath it. */
+    .bus-desc ~ .bus-card-actions {
+      margin-top: .15rem
     }
     .bus-card.bus-structural {
       border-color: #4a3e1a
