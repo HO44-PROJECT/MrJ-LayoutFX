@@ -100,8 +100,9 @@ function beUpdateIdPlaceholder() {
   idEl.placeholder = base || 'auto';
 }
 
-// Rebuild the bus selector and pin_count field based on the selected board type.
-// MCU boards have no bus; SPI boards show a pin_count field; others show a bus dropdown.
+// Rebuild the bus selector based on the selected board type.
+// MCU boards have no bus; others show a bus dropdown. The output count of an SPI
+// board is structural to its type (board_types.json) — never user-edited (#54).
 function beUpdateFields(board) {
   var type = document.getElementById('be-type').value;
   var def = _boardTypes[type] || {};
@@ -141,16 +142,6 @@ function beUpdateFields(board) {
     beStatus('', '');
   }
 
-  // pin_count: only for SPI boards
-  var isSpi = requiredBusType === 'spi_master_only';
-  var pcField = document.getElementById('be-pincount-field');
-  pcField.style.display = isSpi ? '' : 'none';
-  if (isSpi && board && board.pin_count) {
-    document.getElementById('be-pincount').value = board.pin_count;
-  } else if (!board || !isSpi) {
-    document.getElementById('be-pincount').value = '';
-  }
-
   // i2c_address + oscillator_hz: only for I2C boards
   var isI2c = requiredBusType === 'i2c';
   var i2cField = document.getElementById('be-i2c-field');
@@ -187,7 +178,6 @@ function saveBoardEditor() {
     : (document.getElementById('be-id').value || '').trim();
   var type = document.getElementById('be-type').value;
   var bus = document.getElementById('be-bus').value;
-  var pc = parseInt(document.getElementById('be-pincount').value, 10);
 
   if (!id) {
     var base = type.toLowerCase().replace(/[^a-z0-9]/g, '') || 'board';
@@ -201,9 +191,11 @@ function saveBoardEditor() {
   var def = _boardTypes[type] || {};
   if (def.busType && !bus) { beStatus(t('be.err_bus_required').replace('{{type}}', def.busType), 'err'); return; }
 
+  // No pin_count here: the output count of SPI boards is structural to the type
+  // (board_types.json) and inferred by the firmware — writing it from the UI only
+  // created stale-override bugs (#54).
   var entry = { id: id, type: type };
   if (bus) entry.bus = bus;
-  if (def.busType === 'spi_master_only' && pc > 0) entry.pin_count = pc;
   if (def.busType === 'i2c') {
     var i2cAddr = parseInt(document.getElementById('be-i2c-addr').value, 10);
     if (!isNaN(i2cAddr) && i2cAddr !== 64) entry.i2c_address = i2cAddr;

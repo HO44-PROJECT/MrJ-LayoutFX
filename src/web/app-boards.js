@@ -103,6 +103,18 @@ function saveCfg(cfg) {
     .catch(function () { });
 }
 
+// Structural output count of a board type = pins carrying a "wiring" entry in
+// board_types.json — the same rule the firmware's embedded pin-count table uses.
+function _btStructuralPins(type) {
+  var def = _boardTypes[type];
+  if (!def || !def.pins) return 0;
+  var n = 0;
+  for (var i = 0; i < def.pins.length; i++) {
+    if (def.pins[i].wiring !== undefined) n++;
+  }
+  return n;
+}
+
 // Renders the boards tab DIP diagram list.
 // _dbgCfg.boards is the source of truth so newly saved boards appear without reboot.
 // Runtime data (spiRank, pinCount) from _dbgBoards is overlaid when available.
@@ -120,7 +132,10 @@ function renderDebugBoards() {
       id: cb.id,
       type: cb.type || '',
       bus: cb.bus || '',
-      pinCount: rt ? rt.pinCount : (cb.pin_count || 0),
+      // Runtime value first; otherwise the structural count of the type
+      // (pin_count is no longer written by the editor; legacy configs may
+      // still carry one — used as last resort only).
+      pinCount: rt ? rt.pinCount : (_btStructuralPins(cb.type) || cb.pin_count || 0),
       spiRank: rt ? rt.spiRank : 0,
       _cfgIdx: cfgIdx
     };

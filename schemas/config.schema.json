@@ -272,7 +272,7 @@
             24,
             32
           ],
-          "description": "Number of output pins on this board. Optional for known types (HC595=8, HC595x2_biface=16 are implied); required for custom types."
+          "description": "Legacy/fallback only. For types known to the firmware the output count is structural (board_types.json) and this value is IGNORED; it is honoured only for types absent from the embedded catalog. The board editor no longer writes it."
         },
         "label": {
           "type": "string",

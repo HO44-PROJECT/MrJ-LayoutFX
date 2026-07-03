@@ -144,7 +144,10 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
           continue;
         }
 
-        // Derive pin count from the structural map; an explicit kFPinCount overrides.
+        // The output count is STRUCTURAL to the board type (embedded_board_pincounts.h,
+        // generated from board_types.json). A config "pin_count" is honoured only as a
+        // fallback for types unknown to this firmware build — never as an override of a
+        // known type: a stale user override once truncated a 16-output card to 8 (#54).
         uint8_t structural = 0;
         for (uint8_t t = 0; btPinCounts && t < btCount; t++) {
           if (strcmp(btPinCounts[t].type, bcfg.typeStr) == 0) {
@@ -152,7 +155,7 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
             break;
           }
         }
-        bcfg.pinCount = (uint8_t)(bd[kFPinCount] | (int)structural);
+        bcfg.pinCount = (structural > 0) ? structural : (uint8_t)(bd[kFPinCount] | 0);
         bcfg.spiRank = _spiCardCount + 1; // 1-based daisy-chain rank.
         _spiCardCount++;
         // Feeds the pin-count table consumed by Spi595Bus::init (BusRegistry side).

@@ -53,7 +53,7 @@ constexpr char kFSda[] = "sda";     ///< i2c
 constexpr char kFScl[] = "scl";     ///< i2c
 
 // ── Board field keys ──────────────────────────────────────────────────────
-constexpr char kFPinCount[] = "pin_count"; ///< Overrides structural count from board_types.json
+constexpr char kFPinCount[] = "pin_count"; ///< Fallback output count for board types unknown to the embedded catalog — the structural count always wins for known types (#54).
 
 // ── Device field keys and values ──────────────────────────────────────────
 constexpr char kFAddress[] = "address";
