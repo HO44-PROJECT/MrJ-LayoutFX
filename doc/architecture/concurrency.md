@@ -13,7 +13,7 @@ side loop that drives pins itself.
 ## Control kinematics — who calls `newState`
 - **WebUI → HTTP API** (Core 0): `/api/switch`, `/api/device`, `/api/all`, `/api/group`,
   `/api/servo` handlers → `device->newState(state)`.
-- **DCC** (Core 1): NmraDcc ISR buffers bits → `dcc.process()` in `MrJFX::loop()` → `notifyDcc*`
+- **DCC** (Core 1): NmraDcc ISR buffers bits → `dcc.process()` in `LayoutFX::loop()` → `notifyDcc*`
   → `DccDrivable` dispatch by accessory address → the device's `setDccSigOutputState` /
   `setDccSpeed` / `setDccFunction`, which set state via `newState`.
 - **Boot / hot-reload** (Core 1): config → `DeviceFactory` builds devices → `applyDefaultStates()`
@@ -42,7 +42,7 @@ coroutine catches up over the next loops; repeated `newState` calls just move th
 ## The only cross-core interactions
 1. **Device-list lifetime.** Core 0 handlers iterate `_factory` and dereference `Device*`, while
    the Core 1 hot-reload (`fullReset`) **deletes every `Device`**. Concurrent → use-after-free.
-   - **Guard:** a single mutex `g_mrjfxDeviceMutex`, taken via `MRJFX_DEVICE_LOCK()` around
+   - **Guard:** a single mutex `g_lfxDeviceMutex`, taken via `LFX_DEVICE_LOCK()` around
      `handleClient()` (Core 0) and around `fullReset` + rebuild (Core 1) → mutually exclusive.
      ESP32-only; a no-op on AVR (single-core, no HTTP). No deadlock: the reload is deferred through
      the `_reloadPending` flag, never called from within a handler.
@@ -66,7 +66,7 @@ small enough to reason about.
 - No code outside a `Device` writes pins or the SPI buffer.
 - Every control path funnels through `newState` (→ `desiredState`).
 - Any new test / diagnostic behaviour is a **coroutine device**, never a side loop.
-- The device list is only rebuilt / deleted under `MRJFX_DEVICE_LOCK()`.
-- **The effect coroutines never take `MRJFX_DEVICE_LOCK()`** — they must never be starved by the
+- The device list is only rebuilt / deleted under `LFX_DEVICE_LOCK()`.
+- **The effect coroutines never take `LFX_DEVICE_LOCK()`** — they must never be starved by the
   network or a reload. This holds only while the reload stays on the Core 1 thread, sequential
   with the scheduler.

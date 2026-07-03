@@ -17,13 +17,13 @@
 #ifdef LOG_SERIAL
 // Tier-2 serial logging is ON by default (matches the compiled LOG_SERIAL flag);
 // the uart0 "log" bus in config may flip it off at boot to free GPIO1/3.
-bool g_mrjfxLogActive = true;
+bool g_lfxLogActive = true;
 #endif
 
 #if defined(ESP32)
 // Bi-core device-list mutex (backlog #27). Created at static init (FreeRTOS is up
 // well before the HTTP task starts), so lock/unlock are always safe.
-SemaphoreHandle_t g_mrjfxDeviceMutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t g_lfxDeviceMutex = xSemaphoreCreateMutex();
 #endif
 
 /// @brief Allocates memory and duplicates the contents of a source buffer.

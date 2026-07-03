@@ -6,21 +6,21 @@
 
 #include "bus/BusRegistry.h"
 
-#ifdef MRJFX_CONFIG_ENABLED
+#ifdef LFX_CONFIG_ENABLED
 
 // ── Static member definitions ─────────────────────────────────────────────────
 
-BusRegistry::UartEntry BusRegistry::_uarts[MRJFX_BUS_MAX_UART] = {};
+BusRegistry::UartEntry BusRegistry::_uarts[LFX_BUS_MAX_UART] = {};
 uint8_t BusRegistry::_uartCount = 0;
 
 int BusRegistry::_spiMosi = -1;
 int BusRegistry::_spiSclk = -1;
 int BusRegistry::_spiLatch = -1;
-uint8_t BusRegistry::_spiCardPinCounts[MRJFX_BUS_MAX_SPI_CARDS] = {};
+uint8_t BusRegistry::_spiCardPinCounts[LFX_BUS_MAX_SPI_CARDS] = {};
 uint8_t BusRegistry::_spiCardCount = 0;
 bool BusRegistry::_spiReady = false;
 
-BusRegistry::I2cEntry BusRegistry::_i2cs[MRJFX_BUS_MAX_I2C] = {};
+BusRegistry::I2cEntry BusRegistry::_i2cs[LFX_BUS_MAX_I2C] = {};
 uint8_t BusRegistry::_i2cCount = 0;
 bool BusRegistry::_i2cReady = false;
 
@@ -37,8 +37,8 @@ int BusRegistry::_dccPin = -1;
  * @param baud   Baud rate to use when the port is activated.
  */
 void BusRegistry::regUart(const char *key, HardwareSerial *serial, int tx, int rx, int baud) {
-  if (_uartCount >= MRJFX_BUS_MAX_UART) {
-    LOG_PRINTLN(F("BusRegistry: MRJFX_BUS_MAX_UART reached"));
+  if (_uartCount >= LFX_BUS_MAX_UART) {
+    LOG_PRINTLN(F("BusRegistry: LFX_BUS_MAX_UART reached"));
     return;
   }
   UartEntry &e = _uarts[_uartCount++];
@@ -68,7 +68,7 @@ void BusRegistry::regSpi(int mosi, int sclk, int latch) {
  * @param pinCount Number of output bits on this 74HC595 card.
  */
 void BusRegistry::regSpiCard(uint8_t pinCount) {
-  if (_spiCardCount >= MRJFX_BUS_MAX_SPI_CARDS) {
+  if (_spiCardCount >= LFX_BUS_MAX_SPI_CARDS) {
     LOG_PRINTLN(F("BusRegistry: max SPI cards reached"));
     return;
   }
@@ -82,8 +82,8 @@ void BusRegistry::regSpiCard(uint8_t pinCount) {
  * @param scl GPIO number for SCL.
  */
 void BusRegistry::regI2c(const char *key, int sda, int scl) {
-  if (_i2cCount >= MRJFX_BUS_MAX_I2C) {
-    LOG_PRINTLN(F("BusRegistry: MRJFX_BUS_MAX_I2C reached"));
+  if (_i2cCount >= LFX_BUS_MAX_I2C) {
+    LOG_PRINTLN(F("BusRegistry: LFX_BUS_MAX_I2C reached"));
     return;
   }
   I2cEntry &e = _i2cs[_i2cCount++];
@@ -148,7 +148,7 @@ HardwareSerial *BusRegistry::activateUart(const char *key) {
 bool BusRegistry::activateSpi() {
   if (_spiReady)
     return true;
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   if (_spiMosi < 0 || _spiSclk < 0 || _spiLatch < 0 || _spiCardCount == 0)
     return false;
   Spi595Bus::init(_spiMosi, _spiSclk, _spiLatch, _spiCardPinCounts, _spiCardCount);
@@ -192,7 +192,7 @@ TwoWire *BusRegistry::activateI2c() {
 
 /** @brief Forward the SPI output image to the 74HC595 chain. No-op if SPI is not active. */
 void BusRegistry::flush() {
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   if (_spiReady)
     Spi595Bus::flush();
   #endif
@@ -214,12 +214,12 @@ void BusRegistry::reset() {
   _i2cCount = 0;
   // _i2cReady intentionally preserved — Wire must not be re-initialised.
   _dccPin = -1;
-  for (uint8_t i = 0; i < MRJFX_BUS_MAX_UART; i++)
+  for (uint8_t i = 0; i < LFX_BUS_MAX_UART; i++)
     _uarts[i] = {};
-  for (uint8_t i = 0; i < MRJFX_BUS_MAX_I2C; i++)
+  for (uint8_t i = 0; i < LFX_BUS_MAX_I2C; i++)
     _i2cs[i] = {};
-  for (uint8_t i = 0; i < MRJFX_BUS_MAX_SPI_CARDS; i++)
+  for (uint8_t i = 0; i < LFX_BUS_MAX_SPI_CARDS; i++)
     _spiCardPinCounts[i] = 0;
 }
 
-#endif // MRJFX_CONFIG_ENABLED
+#endif // LFX_CONFIG_ENABLED

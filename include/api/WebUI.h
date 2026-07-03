@@ -1,7 +1,7 @@
 /**
  * @file WebUI.h
  *
- * @brief Browser interface — serves the control panel HTML page (ESP32 / MRJFX_WEBUI_ENABLED only).
+ * @brief Browser interface — serves the control panel HTML page (ESP32 / LFX_WEBUI_ENABLED only).
  *
  * Registers a single route:
  *   GET /ui   → gzipped HTML page (built from src/web/webui.html by tools/build_webui.py)
@@ -19,7 +19,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_WEBUI_ENABLED
+#ifdef LFX_WEBUI_ENABLED
 
 class WebUI {
 public:
@@ -30,4 +30,4 @@ private:
     static void _onGetUi();
 };
 
-#endif  // MRJFX_WEBUI_ENABLED
+#endif  // LFX_WEBUI_ENABLED

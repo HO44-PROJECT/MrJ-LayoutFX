@@ -17,9 +17,9 @@
 
 #include "servo/SerialServoMotorMode.h"
 
-#ifdef MRJFX_SERIAL_SERVO_ENABLED
+#ifdef LFX_SERIAL_SERVO_ENABLED
 
-  #ifdef MRJFX_LX16A_SERVO_ENABLED
+  #ifdef LFX_LX16A_SERVO_ENABLED
 /**
  * @brief Constructs a `SerialServoMotor` instance for controlling an LX-16A servo.
  *
@@ -47,7 +47,7 @@ SerialServoMotor::SerialServoMotor(LX16ABus *servoBus, PIN_ID tXpin, PIN_ID TXFl
 }
   #endif
 
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
 /**
  * @brief Constructs a SerialServoMotor instance for Nano.
  *
@@ -86,7 +86,7 @@ SerialServoMotor::SerialServoMotor(LobotServo *servo, PIN_ID tXpin, PIN_ID TXFla
 }
   #endif
 
-  #if defined(MRJFX_LOBOT_SERVO_ENABLED) || defined(MRJFX_LX16A_SERVO_ENABLED)
+  #if defined(LFX_LOBOT_SERVO_ENABLED) || defined(LFX_LX16A_SERVO_ENABLED)
 /**
  * @brief Runs the coroutine for the gas lamp effect.
  *
@@ -112,4 +112,4 @@ int SerialServoMotor::runCoroutine() {
 }
   #endif // End of SerialServoMotor implementation
 
-#endif // MRJFX_SERIAL_SERVO_ENABLED
+#endif // LFX_SERIAL_SERVO_ENABLED

@@ -3,7 +3,7 @@
  * @brief PIN_ID as a plain uint8_t — for GPIO-only platforms (Arduino Nano, Uno, Mega…).
  *
  * Do not include directly. Include devices/PinState.h which routes to this file
- * or to PinStateSPI.h depending on the MRJFX_SPI_CARDS_ENABLED build flag.
+ * or to PinStateSPI.h depending on the LFX_SPI_CARDS_ENABLED build flag.
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX

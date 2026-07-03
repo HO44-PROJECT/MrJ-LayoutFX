@@ -15,7 +15,7 @@
 
 #include "dcc/DccCallbacks.h"
 
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
 
 /**
  * @brief Handles DCC speed commands for registered devices.
@@ -113,7 +113,7 @@ void notifyDccMsg(DCC_MSG *Msg)
     if (Msg->Size < 2)
         return;
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
     // Heartbeat: prove the DCC input is alive. If this never prints when a command
     // station is connected, the problem is hardware (pin/opto/wiring), not software.
     {
@@ -172,7 +172,7 @@ void notifyDccMsg(DCC_MSG *Msg)
         // Calculate the accessory address: ((boardAddr - 1) * 4) + pair + 1
         uint16_t addr = (((boardAddr - 1) << 2) | pair) + 1;
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
         Serial.print(F("[DCC] accessory addr "));
         Serial.print(addr);
         Serial.print(F(" state "));
@@ -213,7 +213,7 @@ void notifyDccMsg(DCC_MSG *Msg)
         // Calculate the accessory address: ((boardAddr - 1) * 4) + pair + 1
         uint16_t addr = (((boardAddr - 1) << 2) | pair) + 1;
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
         Serial.print(F("[DCC] signal addr "));
         Serial.print(addr);
         Serial.print(F(" aspect "));

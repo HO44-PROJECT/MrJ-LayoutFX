@@ -21,7 +21,7 @@
 
 #include "devices/PinState.h"
 
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
   #include "spi/Spi595Bus.h"
 #endif
 
@@ -259,7 +259,7 @@ public:
     return true;
   }
 
-#ifndef MRJFX_SPI_CARDS_ENABLED
+#ifndef LFX_SPI_CARDS_ENABLED
   virtual bool setPins(size_t pin_count, ...) {
     va_list args;
     va_start(args, pin_count);
@@ -277,7 +277,7 @@ public:
 
     return true;
   }
-#endif // !MRJFX_SPI_CARDS_ENABLED
+#endif // !LFX_SPI_CARDS_ENABLED
   virtual bool validatePins() {
     // DEBUG_PRINTF("validate pins for device %s\n", getDeviceName());
     // DEBUG_PRINT(F("Validate pins for device "));
@@ -325,7 +325,7 @@ public:
    * @param pin_count The number of pins provided.
    * @param ... A variable list of PIN_ID arguments.
    */
-#ifndef MRJFX_SPI_CARDS_ENABLED
+#ifndef LFX_SPI_CARDS_ENABLED
   virtual bool setVarPins(size_t pin_count, ...) {
     {
       va_list args;
@@ -340,7 +340,7 @@ public:
       return validatePins();
     }
   }
-#endif // !MRJFX_SPI_CARDS_ENABLED
+#endif // !LFX_SPI_CARDS_ENABLED
 
   /**
    * @brief Initializes the device's pins.
@@ -397,7 +397,7 @@ public:
    * @brief Activates the specified pin (GPIO or SPI daughter card).
    */
   void outputActive(PIN_ID pin) {
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
     if (pin.isSpi()) {
       Spi595Bus::setPin(pin.card, pin.pin, active_state.value);
       return;
@@ -412,7 +412,7 @@ public:
    * @brief Deactivates the specified pin (GPIO or SPI daughter card).
    */
   void outputInactive(PIN_ID pin) {
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
     if (pin.isSpi()) {
       Spi595Bus::setPin(pin.card, pin.pin, inactive_state.value);
       return;
@@ -519,7 +519,7 @@ protected:
   virtual void pin_it(PIN_ID pin, PIN_STATE state) {
     if (pin == NO_PIN)
       return;
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
     if (pin.isSpi()) {
       Spi595Bus::setPin(pin.card, pin.pin, state.value);
       return;

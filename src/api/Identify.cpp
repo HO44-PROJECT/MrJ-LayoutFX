@@ -7,9 +7,9 @@
  */
 #include "api/Identify.h"
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
     #include "spi/Spi595Bus.h"
   #endif
 
@@ -40,9 +40,9 @@ void Identify::write(bool on) {
       digitalWrite(_lowPins[i], LOW);
     digitalWrite(_pin, on ? HIGH : LOW);
   }
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   else if (_mode == SPI_MODE) {
-    // Bit is propagated to the shift register by BusRegistry::flush() in MrJFX::loop().
+    // Bit is propagated to the shift register by BusRegistry::flush() in LayoutFX::loop().
     Spi595Bus::setPin(_card, _pin, on ? 1 : 0);
   }
   #endif
@@ -79,7 +79,7 @@ void Identify::startCharlieplex(uint8_t testPin, const uint8_t *lowPins, uint8_t
   write(PATTERN[0].on);
 }
 
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
 void Identify::startSpi(uint8_t card, uint8_t channel) {
   stop();
   _card = card;
@@ -107,4 +107,4 @@ void Identify::loop() {
   }
 }
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

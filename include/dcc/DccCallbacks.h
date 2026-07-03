@@ -2,7 +2,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
 
 #include <Arduino.h>
 #include <NmraDcc.h>
@@ -32,4 +32,4 @@ extern "C"
 }
 #endif
 
-#endif  // MRJFX_DCC_ENABLED
+#endif  // LFX_DCC_ENABLED

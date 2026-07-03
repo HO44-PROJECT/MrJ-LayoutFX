@@ -22,12 +22,12 @@ A task costs a dedicated stack + TCB (kilobytes each); a coroutine is a small ob
 point. Dozens of effects cost dozens of small objects, not dozens of stacks.
 
 ## Static allocation
-The factory holds **fixed-size arrays** (`_devices[MRJFX_FACTORY_MAX_DEVICES]`, boards, buses…) sized
+The factory holds **fixed-size arrays** (`_devices[LFX_FACTORY_MAX_DEVICES]`, boards, buses…) sized
 by compile-time limits. No heap churn, no fragmentation, a footprint you can reason about at build
 time. Devices are created into these slots, not via scattered `new` on hot paths.
 
 ## Compile-time stripping
-Feature `#define`s (`config.h` → `MRJFX_*_ENABLED` guards) compile **out** everything unused: no OLED
+Feature `#define`s (`config.h` → `LFX_*_ENABLED` guards) compile **out** everything unused: no OLED
 code without `OLED`, no HTTP/WiFi on the Nano, no DCC without `DCC_PIN`, and so on. A target only pays
 flash/RAM for what it actually runs.
 

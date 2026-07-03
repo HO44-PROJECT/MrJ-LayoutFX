@@ -9,10 +9,10 @@
 
 #include "api/DeviceApi.h"
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
 #include "api/Identify.h"
-#include "utils/utils.h" // mrjfxUart0Reserved() — 1/3 testable when the log bus is off
+#include "utils/utils.h" // lfxUart0Reserved() — 1/3 testable when the log bus is off
 
 using namespace api_keys;
 using namespace http_status;
@@ -42,7 +42,7 @@ void DeviceApi::_onTestGpio() {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"invalid pin\"}"));
     return;
   }
-  if (mrjfxUart0Reserved() && (pin == kUart0TxPin || pin == kUart0RxPin)) {
+  if (lfxUart0Reserved() && (pin == kUart0TxPin || pin == kUart0RxPin)) {
     ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved UART pin\"}"));
     return;
   }
@@ -74,7 +74,7 @@ void DeviceApi::_onTestSpi() {
   int card = doc[kCard].as<int>();
   int channel = doc[kChannel].as<int>();
   int state = doc[kState] | 0;
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   if (!Spi595Bus::ready()) {
     ApiServer::sendJson(kServiceUnavailable, F("{\"error\":\"SPI not ready\"}"));
     return;
@@ -117,7 +117,7 @@ void DeviceApi::_onIdentify() {
     for (size_t i = 0; i < _factory->count(); i++) {
       Device *d = _factory->device(i);
       for (size_t j = 0; j < d->getPinCount(); j++) {
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
         PIN_ID gp = d->getPin(j);
         if (!gp.isSpi() && (int)gp.pin == p) d->switchOff();
   #else
@@ -133,7 +133,7 @@ void DeviceApi::_onIdentify() {
       ApiServer::sendJson(kBadRequest, F("{\"error\":\"invalid pin\"}"));
       return;
     }
-    if (mrjfxUart0Reserved() && (pin == kUart0TxPin || pin == kUart0RxPin)) {
+    if (lfxUart0Reserved() && (pin == kUart0TxPin || pin == kUart0RxPin)) {
       ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved UART pin\"}"));
       return;
     }
@@ -146,7 +146,7 @@ void DeviceApi::_onIdentify() {
       for (JsonVariant v : doc[kLow].as<JsonArray>()) {
         int lp = v.as<int>();
         if (lp < 0 || lp > kGpioPinMax || lp == pin) continue;
-        if (mrjfxUart0Reserved() && (lp == kUart0TxPin || lp == kUart0RxPin)) continue;
+        if (lfxUart0Reserved() && (lp == kUart0TxPin || lp == kUart0RxPin)) continue;
         silence(lp);
         if (n < sizeof(low)) low[n++] = (uint8_t)lp;
       }
@@ -157,7 +157,7 @@ void DeviceApi::_onIdentify() {
       Identify::startGpio((uint8_t)pin);
     }
   } else if (doc[kCard].is<int>() && doc[kChannel].is<int>()) {
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
     int card = doc[kCard].as<int>(), ch = doc[kChannel].as<int>();
     if (_factory) {
       for (size_t i = 0; i < _factory->count(); i++) {
@@ -183,11 +183,11 @@ void DeviceApi::_onIdentify() {
 // I2C scanner
 // ---------------------------------------------------------------------------
 
-  #ifdef MRJFX_I2C_SCAN_ENABLED
+  #ifdef LFX_I2C_SCAN_ENABLED
 /**
  * @brief Scan all 7-bit I2C addresses and return those that ACK.
  *        Uses I2C_SDA/I2C_SCL (set in config.h or defaulted in MrJRailwayFX_default.h).
- *        Bus is already initialised by MrJFX::init() via MRJFX_I2C_CARDS_ENABLED.
+ *        Bus is already initialised by LayoutFX::init() via LFX_I2C_CARDS_ENABLED.
  *        Response: {"sda":<n>,"scl":<n>,"count":<n>,"found":[addr,…]}.
  */
 void DeviceApi::_onScanI2c() {
@@ -225,4 +225,4 @@ void DeviceApi::_onScanI2c() {
 }
   #endif
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

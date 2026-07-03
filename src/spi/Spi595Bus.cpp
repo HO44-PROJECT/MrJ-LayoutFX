@@ -6,7 +6,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
 
   #include "spi/Spi595Bus.h"
   #include "utils/utils.h"
@@ -88,7 +88,7 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value) {
     _buf[byteIdx] &= ~(1u << bitIdx);
   }
   // Only mark dirty on a real change so flush() stays a no-op while the SPI
-  // image is static — otherwise the per-loop flush() in MrJFX::loop() would run
+  // image is static — otherwise the per-loop flush() in LayoutFX::loop() would run
   // a full SPI transaction on every coroutine step and jitter the software-PWM
   // timing of GPIO effects (see backlog #48).
   if (_buf[byteIdx] != before)
@@ -98,7 +98,7 @@ void Spi595Bus::setPin(uint8_t card1based, uint8_t bit, uint8_t value) {
 // ---------------------------------------------------------------------------
 
 void Spi595Bus::flush() {
-  // MrJFX::loop() calls this after every coroutine step. Skip the SPI transaction
+  // LayoutFX::loop() calls this after every coroutine step. Skip the SPI transaction
   // entirely when nothing changed since the last flush: GPIO effects never touch
   // _buf, so during a pure-GPIO fade the image stays clean and this stays a cheap
   // boolean check — the scheduler round-trip stays tight and software PWM is smooth.
@@ -150,4 +150,4 @@ void Spi595Bus::testPin(uint8_t card1based, uint8_t bit, uint8_t value) {
   _dirty = true;
 }
 
-#endif // MRJFX_SPI_CARDS_ENABLED
+#endif // LFX_SPI_CARDS_ENABLED

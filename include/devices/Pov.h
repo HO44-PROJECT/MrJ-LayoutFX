@@ -17,7 +17,7 @@
 #pragma once
 
 #include <AceRoutine.h>
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
 #  include "spi/Spi595Bus.h"
 #endif
 using namespace ace_routine;

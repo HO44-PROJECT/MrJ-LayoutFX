@@ -1,6 +1,6 @@
 /**
  * @file DeviceApi.h
- * @brief Device REST API — all /api/ routes (ESP32 / MRJFX_API_SERVER_ENABLED only).
+ * @brief Device REST API — all /api/ routes (ESP32 / LFX_API_SERVER_ENABLED only).
  *
  * Registers and handles the JSON endpoints for device control and system
  * introspection. No HTML — use WebUI for the browser interface.
@@ -54,7 +54,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
   #include "api/ApiServer.h"
   #include "api/DeviceApiKeys.h"
@@ -65,20 +65,20 @@
   #include <WiFi.h>
   #include <esp_system.h>
 
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
     #include "spi/Spi595Bus.h"
   #endif
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
     #include "oled/OledDisplay.h"
   #endif
-  #ifdef MRJFX_SERIAL_SERVO_ENABLED
+  #ifdef LFX_SERIAL_SERVO_ENABLED
     #include "servo/SerialServoMotorMode.h"
   #endif
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
     #include "servo/I2cPwmMotorDevice.h"
     #include "servo/I2cPwmServoDevice.h"
   #endif
-  #ifdef MRJFX_I2C_SCAN_ENABLED
+  #ifdef LFX_I2C_SCAN_ENABLED
     #include <Wire.h>
   #endif
 
@@ -172,10 +172,10 @@ private:
   static void _onTestSpi();
   /** @brief POST /api/test/identify — Blink a pin to locate its LED. Body: {"pin":<n>} | {"card":<n>,"channel":<n>} | {} to stop. */
   static void _onIdentify();
-  #ifdef MRJFX_I2C_SCAN_ENABLED
+  #ifdef LFX_I2C_SCAN_ENABLED
   /** @brief GET /api/scan/i2c   — Scan I2C bus and return found addresses. */
   static void _onScanI2c();
   #endif
 };
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

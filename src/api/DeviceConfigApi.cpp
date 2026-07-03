@@ -8,7 +8,7 @@
 
 #include "api/DeviceApi.h"
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
 using namespace api_keys;
 using namespace http_status;
@@ -424,4 +424,4 @@ void DeviceApi::_onActivateConfig() {
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

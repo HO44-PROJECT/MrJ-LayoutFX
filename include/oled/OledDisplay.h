@@ -28,7 +28,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_OLED_ENABLED
+#ifdef LFX_OLED_ENABLED
 
   #include <U8g2lib.h>
 
@@ -41,7 +41,7 @@
  * keeping Core 1 (CoroutineScheduler + PWM effects) unaffected.
  *
  * External code only needs two calls:
- *   OledDisplay::init();                         // in MrJFX::init()
+ *   OledDisplay::init();                         // in LayoutFX::init()
  *   OledDisplay::notify(type, id, state);        // in DeviceApi handlers
  */
 class OledDisplay {
@@ -53,8 +53,8 @@ public:
 
   /**
    * @brief Initialise the U8g2 driver and start the OLED FreeRTOS task.
-   * Wire must already be initialised (Wire.begin called by MrJFX::init()).
-   * Must be called once in MrJFX::init(), before CoroutineScheduler::setup().
+   * Wire must already be initialised (Wire.begin called by LayoutFX::init()).
+   * Must be called once in LayoutFX::init(), before CoroutineScheduler::setup().
    */
   static void init();
 
@@ -93,7 +93,7 @@ public:
   /**
    * @brief Store the active configuration name for display on the idle screen.
    * Called by ConfigManager after every load / hot-reload.
-   * Pass an empty string or nullptr to fall back to MRJFX_PROJECT_NAME.
+   * Pass an empty string or nullptr to fall back to LFX_PROJECT_NAME.
    */
   static void setConfigName(const char *name);
 
@@ -112,7 +112,7 @@ private:
   void _drawIcon(const char *type, uint8_t ox, uint8_t oy);
   static const char *_stateName(const char *type, int state);
   static void _task(void *);
-  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  #ifdef LFX_OLED_SPLASH_ENABLED
   void _drawSplash();
   void _drawTrain(int tx, int frame);
 
@@ -146,10 +146,10 @@ private:
   U8G2_SSD1306_128X64_NONAME_F_HW_I2C _u8g2;
   #endif
   // Note: constructor uses U8X8_PIN_NONE for clock+data — Wire is pre-initialized
-  //       by MrJFX::init(); passing pins would re-call Wire.begin() (breaking arduino-esp32 v3).
+  //       by LayoutFX::init(); passing pins would re-call Wire.begin() (breaking arduino-esp32 v3).
 };
 
 /** @brief Single global instance — auto-registered with AceRoutine. */
 extern OledDisplay oledDisplay;
 
-#endif // MRJFX_OLED_ENABLED
+#endif // LFX_OLED_ENABLED

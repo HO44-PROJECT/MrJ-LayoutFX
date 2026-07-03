@@ -7,9 +7,9 @@
 
 #include "config/ConfigManager.h"
 
-#ifdef MRJFX_CONFIG_ENABLED
+#ifdef LFX_CONFIG_ENABLED
 
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
     #include "oled/OledDisplay.h"
   #endif
 
@@ -69,7 +69,7 @@ void ConfigManager::init(const char *configPath) {
       _factory.initAll();
       _factory.applyDefaultStates();
       _factory.initIdlePins();
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
       OledDisplay::setConfigName(_factory.configName());
   #endif
       LOG_PRINT(F("[Factory] "));
@@ -182,7 +182,7 @@ void ConfigManager::handlePendingReload() {
 
   // Block the HTTP handlers (Core 0) while devices are torn down + rebuilt, so a
   // concurrent request can never dereference a just-deleted Device (backlog #27).
-  MRJFX_DEVICE_LOCK();
+  LFX_DEVICE_LOCK();
   LOG_PRINTLN(F("[Factory] hot-reload..."));
   _factory.fullReset();
   BusRegistry::reset();
@@ -300,4 +300,4 @@ String ConfigManager::_readFile(const char *path) {
   return s;
 }
 
-#endif // MRJFX_CONFIG_ENABLED
+#endif // LFX_CONFIG_ENABLED

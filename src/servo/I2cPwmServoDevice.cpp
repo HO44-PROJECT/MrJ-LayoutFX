@@ -8,7 +8,7 @@
 
 #include "servo/I2cPwmServoDevice.h"
 
-#ifdef MRJFX_I2C_DEVICES_ENABLED
+#ifdef LFX_I2C_DEVICES_ENABLED
 
 I2cPwmServoDevice::I2cPwmServoDevice(Adafruit_PWMServoDriver *pwm, uint8_t channel,
                                      const Position *positions, uint8_t posCount,
@@ -38,7 +38,7 @@ bool I2cPwmServoDevice::setPin(size_t i, PIN_ID p) {
 
 PIN_ID I2cPwmServoDevice::getPin(size_t i) const {
   if (i != 0) return NO_PIN;
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
   return PIN_ID{_channel, 0};
 #else
   return (PIN_ID)_channel;
@@ -102,4 +102,4 @@ int I2cPwmServoDevice::runCoroutine() {
   return 0;
 }
 
-#endif // MRJFX_I2C_DEVICES_ENABLED
+#endif // LFX_I2C_DEVICES_ENABLED

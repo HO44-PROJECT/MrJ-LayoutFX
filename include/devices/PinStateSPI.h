@@ -3,7 +3,7 @@
  * @brief PIN_ID as a two-byte struct — for ESP32 with SPI daughter-card expansion.
  *
  * Do not include directly. Include devices/PinState.h which routes to this file
- * or to PinStateGPIO.h depending on the MRJFX_SPI_CARDS_ENABLED build flag.
+ * or to PinStateGPIO.h depending on the LFX_SPI_CARDS_ENABLED build flag.
  *
  * PIN_ID encodes either a native GPIO pin or a bit on a 74HC595 daughter card:
  *

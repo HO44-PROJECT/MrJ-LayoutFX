@@ -7,7 +7,7 @@
 
 #include "api/WebUI.h"
 
-#ifdef MRJFX_WEBUI_ENABLED
+#ifdef LFX_WEBUI_ENABLED
 
   #include "api/ApiServer.h"
   #include "generated/webui_html.h"
@@ -29,4 +29,4 @@ void WebUI::_onGetUi() {
     (const char *)WEBUI_HTML_GZ, WEBUI_HTML_GZ_LEN);
 }
 
-#endif  // MRJFX_WEBUI_ENABLED
+#endif  // LFX_WEBUI_ENABLED

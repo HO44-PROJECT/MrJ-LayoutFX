@@ -4,7 +4,7 @@
  *
  * One target at a time (a GPIO pin OR an SPI 74HC595 channel). Blinks a
  * distinctive pattern (three short flashes + a pause) so the user can spot the
- * connected LED on a complex layout. Driven from MrJFX::loop() on Core 1, so it
+ * connected LED on a complex layout. Driven from LayoutFX::loop() on Core 1, so it
  * stays coherent with the coroutine scheduler and the SPI flush.
  *
  * Started/stopped by the WebUI "Identify" button via POST /api/test/identify.
@@ -17,7 +17,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
   #include <Arduino.h>
 
@@ -37,7 +37,7 @@ public:
    */
   static void startCharlieplex(uint8_t testPin, const uint8_t *lowPins, uint8_t lowCount);
 
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   /** @brief Start blinking a 74HC595 channel (card is 1-based). */
   static void startSpi(uint8_t card, uint8_t channel);
   #endif
@@ -45,7 +45,7 @@ public:
   /** @brief Stop blinking and drive the current target inactive. */
   static void stop();
 
-  /** @brief Advance the blink pattern — call every MrJFX::loop() iteration. */
+  /** @brief Advance the blink pattern — call every LayoutFX::loop() iteration. */
   static void loop();
 
   /** @brief True while a target is being identified. */
@@ -65,4 +65,4 @@ private:
   static void write(bool on);
 };
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

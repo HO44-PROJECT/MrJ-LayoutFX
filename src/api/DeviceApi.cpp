@@ -13,7 +13,7 @@
 
 #include "api/DeviceApi.h"
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
 using namespace api_keys;
 using namespace http_status;
@@ -63,7 +63,7 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/restart", HTTP_POST, _onRestart);
   ApiServer::on("/api/reload",  HTTP_POST, _onReload);
   ApiServer::on("/api/servo", HTTP_POST, _onServo);
-  #ifdef MRJFX_I2C_SCAN_ENABLED
+  #ifdef LFX_I2C_SCAN_ENABLED
   ApiServer::on("/api/scan/i2c", HTTP_GET, _onScanI2c);
   #endif
 
@@ -106,20 +106,20 @@ void DeviceApi::_onGetDevices() {
     for (size_t j = 0; j < pc; j++) {
       if (j > 0)
         json += ",";
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
       json += (int)d->getPin(j).pin;
   #else
       json += (int)d->getPin(j);
   #endif
     }
     json += F("]");
-  #ifdef MRJFX_SERIAL_SERVO_ENABLED
+  #ifdef LFX_SERIAL_SERVO_ENABLED
     if (strcmp_P("SerialServo", (const char *)d->getDeviceName()) == 0) {
       json += F(",\"servoId\":");
       json += (int)static_cast<SerialServoMotor *>(d)->getServoId();
     }
   #endif
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
     if (strcmp_P("PCA9685Servo", (const char *)d->getDeviceName()) == 0) {
       auto *srv = static_cast<I2cPwmServoDevice *>(d);
       json += F(",\"pulse_min_us\":"); json += srv->getPulseMinUs();
@@ -186,7 +186,7 @@ void DeviceApi::_onPostDevice() {
     if (strcmp(_factory->deviceId(i), id) == 0) {
       Device *d = _factory->device(i);
       d->newState((STATE_TYPE)state);
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, state);
   #endif
       ApiServer::sendJson(kOk, F("{\"ok\":true}"));
@@ -222,7 +222,7 @@ void DeviceApi::_onSwitch() {
         d->switchOn();
       else
         d->switchOff();
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, on ? 1 : 0);
   #endif
       ApiServer::sendJson(kOk, F("{\"ok\":true}"));
@@ -324,4 +324,4 @@ void DeviceApi::_onServo() {
   ApiServer::sendJson(kNotFound, F("{\"error\":\"device not found\"}"));
 }
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

@@ -23,10 +23,10 @@
 // WebUI bundle and the embedded JSON catalogs at build time: build_webui.py and
 // build_embedded_data.py parse this line and substitute every %%BRAND%% token.
 // Rebranding the project display name = editing this one line.
-#define MRJFX_PROJECT_NAME "LayoutFX"
+#define LFX_PROJECT_NAME "LayoutFX"
 
 // ── Firmware version ──────────────────────────────────────────────────────────
-#define MRJFX_FIRMWARE_VERSION "v1.0"
+#define LFX_FIRMWARE_VERSION "v1.0"
 
 // Effects parameters
 

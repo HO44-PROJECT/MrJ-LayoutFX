@@ -6,7 +6,7 @@
  * @objective Provide a singleton write-only SPI bus usable by any Device coroutine.
  *            Maintains an in-memory image of all card outputs; setPin() updates the
  *            image and marks it dirty, and flush() (called once per loop iteration
- *            from MrJFX::loop) pushes it to hardware in a single SPI.transfer burst
+ *            from LayoutFX::loop) pushes it to hardware in a single SPI.transfer burst
  *            only when it actually changed.
  *
  * Daisy-chain byte order (MSBFIRST hardware):
@@ -23,7 +23,7 @@
  * Per-tick usage (called by Device::pin_it / outputActive / simulatePWM_spi):
  *   Spi595Bus::setPin(card1based, bit, HIGH);  // updates image + marks it dirty
  *
- * @note Only compiled when MRJFX_SPI_CARDS_ENABLED is defined.
+ * @note Only compiled when LFX_SPI_CARDS_ENABLED is defined.
  *
  * @project MrJ-ArduinoRailwayFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
@@ -33,7 +33,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
 
 #include <Arduino.h>
 #include <SPI.h>
@@ -71,7 +71,7 @@ public:
    * @brief Push the current image to hardware without changing any bit.
    *
    * No-op when the image is unchanged since the last flush (dirty flag). Called
-   * every coroutine step from MrJFX::loop, so skipping the SPI transaction while
+   * every coroutine step from LayoutFX::loop, so skipping the SPI transaction while
    * the image is static is what keeps GPIO software-PWM effects jitter-free when
    * an SPI bus is configured (backlog #48).
    */
@@ -121,6 +121,6 @@ inline void pinWrite(PIN_ID p, uint8_t value) {
 
 #else
 
-#error "Spi595Bus.h included but MRJFX_SPI_CARDS_ENABLED is not defined"
+#error "Spi595Bus.h included but LFX_SPI_CARDS_ENABLED is not defined"
 
-#endif // MRJFX_SPI_CARDS_ENABLED
+#endif // LFX_SPI_CARDS_ENABLED

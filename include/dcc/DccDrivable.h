@@ -22,7 +22,7 @@
 
 #include "utils/ArduinoBoard.h"
 #include <assert.h>
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
   #include <NmraDcc.h>
 #endif
 #include "utils/utils.h"
@@ -58,7 +58,7 @@ public:
    *          the NmraDcc library with DIY manufacturer ID, version 3, and default CVs.
    */
   static void init(uint8_t pin_id, bool pullup = true) {
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
     dcc.pin(pin_id, pullup ? 1 : 0); // Enable Pullup
     dcc.init(MAN_ID_DIY, 3, 0, 0);   // Version 3, OpsModeAddressBaseCV=0
 #endif
@@ -66,13 +66,13 @@ public:
     LOG_PRINT(F("[DCC] ready, pin "));
     LOG_PRINTLN(pin_id);
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
     LOG_PRINTLN(F("[DCC] audit mode active"));
     resetSeenMessages();
 #endif
   }
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
   static void resetSeenMessages() {
     memset(dccSeenSpeed, 0, BITMAP_SIZE);
     memset(dccSeenFunc, 0, BITMAP_SIZE);
@@ -85,17 +85,17 @@ public:
    * @details Calls the NmraDcc process function to handle incoming DCC packets.
    */
   static void loop() {
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
     dcc.process();
 #endif
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
     if (millis() - lastResetTime >= AUDIT_SAMPLING) {
       resetSeenMessages();
     }
 #endif
   }
 
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
   static void notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, uint8_t OutputPower);
 
   static void notifyDccAccTurnoutBoard(uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower);
@@ -109,7 +109,7 @@ public:
   static void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState);
 
   static bool IS_OUTPUT_MODE() {
-  #ifdef MRJFX_DCC_ENABLED
+  #ifdef LFX_DCC_ENABLED
     return ((dcc.getCV(29) & CV29_OUTPUT_ADDRESS_MODE) != 0);
   #else
     return false;
@@ -174,11 +174,11 @@ public:
 protected:
   // DCC address for the device
   ADDRESS decoderAddress = 0;
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
   static NmraDcc dcc;
 #endif
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
 
   static constexpr uint16_t AUDIT_SAMPLING = 1000;
   static constexpr uint16_t MAX_DCC_ADDR = 10240;
@@ -202,4 +202,4 @@ private:
   static uint8_t DccDrivableDeviceNumber;
 };
 
-// #endif // MRJFX_DCC_ENABLED
+// #endif // LFX_DCC_ENABLED

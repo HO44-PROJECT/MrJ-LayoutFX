@@ -25,7 +25,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
   #include "utils/utils.h"
   #include <Arduino.h>
@@ -61,12 +61,12 @@ public:
    * @param password    STA WiFi password.
    * @param apSsid      AP fallback SSID (default: WIFI_AP_SSID).
    * @param apPassword  AP fallback password (default: WIFI_AP_PASSWORD, min 8 chars or "").
-   * @param port        HTTP port (default: MRJFX_API_HTTP_PORT).
+   * @param port        HTTP port (default: LFX_API_HTTP_PORT).
    * @param forceAp     Skip STA and start the SoftAP directly (recovery/safe mode).
    */
   static void init(const char *ssid, const char *password,
                    const char *apSsid, const char *apPassword,
-                   uint16_t port = MRJFX_API_HTTP_PORT,
+                   uint16_t port = LFX_API_HTTP_PORT,
                    bool forceAp = false);
 
   /** @brief Return true if the server is running in AP (access-point) mode. */
@@ -76,7 +76,7 @@ private:
   static constexpr uint8_t  kWifiRetries      = 20;   ///< Max STA connection attempts before AP fallback.
   static constexpr uint16_t kWifiRetryMs      = 500;  ///< Delay between each attempt (ms).
 
-  #ifdef MRJFX_OTA_ENABLED
+  #ifdef LFX_OTA_ENABLED
   static constexpr uint32_t kTaskStackBytes   = 8192; ///< Larger: web /update (Update.write) runs in this task.
   #else
   static constexpr uint32_t kTaskStackBytes   = 4096; ///< Stack size for the Core-0 system task.
@@ -95,7 +95,7 @@ private:
    * @param port HTTP port number (default 80).
    * @return Reference to the singleton WebServer instance.
    */
-  static WebServer &_get(uint16_t port = MRJFX_API_HTTP_PORT);
+  static WebServer &_get(uint16_t port = LFX_API_HTTP_PORT);
 
   /**
    * @brief Preflight response for CORS — registered automatically on every route.

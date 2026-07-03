@@ -91,7 +91,7 @@ against and cannot drift from the real configuration.
 ## Brand substitution — one constant for the whole project
 
 The displayed brand name has a **single source of truth**:
-`MRJFX_PROJECT_NAME` in `include/MrJRailwayFX_default.h`. Firmware display
+`LFX_PROJECT_NAME` in `include/MrJRailwayFX_default.h`. Firmware display
 strings (OLED screens, the AP-SSID default, API messages) use the macro
 directly. The web sources and the JSON catalogs carry a `%%BRAND%%` token
 instead of a literal name: `build_webui.py` substitutes it across the whole

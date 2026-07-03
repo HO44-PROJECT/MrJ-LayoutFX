@@ -16,7 +16,7 @@
 
 #include "servo/I2cPwmMotorDevice.h"
 
-#ifdef MRJFX_I2C_DEVICES_ENABLED
+#ifdef LFX_I2C_DEVICES_ENABLED
 
 /**
  * @brief Constructs an I2cPwmMotorDevice for one channel of a PCA9685 board.
@@ -81,7 +81,7 @@ bool I2cPwmMotorDevice::setPin(size_t i, PIN_ID p) {
  */
 PIN_ID I2cPwmMotorDevice::getPin(size_t i) const {
   if (i != 0) return NO_PIN;
-#ifdef MRJFX_SPI_CARDS_ENABLED
+#ifdef LFX_SPI_CARDS_ENABLED
   return PIN_ID{_channel, 0};
 #else
   return (PIN_ID)_channel;
@@ -210,4 +210,4 @@ int I2cPwmMotorDevice::runCoroutine() {
   return 0;
 }
 
-#endif // MRJFX_I2C_DEVICES_ENABLED
+#endif // LFX_I2C_DEVICES_ENABLED

@@ -9,7 +9,7 @@
 #include "utils/SafeMode.h"
 
 // NVS (Preferences) is ESP32-only; on AVR this compiles to nothing and the
-// methods are never referenced (safe mode is gated by MRJFX_CONFIG_ENABLED).
+// methods are never referenced (safe mode is gated by LFX_CONFIG_ENABLED).
 #ifdef ESP32
 
 #include <Preferences.h>

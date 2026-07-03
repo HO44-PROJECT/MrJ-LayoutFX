@@ -40,7 +40,7 @@
  * up the visual definition in board_types.json.  The firmware never interprets it.
  *
  * @note Requires ArduinoJson (>= 6) in lib_deps.
- *       For SerialServo, also requires the MRJFX_LOBOT_SERVO_ENABLED build flag.
+ *       For SerialServo, also requires the LFX_LOBOT_SERVO_ENABLED build flag.
  *       UART bus keys must match the hardware serial name (uart0, uart1, uart2).
  *
  * @project MrJ-ArduinoRailwayFX
@@ -54,7 +54,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_CONFIG_ENABLED
+#ifdef LFX_CONFIG_ENABLED
 
   #include "bus/BusRegistry.h"
   #include "config/BoardPinCount.h"
@@ -64,14 +64,14 @@
   #include <Arduino.h>
   #include <ArduinoJson.h>
 
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
     #include "spi/Spi595Bus.h"
   #endif
 
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
     #include "servo/LobotServo.h"
   #endif
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
     #include <Adafruit_PWMServoDriver.h>
   #endif
 
@@ -256,10 +256,10 @@ public:
   }
 
 private:
-  Device *_devices[MRJFX_FACTORY_MAX_DEVICES];
-  char _ids[MRJFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
-  uint8_t _boards[MRJFX_FACTORY_MAX_DEVICES];
-  STATE_TYPE _deviceDefaultStates[MRJFX_FACTORY_MAX_DEVICES]; ///< Default states from JSON config.
+  Device *_devices[LFX_FACTORY_MAX_DEVICES];
+  char _ids[LFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
+  uint8_t _boards[LFX_FACTORY_MAX_DEVICES];
+  STATE_TYPE _deviceDefaultStates[LFX_FACTORY_MAX_DEVICES]; ///< Default states from JSON config.
   size_t _count = 0;
 
   char _configName[FACTORY_LABEL_LEN] = {}; ///< Config "name" field, for OLED display.
@@ -267,7 +267,7 @@ private:
   int _dccPin = -1;
   SpiBusCfg _spiBus;
 
-  BoardCfg _boards_cfg[MRJFX_FACTORY_MAX_BOARDS];
+  BoardCfg _boards_cfg[LFX_FACTORY_MAX_BOARDS];
   uint8_t _boardCount = 0;
 
   // SPI cards seen during parse — kept only to bound spiRank and enforce the
@@ -275,7 +275,7 @@ private:
   // lives in BusRegistry (fed via regSpiCard), so no per-card array is stored here.
   uint8_t _spiCardCount = 0;
 
-  PortCfg _ports[MRJFX_FACTORY_MAX_PORTS];
+  PortCfg _ports[LFX_FACTORY_MAX_PORTS];
   size_t _portCount = 0;
 
   /** @brief Bus key → BusType catalog, populated during _parseBuses(). */
@@ -283,18 +283,18 @@ private:
     char key[FACTORY_ID_LEN] = {};
     BusType type = BUS_NONE;
   };
-  BusEntry _busEntries[MRJFX_FACTORY_MAX_BUSES];
+  BusEntry _busEntries[LFX_FACTORY_MAX_BUSES];
   uint8_t _busCount = 0;
   bool _busesSection = false; ///< A "buses" object was present in the loaded config.
   bool _uart0LogBus = false;  ///< Config declares the uart0 serial-log bus (keep logging + reserve 1/3).
 
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
-  ace_routine::Coroutine *_lobotServos[MRJFX_FACTORY_MAX_DEVICES];
+  #ifdef LFX_LOBOT_SERVO_ENABLED
+  ace_routine::Coroutine *_lobotServos[LFX_FACTORY_MAX_DEVICES];
   size_t _lobotCount = 0;
   #endif
 
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
-  Adafruit_PWMServoDriver *_pwmDrivers[MRJFX_FACTORY_MAX_BOARDS] = {};
+  #ifdef LFX_I2C_DEVICES_ENABLED
+  Adafruit_PWMServoDriver *_pwmDrivers[LFX_FACTORY_MAX_BOARDS] = {};
   #endif
 
   static constexpr uint8_t MAX_IDLE_PINS = 32; ///< Max entries in idle_pins[].
@@ -315,4 +315,4 @@ private:
   Device *_createDevice(JsonObject obj);
 };
 
-#endif // MRJFX_CONFIG_ENABLED
+#endif // LFX_CONFIG_ENABLED

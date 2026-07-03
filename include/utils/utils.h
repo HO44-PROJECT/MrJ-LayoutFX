@@ -29,19 +29,19 @@
 // --- Bi-core device-list lock (backlog #27) ------------------------------------
 // One mutex serialises the HTTP handlers (Core 0 system task) against the config
 // hot-reload that deletes every Device (Core 1). ESP32-only; a no-op elsewhere
-// (AVR is single-core with no HTTP server). Use MRJFX_DEVICE_LOCK() at the top of
+// (AVR is single-core with no HTTP server). Use LFX_DEVICE_LOCK() at the top of
 // a scope for RAII lock/unlock.
 #if defined(ESP32)
   #include <freertos/FreeRTOS.h>
   #include <freertos/semphr.h>
-extern SemaphoreHandle_t g_mrjfxDeviceMutex;
+extern SemaphoreHandle_t g_lfxDeviceMutex;
 struct MrjfxDeviceLock {
-  MrjfxDeviceLock() { if (g_mrjfxDeviceMutex) xSemaphoreTake(g_mrjfxDeviceMutex, portMAX_DELAY); }
-  ~MrjfxDeviceLock() { if (g_mrjfxDeviceMutex) xSemaphoreGive(g_mrjfxDeviceMutex); }
+  MrjfxDeviceLock() { if (g_lfxDeviceMutex) xSemaphoreTake(g_lfxDeviceMutex, portMAX_DELAY); }
+  ~MrjfxDeviceLock() { if (g_lfxDeviceMutex) xSemaphoreGive(g_lfxDeviceMutex); }
 };
-  #define MRJFX_DEVICE_LOCK() MrjfxDeviceLock _mrjfxDevLock
+  #define LFX_DEVICE_LOCK() MrjfxDeviceLock _mrjfxDevLock
 #else
-  #define MRJFX_DEVICE_LOCK() ((void)0)
+  #define LFX_DEVICE_LOCK() ((void)0)
 #endif
 
 /**
@@ -144,9 +144,9 @@ void debugPrintln(size_t value);
   // Runtime gate for Tier-2 (operational/API) serial logging. Boot-critical
   // Tier-1 messages bypass this and print directly to Serial. Set false — via the
   // uart0 "log" bus in config — to silence Tier-2 and free GPIO1/3 as plain GPIO.
-  extern bool g_mrjfxLogActive;
-  #define _LOG_S_PRINT(x) do { if (g_mrjfxLogActive) Serial.print(x); } while (0)
-  #define _LOG_S_PRINTLN(x) do { if (g_mrjfxLogActive) Serial.println(x); } while (0)
+  extern bool g_lfxLogActive;
+  #define _LOG_S_PRINT(x) do { if (g_lfxLogActive) Serial.print(x); } while (0)
+  #define _LOG_S_PRINTLN(x) do { if (g_lfxLogActive) Serial.println(x); } while (0)
 #else
   #define _LOG_S_PRINT(x)
   #define _LOG_S_PRINTLN(x)
@@ -155,9 +155,9 @@ void debugPrintln(size_t value);
 // True when GPIO1/3 are owned by the UART0 console and must not be driven as
 // plain GPIO. False once the uart0 log bus is disabled (pins freed for effects),
 // so hardware tests and effects can use them. Compile-time false when no serial.
-inline bool mrjfxUart0Reserved() {
+inline bool lfxUart0Reserved() {
 #if defined(LOG_SERIAL)
-  return g_mrjfxLogActive;
+  return g_lfxLogActive;
 #elif defined(DEBUG_SERIAL)
   return true;
 #else
@@ -165,7 +165,7 @@ inline bool mrjfxUart0Reserved() {
 #endif
 }
 
-#if defined(LOG_OLED) && defined(MRJFX_OLED_ENABLED)
+#if defined(LOG_OLED) && defined(LFX_OLED_ENABLED)
   #include "oled/OledDisplay.h"
   inline void _oledLog() {}
   inline void _oledLog(const char *s) { OledDisplay::log(s); }
@@ -186,7 +186,7 @@ inline bool mrjfxUart0Reserved() {
     _LOG_O_PRINTLN(__VA_ARGS__); \
   } while (0)
 #ifdef LOG_SERIAL
-  #define LOG_PRINTF(fmt, ...) do { if (g_mrjfxLogActive) Serial.printf(fmt, ##__VA_ARGS__); } while (0)
+  #define LOG_PRINTF(fmt, ...) do { if (g_lfxLogActive) Serial.printf(fmt, ##__VA_ARGS__); } while (0)
 #else
   #define LOG_PRINTF(fmt, ...)
 #endif
@@ -205,7 +205,7 @@ extern StatusOled oled_status;
   #define STATUS_REGISTER_DEVICE(id, label) oled_status.registerDevice(id, label)
   #define STATUS_UPDATE_DEVICE(id, state) oled_status.updateDevice(id, state)
 
-  // Internal init helper (called by MrJFX::init())
+  // Internal init helper (called by LayoutFX::init())
   inline void _statusOledInit() {
     oled_status.begin();
     #ifdef OLED_CONTRAST
@@ -214,7 +214,7 @@ extern StatusOled oled_status;
     #ifdef OLED_FLIP_MODE
       oled_status.setFlipMode(true);
     #endif
-    oled_status.showSplash(F(MRJFX_PROJECT_NAME), F(MRJFX_FIRMWARE_VERSION));
+    oled_status.showSplash(F(LFX_PROJECT_NAME), F(LFX_FIRMWARE_VERSION));
     delay(2000);
   }
 

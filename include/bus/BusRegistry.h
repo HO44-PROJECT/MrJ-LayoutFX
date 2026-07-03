@@ -7,7 +7,7 @@
  *   activate*() — initialise on first device use, idempotent.
  *
  * Additional helpers:
- *   flush()     — propagate the SPI image to hardware (call from MrJFX::loop).
+ *   flush()     — propagate the SPI image to hardware (call from LayoutFX::loop).
  *   reset()     — clear all internal state (tests only, no hardware interaction).
  *
  * @project MrJ-ArduinoRailwayFX
@@ -21,13 +21,13 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_CONFIG_ENABLED
+#ifdef LFX_CONFIG_ENABLED
 
   #include "utils/utils.h"
   #include <Arduino.h>
   #include <Wire.h>
 
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
     #include "spi/Spi595Bus.h"
   #endif
 
@@ -110,7 +110,7 @@ public:
    * @brief Mark the I2C bus as already initialised (Wire.begin called externally).
    *        Prevents activateI2c() from calling Wire.begin() a second time, which
    *        corrupts the I2C peripheral on arduino-esp32 v3.x.
-   *        Must be called in MrJFX::init() right after Wire.begin().
+   *        Must be called in LayoutFX::init() right after Wire.begin().
    */
   static void preInitI2c() { _i2cReady = true; }
 
@@ -124,12 +124,12 @@ private:
     int tx, rx, baud;
     bool initialized;
   };
-  static UartEntry _uarts[MRJFX_BUS_MAX_UART]; ///< Override limit via BUS_MAX_UART in config.h.
+  static UartEntry _uarts[LFX_BUS_MAX_UART]; ///< Override limit via BUS_MAX_UART in config.h.
   static uint8_t _uartCount;
 
   // SPI
   static int _spiMosi, _spiSclk, _spiLatch;
-  static uint8_t _spiCardPinCounts[MRJFX_BUS_MAX_SPI_CARDS]; ///< Override limit via BUS_MAX_SPI_CARDS in config.h.
+  static uint8_t _spiCardPinCounts[LFX_BUS_MAX_SPI_CARDS]; ///< Override limit via BUS_MAX_SPI_CARDS in config.h.
   static uint8_t _spiCardCount;
   static bool _spiReady;
 
@@ -139,7 +139,7 @@ private:
     int sda, scl;
     bool initialized;
   };
-  static I2cEntry _i2cs[MRJFX_BUS_MAX_I2C]; ///< Override limit via BUS_MAX_I2C in config.h.
+  static I2cEntry _i2cs[LFX_BUS_MAX_I2C]; ///< Override limit via BUS_MAX_I2C in config.h.
   static uint8_t _i2cCount;
   static bool _i2cReady;
 
@@ -147,4 +147,4 @@ private:
   static int _dccPin;
 };
 
-#endif // MRJFX_CONFIG_ENABLED
+#endif // LFX_CONFIG_ENABLED

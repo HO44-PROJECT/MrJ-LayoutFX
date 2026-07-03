@@ -5,9 +5,9 @@
  *   1. ArduinoOTA (espota)  — `pio run -t upload` over WiFi, from a dev machine.
  *   2. Web endpoint /update — upload a firmware .bin from any browser (field use).
  *
- * Both are compiled in by `#define OTA` in config.h (→ MRJFX_OTA_ENABLED).
+ * Both are compiled in by `#define OTA` in config.h (→ LFX_OTA_ENABLED).
  * The web endpoint reuses the existing ApiServer WebServer, so it needs
- * MRJFX_API_SERVER_ENABLED; ArduinoOTA only needs an active WiFi connection.
+ * LFX_API_SERVER_ENABLED; ArduinoOTA only needs an active WiFi connection.
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
@@ -18,7 +18,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_OTA_ENABLED
+#ifdef LFX_OTA_ENABLED
 
 namespace OtaUpdater {
 
@@ -39,7 +39,7 @@ void handle();
  */
 const char *hostname();
 
-  #ifdef MRJFX_API_SERVER_ENABLED
+  #ifdef LFX_API_SERVER_ENABLED
 /**
  * @brief Register GET/POST /update on the shared ApiServer WebServer.
  *        Must be called before ApiServer::init() (i.e. before the server starts).
@@ -49,4 +49,4 @@ void registerWebRoutes();
 
 } // namespace OtaUpdater
 
-#endif // MRJFX_OTA_ENABLED
+#endif // LFX_OTA_ENABLED

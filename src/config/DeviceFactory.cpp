@@ -9,7 +9,7 @@
 
 #include "config/DeviceFactory.h"
 
-#ifdef MRJFX_CONFIG_ENABLED
+#ifdef LFX_CONFIG_ENABLED
 
   // Device subclass headers — included here only (not in .h) to avoid polluting all consumers.
   #include "devices/StaticLow.h"
@@ -34,13 +34,13 @@
   #include "signals/MrJDbExitSignal.h"
   #include "traffic/TrafficLight3Phase.h"
   #include "traffic/TrafficLight4Phase.h"
-  #ifdef MRJFX_AUDIO_ENABLED
+  #ifdef LFX_AUDIO_ENABLED
     #include "audio/DfAudio.h"
   #endif
-  #ifdef MRJFX_SERIAL_SERVO_ENABLED
+  #ifdef LFX_SERIAL_SERVO_ENABLED
     #include "servo/SerialServoMotorMode.h"
   #endif
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
     #include "servo/I2cPwmServoDevice.h"
     #include "servo/I2cPwmMotorDevice.h"
   #endif
@@ -118,8 +118,8 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
   // Pass 2 — boards.
   if (doc[kSecBoards].is<JsonArray>()) {
     for (JsonObject bd : doc[kSecBoards].as<JsonArray>()) {
-      if (_boardCount >= MRJFX_FACTORY_MAX_BOARDS) {
-        LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_BOARDS reached"));
+      if (_boardCount >= LFX_FACTORY_MAX_BOARDS) {
+        LOG_PRINTLN(F("DeviceFactory: LFX_FACTORY_MAX_BOARDS reached"));
         break;
       }
 
@@ -138,8 +138,8 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
       }
 
       if (bcfg.busType == BUS_SPI_MASTER) {
-        if (_spiCardCount >= MRJFX_FACTORY_MAX_SPI_CARDS) {
-          LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_SPI_CARDS reached"));
+        if (_spiCardCount >= LFX_FACTORY_MAX_SPI_CARDS) {
+          LOG_PRINTLN(F("DeviceFactory: LFX_FACTORY_MAX_SPI_CARDS reached"));
           _boardCount++;
           continue;
         }
@@ -197,8 +197,8 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
   }
 
   for (JsonObject obj : doc[kSecDevices].as<JsonArray>()) {
-    if (_count >= MRJFX_FACTORY_MAX_DEVICES) {
-      LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_DEVICES reached"));
+    if (_count >= LFX_FACTORY_MAX_DEVICES) {
+      LOG_PRINTLN(F("DeviceFactory: LFX_FACTORY_MAX_DEVICES reached"));
       break;
     }
     Device *d = _createDevice(obj);
@@ -292,14 +292,14 @@ void DeviceFactory::fullReset() {
   _count = 0;
 
   // Delete PCA9685 I2C drivers (not coroutines, no scheduler involvement).
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++) {
+  #ifdef LFX_I2C_DEVICES_ENABLED
+  for (uint8_t i = 0; i < LFX_FACTORY_MAX_BOARDS; i++) {
     if (_pwmDrivers[i]) { delete _pwmDrivers[i]; _pwmDrivers[i] = nullptr; }
   }
   #endif
 
   // Detach and delete LobotServo coroutines (separate from the Device list).
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
   for (size_t i = 0; i < _lobotCount; i++) {
     if (_lobotServos[i]) {
       Device::detachCoroutineFromScheduler(_lobotServos[i]);
@@ -319,11 +319,11 @@ void DeviceFactory::fullReset() {
   _idlePinCount = 0;
   _spiBus       = SpiBusCfg{};
 
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
+  for (uint8_t i = 0; i < LFX_FACTORY_MAX_BOARDS; i++)
     _boards_cfg[i] = BoardCfg{};
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BUSES; i++)
+  for (uint8_t i = 0; i < LFX_FACTORY_MAX_BUSES; i++)
     _busEntries[i] = BusEntry{};
-  for (size_t i = 0; i < MRJFX_FACTORY_MAX_PORTS; i++)
+  for (size_t i = 0; i < LFX_FACTORY_MAX_PORTS; i++)
     _ports[i] = PortCfg{};
 }
 
@@ -350,18 +350,18 @@ bool DeviceFactory::resetIfEmpty() {
   _idlePinCount = 0;
   _spiBus       = SpiBusCfg{};
 
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
+  for (uint8_t i = 0; i < LFX_FACTORY_MAX_BOARDS; i++)
     _boards_cfg[i] = BoardCfg{};
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BUSES; i++)
+  for (uint8_t i = 0; i < LFX_FACTORY_MAX_BUSES; i++)
     _busEntries[i] = BusEntry{};
-  for (size_t i = 0; i < MRJFX_FACTORY_MAX_PORTS; i++)
+  for (size_t i = 0; i < LFX_FACTORY_MAX_PORTS; i++)
     _ports[i] = PortCfg{};
 
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
-  for (uint8_t i = 0; i < MRJFX_FACTORY_MAX_BOARDS; i++)
+  #ifdef LFX_I2C_DEVICES_ENABLED
+  for (uint8_t i = 0; i < LFX_FACTORY_MAX_BOARDS; i++)
     _pwmDrivers[i] = nullptr;
   #endif
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
   _lobotCount = 0;
   #endif
 
@@ -403,12 +403,12 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
 
     // Register key in the catalog before branching so it is reachable by
     // _resolveBusType() regardless of which branch runs below.
-    if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+    if (_busCount < LFX_FACTORY_MAX_BUSES)
       strncpy(_busEntries[_busCount].key, busKey, sizeof(_busEntries[0].key) - 1);
 
     if (strcmp(type, kBusDcc) == 0) {
       _dccPin = bus[kFPin] | -1;
-      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+      if (_busCount < LFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_DCC;
       BusRegistry::regDcc(_dccPin);
       LOG_PRINT(F("DeviceFactory: bus dcc pin="));
@@ -418,7 +418,7 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       _spiBus.mosi = bus[kFMosi] | -1;
       _spiBus.sclk = bus[kFSclk] | -1;
       _spiBus.latch = bus[kFLatch] | -1;
-      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+      if (_busCount < LFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_MASTER;
       if (_spiBus.configured()) {
         BusRegistry::regSpi(_spiBus.mosi, _spiBus.sclk, _spiBus.latch);
@@ -433,7 +433,7 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       }
 
     } else if (strcmp(type, kBusSpiDuplex) == 0) {
-      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+      if (_busCount < LFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_SPI_FULL;
       // Full-duplex SPI reserved — no devices use it yet.
       LOG_PRINT(F("DeviceFactory: bus spi_full_duplex "));
@@ -441,9 +441,9 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       LOG_PRINTLN(F(" — not yet handled"));
 
     } else if (strcmp(type, kBusUart) == 0) {
-      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+      if (_busCount < LFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_UART;
-      if (_portCount < MRJFX_FACTORY_MAX_PORTS) {
+      if (_portCount < LFX_FACTORY_MAX_PORTS) {
         PortCfg &cfg = _ports[_portCount];
         strncpy(cfg.name, busKey, sizeof(cfg.name) - 1);
         cfg.name[sizeof(cfg.name) - 1] = '\0';
@@ -463,11 +463,11 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
         LOG_PRINTLN(cfg.baud);
         _portCount++;
       } else {
-        LOG_PRINTLN(F("DeviceFactory: MRJFX_FACTORY_MAX_PORTS reached"));
+        LOG_PRINTLN(F("DeviceFactory: LFX_FACTORY_MAX_PORTS reached"));
       }
 
     } else if (strcmp(type, kBusI2c) == 0) {
-      if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+      if (_busCount < LFX_FACTORY_MAX_BUSES)
         _busEntries[_busCount].type = BUS_I2C;
       int sda = bus[kFSda] | -1;
       int scl = bus[kFScl] | -1;
@@ -484,7 +484,7 @@ bool DeviceFactory::_parseBuses(JsonObject buses) {
       LOG_PRINTLN(type);
     }
 
-    if (_busCount < MRJFX_FACTORY_MAX_BUSES)
+    if (_busCount < LFX_FACTORY_MAX_BUSES)
       _busCount++;
   }
   return true;
@@ -589,7 +589,7 @@ PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   if (boardIdx > 0 && boardIdx <= _boardCount) {
     const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
     if (bcfg.busType == BUS_SPI_MASTER && bcfg.spiRank > 0) {
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
       BusRegistry::activateSpi(); // Idempotent — only initialises on first call.
       return PIN_ID::spi(bcfg.spiRank, bit);
   #else
@@ -598,7 +598,7 @@ PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   #endif
     }
   }
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   return PIN_ID::gpio(bit);
   #else
   return (PIN_ID)bit;
@@ -688,8 +688,8 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   // Variable-pin
   // ------------------------------------------------------------------
   else if (strcmp(type, kDevStaticLow) == 0) {
-    PIN_ID pins[MRJFX_FACTORY_MAX_DEVICES];
-    size_t n = _pins(wiring, pins, MRJFX_FACTORY_MAX_DEVICES, boardIdx);
+    PIN_ID pins[LFX_FACTORY_MAX_DEVICES];
+    size_t n = _pins(wiring, pins, LFX_FACTORY_MAX_DEVICES, boardIdx);
     d = new StaticLow(n, pins);
   }
 
@@ -741,7 +741,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   // The HardwareSerial port is NOT opened here; DfAudio owns its own pins.
   // ------------------------------------------------------------------
   else if (strcmp(type, kDevDfAudio) == 0) {
-  #ifdef MRJFX_AUDIO_ENABLED
+  #ifdef LFX_AUDIO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
       LOG_PRINTLN(F("DeviceFactory: DfAudio — board not found"));
       return nullptr;
@@ -758,12 +758,12 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       LOG_PRINTLN(bcfg.busKey);
       return nullptr;
     }
-    #ifdef MRJFX_SPI_CARDS_ENABLED
+    #ifdef LFX_SPI_CARDS_ENABLED
     d = new DfAudio(PIN_ID::gpio((uint8_t)cfg->rx), PIN_ID::gpio((uint8_t)cfg->tx));
     #else
     d = new DfAudio((PIN_ID)(uint8_t)cfg->rx, (PIN_ID)(uint8_t)cfg->tx);
     #endif
-  #endif // MRJFX_AUDIO_ENABLED
+  #endif // LFX_AUDIO_ENABLED
   }
 
   // ------------------------------------------------------------------
@@ -771,7 +771,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   // The port is opened lazily here via BusRegistry::activateUart().
   // ------------------------------------------------------------------
   else if (strcmp(type, kDevSerialServo) == 0) {
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
       LOG_PRINTLN(F("DeviceFactory: SerialServo — board not found"));
       return nullptr;
@@ -789,7 +789,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       return nullptr;
     }
     uint8_t servoId = (uint8_t)wiring.as<int>();
-    if (_lobotCount >= MRJFX_FACTORY_MAX_DEVICES) {
+    if (_lobotCount >= LFX_FACTORY_MAX_DEVICES) {
       LOG_PRINTLN(F("DeviceFactory: LOBOT servo array full"));
       return nullptr;
     }
@@ -806,7 +806,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   // PCA9685Servo — multi-position slewing servo on a PCA9685 I2C board.
   // ------------------------------------------------------------------
   else if (strcmp(type, kDevI2cPwmServo) == 0) {
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
       LOG_PRINTLN(F("DeviceFactory: PCA9685Servo — board not found"));
       return nullptr;
@@ -859,7 +859,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   // PCA9685Motor — continuous-rotation motor on a PCA9685 I2C board.
   // ------------------------------------------------------------------
   else if (strcmp(type, kDevI2cPwmMotor) == 0) {
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
       LOG_PRINTLN(F("DeviceFactory: PCA9685Motor — board not found"));
       return nullptr;
@@ -944,4 +944,4 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   return d;
 }
 
-#endif // MRJFX_CONFIG_ENABLED
+#endif // LFX_CONFIG_ENABLED

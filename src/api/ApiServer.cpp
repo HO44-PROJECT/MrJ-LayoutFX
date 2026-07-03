@@ -9,7 +9,7 @@
 
 #include "api/ApiServer.h"
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
   #include <DNSServer.h>
 
 using namespace http_status;
@@ -29,7 +29,7 @@ DNSServer *ApiServer::_dns = nullptr;
 /**
  * @brief Lazily create the WebServer singleton with the given port.
  *        No-op if the server is already created (first call wins).
- * @param port HTTP port number (default MRJFX_API_HTTP_PORT).
+ * @param port HTTP port number (default LFX_API_HTTP_PORT).
  * @return Reference to the singleton WebServer instance.
  */
 WebServer &ApiServer::_get(uint16_t port) {
@@ -101,7 +101,7 @@ void ApiServer::on(const char *path, HTTPMethod method,
  * @param password   STA network password.
  * @param apSsid     AP fallback SSID.
  * @param apPassword AP fallback password (min 8 chars, or "" for open network).
- * @param port       HTTP port (default MRJFX_API_HTTP_PORT).
+ * @param port       HTTP port (default LFX_API_HTTP_PORT).
  */
 void ApiServer::init(const char *ssid, const char *password,
                      const char *apSsid, const char *apPassword,
@@ -150,7 +150,7 @@ void ApiServer::init(const char *ssid, const char *password,
 
   // Force AP when the caller asks (safe mode) or when compiled-in.
   bool startApDirect = forceAp;
-  #ifdef MRJFX_WIFI_FORCE_AP
+  #ifdef LFX_WIFI_FORCE_AP
   startApDirect = true;
   #endif
 
@@ -212,7 +212,7 @@ void ApiServer::init(const char *ssid, const char *password,
           // Serialise request handlers (which read/mutate the device list) against
           // the Core-1 hot-reload that deletes every Device (backlog #27).
           {
-            MRJFX_DEVICE_LOCK();
+            LFX_DEVICE_LOCK();
             _server->handleClient();
           }
           vTaskDelay(kTaskYieldTicks);
@@ -221,4 +221,4 @@ void ApiServer::init(const char *ssid, const char *password,
       "system", kTaskStackBytes, nullptr, kTaskPriority, nullptr, kTaskCore);
 }
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

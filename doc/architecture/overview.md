@@ -38,7 +38,7 @@ Each device subclasses `Device` and implements `runCoroutine()`. `newState()` re
 control entry point — details and the state sentinels are in [concurrency.md](concurrency.md).
 
 ## Boot sequence (defensive)
-Roughly, in `MrJFX::init()`: serial/log → safe-mode check → OLED (early, shows boot context) →
+Roughly, in `LayoutFX::init()`: serial/log → safe-mode check → OLED (early, shows boot context) →
 LittleFS + config load (**skipped in safe mode**) → `DeviceFactory` build + `applyDefaultStates` +
 `initIdlePins` → buses → WiFi / HTTP (`ApiServer`, Core-0 task) → OTA / mDNS → DCC. Order matters:
 pins are parked idle before anything drives them, and the API / DCC come up only after devices exist.

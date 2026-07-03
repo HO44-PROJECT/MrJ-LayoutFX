@@ -17,20 +17,20 @@
 
 // Static variable initialization
 uint8_t DccDrivable::DccDrivableDeviceNumber = 0;
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
 NmraDcc DccDrivable::dcc;
 #endif
 // Definitions of static members
 DccDrivable *DccDrivable::DccDrivableDevices[MAX_PIN_NUMBER] = {nullptr};
 ADDRESS DccDrivable::DccDrivableAddresses[MAX_PIN_NUMBER] = {0};
 
-#ifdef MRJFX_DCC_AUDIT_ENABLED
+#ifdef LFX_DCC_AUDIT_ENABLED
 uint8_t DccDrivable::dccSeenSpeed[DccDrivable::BITMAP_SIZE];
 uint8_t DccDrivable::dccSeenFunc[DccDrivable::BITMAP_SIZE];
 unsigned long DccDrivable::lastResetTime = 0;
 #endif
 
-#ifdef MRJFX_DCC_ENABLED
+#ifdef LFX_DCC_ENABLED
 /**
  * @brief Handles DCC signal state commands for registered devices.
  * @param Addr DCC address of the device (1-10239).
@@ -39,7 +39,7 @@ unsigned long DccDrivable::lastResetTime = 0;
  *          sets the function state for the corresponding device.
  */
 void DccDrivable::notifyDccState(uint16_t Addr, uint8_t State) {
-  #ifdef MRJFX_DCC_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccState] Addr="));
   DEBUG_PRINT(Addr);
   DEBUG_PRINT(F(", state="));
@@ -63,7 +63,7 @@ void DccDrivable::notifyDccState(uint16_t Addr, uint8_t State) {
  *          sets the signal output state for the corresponding device.
  */
 void DccDrivable::notifyDccSigOutputState(uint16_t Addr, uint8_t State) {
-  #ifdef MRJFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccSigOutputState] Addr="));
   DEBUG_PRINT(Addr);
   DEBUG_PRINT(F(", state="));
@@ -78,7 +78,7 @@ void DccDrivable::notifyDccSigOutputState(uint16_t Addr, uint8_t State) {
 }
 
 void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
-  #ifdef MRJFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED
 
   if (Addr >= MAX_DCC_ADDR)
     return; // sécurité
@@ -111,7 +111,7 @@ void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP 
  *          Supports 14, 28, and 128 speed steps with direction handling.
  */
 void DccDrivable::notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
-  #ifdef MRJFX_DCC_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED
 
   if (Addr >= MAX_DCC_ADDR)
     return; // sécurité
@@ -163,7 +163,7 @@ void DccDrivable::notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t 
 }
 
 void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, uint8_t OutputPower) {
-  #ifdef MRJFX_DCC_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccAccTurnoutOutput] Addr="));
   DEBUG_PRINT(Addr);
   DEBUG_PRINT(F(", direction="));
@@ -189,7 +189,7 @@ void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, ui
  *          sets the accessory state for the corresponding device.
  */
 void DccDrivable::notifyDccAccTurnoutBoard(uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower) {
-  #ifdef MRJFX_DCC_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccAccTurnoutBoard] Addr="));
   DEBUG_PRINT(BoardAddr);
   DEBUG_PRINT(F(", OutputPair="));

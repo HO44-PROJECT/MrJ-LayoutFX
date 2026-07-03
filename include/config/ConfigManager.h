@@ -1,6 +1,6 @@
 /**
  * @file ConfigManager.h
- * @brief LittleFS config loader (ESP32 / MRJFX_CONFIG_ENABLED only).
+ * @brief LittleFS config loader (ESP32 / LFX_CONFIG_ENABLED only).
  *
  * Single responsibility: mount LittleFS, parse the JSON config, initialise
  * the DeviceFactory and DCC. No HTTP concerns — routes are registered by
@@ -19,7 +19,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_CONFIG_ENABLED
+#ifdef LFX_CONFIG_ENABLED
 
   #include "config/DeviceFactory.h"
   #include "dcc/DccDrivable.h"
@@ -89,7 +89,7 @@ public:
    * @brief Schedule a hot-reload from the HTTP handler (Core 0).
    *
    * Sets a volatile flag; the actual reload is deferred to Core 1 via
-   * handlePendingReload(), which must be called from MrJFX::loop().
+   * handlePendingReload(), which must be called from LayoutFX::loop().
    * Safe to call even when devices are running — fullReset() will tear them
    * down cleanly before the new config is applied.
    */
@@ -115,4 +115,4 @@ private:
   static String _readFile(const char *path);
 };
 
-#endif // MRJFX_CONFIG_ENABLED
+#endif // LFX_CONFIG_ENABLED

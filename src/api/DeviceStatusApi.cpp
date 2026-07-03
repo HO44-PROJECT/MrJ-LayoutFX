@@ -10,14 +10,14 @@
 #include "api/DeviceApi.h"
 #include "generated/build_info.h"
 
-#ifdef MRJFX_API_SERVER_ENABLED
+#ifdef LFX_API_SERVER_ENABLED
 
 // Embedded JSON catalogs (PROGMEM, gzipped)
 #include "generated/embedded_board_types.h"
 #include "generated/embedded_device_types.h"
 #include "generated/embedded_bus_types.h"
 #include "generated/embedded_i2c_known.h"
-#include "utils/utils.h" // g_mrjfxLogActive (runtime UART0 log-bus state)
+#include "utils/utils.h" // g_lfxLogActive (runtime UART0 log-bus state)
 
 using namespace api_keys;
 using namespace http_status;
@@ -35,7 +35,7 @@ void DeviceApi::_onGetStatus() {
   LOG_PRINTLN(F("API: GET /api/status"));
   JsonDocument doc;
 
-  doc[kVersion] = MRJFX_FIRMWARE_VERSION;
+  doc[kVersion] = LFX_FIRMWARE_VERSION;
   doc[kBuildDate] = __DATE__ " " __TIME__;
   #ifdef PIOENV_NAME
   doc[kEnv] = F(PIOENV_NAME);
@@ -46,7 +46,7 @@ void DeviceApi::_onGetStatus() {
   doc[F("wifiMode")] = ap ? F("ap") : F("sta");
   doc[kConfig] = ConfigManager::configExists();
   doc[kDevices] = (int)_factory->count();
-  doc[kDevicesMax] = (int)MRJFX_FACTORY_MAX_DEVICES;
+  doc[kDevicesMax] = (int)LFX_FACTORY_MAX_DEVICES;
   doc[kCpuMhz] = ESP.getCpuFreqMHz();
   doc[kChip] = ESP.getChipModel();
   doc[kChipRev] = ESP.getChipRevision();
@@ -64,42 +64,42 @@ void DeviceApi::_onGetStatus() {
   feat[kFeatApi] = true;
   feat[kFeatWebui] = true;
   feat[kFeatConfig] = true;
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
   feat[kFeatOled] = true;
   #else
   feat[kFeatOled] = false;
   #endif
-  #ifdef MRJFX_I2C_DEVICES_ENABLED
+  #ifdef LFX_I2C_DEVICES_ENABLED
   feat[kFeatI2c] = true;
   #else
   feat[kFeatI2c] = false;
   #endif
-  #ifdef MRJFX_SPI_CARDS_ENABLED
+  #ifdef LFX_SPI_CARDS_ENABLED
   feat[kFeatSpi] = true;
   #else
   feat[kFeatSpi] = false;
   #endif
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
   feat[kFeatLobotServo] = true;
   #else
   feat[kFeatLobotServo] = false;
   #endif
-  #ifdef MRJFX_LX16A_SERVO_ENABLED
+  #ifdef LFX_LX16A_SERVO_ENABLED
   feat[kFeatLx16aServo] = true;
   #else
   feat[kFeatLx16aServo] = false;
   #endif
-  #ifdef MRJFX_DCC_ENABLED
+  #ifdef LFX_DCC_ENABLED
   feat[kFeatDcc] = true;
   #else
   feat[kFeatDcc] = false;
   #endif
-  #ifdef MRJFX_AUDIO_ENABLED
+  #ifdef LFX_AUDIO_ENABLED
   feat[kFeatAudio] = true;
   #else
   feat[kFeatAudio] = false;
   #endif
-  #ifdef MRJFX_OTA_ENABLED
+  #ifdef LFX_OTA_ENABLED
   feat[kFeatOta] = true;
   #else
   feat[kFeatOta] = false;
@@ -133,7 +133,7 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatOledStatus] = false;
   #endif
-  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  #ifdef LFX_OLED_SPLASH_ENABLED
   feat[kFeatOledSplash] = true;
   #else
   feat[kFeatOledSplash] = false;
@@ -149,12 +149,12 @@ void DeviceApi::_onGetStatus() {
   feat[kFeatOledEvents] = false;
   #endif
   // ── Network / bus / behaviour options ──
-  #ifdef MRJFX_WIFI_FORCE_AP
+  #ifdef LFX_WIFI_FORCE_AP
   feat[kFeatWifiForceAp] = true;
   #else
   feat[kFeatWifiForceAp] = false;
   #endif
-  #ifdef MRJFX_DCC_AUDIT_ENABLED
+  #ifdef LFX_DCC_AUDIT_ENABLED
   feat[kFeatDccAudit] = true;
   #else
   feat[kFeatDccAudit] = false;
@@ -164,7 +164,7 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatServoDir] = false;
   #endif
-  #ifdef MRJFX_I2C_SCAN_ENABLED
+  #ifdef LFX_I2C_SCAN_ENABLED
   feat[kFeatI2cScan] = true;
   #else
   feat[kFeatI2cScan] = false;
@@ -180,11 +180,11 @@ void DeviceApi::_onGetStatus() {
   feat[kFeatDemo] = false;
   #endif
 
-  #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(MRJFX_DCC_ENABLED)
+  #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(LFX_DCC_ENABLED)
   {
     JsonObject sp = doc[kSysPins].to<JsonObject>();
     #if defined(LOG_SERIAL)
-    if (g_mrjfxLogActive) { // runtime: 1/3 reserved only while the uart0 log bus is active
+    if (g_lfxLogActive) { // runtime: 1/3 reserved only while the uart0 log bus is active
       sp[String(1)] = kPinTx0;
       sp[String(3)] = kPinRx0;
     }
@@ -192,7 +192,7 @@ void DeviceApi::_onGetStatus() {
     sp[String(1)] = kPinTx0;
     sp[String(3)] = kPinRx0;
     #endif
-    #ifdef MRJFX_DCC_ENABLED
+    #ifdef LFX_DCC_ENABLED
     sp[String(DCC_PIN)] = kPinDcc;
     #endif
   }
@@ -202,8 +202,8 @@ void DeviceApi::_onGetStatus() {
   doc[kWifiRssi] = ap ? 0                 : WiFi.RSSI();
   doc[kWifiMac]  = WiFi.macAddress();
 
-  #define _MRJFX_STR_(x) #x
-  #define _MRJFX_STR(x) _MRJFX_STR_(x)
+  #define _LFX_STR_(x) #x
+  #define _LFX_STR(x) _LFX_STR_(x)
   static const struct {
     const char *name;
     const char *runtime;
@@ -213,14 +213,14 @@ void DeviceApi::_onGetStatus() {
   #endif
       {"ArduinoJson", ARDUINOJSON_VERSION},
   #ifdef NMRADCC_VERSION
-      {"NmraDcc", _MRJFX_STR(NMRADCC_VERSION)},
+      {"NmraDcc", _LFX_STR(NMRADCC_VERSION)},
   #endif
   #ifdef U8G2_VERSION
       {"U8g2", U8G2_VERSION},
   #endif
       {nullptr, nullptr}};
-  #undef _MRJFX_STR_
-  #undef _MRJFX_STR
+  #undef _LFX_STR_
+  #undef _LFX_STR
 
   JsonObject libs = doc[kLibs].to<JsonObject>();
   libs[kLibEspIdf] = esp_get_idf_version();
@@ -347,8 +347,8 @@ void DeviceApi::_onGetHealth() {
 void DeviceApi::_onRestart() {
   LOG_PRINTLN(F("API: POST /api/restart"));
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
-  #ifdef MRJFX_OLED_ENABLED
-  OledDisplay::showMessage(MRJFX_PROJECT_NAME, "Redemarrage...");
+  #ifdef LFX_OLED_ENABLED
+  OledDisplay::showMessage(LFX_PROJECT_NAME, "Redemarrage...");
   #endif
   delay(400);
   ESP.restart();
@@ -367,4 +367,4 @@ void DeviceApi::_onReload() {
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }
 
-#endif // MRJFX_API_SERVER_ENABLED
+#endif // LFX_API_SERVER_ENABLED

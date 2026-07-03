@@ -7,13 +7,13 @@
 
 #include "oled/OledDisplay.h"
 
-#ifdef MRJFX_OLED_ENABLED
+#ifdef LFX_OLED_ENABLED
 
   #include <stdio.h>
   #include <string.h>
   #include <Wire.h>
 
-  #ifdef MRJFX_WIFI_ENABLED
+  #ifdef LFX_WIFI_ENABLED
     #include <WiFi.h>
   #endif
 
@@ -43,7 +43,7 @@ OledDisplay oledDisplay;
 // U8G2 HW I2C constructor: pass U8X8_PIN_NONE for clock and data so that
 // begin() uses the pre-initialized Wire instance without calling Wire.begin()
 // again.  On arduino-esp32 v3.x, a second Wire.begin() call reinitialises the
-// I2C peripheral and corrupts the bus.  Wire is started in MrJFX::init().
+// I2C peripheral and corrupts the bus.  Wire is started in LayoutFX::init().
 OledDisplay::OledDisplay()
     : _u8g2(U8G2_R0, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE) {}
 
@@ -75,9 +75,9 @@ bool OledDisplay::_begin() {
   _u8g2.begin();
   _u8g2.clearBuffer();
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 12, MRJFX_PROJECT_NAME);
+  _u8g2.drawStr(0, 12, LFX_PROJECT_NAME);
   _u8g2.setFont(u8g2_font_5x7_tr);
-  _u8g2.drawStr(0, 22, MRJFX_FIRMWARE_VERSION);
+  _u8g2.drawStr(0, 22, LFX_FIRMWARE_VERSION);
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(0, 34, "Starting...");
   _u8g2.sendBuffer();
@@ -130,7 +130,7 @@ void OledDisplay::notify(const char *type, const char *id, int state) {
 // Startup splash — steam train scrolling right→left  (#define OLED_SPLASH)
 // ---------------------------------------------------------------------------
 
-  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  #ifdef LFX_OLED_SPLASH_ENABLED
 
 void OledDisplay::_drawTrain(int tx, int frame) {
   constexpr int W = 128;
@@ -185,9 +185,9 @@ void OledDisplay::_drawTrain(int tx, int frame) {
   // Title + version
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.setCursor(22, 11);
-  _u8g2.print(F(MRJFX_PROJECT_NAME));
+  _u8g2.print(F(LFX_PROJECT_NAME));
   _u8g2.setFont(u8g2_font_5x7_tr);
-  _u8g2.drawStr(22, 21, MRJFX_FIRMWARE_VERSION);
+  _u8g2.drawStr(22, 21, LFX_FIRMWARE_VERSION);
 
   // Cowcatcher (only when tx-7 >= 0 to avoid negative drawLine coords)
   if (tx >= 7 && tx < W) {
@@ -271,14 +271,14 @@ void OledDisplay::_drawSplash() {
   vTaskDelay(pdMS_TO_TICKS(500));
 }
 
-  #endif // MRJFX_OLED_SPLASH_ENABLED
+  #endif // LFX_OLED_SPLASH_ENABLED
 
 // ---------------------------------------------------------------------------
 // Coroutine body
 // ---------------------------------------------------------------------------
 
 void OledDisplay::_task(void *) {
-  #ifdef MRJFX_OLED_SPLASH_ENABLED
+  #ifdef LFX_OLED_SPLASH_ENABLED
   oledDisplay._drawSplash();
   #endif
   for (;;) {
@@ -313,7 +313,7 @@ void OledDisplay::_drawSafeMode() {
   _u8g2.drawStr(6, 17, "SAFE MODE");
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(6, 33, "config bypassed");
-  #ifdef MRJFX_WIFI_ENABLED
+  #ifdef LFX_WIFI_ENABLED
   char ip[24] = "No WiFi";
   if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
@@ -337,12 +337,12 @@ void OledDisplay::_drawIdle() {
   #if OLED_HEIGHT >= 64
   // ── Line 1 (y=10): config name or project name ────────────────────────────
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 10, _configName[0] ? _configName : MRJFX_PROJECT_NAME);
+  _u8g2.drawStr(0, 10, _configName[0] ? _configName : LFX_PROJECT_NAME);
   _u8g2.drawHLine(0, 13, 128);
 
   // ── Line 2 (y=25): IP address + WiFi signal bars (right-aligned) ──────────
   char ip[20] = "No WiFi";
-    #ifdef MRJFX_WIFI_ENABLED
+    #ifdef LFX_WIFI_ENABLED
   if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
   } else {
@@ -352,7 +352,7 @@ void OledDisplay::_drawIdle() {
     #endif
   _u8g2.drawStr(0, 25, ip);
 
-    #ifdef MRJFX_WIFI_ENABLED
+    #ifdef LFX_WIFI_ENABLED
   // WiFi bars: 4 bars right-aligned, anchored at bottom y=24
   {
     int rssi = (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : -100;
@@ -382,19 +382,19 @@ void OledDisplay::_drawIdle() {
   // ── Line 4 (y=52): active features — compile-time constant ────────────────
   {
     static const char kFeats[] =
-    #ifdef MRJFX_WIFI_ENABLED
+    #ifdef LFX_WIFI_ENABLED
       "WiFi "
     #endif
-    #ifdef MRJFX_CONFIG_ENABLED
+    #ifdef LFX_CONFIG_ENABLED
       "CFG "
     #endif
-    #ifdef MRJFX_I2C_DEVICES_ENABLED
+    #ifdef LFX_I2C_DEVICES_ENABLED
       "I2C "
     #endif
-    #ifdef MRJFX_SPI_CARDS_ENABLED
+    #ifdef LFX_SPI_CARDS_ENABLED
       "SPI "
     #endif
-    #ifdef MRJFX_DCC_ENABLED
+    #ifdef LFX_DCC_ENABLED
       "DCC"
     #endif
       "";
@@ -404,10 +404,10 @@ void OledDisplay::_drawIdle() {
 
   #else // 128×32
   _u8g2.setFont(u8g2_font_6x10_tr);
-  _u8g2.drawStr(0, 8, MRJFX_PROJECT_NAME);
+  _u8g2.drawStr(0, 8, LFX_PROJECT_NAME);
 
   char ip[20] = "No WiFi";
-    #ifdef MRJFX_WIFI_ENABLED
+    #ifdef LFX_WIFI_ENABLED
   if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
   } else {
@@ -883,4 +883,4 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   _u8g2.drawStr(ox + 13, oy + 21, "?");
 }
 
-#endif // MRJFX_OLED_ENABLED
+#endif // LFX_OLED_ENABLED

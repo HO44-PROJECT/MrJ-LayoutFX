@@ -19,15 +19,15 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_SERIAL_SERVO_ENABLED
+#ifdef LFX_SERIAL_SERVO_ENABLED
 
   #include "devices/MultiplePinDevice.h"
   #include "devices/PinState.h"
 
-  #ifdef MRJFX_LX16A_SERVO_ENABLED
+  #ifdef LFX_LX16A_SERVO_ENABLED
     #include <lx16a-servo.h>
   #endif
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
     #include "servo/LobotServo.h"
   #endif
 
@@ -57,7 +57,7 @@ class SerialServoMotor : public MultiplePinDevice<SERIAL_SERVO_PIN_COUNT> {
 public:
   static const STATE_TYPE RUN_STATE = NEXT_STABLE;
 
-  #ifdef MRJFX_LX16A_SERVO_ENABLED
+  #ifdef LFX_LX16A_SERVO_ENABLED
 
   /**
    * @brief Constructs a SerialServoMotor with a pre-initialized servo bus.
@@ -108,7 +108,7 @@ public:
   SerialServoMotor(LX16ABus *servoBus = nullptr, PIN_ID tXpin = NO_PIN, PIN_ID TXFlagGPIO = NO_PIN, int servoID = LX16A_SERVO_ID);
   #endif
 
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
   SerialServoMotor(PIN_ID tXpin, int servoID)
       : SerialServoMotor(nullptr, tXpin, NO_PIN, servoID) {}
   SerialServoMotor(PIN_ID tXpin, PIN_ID TXFlagGPIO, int servoID)
@@ -123,10 +123,10 @@ public:
    */
   virtual ~SerialServoMotor() {
   // Free allocated memory for servo and servoBus
-  #ifdef MRJFX_LX16A_SERVO_ENABLED
+  #ifdef LFX_LX16A_SERVO_ENABLED
     delete servoBus;
   #endif
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
 
   #endif
   }
@@ -193,7 +193,7 @@ public:
   inline virtual void setMotorSpeed(int16_t s) override { setSpeed((SERVO_SPEED)s); }
   inline virtual void reverseMotor() override { reverse(); }
 
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
   /**
    * @brief Hardware health check: confirms the servo responds on the bus.
    * @return 0 = OK, 1 = no response, 2 = bad response, -1 = not initialised.
@@ -279,11 +279,11 @@ public:
   #endif
 
 protected:
-  #ifdef MRJFX_LX16A_SERVO_ENABLED
+  #ifdef LFX_LX16A_SERVO_ENABLED
   LX16AServo *servo = nullptr;  ///< Pointer to the LX-16A servo object for motor mode control, initialized in constructor.
   LX16ABus *servoBus = nullptr; ///< Pointer to the serial bus for LX-16A communication, initialized in constructor.
   #endif
-  #ifdef MRJFX_LOBOT_SERVO_ENABLED
+  #ifdef LFX_LOBOT_SERVO_ENABLED
   LobotServo *servo = nullptr; ///< Pointer to LobotServo object
   #endif
   SERVO_SPEED speed    = SERVO_SPEED_DEFAULT; ///< Running speed — never 0, preserved across stop/start.
@@ -294,4 +294,4 @@ public:
   uint8_t getServoId() const { return _servoId; }
 };
 
-#endif // MRJFX_SERIAL_SERVO_ENABLED
+#endif // LFX_SERIAL_SERVO_ENABLED

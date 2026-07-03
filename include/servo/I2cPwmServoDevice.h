@@ -17,7 +17,7 @@
 
 #include <MrJRailwayFX_define.h>
 
-#ifdef MRJFX_I2C_DEVICES_ENABLED
+#ifdef LFX_I2C_DEVICES_ENABLED
 
   #include <Adafruit_PWMServoDriver.h>
   #include "devices/Device.h"
@@ -95,4 +95,4 @@ private:
   }
 };
 
-#endif // MRJFX_I2C_DEVICES_ENABLED
+#endif // LFX_I2C_DEVICES_ENABLED

@@ -8,18 +8,18 @@
 
 #include "api/OtaUpdater.h"
 
-#ifdef MRJFX_OTA_ENABLED
+#ifdef LFX_OTA_ENABLED
 
   #include <Arduino.h>
   #include <ArduinoOTA.h> // pulls in ESPmDNS + Update
   #include <Update.h>
 
-  #ifdef MRJFX_API_SERVER_ENABLED
+  #ifdef LFX_API_SERVER_ENABLED
     #include "api/ApiServer.h"
     #include <WebServer.h>
   #endif
 
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
     #include "oled/OledDisplay.h"
   #endif
 
@@ -48,7 +48,7 @@ void beginArduinoOta() {
   ArduinoOTA
       .onStart([]() {
         Serial.println(F("[OTA] update started (espota)"));
-  #ifdef MRJFX_OLED_ENABLED
+  #ifdef LFX_OLED_ENABLED
         OledDisplay::log("OTA update...");
   #endif
       })
@@ -66,7 +66,7 @@ void beginArduinoOta() {
 
 void handle() { ArduinoOTA.handle(); }
 
-  #ifdef MRJFX_API_SERVER_ENABLED
+  #ifdef LFX_API_SERVER_ENABLED
 
 namespace {
 
@@ -121,8 +121,8 @@ void registerWebRoutes() {
       });
 }
 
-  #endif // MRJFX_API_SERVER_ENABLED
+  #endif // LFX_API_SERVER_ENABLED
 
 } // namespace OtaUpdater
 
-#endif // MRJFX_OTA_ENABLED
+#endif // LFX_OTA_ENABLED

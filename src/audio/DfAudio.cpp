@@ -15,7 +15,7 @@
 
 #include "audio/DfAudio.h"
 
-#ifdef MRJFX_AUDIO_ENABLED
+#ifdef LFX_AUDIO_ENABLED
 
 /**
  * @brief Constructs a DfAudio instance and initializes the SoftwareSerial link.
@@ -187,4 +187,4 @@ void DfAudio::enterLowPowerMode()
     sendCommand(command, sizeof(command));
 }
 
-#endif // MRJFX_AUDIO_ENABLED
+#endif // LFX_AUDIO_ENABLED
