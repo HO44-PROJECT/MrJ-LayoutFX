@@ -5,3 +5,7 @@
 # tools/build_webui.py (webui_html.h), build_embedded_data.py (embedded_*.h) and
 # gen_build_info.py (build_info.h). Source of truth: src/web/*, data/*.json.
 include/generated/
+
+# Python bytecode (tools/ scripts)
+__pycache__/
+*.pyc
