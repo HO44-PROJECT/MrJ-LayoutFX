@@ -313,10 +313,19 @@ void DeviceApi::_onServo() {
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
+      Device *d = _factory->device(i);
       if (isReverse)
-        _factory->device(i)->reverseMotor();
+        d->reverseMotor();
       else
-        _factory->device(i)->setMotorSpeed((int16_t)doc[kSpeed].as<int>());
+        d->setMotorSpeed((int16_t)doc[kSpeed].as<int>());
+  #ifdef LFX_OLED_ENABLED
+      // Show the requested action on the OLED, like the switch/device handlers
+      // do for the other effects (#63). Reverse uses the -1 sentinel (the UI
+      // only sends the non-negative preset speeds); preset speeds map to their
+      // labels in OledDisplay::_stateName ("SerialServo" branch).
+      OledDisplay::notify(String(d->getDeviceName()).c_str(), id,
+                          isReverse ? -1 : doc[kSpeed].as<int>());
+  #endif
       ApiServer::sendJson(kOk, F("{\"ok\":true}"));
       return;
     }

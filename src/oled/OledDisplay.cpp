@@ -12,6 +12,8 @@
   #include <stdio.h>
   #include <string.h>
   #include <Wire.h>
+  #include "config/DeviceFactoryKeys.h" // kDev* type strings - single source of truth (no literals here)
+  #include "generated/embedded_state_labels.h" // state labels generated from device_types.json (same as the WebUI)
 
   #ifdef LFX_WIFI_ENABLED
     #include <WiFi.h>
@@ -516,46 +518,15 @@ void OledDisplay::_drawLog() {
 // ---------------------------------------------------------------------------
 
 const char *OledDisplay::_stateName(const char *type, int state) {
-  if (strcmp(type, "MrJDBBlocSignal") == 0) {
-    switch (state) {
-    case 1:
-      return "HP0";
-    case 2:
-      return "HP1";
-    }
-  } else if (strcmp(type, "MrJDBEntrySignal") == 0) {
-    switch (state) {
-    case 1:
-      return "HP0";
-    case 2:
-      return "HP1";
-    case 3:
-      return "HP2";
-    }
-  } else if (strcmp(type, "MrJDBExitSignal") == 0) {
-    switch (state) {
-    case 1:
-      return "HP00";
-    case 2:
-      return "HP1";
-    case 3:
-      return "HP2";
-    case 4:
-      return "HP0+SH1";
-    }
-  } else if (strcmp(type, "TrafficLight3ph") == 0 ||
-             strcmp(type, "TrafficLight4ph") == 0) {
-    switch (state) {
-    case 0:
-      return "STOP";
-    case 1:
-      return "GO";
-    case 2:
-      return "GO";
-    case 3:
-      return "FLASH";
-    }
+  // Lookup in the table GENERATED from device_types.json ("states" arrays) —
+  // the OLED shows the same labels as the WebUI by construction, so a drift
+  // between firmware and catalog is impossible (#64). ~25 entries, scanned
+  // once per OLED event. -1 is the servo reverse sentinel (DeviceApi::_onServo).
+  for (uint16_t i = 0; i < STATE_LABELS_LEN; i++) {
+    if (STATE_LABELS[i].value == state && strcmp(STATE_LABELS[i].type, type) == 0)
+      return STATE_LABELS[i].label;
   }
+  // Types without a "states" array (lamps, beacons…): plain on/off.
   return state > 0 ? "ON" : "OFF";
 }
 
@@ -570,18 +541,18 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── DB signals ───────────────────────────────────────────────────────────
   // SVG: rect x=8 y=1 w=8 h=20 rx=2  →  x=11 y=1 w=11 h=27 rx=3
   //      mast: line (12,22)-(12,21)   →  (16,29)-(16,28)
-  if (strcmp(type, "MrJDBBlocSignal") == 0 ||
-      strcmp(type, "MrJDBEntrySignal") == 0 ||
-      strcmp(type, "MrJDBExitSignal") == 0) {
+  if (strcmp(type, factory_keys::kDevMrJDBBlocSignal) == 0 ||
+      strcmp(type, factory_keys::kDevMrJDBEntrySignal) == 0 ||
+      strcmp(type, factory_keys::kDevMrJDBExitSignal) == 0) {
     _u8g2.drawRFrame(ox + 11, oy + 1, 11, 27, 3);
     _u8g2.drawVLine(ox + 16, oy + 28, 3);
 
-    if (strcmp(type, "MrJDBBlocSignal") == 0) {
+    if (strcmp(type, factory_keys::kDevMrJDBBlocSignal) == 0) {
       // cx=10,cy=15 r=1.5 → cx=13,cy=20 r=2
       // cx=14,cy=15 r=1.5 → cx=19,cy=20 r=2
       _u8g2.drawDisc(ox + 13, oy + 20, 2);
       _u8g2.drawDisc(ox + 19, oy + 20, 2);
-    } else if (strcmp(type, "MrJDBEntrySignal") == 0) {
+    } else if (strcmp(type, factory_keys::kDevMrJDBEntrySignal) == 0) {
       // cx=14,cy=6  r=1.5 → cx=19,cy=8  r=2  (top-right)
       // cx=10,cy=15 r=1.5 → cx=13,cy=20 r=2  (bottom-left)
       // cx=14,cy=15 r=1.5 → cx=19,cy=20 r=2  (bottom-right)
@@ -610,7 +581,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // SVG 3ph: rect x=7 y=2 w=10 h=17 rx=2 → x=9 y=3 w=13 h=23 rx=3
   //          circles cy=6,11,16 r=2       → cy=8,15,21 r=3
   //          mast line y=19-22            → y=25-29
-  if (strcmp(type, "TrafficLight3ph") == 0) {
+  if (strcmp(type, factory_keys::kDevTrafficLight3) == 0) {
     _u8g2.drawRFrame(ox + 9, oy + 3, 13, 23, 3);
     _u8g2.drawVLine(ox + 15, oy + 26, 4);
     _u8g2.drawDisc(ox + 15, oy + 8, 3);
@@ -620,7 +591,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   }
   // SVG 4ph: rect x=7 y=1 w=10 h=20 rx=2 → x=9 y=1 w=13 h=27 rx=3
   //          circles cy=5,10,15,20 r=1.7  → cy=7,13,20,27 r=2
-  if (strcmp(type, "TrafficLight4ph") == 0) {
+  if (strcmp(type, factory_keys::kDevTrafficLight4) == 0) {
     _u8g2.drawRFrame(ox + 9, oy + 1, 13, 27, 3);
     _u8g2.drawDisc(ox + 15, oy + 7, 2);
     _u8g2.drawDisc(ox + 15, oy + 13, 2);
@@ -632,7 +603,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── Led ──────────────────────────────────────────────────────────────────
   // SVG: circle cx=12 cy=11 r=4 → cx=16 cy=15 r=5
   //      8 rays, base line y=21, stem y=15-21
-  if (strcmp(type, "Led") == 0) {
+  if (strcmp(type, factory_keys::kDevLed) == 0) {
     _u8g2.drawCircle(ox + 16, oy + 15, 5);
     _u8g2.drawLine(ox + 16, oy + 1, ox + 16, oy + 3);   // top
     _u8g2.drawLine(ox + 16, oy + 24, ox + 16, oy + 27); // bottom
@@ -650,7 +621,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── Beacon ───────────────────────────────────────────────────────────────
   // SVG: circle cx=12 cy=10 r=3.5 → cx=16 cy=13 r=5
   //      8 rays, base line x=8-16 y=21
-  if (strcmp(type, "Beacon") == 0) {
+  if (strcmp(type, factory_keys::kDevBeacon) == 0) {
     _u8g2.drawCircle(ox + 16, oy + 13, 5);
     _u8g2.drawLine(ox + 16, oy + 1, ox + 16, oy + 4);   // top
     _u8g2.drawLine(ox + 16, oy + 21, ox + 16, oy + 24); // bottom
@@ -667,7 +638,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── DoubleBeacon ─────────────────────────────────────────────────────────
   // SVG: two beacons at cx=7,cy=9 and cx=17,cy=9, r=2.5
   //      base line x=5-19 y=20
-  if (strcmp(type, "DoubleBeacon") == 0) {
+  if (strcmp(type, factory_keys::kDevDoubleBeacon) == 0) {
     // Left beacon cx=7,cy=9 r=2.5 → cx=9,cy=12 r=3
     _u8g2.drawCircle(ox + 9, oy + 12, 3);
     _u8g2.drawLine(ox + 9, oy + 3, ox + 9, oy + 5);
@@ -698,7 +669,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   //      3 arms (bezier ≈ line) to cx=7,12,17 cy=7.5 → cx=9,16,23 cy=10
   //      3 filled circles r=1.5 → r=2
   //      base rect x=10 y=22 w=4 → (13,29) w=5
-  if (strcmp(type, "GasLamp") == 0) {
+  if (strcmp(type, factory_keys::kDevGasLamp) == 0) {
     _u8g2.drawVLine(ox + 16, oy + 16, 13);
     _u8g2.drawLine(ox + 16, oy + 16, ox + 9, oy + 10);
     _u8g2.drawLine(ox + 16, oy + 16, ox + 16, oy + 10);
@@ -713,7 +684,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── Electric Lamp ────────────────────────────────────────────────────────
   // SVG: bulb path (≈ circle r=6 cx=12 cy=9) + flat bottom at y=17-19
   //      connectors: M10 21h4 / M11 21v-2 M13 21v-2
-  if (strcmp(type, "ElectricLamp") == 0) {
+  if (strcmp(type, factory_keys::kDevElectricLamp) == 0) {
     _u8g2.drawCircle(ox + 16, oy + 12, 8);
     _u8g2.drawHLine(ox + 13, oy + 21, 7); // flat bottom
     _u8g2.drawHLine(ox + 13, oy + 23, 7);
@@ -724,7 +695,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
 
   // ── Defect Lamp ──────────────────────────────────────────────────────────
   // Same as Electric Lamp + X cross inside
-  if (strcmp(type, "DefectLamp") == 0) {
+  if (strcmp(type, factory_keys::kDevDefectLamp) == 0) {
     _u8g2.drawCircle(ox + 16, oy + 12, 8);
     _u8g2.drawHLine(ox + 13, oy + 21, 7);
     _u8g2.drawHLine(ox + 13, oy + 23, 7);
@@ -738,7 +709,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
 
   // ── Camp Fire ────────────────────────────────────────────────────────────
   // SVG: flame path (teardrop) + ground line y=22 + sticks
-  if (strcmp(type, "CampFire") == 0) {
+  if (strcmp(type, factory_keys::kDevCampFire) == 0) {
     // Flame (approximated as elongated teardrop)
     _u8g2.drawLine(ox + 16, oy + 3, ox + 10, oy + 13); // left side
     _u8g2.drawLine(ox + 16, oy + 3, ox + 22, oy + 13); // right side
@@ -755,7 +726,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── Torch ────────────────────────────────────────────────────────────────
   // SVG: diagonal handle (6,22)-(14,13) + (12,14)-(16,12)
   //      flame path M13 13 Q10 9 13 5 Q15 8 16 6 Q18 10 16 13Z (≈ teardrop)
-  if (strcmp(type, "Torch") == 0) {
+  if (strcmp(type, factory_keys::kDevTorch) == 0) {
     _u8g2.drawLine(ox + 8, oy + 29, ox + 19, oy + 17);  // main handle
     _u8g2.drawLine(ox + 16, oy + 19, ox + 21, oy + 16); // secondary handle
     // Flame (≈ oval at tip of torch)
@@ -766,7 +737,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
 
   // ── Storm ────────────────────────────────────────────────────────────────
   // SVG: cloud path (arc/oval top) + lightning polyline 12,11→10,16→14,16→12,21
-  if (strcmp(type, "Storm") == 0) {
+  if (strcmp(type, factory_keys::kDevStorm) == 0) {
     // Simplified cloud: two overlapping circles
     _u8g2.drawCircle(ox + 12, oy + 9, 5);
     _u8g2.drawCircle(ox + 20, oy + 9, 4);
@@ -782,7 +753,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // SVG: outer rect x=2 y=4 w=20 h=16 rx=2 → x=3 y=5 w=27 h=21 rx=3
   //      inner rect x=5 y=7 w=14 h=10 rx=1 → x=7 y=9 w=19 h=13 rx=1
   //      letters inside (too complex at 32px → horizontal lines)
-  if (strcmp(type, "NeonSign") == 0) {
+  if (strcmp(type, factory_keys::kDevNeonSign) == 0) {
     _u8g2.drawRFrame(ox + 3, oy + 5, 27, 21, 3);
     _u8g2.drawRFrame(ox + 7, oy + 9, 19, 13, 1);
     _u8g2.drawHLine(ox + 9, oy + 13, 7);
@@ -796,7 +767,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   //      spout/bec on left at ~(4,14) curving up to (4,7)
   //      flame at ~(4,8) tiny disc
   //      handle circle cx=21,cy=13 r=1.5 → cx=28,cy=17 r=2
-  if (strcmp(type, "OilLamp") == 0) {
+  if (strcmp(type, factory_keys::kDevOilLamp) == 0) {
     _u8g2.drawEllipse(ox + 16, oy + 19, 11, 4, U8G2_DRAW_ALL);
     _u8g2.drawRFrame(ox + 13, oy + 23, 6, 3, 1);      // foot
     _u8g2.drawLine(ox + 5, oy + 19, ox + 3, oy + 13); // spout
@@ -810,7 +781,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   //      6 short rays around it
   //      vertical pole (12,6.5)-(12,17) → (16,9)-(16,23)
   //      base rect x=10 y=17 w=4 h=5 → x=13 y=23 w=5 h=7
-  if (strcmp(type, "SignalFlare") == 0) {
+  if (strcmp(type, factory_keys::kDevSignalFlare) == 0) {
     _u8g2.drawDisc(ox + 16, oy + 7, 2);
     _u8g2.drawLine(ox + 16, oy + 1, ox + 16, oy + 4);  // top ray
     _u8g2.drawLine(ox + 21, oy + 3, ox + 19, oy + 5);  // top-right
@@ -827,7 +798,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── Solder Lamp ──────────────────────────────────────────────────────────
   // SVG: arch body M4,21 Q4,3 12,3 Q20,3 20,21 Z → tall rounded-top rect
   //      window rect x=6 y=10 w=12 h=5 rx=1 → x=8 y=13 w=16 h=7 rx=1
-  if (strcmp(type, "SolderLamp") == 0) {
+  if (strcmp(type, factory_keys::kDevSolderLamp) == 0) {
     _u8g2.drawRFrame(ox + 5, oy + 4, 22, 24, 8); // arch body
     _u8g2.drawRFrame(ox + 8, oy + 13, 16, 7, 1); // window
     return;
@@ -838,7 +809,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   //      diagonal (3,7)-(21,17) → (4,9)-(28,23)
   //      diagonal (21,7)-(3,17) → (28,9)-(4,23)
   //      filled circles at (3,7) and (21,17) r=2.5 → (4,9) and (28,23) r=3
-  if (strcmp(type, "RailwayCrossingLights") == 0) {
+  if (strcmp(type, factory_keys::kDevRailwayCrossing) == 0) {
     _u8g2.drawVLine(ox + 16, oy + 3, 26);
     _u8g2.drawLine(ox + 4, oy + 9, ox + 28, oy + 23);
     _u8g2.drawLine(ox + 28, oy + 9, ox + 4, oy + 23);
@@ -852,7 +823,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   //      circle cx=8.5,cy=13 r=2.5 → cx=11,cy=17 r=3
   //      circle cx=15.5,cy=13 r=2.5 → cx=21,cy=17 r=3
   //      rail lines, legs
-  if (strcmp(type, "TrainHeadLamp") == 0) {
+  if (strcmp(type, factory_keys::kDevTrainHeadLamp) == 0) {
     _u8g2.drawRFrame(ox + 4, oy + 9, 24, 16, 4);
     _u8g2.drawDisc(ox + 11, oy + 17, 3);
     _u8g2.drawDisc(ox + 21, oy + 17, 3);
@@ -866,7 +837,7 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   // ── Turn Signal ───────────────────────────────────────────────────────────
   // SVG: path M4 12L13 3V8H19V16H13V21Z (right-pointing arrow)
   //      scaled: (5,16)→(17,4)→(17,11)→(25,11)→(25,21)→(17,21)→(17,28)→(5,16)
-  if (strcmp(type, "TurnSignal") == 0) {
+  if (strcmp(type, factory_keys::kDevTurnSignal) == 0) {
     _u8g2.drawLine(ox + 5, oy + 16, ox + 17, oy + 4);
     _u8g2.drawLine(ox + 17, oy + 4, ox + 17, oy + 11);
     _u8g2.drawLine(ox + 17, oy + 11, ox + 25, oy + 11);
@@ -874,6 +845,19 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
     _u8g2.drawLine(ox + 25, oy + 21, ox + 17, oy + 21);
     _u8g2.drawLine(ox + 17, oy + 21, ox + 17, oy + 28);
     _u8g2.drawLine(ox + 17, oy + 28, ox + 5, oy + 16);
+    return;
+  }
+
+  // ── Servos / motors (same glyph as the WebUI SerialServo icon) ───────────
+  // SVG: rect x=5 y=7 w=14 h=10 rx=2 → x=7 y=9 w=19 h=13 rx=3
+  //      shaft circle cx=15 cy=12 r=2 → cx=20 cy=16 r=3
+  //      arm line (15,12)-(24,6)      → (20,16)-(31,8)
+  if (strcmp(type, factory_keys::kDevSerialServo) == 0 ||
+      strcmp(type, factory_keys::kDevI2cPwmServo) == 0 ||
+      strcmp(type, factory_keys::kDevI2cPwmMotor) == 0) {
+    _u8g2.drawRFrame(ox + 7, oy + 9, 19, 13, 3);
+    _u8g2.drawDisc(ox + 20, oy + 16, 3);
+    _u8g2.drawLine(ox + 20, oy + 16, ox + 31, oy + 8);
     return;
   }
 
