@@ -655,7 +655,10 @@ function deleteBus(key) {
       });
     })
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function () { _reloadAfterSave(); loadDebug(); renderBusesTab(); })
+    // Re-render only once loadDebug()'s fetches have refreshed _dbgCfg — a
+    // synchronous renderBusesTab() here would paint the stale bus list (#65).
+    .then(function () { _reloadAfterSave(); return loadDebug(); })
+    .then(function () { renderBusesTab(); })
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 

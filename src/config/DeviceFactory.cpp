@@ -112,6 +112,10 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
   // init() tell "config manages buses, uart0 absent → log off" from "legacy/empty
   // config → keep the compiled LOG_SERIAL default" (see logBusRequest()).
   _busesSection = doc[kSecBuses].is<JsonObject>();
+  // Re-derived from THIS config: without this reset the flag sticks to true
+  // across hot-reloads once a uart0 bus has been seen, and logBusRequest()
+  // keeps answering LOG_BUS_ON after the bus was deleted (#65).
+  _uart0LogBus = false;
   if (_busesSection)
     _parseBuses(doc[kSecBuses].as<JsonObject>());
 

@@ -208,6 +208,29 @@ void ConfigManager::handlePendingReload() {
 
   if (_factory.dccPin() >= 0)
     DccDrivable::init((uint8_t)_factory.dccPin());
+
+  #ifdef LOG_SERIAL
+  // Reconcile the uart0 log bus with the reloaded config. The boot path
+  // evaluates logBusRequest() only once, so both directions must also be
+  // applied on hot-reload: removing the bus frees GPIO1/3 without a reboot,
+  // re-adding it reopens the serial console at runtime.
+  {
+    DeviceFactory::LogBusReq req = _factory.logBusRequest();
+    if (req == DeviceFactory::LOG_BUS_OFF && g_lfxLogActive) {
+      // Direct Serial (Tier-1): last message before the console closes.
+      Serial.println(F("[Log] uart0 bus removed — releasing GPIO1/3, serial console now silent"));
+      Serial.flush();
+      Serial.end();
+      g_lfxLogActive = false;
+    } else if (req == DeviceFactory::LOG_BUS_ON && !g_lfxLogActive) {
+      Serial.begin(115200); // same fixed baud as the boot path (LayoutFX::init)
+      delay(50);            // let the UART/USB bridge settle or the first line is lost
+                            // (one-shot inside the reload — not a coroutine path)
+      g_lfxLogActive = true;
+      Serial.println(F("[Log] uart0 bus re-added — serial console reopened, GPIO1/3 reserved"));
+    }
+  }
+  #endif
 }
 
 /** @brief Delete the active config file from LittleFS. Does nothing if absent. */

@@ -524,7 +524,10 @@ function loadDebug() {
       .then(function (r) { if (!r.ok) throw r; return r.json(); })
       .then(function (ik) { _i2cKnown = _stripMeta(ik); })
       .catch(function () { });
-  Promise.all([pDevs, pTypes, pBoards, pCfg, pStatus, pDevTypes, pBusTypes, pI2cKnown]).then(function () {
+  // Returned so mutating actions can chain work on FRESH data (deleteBus & co —
+  // a synchronous render right after calling loadDebug() paints the stale
+  // _dbgCfg while the fetches are still in flight).
+  return Promise.all([pDevs, pTypes, pBoards, pCfg, pStatus, pDevTypes, pBusTypes, pI2cKnown]).then(function () {
     // Merge firmware-reserved pins — config-declared buses take precedence.
     Object.keys(_dbgFirmwarePins).forEach(function (gpio) {
       if (!_dbgSysPins[gpio]) _dbgSysPins[gpio] = _dbgFirmwarePins[gpio];
