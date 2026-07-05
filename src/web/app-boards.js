@@ -420,8 +420,16 @@ function renderPin(board, boardApiIdx, pin) {
   var grp = (dev && dev.pins && dev.pins.length > 1) ? dev.id : null;
 
   // In DCC-label mode, a pin carrying a device with a DCC address shows "#<addr>"
-  // instead of its GPIO/channel number (see setPinLabel). Others keep the number.
-  var numLabel = (_dbgPinLabel === 'dcc' && dev && dev.addr > 0) ? '#' + dev.addr : pin.label;
+  // instead of its GPIO/channel number (see setPinLabel). On SPI/I2C expansion
+  // boards pin.label is the only meaningful channel name ("Q3", "CH7") so it's
+  // always kept; on plain GPIO boards it's a static alt-function name ("TXD0")
+  // that's misleading once a device sits there outside a bus — show the bare
+  // GPIO number instead, unless a bus currently reserves the pin (_dbgSysPins),
+  // e.g. a device config-only-skipped by the uart0 guard (#66) still shows
+  // "TXD0" while the log bus owns it (#70).
+  var numLabel = (_dbgPinLabel === 'dcc' && dev && dev.addr > 0) ? '#' + dev.addr
+    : (isSpi || isI2c) ? pin.label
+      : (dev ? (_dbgSysPins[num] || num) : pin.label);
 
   // Build a small LED toggle button for a free MCU GPIO (direct hardware test).
   function mkLedBtn(gpio) {
