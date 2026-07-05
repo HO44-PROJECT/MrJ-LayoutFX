@@ -581,7 +581,7 @@ function showWelcome() {
 
   var pBoardTypes = Object.keys(_boardTypes).length > 0
     ? Promise.resolve(_boardTypes)
-    : fetch('/api/board-types').then(function (r) { return r.json(); }).catch(function () { return {}; });
+    : fetch('/api/board-types').then(function (r) { return r.json(); }).then(_stripMeta).catch(function () { return {}; });
 
   Promise.all([
     fetch('/api/config').then(function (r) {
@@ -618,7 +618,7 @@ function openWizard() {
 
   var pBoardTypes = Object.keys(_boardTypes).length > 0
     ? Promise.resolve(_boardTypes)
-    : fetch('/api/board-types').then(function (r) { return r.json(); }).catch(function () { return {}; });
+    : fetch('/api/board-types').then(function (r) { return r.json(); }).then(_stripMeta).catch(function () { return {}; });
 
   Promise.all([
     fetch('/api/config').then(function (r) {
