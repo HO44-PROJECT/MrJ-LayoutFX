@@ -66,6 +66,30 @@ void ConfigManager::init(const char *configPath) {
   if (!json.isEmpty()) {
     LOG_PRINTLN(F("[Factory] loading config..."));
     if (_factory.load(json.c_str(), BOARD_PIN_COUNTS, BOARD_PIN_COUNTS_LEN)) {
+  #ifdef LOG_SERIAL
+      // Close UART0 HERE — after load() (bus/device parsing) but BEFORE initAll().
+      // load() only PARSES the config: no pin is touched yet, so the console is
+      // still safe to use for the messages above and below. initAll() is what
+      // calls initPins() on every device, which for a device wired to GPIO1/3
+      // (legal once the log bus is off — see the #66 guard in DeviceFactory)
+      // immediately drives that pin as an output. If UART0 were still open at
+      // that point, the electrical contention between the live console and the
+      // freshly-driven output pin corrupts whatever is mid-transmission on the
+      // wire — this is what truncated the boot log mid-line in practice.
+      // Losing the boot IP from serial in this case is an acceptable trade — it
+      // is still shown on the OLED and via /api/status once WiFi is up.
+      {
+        DeviceFactory::LogBusReq req = _factory.logBusRequest();
+        g_lfxLogActive = (req == DeviceFactory::LOG_BUS_ON)  ? true
+                         : (req == DeviceFactory::LOG_BUS_OFF) ? false
+                         : g_lfxLogActive; // DEFAULT (no "buses" section) → compiled value
+        if (!g_lfxLogActive) {
+          Serial.println(F("[Log] uart0 bus off — releasing GPIO1/3, serial console now silent"));
+          Serial.flush();
+          Serial.end();
+        }
+      }
+  #endif
       _factory.initAll();
       _factory.applyDefaultStates();
       _factory.initIdlePins();
@@ -151,8 +175,38 @@ bool ConfigManager::reload() {
     LOG_PRINTLN(F("[Factory] reload — JSON parse error"));
     return false;
   }
+
+  #ifdef LOG_SERIAL
+  // Close UART0 BEFORE initAll() if the reloaded config turns the log bus off —
+  // see the identical comment in ConfigManager::init() for why this ordering
+  // (not after initAll()) is required to avoid corrupting in-flight console
+  // output when a device newly wired to GPIO1/3 gets driven as an output.
+  {
+    DeviceFactory::LogBusReq req = _factory.logBusRequest();
+    if (req == DeviceFactory::LOG_BUS_OFF && g_lfxLogActive) {
+      Serial.println(F("[Log] uart0 bus off — releasing GPIO1/3, serial console now silent"));
+      Serial.flush();
+      Serial.end();
+      g_lfxLogActive = false;
+    }
+  }
+  #endif
+
   _factory.initAll();
   _factory.applyDefaultStates();
+
+  #ifdef LOG_SERIAL
+  {
+    DeviceFactory::LogBusReq req = _factory.logBusRequest();
+    if (req == DeviceFactory::LOG_BUS_ON && !g_lfxLogActive) {
+      Serial.begin(115200);
+      delay(50);
+      g_lfxLogActive = true;
+      Serial.println(F("[Log] uart0 bus re-added — serial console reopened, GPIO1/3 reserved"));
+    }
+  }
+  #endif
+
   LOG_PRINT(F("[Factory] reload — "));
   LOG_PRINT(_factory.count());
   LOG_PRINTLN(F(" device(s) ready"));
@@ -199,21 +253,18 @@ void ConfigManager::handlePendingReload() {
     ace_routine::CoroutineScheduler::setup();
     return;
   }
-  _factory.initAll();
-  _factory.applyDefaultStates();
-  ace_routine::CoroutineScheduler::setup();
-  LOG_PRINT(F("[Factory] hot-reload — "));
-  LOG_PRINT(_factory.count());
-  LOG_PRINTLN(F(" device(s) ready"));
-
-  if (_factory.dccPin() >= 0)
-    DccDrivable::init((uint8_t)_factory.dccPin());
 
   #ifdef LOG_SERIAL
-  // Reconcile the uart0 log bus with the reloaded config. The boot path
-  // evaluates logBusRequest() only once, so both directions must also be
-  // applied on hot-reload: removing the bus frees GPIO1/3 without a reboot,
-  // re-adding it reopens the serial console at runtime.
+  // Reconcile the uart0 log bus with the reloaded config BEFORE initAll(): removing
+  // the bus must close UART0 here, not after, because initAll() (below) calls
+  // initPins() on every device — including one now legally wired to GPIO1/3 (the
+  // #66 guard only skips it while the bus is active) — which drives that pin as an
+  // output immediately. Leaving UART0 open across that call means the console is
+  // still transmitting while the pin gets toggled: electrical contention that
+  // corrupts/truncates whatever is mid-transmission (the boot-time equivalent of
+  // this bit us via a truncated log line). Re-adding the bus is the opposite
+  // direction — no pin is ever driven while it's active, so reopening it after
+  // initAll() is safe and keeps the "device(s) ready" summary on the console.
   {
     DeviceFactory::LogBusReq req = _factory.logBusRequest();
     if (req == DeviceFactory::LOG_BUS_OFF && g_lfxLogActive) {
@@ -222,7 +273,18 @@ void ConfigManager::handlePendingReload() {
       Serial.flush();
       Serial.end();
       g_lfxLogActive = false;
-    } else if (req == DeviceFactory::LOG_BUS_ON && !g_lfxLogActive) {
+    }
+  }
+  #endif
+
+  _factory.initAll();
+  _factory.applyDefaultStates();
+  ace_routine::CoroutineScheduler::setup();
+
+  #ifdef LOG_SERIAL
+  {
+    DeviceFactory::LogBusReq req = _factory.logBusRequest();
+    if (req == DeviceFactory::LOG_BUS_ON && !g_lfxLogActive) {
       Serial.begin(115200); // same fixed baud as the boot path (LayoutFX::init)
       delay(50);            // let the UART/USB bridge settle or the first line is lost
                             // (one-shot inside the reload — not a coroutine path)
@@ -231,6 +293,13 @@ void ConfigManager::handlePendingReload() {
     }
   }
   #endif
+
+  LOG_PRINT(F("[Factory] hot-reload — "));
+  LOG_PRINT(_factory.count());
+  LOG_PRINTLN(F(" device(s) ready"));
+
+  if (_factory.dccPin() >= 0)
+    DccDrivable::init((uint8_t)_factory.dccPin());
 }
 
 /** @brief Delete the active config file from LittleFS. Does nothing if absent. */
