@@ -75,13 +75,19 @@ function dbgFindDev(boardApiIdx, wiring) {
 
 // ── Rendering ────────────────────────────────────────────────────────
 
-// Sync the layout name to both the header subtitle and the settings input field.
+// Captured once at load, before applyLayoutName ever touches document.title —
+// %%BRAND%% is already substituted server-side by then (#67).
+var _dbgBrandTitle = document.title;
+
+// Sync the layout name to both the header subtitle, the settings input field, and
+// the browser tab title (#67 — distinguishes devices/layouts across open tabs).
 // Does not update the input if it currently has focus (prevents overwriting user typing).
 function applyLayoutName(name) {
   var span = document.getElementById('hdr-layout-name');
   if (span) span.textContent = name ? ' — ' + name : '';
   var inp = document.getElementById('cfg-layout-name');
   if (inp && inp !== document.activeElement) inp.value = name || '';
+  document.title = name ? _dbgBrandTitle + ' — ' + name : _dbgBrandTitle;
 }
 
 // Called on every keystroke in the layout name field; updates the header and auto-saves.
