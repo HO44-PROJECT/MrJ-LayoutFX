@@ -45,12 +45,23 @@ function openBoardEditor(cfgIdx) {
   var hasMainBoard = isNew && ((_dbgCfg && _dbgCfg.boards) || []).some(function (b) {
     return !(_boardTypes[b.type] && _boardTypes[b.type].busType);
   });
+  // When editing an existing board, only offer types from its own category — a main
+  // board can only become another main board, an expansion board only another
+  // expansion board (#72). "New" keeps both categories: the generic "+ Carte" button
+  // is also how the very first main board gets added outside the wizard.
+  var editingMain = !isNew && board && !(_boardTypes[board.type] && _boardTypes[board.type].busType);
+  var editingExpansion = !isNew && board && !!(_boardTypes[board.type] && _boardTypes[board.type].busType);
   // Build the board-type <select>.  Rules for disabling an option:
   //   – Main board (busType===null) disabled if another main board already exists.
   //   – Expansion board disabled if no compatible bus is configured and no firmware
   //     feature flag covers its bus type (feature flags allow pre-configuration before
   //     the bus entry is actually created).
-  typeEl.innerHTML = Object.keys(_boardTypes).map(function (k) {
+  typeEl.innerHTML = Object.keys(_boardTypes).filter(function (k) {
+    var isMainType = !_boardTypes[k].busType;
+    if (editingMain) return isMainType;
+    if (editingExpansion) return !isMainType;
+    return true;
+  }).map(function (k) {
     var def = _boardTypes[k];
     var required = def.busType || null;
     var isMainType = !required;
