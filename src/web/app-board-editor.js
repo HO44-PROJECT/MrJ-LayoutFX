@@ -319,6 +319,20 @@ function addLogBus() {
     .then(function (cfg) {
       if (!cfg.buses) cfg.buses = {};
       if (cfg.buses.uart0) return Promise.resolve(null); // already present
+      // Warn when devices are wired to GPIO 1/3 on a GPIO board: while the log
+      // bus is active the firmware SKIPS them (#66) — they stay in the config
+      // and revive when the bus is removed.
+      var gpioBoards = {}; // board ids with no bus (root/GPIO)
+      (cfg.boards || []).forEach(function (b) { if (!b.bus) gpioBoards[b.id] = true; });
+      var conflicts = (cfg.devices || []).filter(function (d) {
+        if (d.board && !gpioBoards[d.board]) return false; // bus board: wiring ≠ GPIO
+        var w = Array.isArray(d.wiring) ? d.wiring : [d.wiring];
+        return w.indexOf(1) >= 0 || w.indexOf(3) >= 0;
+      }).map(function (d) { return d.id; });
+      if (conflicts.length &&
+          !confirm(t('bue.add_log_conflicts').replace('{{list}}', conflicts.join(', ')))) {
+        return Promise.resolve(null); // user cancelled
+      }
       cfg.buses.uart0 = { type: 'uart', tx: 1, rx: 3, baud: 115200 };
       return fetch('/api/config', {
         method: 'POST',
@@ -640,13 +654,26 @@ function saveBusEditor() {
 }
 
 // Delete a bus from config.json; also removes all boards that depended on it.
+// Devices wired to those boards are KEPT in the config (they become dormant —
+// the firmware skips unknown-board devices, #68 — and revive if the board
+// comes back); the confirm dialog lists them so the user knows.
 function deleteBus(key) {
-  if (!confirm(t('bue.del_confirm').replace('{{key}}', key))) return;
   fetch('/api/config')
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function (cfg) {
+      var removedBoards = (cfg.boards || [])
+        .filter(function (b) { return b.bus === key; })
+        .map(function (b) { return b.id; });
+      var orphans = (cfg.devices || [])
+        .filter(function (d) { return removedBoards.indexOf(d.board) >= 0; })
+        .map(function (d) { return d.id; });
+      var msg = t('bue.del_confirm').replace('{{key}}', key);
+      if (orphans.length) {
+        msg += '\n\n' + t('bue.del_confirm_orphans').replace('{{list}}', orphans.join(', '));
+      }
+      if (!confirm(msg)) return null; // user cancelled — thread a sentinel down the chain
       delete cfg.buses[key];
-      // Remove boards that depended on this bus
+      // Remove boards that depended on this bus (devices stay — see above)
       cfg.boards = cfg.boards.filter(function (b) { return b.bus !== key; });
       return fetch('/api/config', {
         method: 'POST',
@@ -654,11 +681,18 @@ function deleteBus(key) {
         body: JSON.stringify(cfg)
       });
     })
-    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (r) {
+      if (r === null) return null; // cancelled
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     // Re-render only once loadDebug()'s fetches have refreshed _dbgCfg — a
     // synchronous renderBusesTab() here would paint the stale bus list (#65).
-    .then(function () { _reloadAfterSave(); return loadDebug(); })
-    .then(function () { renderBusesTab(); })
+    .then(function (done) {
+      if (done === null) return null;
+      _reloadAfterSave();
+      return loadDebug().then(function () { renderBusesTab(); });
+    })
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 

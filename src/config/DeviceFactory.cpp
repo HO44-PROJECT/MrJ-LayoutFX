@@ -602,6 +602,15 @@ PIN_ID DeviceFactory::_pin(JsonVariant v, uint8_t boardIdx) {
   #endif
     }
   }
+  // Belt-and-braces: GPIO 6-11 are the ESP32 SPI-flash pins — never legal as
+  // effect outputs. Driving them stalls flash access and trips the watchdog
+  // into a boot loop (#68), so refuse them here whatever the config says.
+  if (bit >= 6 && bit <= 11) {
+    LOG_PRINT(F("DeviceFactory: GPIO "));
+    LOG_PRINT(bit);
+    LOG_PRINTLN(F(" is an SPI-flash pin — wiring refused"));
+    return NO_PIN; // works for both PIN_ID variants (struct constant / scalar define)
+  }
   #ifdef LFX_SPI_CARDS_ENABLED
   return PIN_ID::gpio(bit);
   #else
@@ -653,6 +662,58 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   int address = obj[kFAddress] | 0;
   JsonVariant wiring = obj[kFWiring];
   uint8_t boardIdx = _resolveBoardIdx(obj[kFBoard]);
+
+  // Orphan guard: a board that is NAMED but unknown (e.g. deleted along with
+  // its bus) must SKIP the device — never fall back to root GPIO, where a 595
+  // card's wiring bits would be reinterpreted as raw pin numbers and can land
+  // on the ESP32 SPI-flash pins (GPIO 6-11) → watchdog boot loop (#68).
+  // The device stays in the config and revives when its board comes back.
+  // boardIdx 0 remains legitimate only for an absent/empty "board" field.
+  {
+    const char *boardId = obj[kFBoard] | "";
+    if (boardId[0] != '\0' && boardIdx == 0) {
+      LOG_PRINT(F("DeviceFactory: device '"));
+      LOG_PRINT(obj[kFId] | "");
+      LOG_PRINT(F("' SKIPPED — unknown board '"));
+      LOG_PRINT(boardId);
+      LOG_PRINTLN(F("'"));
+      return nullptr;
+    }
+  }
+
+  #ifdef LOG_SERIAL
+  // uart0 contention guard (#66): while THIS config keeps the uart0 log bus
+  // (pass 1 is already parsed, so logBusRequest() is authoritative here — NOT
+  // the runtime g_lfxLogActive, which is only reconciled after load), any
+  // device wired to GPIO 1 or 3 on a plain-GPIO board is SKIPPED: an effect on
+  // TX0 kills the console and one on RX0 fights the USB bridge electrically.
+  // The device stays in the config and revives once the log bus is removed.
+  {
+    LogBusReq req = logBusRequest();
+    bool uart0Owned = (req == LOG_BUS_ON) ||
+                      (req == LOG_BUS_DEFAULT && g_lfxLogActive);
+    bool rootBoard = (boardIdx == 0) ||
+                     (boardIdx <= _boardCount && _boards_cfg[boardIdx - 1].isRoot());
+    if (uart0Owned && rootBoard) {
+      bool onUart0Pins = false;
+      if (wiring.is<JsonArray>()) {
+        for (JsonVariant v : wiring.as<JsonArray>()) {
+          int p = v.as<int>();
+          if (p == 1 || p == 3) onUart0Pins = true;
+        }
+      } else if (wiring.is<int>()) {
+        int p = wiring.as<int>();
+        if (p == 1 || p == 3) onUart0Pins = true;
+      }
+      if (onUart0Pins) {
+        LOG_PRINT(F("DeviceFactory: device '"));
+        LOG_PRINT(obj[kFId] | "");
+        LOG_PRINTLN(F("' SKIPPED — GPIO1/3 reserved by the uart0 log bus"));
+        return nullptr;
+      }
+    }
+  }
+  #endif
 
   Device *d = nullptr;
 
