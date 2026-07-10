@@ -30,6 +30,7 @@ int OledDisplay::_evtState = 0;
 volatile bool OledDisplay::_hasEvent = false;
 char OledDisplay::_logMsg[44] = {};
 volatile bool OledDisplay::_hasLog = false;
+char OledDisplay::_stateNameBuf[8] = {};
 volatile bool OledDisplay::_safeMode = false;
 
 // ---------------------------------------------------------------------------
@@ -526,6 +527,14 @@ const char *OledDisplay::_stateName(const char *type, int state) {
     if (STATE_LABELS[i].value == state && strcmp(STATE_LABELS[i].type, type) == 0)
       return STATE_LABELS[i].label;
   }
+  // Servos/motors driven by DCC speed: a continuous value (-1000..+1000, not a
+  // fixed state), so it will never match STATE_LABELS — format it directly (#46).
+  if (strcmp(type, factory_keys::kDevSerialServo) == 0 ||
+      strcmp(type, factory_keys::kDevI2cPwmServo) == 0 ||
+      strcmp(type, factory_keys::kDevI2cPwmMotor) == 0) {
+    snprintf(_stateNameBuf, sizeof(_stateNameBuf), "%d", state);
+    return _stateNameBuf;
+  }
   // Types without a "states" array (lamps, beacons…): plain on/off.
   return state > 0 ? "ON" : "OFF";
 }
@@ -819,18 +828,19 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
   }
 
   // ── Train Head Lamp ───────────────────────────────────────────────────────
-  // SVG: rect x=3 y=7 w=18 h=12 rx=3 → x=4 y=9 w=24 h=16 rx=4
-  //      circle cx=8.5,cy=13 r=2.5 → cx=11,cy=17 r=3
-  //      circle cx=15.5,cy=13 r=2.5 → cx=21,cy=17 r=3
-  //      rail lines, legs
+  // SVG: mounting bracket rect x=10 y=1 w=4 h=5 rx=1 → x=13 y=1 w=5 h=7 rx=1
+  //      lamp body circle cx=12,cy=13 r=6         → cx=16,cy=17 r=8
+  //      lamp bulb (filled) cx=12,cy=10.5 r=2      → cx=16,cy=14 r=3
+  //      ground rail line (2,18)-(22,18)           → (3,24)-(29,24)
+  //      left wheel circle cx=5.5,cy=21 r=2.5      → cx=7,cy=28 r=3
+  //      right wheel circle cx=18.5,cy=21 r=2.5    → cx=25,cy=28 r=3
   if (strcmp(type, factory_keys::kDevTrainHeadLamp) == 0) {
-    _u8g2.drawRFrame(ox + 4, oy + 9, 24, 16, 4);
-    _u8g2.drawDisc(ox + 11, oy + 17, 3);
-    _u8g2.drawDisc(ox + 21, oy + 17, 3);
-    _u8g2.drawLine(ox + 4, oy + 13, ox + 1, oy + 13);
-    _u8g2.drawLine(ox + 4, oy + 21, ox + 1, oy + 21);
-    _u8g2.drawLine(ox + 11, oy + 25, ox + 9, oy + 29);
-    _u8g2.drawLine(ox + 21, oy + 25, ox + 23, oy + 29);
+    _u8g2.drawRFrame(ox + 13, oy + 1, 5, 7, 1);
+    _u8g2.drawCircle(ox + 16, oy + 17, 8);
+    _u8g2.drawDisc(ox + 16, oy + 14, 3);
+    _u8g2.drawLine(ox + 3, oy + 24, ox + 29, oy + 24);
+    _u8g2.drawCircle(ox + 7, oy + 28, 3);
+    _u8g2.drawCircle(ox + 25, oy + 28, 3);
     return;
   }
 

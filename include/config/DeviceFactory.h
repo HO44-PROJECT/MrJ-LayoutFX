@@ -223,6 +223,20 @@ public:
   const char *deviceId(size_t i) const { return (i < _count) ? _ids[i] : ""; }
 
   /**
+   * @brief Reverse-lookup the config id string for a device pointer.
+   *        Used by the DCC dispatch path (DccDrivable only holds a Device*,
+   *        never a factory index) to report OLED events (#46).
+   * @param dev Device pointer, as held by DccDrivable::DccDrivableDevices[].
+   * @return Null-terminated id string, or "" if not found.
+   */
+  const char *idOf(const Device *dev) const {
+    for (size_t i = 0; i < _count; i++)
+      if (_devices[i] == dev)
+        return _ids[i];
+    return "";
+  }
+
+  /**
    * @brief Get the 1-based board index for a device (0 = root MCU).
    * @param i Zero-based device index.
    */

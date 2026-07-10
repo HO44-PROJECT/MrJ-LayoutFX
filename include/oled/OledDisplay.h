@@ -135,6 +135,11 @@ private:
   static char _logMsg[44];
   static volatile bool _hasLog;
 
+  // Scratch buffer for _stateName()'s formatted-speed case (servos/motors have
+  // a continuous value, not a fixed label in STATE_LABELS) — Core 0 only, safe
+  // to share since _drawEvent() is the sole caller (#46).
+  static char _stateNameBuf[8];
+
   // Safe-mode screen (config bypassed) — persistent until reboot.
   static volatile bool _safeMode;
 
