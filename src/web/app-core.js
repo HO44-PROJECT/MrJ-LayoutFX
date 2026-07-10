@@ -89,6 +89,7 @@ function switchCfgTab(name) {
   if (name === 'boards') { loadDebug(); }
   if (name === 'buses') { loadDebug(); }
   if (name === 'files') { loadConfigs(); cfgStatus('', ''); }
+  if (name === 'diag') { startDccPoll(); } else { stopDccPoll(); }
 }
 
 

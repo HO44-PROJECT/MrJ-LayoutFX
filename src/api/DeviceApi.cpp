@@ -57,6 +57,7 @@ void DeviceApi::init(const DeviceFactory &factory) {
   ApiServer::on("/api/bus-types", HTTP_GET, _onGetBusTypes);
   ApiServer::on("/api/i2c-known", HTTP_GET, _onGetI2cKnown);
   ApiServer::on("/api/health", HTTP_GET, _onGetHealth);
+  ApiServer::on("/api/dcc-status", HTTP_GET, _onGetDccStatus);
   ApiServer::on("/api/test/gpio", HTTP_POST, _onTestGpio);
   ApiServer::on("/api/test/spi", HTTP_POST, _onTestSpi);
   ApiServer::on("/api/test/identify", HTTP_POST, _onIdentify);

@@ -35,6 +35,8 @@
  *   GET    /api/bus-types        — stream bus_types.json from LittleFS
  *   GET    /api/i2c-known        — stream i2c_known.json from LittleFS
  *   GET    /api/health           — hardware health check for each device (servo ACK, etc.)
+ *   GET    /api/dcc-status       — DCC packet counters + last-seen per message category,
+ *                                  plus a decoded-event log (oldest to newest)
  *   POST   /api/restart          — immediate ESP32 restart
  *   POST   /api/reload           — re-parse config.json without rebooting (wizard only)
  *   POST   /api/test/gpio        — body {"pin":<n>,"state":<0|1>} — raw GPIO toggle
@@ -80,6 +82,9 @@
   #endif
   #ifdef LFX_I2C_SCAN_ENABLED
     #include <Wire.h>
+  #endif
+  #ifdef LFX_DCC_ENABLED
+    #include "dcc/DccDrivable.h"
   #endif
 
 class DeviceApi {
@@ -160,6 +165,8 @@ private:
   static void _onGetI2cKnown();
   /** @brief GET /api/health      — Per-device hardware health check results. */
   static void _onGetHealth();
+  /** @brief GET /api/dcc-status  — DCC packet counters, last-seen per category, and decoded-event log. */
+  static void _onGetDccStatus();
   /** @brief POST /api/restart    — Immediate ESP32 restart. */
   static void _onRestart();
   /** @brief POST /api/reload    — Re-parse config.json without rebooting. Returns 409 if devices are already loaded. */

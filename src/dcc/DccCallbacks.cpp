@@ -113,6 +113,10 @@ void notifyDccMsg(DCC_MSG *Msg)
     if (Msg->Size < 2)
         return;
 
+    // Counts every raw packet, decoded or not — the WebUI diagnostic screen uses this
+    // to prove the DCC bus itself is alive even if nothing below matches a known packet type.
+    DccDrivable::trackDccMsg(DccDrivable::DCC_MSG_RAW);
+
 #ifdef LFX_DCC_AUDIT_ENABLED
     // Heartbeat: prove the DCC input is alive. If this never prints when a command
     // station is connected, the problem is hardware (pin/opto/wiring), not software.

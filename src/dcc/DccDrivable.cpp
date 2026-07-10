@@ -15,14 +15,44 @@
 
 #include "dcc/DccDrivable.h"
 
+#ifdef LFX_OLED_ENABLED
+  #include "config/ConfigManager.h"
+  #include "oled/OledDisplay.h"
+#endif
+
 // Static variable initialization
 uint8_t DccDrivable::DccDrivableDeviceNumber = 0;
 #ifdef LFX_DCC_ENABLED
 NmraDcc DccDrivable::dcc;
+uint32_t DccDrivable::dccMsgCount[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
+unsigned long DccDrivable::dccMsgLastMs[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
+DccDrivable::DccLogEntry DccDrivable::dccLog[DccDrivable::DCC_MSG_KIND_COUNT][DccDrivable::DCC_LOG_CAPACITY] = {};
+uint8_t DccDrivable::dccLogHead[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
+uint8_t DccDrivable::dccLogCount[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
 #endif
 // Definitions of static members
 DccDrivable *DccDrivable::DccDrivableDevices[MAX_PIN_NUMBER] = {nullptr};
 ADDRESS DccDrivable::DccDrivableAddresses[MAX_PIN_NUMBER] = {0};
+
+#if defined(LFX_DCC_ENABLED) && defined(LFX_OLED_ENABLED)
+// Last state notified to the OLED per registered device slot (parallel to
+// DccDrivableAddresses[]/DccDrivableDevices[]) — DCC command stations repeat
+// packets continuously, so without this the event screen would flicker on
+// every repeat of an unchanged state/speed instead of only on real transitions (#46).
+static int16_t _dccLastNotified[MAX_PIN_NUMBER];
+static bool _dccEverNotified[MAX_PIN_NUMBER] = {false};
+
+// Post an OLED event for slot i only if `value` differs from what was last
+// notified for that slot (or this is the first notify for it).
+static void _dccNotifyOledIfChanged(uint8_t i, Device *dev, int value) {
+  if (_dccEverNotified[i] && _dccLastNotified[i] == value)
+    return;
+  _dccLastNotified[i] = value;
+  _dccEverNotified[i] = true;
+  const char *id = ConfigManager::factory().idOf(dev);
+  OledDisplay::notify(String(dev->getDeviceName()).c_str(), id, value);
+}
+#endif
 
 #ifdef LFX_DCC_AUDIT_ENABLED
 uint8_t DccDrivable::dccSeenSpeed[DccDrivable::BITMAP_SIZE];
@@ -51,6 +81,9 @@ void DccDrivable::notifyDccState(uint16_t Addr, uint8_t State) {
     if (DccDrivableAddresses[i] == Addr) {
       // Set speed for the matching device
       DccDrivableDevices[i]->setDccFunction(State);
+      #ifdef LFX_OLED_ENABLED
+      _dccNotifyOledIfChanged(i, static_cast<Device *>(DccDrivableDevices[i]), State & 0x01);
+      #endif
     }
   }
 }
@@ -63,22 +96,32 @@ void DccDrivable::notifyDccState(uint16_t Addr, uint8_t State) {
  *          sets the signal output state for the corresponding device.
  */
 void DccDrivable::notifyDccSigOutputState(uint16_t Addr, uint8_t State) {
-  #ifdef LFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED
+  trackDccMsg(DCC_MSG_SIGNAL);
+  #ifdef LFX_DCC_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccSigOutputState] Addr="));
   DEBUG_PRINT(Addr);
   DEBUG_PRINT(F(", state="));
   DEBUG_PRINTLN(State);
   #endif
+  bool matched = false;
   for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {
     if (DccDrivableAddresses[i] == Addr) {
+      matched = true;
       // Set speed for the matching device
       DccDrivableDevices[i]->setDccSigOutputState(State);
+      logDccEvent(DCC_MSG_SIGNAL, Addr, State, static_cast<Device *>(DccDrivableDevices[i])->getDeviceName());
+      #ifdef LFX_OLED_ENABLED
+      _dccNotifyOledIfChanged(i, static_cast<Device *>(DccDrivableDevices[i]), State);
+      #endif
     }
   }
+  if (!matched)
+    logDccEvent(DCC_MSG_SIGNAL, Addr, State, nullptr);
 }
 
 void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
-  #ifdef LFX_DCC_AUDIT_ENABLED_AUDIT_ENABLED
+  trackDccMsg(DCC_MSG_FUNC);
+  #ifdef LFX_DCC_AUDIT_ENABLED
 
   if (Addr >= MAX_DCC_ADDR)
     return; // sécurité
@@ -97,6 +140,11 @@ void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP 
   }
 
   #endif
+
+  // No registered device currently reacts to raw function-group packets (setDccFunction
+  // is wired from notifyDccState, a distinct legacy path) — logged with no device name so
+  // the diagnostic log still shows the packet arrived, which is the point of this callback.
+  logDccEvent(DCC_MSG_FUNC, Addr, FuncState, nullptr);
 }
 
 /**
@@ -111,6 +159,7 @@ void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP 
  *          Supports 14, 28, and 128 speed steps with direction handling.
  */
 void DccDrivable::notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps) {
+  trackDccMsg(DCC_MSG_SPEED);
   #ifdef LFX_DCC_AUDIT_ENABLED
 
   if (Addr >= MAX_DCC_ADDR)
@@ -158,11 +207,19 @@ void DccDrivable::notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t 
 
       // Set speed for the matching device
       DccDrivableDevices[i]->setDccSpeed(mappedSpeed);
+      logDccEvent(DCC_MSG_SPEED, Addr, mappedSpeed, static_cast<Device *>(DccDrivableDevices[i])->getDeviceName());
+      #ifdef LFX_OLED_ENABLED
+      // mappedSpeed changes on nearly every repeated packet at full throttle (throttle
+      // jitter of +/-1 step), so dedup on it directly — same guard as the other two
+      // callbacks, keeping the event screen quiet while the train holds a steady speed.
+      _dccNotifyOledIfChanged(i, static_cast<Device *>(DccDrivableDevices[i]), mappedSpeed);
+      #endif
     }
   }
 }
 
 void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, uint8_t OutputPower) {
+  trackDccMsg(DCC_MSG_ACCESSORY);
   #ifdef LFX_DCC_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccAccTurnoutOutput] Addr="));
   DEBUG_PRINT(Addr);
@@ -172,11 +229,19 @@ void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, ui
   DEBUG_PRINTLN(OutputPower);
   #endif
 
+  bool matched = false;
   for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {
     if (DccDrivableAddresses[i] == Addr) {
+      matched = true;
       DccDrivableDevices[i]->setDccAccessoryState(Direction);
+      logDccEvent(DCC_MSG_ACCESSORY, Addr, Direction, static_cast<Device *>(DccDrivableDevices[i])->getDeviceName());
+      #ifdef LFX_OLED_ENABLED
+      _dccNotifyOledIfChanged(i, static_cast<Device *>(DccDrivableDevices[i]), Direction);
+      #endif
     }
   }
+  if (!matched)
+    logDccEvent(DCC_MSG_ACCESSORY, Addr, Direction, nullptr);
 }
 
 /**
@@ -189,6 +254,7 @@ void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, ui
  *          sets the accessory state for the corresponding device.
  */
 void DccDrivable::notifyDccAccTurnoutBoard(uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower) {
+  trackDccMsg(DCC_MSG_ACCESSORY);
   #ifdef LFX_DCC_AUDIT_ENABLED
   DEBUG_PRINT(F("[notifyDccAccTurnoutBoard] Addr="));
   DEBUG_PRINT(BoardAddr);
@@ -199,12 +265,20 @@ void DccDrivable::notifyDccAccTurnoutBoard(uint16_t BoardAddr, uint8_t OutputPai
   DEBUG_PRINT(F(", OutputPower="));
   DEBUG_PRINTLN(OutputPower);
   #endif
+  bool matched = false;
   for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {
     if (DccDrivableAddresses[i] == BoardAddr) {
+      matched = true;
       // Set state for the matching device
       DccDrivableDevices[i]->setDccAccessoryState(Direction);
+      logDccEvent(DCC_MSG_ACCESSORY, BoardAddr, Direction, static_cast<Device *>(DccDrivableDevices[i])->getDeviceName());
+      #ifdef LFX_OLED_ENABLED
+      _dccNotifyOledIfChanged(i, static_cast<Device *>(DccDrivableDevices[i]), Direction);
+      #endif
     }
   }
+  if (!matched)
+    logDccEvent(DCC_MSG_ACCESSORY, BoardAddr, Direction, nullptr);
 }
 
 #endif

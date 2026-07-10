@@ -87,6 +87,7 @@ APP_MODULES = [
     "app-wizard.js",
     "app-config.js",
     "app-boards.js",
+    "app-dcc.js",
     "app-about.js",
     "app-device-editor.js",
     "app-board-editor.js",

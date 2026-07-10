@@ -70,6 +70,26 @@ When the I²C bus is up (`I2C_CARDS`, `I2C_SCAN` or `OLED`), the diagnostics exp
 **Scan I²C** — it walks the bus and lists responding addresses, handy to confirm
 PCA9685 boards or an OLED are wired and addressed correctly.
 
+## DCC activity (Diagnostics tab)
+
+When `LFX_DCC_ENABLED` is built in (a `DCC_PIN` is configured), the Diagnostics
+tab shows one **pill per message category** (bus/speed/function/accessory/signal):
+
+- A pill's **dot** turns green briefly whenever a fresh packet of that kind
+  arrives — tells "bus dead" (nothing lights up, not even the raw pill) apart
+  from "bus alive but this decoder ignores it" (raw lights up, the others
+  don't) at a glance.
+- Clicking a pill **filters the event log** below it to that category (its
+  **background** turns accent-coloured while active); clicking it again
+  returns to the unfiltered "all" view. The dot colour (activity) and the
+  background colour (active filter) are independent — one does not imply
+  the other.
+- The log lists decoded events (time, category, address, value, repeat count,
+  matched device name if any), newest first, in a fixed-column layout so
+  values line up across rows. Repeated identical packets (e.g. a throttle
+  held at a steady speed) collapse into one line with a growing `×N` count
+  instead of flooding the log.
+
 ## Recovery — safe mode
 
 A broken or lockout config is recoverable without a reflash: **reset twice quickly**

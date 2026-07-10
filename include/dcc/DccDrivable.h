@@ -115,6 +115,99 @@ public:
     return false;
   #endif
   }
+
+  /**
+   * @enum DccMsgKind
+   * @brief Coarse DCC message categories tracked for the WebUI diagnostic screen.
+   */
+  enum DccMsgKind : uint8_t {
+    DCC_MSG_RAW = 0,       ///< Any raw packet on the bus, decoded or not (proves the bus is alive).
+    DCC_MSG_SPEED,         ///< Speed/direction packet.
+    DCC_MSG_FUNC,          ///< Function group packet (F0-F12).
+    DCC_MSG_ACCESSORY,     ///< Basic accessory packet (turnout).
+    DCC_MSG_SIGNAL,        ///< Extended accessory packet (signal aspect).
+    DCC_MSG_KIND_COUNT
+  };
+
+  /** @brief Record one received message of the given kind (called from the notify callbacks). */
+  static void trackDccMsg(DccMsgKind kind) {
+    if (kind >= DCC_MSG_KIND_COUNT)
+      return;
+    dccMsgCount[kind]++;
+    dccMsgLastMs[kind] = millis();
+  }
+
+  /** @brief Packets seen since boot for this message kind. */
+  static uint32_t dccMsgCountOf(DccMsgKind kind) { return (kind < DCC_MSG_KIND_COUNT) ? dccMsgCount[kind] : 0; }
+
+  /** @brief millis() of the last packet of this kind, or 0 if never seen. */
+  static unsigned long dccMsgLastMsOf(DccMsgKind kind) { return (kind < DCC_MSG_KIND_COUNT) ? dccMsgLastMs[kind] : 0; }
+
+  /** @brief Per-category capacity of the decoded-event ring buffers exposed to the WebUI diagnostic log. */
+  static constexpr uint8_t DCC_LOG_CAPACITY = 16;
+
+  /**
+   * @struct DccLogEntry
+   * @brief One decoded DCC event, as shown on a single line of the WebUI diagnostic log.
+   */
+  struct DccLogEntry {
+    DccMsgKind kind;
+    uint16_t address;
+    int16_t value;            ///< Mapped speed, function/accessory/signal state, in the same units passed to the device.
+    unsigned long atMs;
+    const __FlashStringHelper *deviceName;  ///< nullptr if no registered device matched this address.
+    uint16_t repeatCount;      ///< 1 = seen once; >1 = this many consecutive identical packets collapsed into one line.
+  };
+
+  /**
+   * @brief Append one decoded event to its category's ring buffer (overwrites that category's
+   *        oldest entry once full).
+   * @details Each message category (Speed/Func/Accessory/Signal) gets its own DCC_LOG_CAPACITY-slot
+   *          buffer instead of sharing one pool — a command station repeats unchanged speed packets
+   *          continuously while a throttle is held steady, and at full throttle the mapped speed
+   *          jitters on nearly every repeat so it can't even be collapsed by the dedup below; with a
+   *          single shared pool that traffic alone can cycle the whole buffer several times per
+   *          second, evicting a rare Accessory/Signal burst before the WebUI's 1s poll ever sees it.
+   *          Partitioning by category makes that structurally impossible. If this event is identical
+   *          (kind/address/value/device) to the most recently logged one *in the same category*,
+   *          bump its repeat counter in place instead of appending a new line.
+   * @param deviceName Name of the device that reacted, or nullptr if the address matched nothing.
+   */
+  static void logDccEvent(DccMsgKind kind, uint16_t address, int16_t value, const __FlashStringHelper *deviceName) {
+    if (kind >= DCC_MSG_KIND_COUNT)
+      return;
+    DccLogEntry *buf = dccLog[kind];
+    uint8_t &head = dccLogHead[kind];
+    uint8_t &count = dccLogCount[kind];
+    if (count > 0) {
+      DccLogEntry &last = buf[(head + DCC_LOG_CAPACITY - 1) % DCC_LOG_CAPACITY];
+      if (last.address == address && last.value == value && last.deviceName == deviceName) {
+        last.atMs = millis();
+        if (last.repeatCount < 0xFFFF)
+          last.repeatCount++;
+        return;
+      }
+    }
+    DccLogEntry &e = buf[head];
+    e.kind = kind;
+    e.address = address;
+    e.value = value;
+    e.atMs = millis();
+    e.deviceName = deviceName;
+    e.repeatCount = 1;
+    head = (head + 1) % DCC_LOG_CAPACITY;
+    if (count < DCC_LOG_CAPACITY)
+      count++;
+  }
+
+  /** @brief Number of valid entries currently logged for `kind` (up to DCC_LOG_CAPACITY). */
+  static uint8_t dccLogSize(DccMsgKind kind) { return (kind < DCC_MSG_KIND_COUNT) ? dccLogCount[kind] : 0; }
+
+  /** @brief `kind`'s log entry at `index`, ordered oldest (0) to newest (dccLogSize(kind)-1). */
+  static const DccLogEntry &dccLogAt(DccMsgKind kind, uint8_t index) {
+    uint8_t start = (dccLogCount[kind] < DCC_LOG_CAPACITY) ? 0 : dccLogHead[kind];
+    return dccLog[kind][(start + index) % DCC_LOG_CAPACITY];
+  }
 #endif
 
   /**
@@ -176,6 +269,20 @@ protected:
   ADDRESS decoderAddress = 0;
 #ifdef LFX_DCC_ENABLED
   static NmraDcc dcc;
+
+  // Per-category packet counters + last-seen timestamp, exposed via /api/dcc-status
+  // for the WebUI diagnostic screen — always on (cheap: DCC_MSG_KIND_COUNT x 8 bytes),
+  // independent of LFX_DCC_AUDIT_ENABLED which is a heavier Serial-only debug aid.
+  static uint32_t dccMsgCount[DCC_MSG_KIND_COUNT];
+  static unsigned long dccMsgLastMs[DCC_MSG_KIND_COUNT];
+
+  // One ring buffer per message category for the WebUI diagnostic log — DCC_MSG_KIND_COUNT x
+  // DCC_LOG_CAPACITY x ~14 bytes (~900 bytes total at DCC_LOG_CAPACITY=16), partitioned so
+  // Speed/Func traffic can never evict an Accessory/Signal entry (#76). Still cheap enough for
+  // the 2KB-RAM AVR/Nano targets that also compile this header when DCC_PIN is configured.
+  static DccLogEntry dccLog[DCC_MSG_KIND_COUNT][DCC_LOG_CAPACITY];
+  static uint8_t dccLogHead[DCC_MSG_KIND_COUNT];   ///< Index where the next entry will be written, per category.
+  static uint8_t dccLogCount[DCC_MSG_KIND_COUNT];  ///< Number of valid entries per category (caps at DCC_LOG_CAPACITY).
 #endif
 
 #ifdef LFX_DCC_AUDIT_ENABLED

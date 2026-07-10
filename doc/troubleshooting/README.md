@@ -19,6 +19,13 @@ investigation.
   rafraîchissement, sous-systèmes coupés un à un)… conclue en panne **matérielle**
   du breadboard, masquée par une baseline périmée (« le POC marche ici ») jamais
   re-vérifiée. Contient la leçon de méthode et la checklist de réparation.
+- [dcc-log-ring-buffer-eviction.md](dcc-log-ring-buffer-eviction.md) —
+  ✅ résolu — « le journal DCC diagnostics n'affiche aucune trace lors de
+  bascules rapides d'un signal/accessoire » : le tampon circulaire du journal
+  était un pool unique partagé entre les 5 catégories de messages ; le trafic
+  Speed/Func à haut débit pouvait évincer un événement Signal/Accessoire rare
+  avant que le polling WebUI ne l'ait récupéré. Résolu par un tampon par
+  catégorie (#76).
 
 ## Writing a new entry
 

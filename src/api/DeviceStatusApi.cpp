@@ -340,6 +340,89 @@ void DeviceApi::_onGetHealth() {
 }
 
 // ---------------------------------------------------------------------------
+// DCC status
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Return per-category DCC packet counters and last-seen timestamps.
+ *        Powers the WebUI Diagnostics tab's live DCC activity indicators —
+ *        lets the user tell "bus dead" (nothing, not even `raw`, ever increments)
+ *        from "bus alive but wrong address/CV" (raw increments, others don't).
+ */
+void DeviceApi::_onGetDccStatus() {
+  LOG_PRINTLN(F("API: GET /api/dcc-status"));
+  JsonDocument doc;
+
+  #ifdef LFX_DCC_ENABLED
+  doc[kDccEnabled] = true;
+  doc[kDccUptimeMs] = millis();
+  JsonObject msgs = doc[kDccMessages].to<JsonObject>();
+  static const struct { const char *key; DccDrivable::DccMsgKind kind; } kKinds[] = {
+    {kDccKindRaw, DccDrivable::DCC_MSG_RAW},
+    {kDccKindSpeed, DccDrivable::DCC_MSG_SPEED},
+    {kDccKindFunc, DccDrivable::DCC_MSG_FUNC},
+    {kDccKindAccessory, DccDrivable::DCC_MSG_ACCESSORY},
+    {kDccKindSignal, DccDrivable::DCC_MSG_SIGNAL},
+  };
+  for (const auto &k : kKinds) {
+    JsonObject o = msgs[k.key].to<JsonObject>();
+    o[kDccCount] = DccDrivable::dccMsgCountOf(k.kind);
+    o[kDccLastMs] = DccDrivable::dccMsgLastMsOf(k.kind);
+  }
+
+  // Each category (Speed/Func/Accessory/Signal) keeps its own ring buffer (see logDccEvent's
+  // doc comment for why), so merge them here by timestamp for the "all" view — at most
+  // DCC_MSG_KIND_COUNT x DCC_LOG_CAPACITY entries, cheap to merge with a simple repeated
+  // linear scan even on a Nano.
+  const DccDrivable::DccLogEntry *merged[(DccDrivable::DCC_MSG_KIND_COUNT - 1) * DccDrivable::DCC_LOG_CAPACITY];
+  uint8_t mergedCount = 0;
+  uint8_t next[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
+  for (;;) {
+    int8_t bestKind = -1;
+    unsigned long bestMs = 0;
+    for (uint8_t k = DccDrivable::DCC_MSG_SPEED; k < DccDrivable::DCC_MSG_KIND_COUNT; k++) {
+      auto kind = static_cast<DccDrivable::DccMsgKind>(k);
+      if (next[k] >= DccDrivable::dccLogSize(kind))
+        continue;
+      unsigned long ms = DccDrivable::dccLogAt(kind, next[k]).atMs;
+      if (bestKind == -1 || ms < bestMs) {
+        bestKind = k;
+        bestMs = ms;
+      }
+    }
+    if (bestKind == -1)
+      break;
+    auto kind = static_cast<DccDrivable::DccMsgKind>(bestKind);
+    merged[mergedCount++] = &DccDrivable::dccLogAt(kind, next[bestKind]);
+    next[bestKind]++;
+  }
+
+  JsonArray log = doc[kDccLog].to<JsonArray>();
+  for (uint8_t i = 0; i < mergedCount; i++) {
+    const DccDrivable::DccLogEntry &e = *merged[i];
+    JsonObject o = log.add<JsonObject>();
+    for (const auto &k : kKinds) {
+      if (k.kind == e.kind) {
+        o[kDccLogKind] = k.key;
+        break;
+      }
+    }
+    o[kDccLogAddress] = e.address;
+    o[kDccLogValue] = e.value;
+    o[kDccLastMs] = e.atMs;
+    o[kDccLogDevice] = e.deviceName ? String(e.deviceName) : String();
+    o[kDccLogRepeat] = e.repeatCount;
+  }
+  #else
+  doc[kDccEnabled] = false;
+  #endif
+
+  String json;
+  serializeJson(doc, json);
+  ApiServer::sendJson(kOk, json);
+}
+
+// ---------------------------------------------------------------------------
 // Restart
 // ---------------------------------------------------------------------------
 

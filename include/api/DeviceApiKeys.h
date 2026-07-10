@@ -125,6 +125,24 @@ constexpr char kScl[]   = "scl";   ///< SCL pin used for scan (lowercase).
 constexpr char kFound[] = "found"; ///< Array of found I2C addresses.
 constexpr char kCount[] = "count"; ///< Number of found addresses.
 
+// ── DCC status — response fields (GET /api/dcc-status) ────────────────────
+constexpr char kDccEnabled[] = "enabled"; ///< Whether LFX_DCC_ENABLED is compiled in.
+constexpr char kDccUptimeMs[] = "uptime_ms"; ///< millis() at response time, for client-side age calc.
+constexpr char kDccMessages[] = "messages"; ///< Per-category counters object.
+constexpr char kDccCount[] = "count"; ///< Packets seen since boot, for one category.
+constexpr char kDccLastMs[] = "last_ms"; ///< millis() of the last packet of this category (0 = never).
+constexpr char kDccKindRaw[] = "raw"; ///< Any raw packet on the bus (proves the bus is alive).
+constexpr char kDccKindSpeed[] = "speed"; ///< Speed/direction packets.
+constexpr char kDccKindFunc[] = "func"; ///< Function group packets (F0-F12).
+constexpr char kDccKindAccessory[] = "accessory"; ///< Basic accessory (turnout) packets.
+constexpr char kDccKindSignal[] = "signal"; ///< Extended accessory (signal aspect) packets.
+constexpr char kDccLog[] = "log"; ///< Array of decoded events, oldest first (see DccDrivable::DccLogEntry).
+constexpr char kDccLogKind[] = "kind"; ///< Message category of a log entry (same strings as kDccKind*).
+constexpr char kDccLogAddress[] = "address"; ///< DCC address the log entry's packet targeted.
+constexpr char kDccLogValue[] = "value"; ///< Decoded value (mapped speed, state, or aspect).
+constexpr char kDccLogDevice[] = "device"; ///< Name of the device that reacted, or "" if no device matched.
+constexpr char kDccLogRepeat[] = "repeat"; ///< Consecutive identical packets collapsed into this entry (1 = no repeat).
+
 // ── Config file management — JSON body and URL param fields ───────────────
 constexpr char kName[] = "name"; ///< Config display name (JSON field and ?name= query param).
 constexpr char kFile[] = "file"; ///< Config filename (DELETE /api/configs body).

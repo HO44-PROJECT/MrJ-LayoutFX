@@ -1337,6 +1337,114 @@
     }
     .i2c-name { color: var(--accent); font-family: inherit; font-size: .75rem }
 
+    /* ── DCC activity pills (Diagnostics tab) ────────────────────────────── */
+    .dcc-led-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    /* .dcc-led is a <button> for filterable categories, a <div> for "raw" (no detailed
+       log to filter on) — reset button-only defaults (font, cursor) so both render alike. */
+    .dcc-led {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .3rem .6rem;
+      border-radius: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--bd);
+      font: inherit;
+      font-size: .75rem;
+      color: var(--t2);
+      cursor: default;
+      transition: background .15s, border-color .15s, color .15s
+    }
+
+    button.dcc-led {
+      cursor: pointer
+    }
+
+    .dcc-led-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bd);
+      transition: background .15s, box-shadow .15s
+    }
+
+    /* Two independent signals, deliberately different visual channels so they never
+       get mistaken for one another: the DOT turns green on recent traffic (.lit),
+       the pill's BACKGROUND turns accent-colored when it's the active filter (.active). */
+    .dcc-led.lit .dcc-led-dot {
+      background: var(--d3);
+      box-shadow: 0 0 6px var(--d2)
+    }
+
+    .dcc-led.active {
+      background: var(--acc);
+      color: var(--bg1);
+      border-color: var(--acc)
+    }
+
+    .dcc-led.active .dcc-led-count {
+      color: var(--bg1)
+    }
+
+    .dcc-led-count {
+      font-family: monospace;
+      color: var(--t3);
+      font-size: .68rem
+    }
+
+    /* ── DCC event log (decoded events, newest first) ────────────────────── */
+
+    .dcc-log {
+      margin-top: .4rem;
+      max-height: 28rem;
+      overflow-y: auto;
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      background: var(--bg2);
+      font-family: monospace;
+      font-size: .78rem
+    }
+
+    .dcc-log-empty {
+      padding: .5rem .6rem;
+      color: var(--t3);
+      font-style: italic
+    }
+
+    /* Grid (not flex) so every row's columns line up vertically — fixed tracks per
+       field, Device takes whatever is left. */
+    .dcc-log-row {
+      display: grid;
+      grid-template-columns: 4.2em 5.5em 3.6em 4em 3em 1fr;
+      column-gap: .6rem;
+      align-items: baseline;
+      padding: .28rem .6rem;
+      border-bottom: 1px solid var(--bd);
+      color: var(--t1)
+    }
+
+    .dcc-log-row:last-child { border-bottom: none }
+
+    .dcc-log-time { color: var(--t3) }
+    .dcc-log-kind { color: var(--d3); font-weight: bold }
+    .dcc-log-addr { color: var(--t2) }
+    .dcc-log-value { color: var(--t1) }
+    .dcc-log-repeat {
+      color: var(--t3);
+      font-style: italic
+    }
+    .dcc-log-device {
+      color: var(--t2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
     .dbg-info {
       padding: .5rem .75rem;
       font-size: .78rem;
