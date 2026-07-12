@@ -7,6 +7,10 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- Config upload: the WebUI text wrongly implied the ESP32 reboots automatically
+  right after sending a new JSON file. The 3-step flow itself (Send → Activate
+  → Apply) was already correct and unchanged — only the misleading copy was
+  fixed, across all 4 languages. (#53)
 - RailwayCrossingLights: fixed a `-Wmaybe-uninitialized` warning on ESP32 —
   `onUs0`/`onUs1`/`onUs` are now member variables instead of locals, since a
   local declared before a `COROUTINE_DELAY_MICROS()` yield isn't guaranteed to
