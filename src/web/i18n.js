@@ -1469,6 +1469,21 @@
       return dict[key] || fallback;
     }
 
+    // Device-type translation with fallback to the English value from device_types.json.
+    function tdt(type, field, fallback) {
+      var key = 'dt.' + type + '.' + field;
+      var dict = TRANSLATIONS[_lang] || TRANSLATIONS['fr'];
+      return dict[key] || fallback;
+    }
+
+    // Short display label for a device type (card badge, editor list) — the
+    // technical `type` (e.g. 'MrJDBBlocSignal') stays the wire format everywhere
+    // else; this is purely cosmetic (#77).
+    function dtLabel(type) {
+      var dt = (typeof _deviceTypes !== 'undefined' && _deviceTypes[type]) || {};
+      return tdt(type, 'label', dt.label || type);
+    }
+
     function setLang(lang) {
       _lang = lang;
       localStorage.setItem('lang', lang);

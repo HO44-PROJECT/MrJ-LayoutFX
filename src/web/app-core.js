@@ -158,7 +158,7 @@ function cardTraffic(d) {
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
     + '<span class="dot ' + c + '"></span></div>'
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
-    + '<span class="badge">' + d.type + '</span>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
     + '<div class="tbtns">' + tbtn('OFF', 'off', 0) + tbtn(t('aspect.go'), 'go', 2) + tbtn(t('aspect.caution'), 'flash', 3) + tbtn(t('aspect.stop'), 'stop', 1) + '</div>'
     + '</div>';
@@ -191,7 +191,7 @@ function cardSignal(d) {
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
     + '<span class="dot ' + c + '"></span></div>'
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
-    + '<span class="badge">' + d.type + '</span>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
     + '<div class="tbtns">' + (states || []).map(sbtn).join('') + '</div>'
     + '</div>';
@@ -217,7 +217,7 @@ function cardServo(d) {
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
     + '<span class="dot ' + c + '"></span></div>'
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
-    + '<span class="badge">' + d.type + '</span>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
     + '<div class="tbtns">' + SERVO_STATES.map(sbtn).join('') + '</div>'
     + '</div>';
@@ -244,7 +244,7 @@ function cardI2cMotor(d) {
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
     + '<span class="dot ' + c + '"></span></div>'
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
-    + '<span class="badge">' + d.type + '</span>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
     + '<div class="tbtns">' + btns + '</div>'
     + '</div>';
@@ -271,7 +271,7 @@ function cardI2cServo(d) {
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
     + '<span class="dot ' + c + '"></span></div>'
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
-    + '<span class="badge">' + d.type + '</span>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
     + '<div class="tbtns">' + btns + '</div>'
     + '</div>';
@@ -294,7 +294,7 @@ function card(d) {
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
     + '<span class="dot ' + c + '"></span></div>'
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
-    + '<span class="badge">' + d.type + '</span>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
     + '<button class="btn ' + c + '" onclick="tog(\'' + d.id + '\',' + d.desired + ')" ' + dis + '>' + lbl(c) + '</button>'
     + '</div>';

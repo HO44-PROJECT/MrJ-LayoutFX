@@ -62,9 +62,12 @@ function deRenderTypeList(typeFilter, forceType, boardIdx) {
   var panel = document.getElementById('de-type-panel');
   if (panel) {
     panel.innerHTML = typeList.map(function (tp) {
+      var dt = _deviceTypes[tp] || {};
+      var shortLabel = tdt(tp, 'label', dt.label || tp);
+      var label = tdt(tp, 'dropdownLabel', dt.dropdownLabel || shortLabel);
       return '<div class="de-type-opt" data-tp="' + tp + '" onclick="deSelectType(\'' + tp + '\')">'
         + '<span class="de-type-opt-ico">' + (ICONS[tp] || ICONS['_'] || '') + '</span>'
-        + '<span class="de-type-opt-name">' + tp + ' — ' + tooltip(tp) + '</span>'
+        + '<span class="de-type-opt-name">' + label + ' — ' + tooltip(tp) + '</span>'
         + '<span class="de-type-opt-pins">' + _dePinHint(tp) + '</span>'
         + '</div>';
     }).join('');
@@ -79,7 +82,7 @@ function deSyncTypeTrigger() {
   if (!trg || !typeEl) return;
   var tp = typeEl.value;
   trg.innerHTML = '<span class="de-type-opt-ico">' + (ICONS[tp] || ICONS['_'] || '') + '</span>'
-    + '<span class="de-type-opt-name">' + (tp ? tp + ' — ' + tooltip(tp) : '') + '</span>'
+    + '<span class="de-type-opt-name">' + (tp ? dtLabel(tp) + ' — ' + tooltip(tp) : '') + '</span>'
     + '<span class="de-type-caret">▾</span>';
   trg.disabled = typeEl.disabled;
 }
@@ -103,6 +106,11 @@ function deToggleTypeDd(event) {
   if (!panel) return;
   if (panel.style.display !== 'none') { deCloseTypeDd(); return; }
   panel.style.display = '';
+  // The panel is an absolutely-positioned overlay, but its potential height still
+  // counts toward .de-body's scrollable overflow — without this the body grows its
+  // own scrollbar behind the panel's, showing two at once for a long type list.
+  var body = document.querySelector('#de-modal .de-body');
+  if (body) body.style.overflow = 'hidden';
   var cur = typeEl ? typeEl.value : '';
   var opts = panel.querySelectorAll('.de-type-opt');
   for (var i = 0; i < opts.length; i++) {
@@ -117,6 +125,8 @@ function deToggleTypeDd(event) {
 function deCloseTypeDd() {
   var panel = document.getElementById('de-type-panel');
   if (panel) panel.style.display = 'none';
+  var body = document.querySelector('#de-modal .de-body');
+  if (body) body.style.overflow = '';
   document.removeEventListener('click', deCloseTypeDd);
   document.removeEventListener('keydown', deTypeDdKey);
 }

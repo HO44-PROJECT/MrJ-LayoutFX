@@ -255,7 +255,11 @@
       "properties": {
         "label": {
           "type": "string",
-          "description": "Display name shown in the board-type picker."
+          "description": "Short display name shown once a board of this type is placed (card header, pinout diagram)."
+        },
+        "dropdownLabel": {
+          "type": "string",
+          "description": "Display name shown in the board-type picker only. Falls back to `label` when absent. Lets a one-time selection dropdown carry more context (author credit, MCU detail) than the short `label` repeated across every other view."
         },
         "description": {
           "type": "string",

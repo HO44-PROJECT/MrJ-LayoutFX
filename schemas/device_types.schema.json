@@ -125,11 +125,12 @@
           "description": "Constructor style used by config_to_cpp.py when generating main.cpp for non-WebUI targets (AVR, etc.).\n  single_pin    → new Type(pin)\n  multi_pin     → new Type(pins_var)\n  variable_pins → new Type(count, pins_var)\n  serial_servo  → new Type(&Serial, servo_id)\n  audio         → new Type(rx, tx)\n  i2c_servo     → PCA9685Servo — not yet supported in code generation\n  i2c_motor     → PCA9685Motor — not yet supported in code generation"
         },
         "label": {
-          "type": "object",
-          "description": "Human-readable label for the device type, keyed by language code (e.g. 'fr', 'en').",
-          "additionalProperties": {
-            "type": "string"
-          }
+          "type": "string",
+          "description": "Short human-readable display name shown once a device of this type is placed (cockpit card badge, editor list). Per-language override via TRANSLATIONS['dt.<type>.label'] in i18n.js; this is the fallback."
+        },
+        "dropdownLabel": {
+          "type": "string",
+          "description": "Display name shown in the device-type picker only. Falls back to `label` when absent. Lets a one-time selection dropdown carry more context (author credit) than the short `label` repeated on every card. Per-language override via TRANSLATIONS['dt.<type>.dropdownLabel']; this is the fallback."
         }
       },
       "if": {

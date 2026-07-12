@@ -76,7 +76,8 @@ function openBoardEditor(cfgIdx) {
     var disabled = conflict || !hasCompatBus;
     var tip = conflict ? t('be.one_gpio_board_only') : t('be.no_bus_warn');
     var dis = disabled ? ' disabled title="' + tip.replace(/"/g, '&quot;') + '"' : '';
-    var label = (def.label || k) + (disabled ? ' ⚠' : '');
+    var shortLabel = tbt(k, 'label', def.label || k);
+    var label = tbt(k, 'dropdownLabel', def.dropdownLabel || shortLabel) + (disabled ? ' ⚠' : '');
     return '<option value="' + k + '"' + dis + '>' + label + '</option>';
   }).join('');
 
