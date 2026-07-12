@@ -7,6 +7,10 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- About page: the "Build" timestamp could stay frozen across builds that
+  didn't happen to touch `DeviceStatusApi.cpp` itself (it read `__DATE__
+  __TIME__`, stamped only when that translation unit gets recompiled). Now
+  generated fresh on every build by `tools/gen_build_info.py`. (#108)
 - Config upload: the WebUI text wrongly implied the ESP32 reboots automatically
   right after sending a new JSON file. The 3-step flow itself (Send → Activate
   → Apply) was already correct and unchanged — only the misleading copy was

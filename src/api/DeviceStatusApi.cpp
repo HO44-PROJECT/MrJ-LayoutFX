@@ -36,7 +36,7 @@ void DeviceApi::_onGetStatus() {
   JsonDocument doc;
 
   doc[kVersion] = LFX_FIRMWARE_VERSION;
-  doc[kBuildDate] = __DATE__ " " __TIME__;
+  doc[kBuildDate] = kFirmwareBuildDate;
   #ifdef PIOENV_NAME
   doc[kEnv] = F(PIOENV_NAME);
   #endif
