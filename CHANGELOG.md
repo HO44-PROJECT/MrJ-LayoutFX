@@ -7,6 +7,15 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- RailwayCrossingLights: fixed a `-Wmaybe-uninitialized` warning on ESP32 —
+  `onUs0`/`onUs1`/`onUs` are now member variables instead of locals, since a
+  local declared before a `COROUTINE_DELAY_MICROS()` yield isn't guaranteed to
+  survive it. (#109)
+- LobotServo: fixed two compiler warnings — an explicit `IDLE` case in the
+  receive-state switch (`-Wswitch`), and a `virtual` destructor gated to
+  ESP32 only, where `DeviceFactory::fullReset()` deletes instances through a
+  base `Coroutine*` pointer (`-Wdelete-non-virtual-dtor`). Nano/AVR build is
+  unaffected. (#107)
 - OilLamp: the flicker phase no longer strobes — intensity now glides toward
   a periodically-redrawn target every PWM cycle (exponential smoothing),
   instead of jumping straight to a new independently-drawn value every

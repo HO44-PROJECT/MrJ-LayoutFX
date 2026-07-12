@@ -70,4 +70,12 @@ protected:
     int16_t brightness0 = 0;                                                                        ///< Pin 0's own brightness during extinction (RUN_TRANSIT_STATE).
     int16_t brightness1 = 0;                                                                        ///< Pin 1's own brightness during extinction (RUN_TRANSIT_STATE).
     bool isFlashOn = false;                                                                         ///< Tracks whether the LED is in ON or OFF state during flashing phase.
+
+    // Must be member variables, not locals in runCoroutine(): COROUTINE_DELAY_MICROS()
+    // returns out of runCoroutine() and resumes later via a saved goto label, so any
+    // plain local declared before the delay is read back uninitialized on resume
+    // (AceRoutine's own Coroutine.h docs warn locals aren't preserved across a yield).
+    uint32_t onUs0 = 0;                                                                             ///< Pin 0's PWM on-time (µs) for the current extinction cycle.
+    uint32_t onUs1 = 0;                                                                             ///< Pin 1's PWM on-time (µs) for the current extinction cycle.
+    uint32_t onUs = 0;                                                                              ///< max(onUs0, onUs1) for the current extinction cycle.
 };

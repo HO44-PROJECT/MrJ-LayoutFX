@@ -141,9 +141,9 @@ int RailwayCrossingLights::runCoroutine()
                 // busy-blocks Core 1 for up to a full PWM period (~10 ms) on every pass,
                 // starving every other coroutine and shredding the software-PWM timing of
                 // all other fades (this was the real cause of backlog #48).
-                uint32_t onUs0 = (uint32_t)brightness0 * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255;
-                uint32_t onUs1 = (uint32_t)brightness1 * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255;
-                uint32_t onUs  = max(onUs0, onUs1);
+                onUs0 = (uint32_t)brightness0 * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255;
+                onUs1 = (uint32_t)brightness1 * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255;
+                onUs  = max(onUs0, onUs1);
                 if (onUs > 0)
                 {
                     if (brightness0 > 0) outputActive(getPin(0));
