@@ -7,6 +7,19 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- Device editor: multi-pin wiring dropdowns (e.g. a 2/3/4-wire signal) no
+  longer offer a pin already picked in another wiring slot of the same
+  device — each slot's dropdown is re-filtered live against its siblings'
+  current values. (#36)
+- About page: gauge fill now shows green when healthy, not just orange/red —
+  the warning/critical thresholds already existed, only the healthy-state
+  colour was missing. (#60)
+- Browser tab title now reflects the active configuration's name on the very
+  first cockpit load, not only after navigating to the Boards/Buses tab.
+  (#75)
+- `/api/devices` now streams the JSON response one device at a time (HTTP
+  chunked transfer) instead of building the whole array in one growing
+  `String` — keeps RAM use flat as device count grows. (#31)
 - Device and board types now have a human-readable `label` (short, shown once
   placed) and an optional `dropdownLabel` (longer, shown only in the
   selection dropdown — carries author credit for the custom PCBs and the
