@@ -81,7 +81,6 @@ These are **independent** and not mutually exclusive.
 
 | Flag | Type | Default | Effect |
 |---|---|---|---|
-| `SERVO_PRESERVE_DIRECTION` | toggle | off | `setSpeed()` ignores the sign of its argument and keeps the current rotation direction. |
 | `DEMO` | toggle | off | Built-in demo sequences (traffic, signals, servo, LED effects). |
 
 ## Capacity limits

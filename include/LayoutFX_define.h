@@ -68,7 +68,6 @@
  *   DEBUG_OLED            Send debug logs to the OLED instead of serial.
  *
  * Behaviour:
- *   SERVO_PRESERVE_DIRECTION  Servo keeps its last travel direction across moves.
  *   DEMO                  Built-in demo sequences (traffic, signals, servo, LED FX).
  *
  * Capacity limits (override the default shown):

@@ -172,25 +172,37 @@ public:
    * speed != 0  → clamp, store in speed, wake coroutine via _speedChanged flag → RUN_STATE.
    */
   inline virtual void setSpeed(SERVO_SPEED s) {
+    // s carries an explicit, intentional direction (from DCC) — the sign must
+    // always be honoured as-is (#74).
     if (s == SERVO_SPEED_STOP) {
       stop();
       return;
     }
-    SERVO_SPEED abs_s = max(min(s, SERVO_SPEED_MAX), SERVO_SPEED_MIN);
-  #ifdef SERVO_PRESERVE_DIRECTION
-    speed = (speed < 0) ? -abs(abs_s) : abs(abs_s); // magnitude only, keep current direction
-  #else
-    speed = abs_s; // signed value used as-is
-  #endif
+    speed = max(min(s, SERVO_SPEED_MAX), SERVO_SPEED_MIN);
     start();
   }
 
   /**
-   * @brief Set motor speed from the web API (speed in [-1000, +1000]).
+   * @brief Set motor speed from the web API — magnitude only, preserves direction.
    *
-   * Called by /api/servo endpoint. Delegates to setSpeed().
+   * The WebUI speed control (presets/slider) sends a plain non-negative magnitude,
+   * it does not know or set direction (that's reverseMotor()'s job). Applying it
+   * with setSpeed() as-is would snap the servo back to forward on every speed
+   * change, undoing a previous reverseMotor() (#74). Keep the current sign of
+   * `speed` and only update its magnitude.
+   *
+   * Called by /api/servo endpoint.
    */
-  inline virtual void setMotorSpeed(int16_t s) override { setSpeed((SERVO_SPEED)s); }
+  inline virtual void setMotorSpeed(int16_t s) override {
+    if (s == SERVO_SPEED_STOP) {
+      stop();
+      return;
+    }
+    SERVO_SPEED mag = abs(max(min(s, SERVO_SPEED_MAX), SERVO_SPEED_MIN));
+    speed = (speed < 0) ? -mag : mag;
+    start();
+  }
+
   inline virtual void reverseMotor() override { reverse(); }
 
   #ifdef LFX_LOBOT_SERVO_ENABLED

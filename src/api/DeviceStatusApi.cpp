@@ -159,11 +159,6 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatDccAudit] = false;
   #endif
-  #ifdef SERVO_PRESERVE_DIRECTION
-  feat[kFeatServoDir] = true;
-  #else
-  feat[kFeatServoDir] = false;
-  #endif
   #ifdef LFX_I2C_SCAN_ENABLED
   feat[kFeatI2cScan] = true;
   #else

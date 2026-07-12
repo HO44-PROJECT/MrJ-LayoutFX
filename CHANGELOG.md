@@ -7,6 +7,14 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- Servo motor mode: a DCC reverse command no longer fails to reverse the
+  servo's rotation. `SerialServoMotorMode::setSpeed()` was shared between the
+  DCC path (always sends an explicit signed value) and the WebUI path (sends
+  a magnitude only, relies on the current direction persisting) — split into
+  `setSpeed()` (DCC, honours the sign as-is) and `setMotorSpeed()` (WebUI,
+  keeps the current sign, updates magnitude only). `SERVO_PRESERVE_DIRECTION`
+  is now unused by either path and has been removed entirely (code + docs).
+  Validated on hardware via JMRI (DCC forward/reverse) and the WebUI. (#74)
 - About page: the "Build" timestamp could stay frozen across builds that
   didn't happen to touch `DeviceStatusApi.cpp` itself (it read `__DATE__
   __TIME__`, stamped only when that translation unit gets recompiled). Now

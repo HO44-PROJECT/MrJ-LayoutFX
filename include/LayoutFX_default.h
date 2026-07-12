@@ -113,10 +113,6 @@
 #define SERVO_SPEED_MIN ((int16_t)-1000)       ///< Minimum speed for LX-16A servo in motor mode (full reverse)
 #define SERVO_SPEED_STOP 0                     ///< Speed value to stop the servo in motor mode
 #define SERVO_SPEED_DEFAULT ((SERVO_SPEED)300) ///< Default running speed applied at first start()
-// Define SERVO_PRESERVE_DIRECTION to make setSpeed() ignore the sign of its argument
-// and preserve the current rotation direction instead.
-// If not defined (default), setSpeed() uses the signed value as-is.
-// #define SERVO_PRESERVE_DIRECTION
 
 // Beacon effect configuration constants
 #define BEACON_FLASH_ON_DURATION_1 80   ///< Duration of the first flash in milliseconds.

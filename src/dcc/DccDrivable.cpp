@@ -14,6 +14,7 @@
  */
 
 #include "dcc/DccDrivable.h"
+#include "devices/Device.h"
 
 #ifdef LFX_OLED_ENABLED
   #include "config/ConfigManager.h"
