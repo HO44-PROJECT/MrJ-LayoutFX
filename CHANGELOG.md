@@ -7,6 +7,10 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- RailwayCrossingLights: stopping the effect no longer flashes both LEDs
+  full-bright before fading out — the fade now starts from each pin's own
+  actual brightness left by the flashing phase instead of resetting both to
+  full intensity. (#81)
 - Device editor: multi-pin wiring dropdowns (e.g. a 2/3/4-wire signal) no
   longer offer a pin already picked in another wiring slot of the same
   device — each slot's dropdown is re-filtered live against its siblings'

@@ -96,23 +96,38 @@ int RailwayCrossingLights::runCoroutine()
             break;
 
         case OFF_STATE:
-            // Gradually decrease brightness on both pins simultaneously.
+            // Gradually decrease brightness on both pins, starting from each pin's
+            // OWN actual state left by FLASHING (only one pin was ever lit at a
+            // time there) — NOT a flat MAX_INTENSITY reset for both, which used to
+            // snap the pin that was dark back to full brightness for one extinction
+            // step before the fade began (#81).
             if (getState() == INIT_STATE)
             {
                 setState(RUN_TRANSIT_STATE);
-                brightness = RAILWAYCROSSLIGHTS_MAX_INTENSITY;
-                startTime  = millis();
+                brightness0 = isFlashOn ? RAILWAYCROSSLIGHTS_MAX_INTENSITY : 0;
+                brightness1 = isFlashOn ? 0 : RAILWAYCROSSLIGHTS_MAX_INTENSITY;
+                startTime   = millis();
             }
-            // Gradually decrease brightness to zero with subtle flicker.
+            // Gradually decrease brightness to zero with subtle flicker, each pin independently.
             if (millis() - startTime > RAILWAYCROSSLIGHTS_EXTINCTION_STEP_MS)
             {
-                brightness -= (RAILWAYCROSSLIGHTS_MAX_INTENSITY * RAILWAYCROSSLIGHTS_EXTINCTION_STEP_MS) / RAILWAYCROSSLIGHTS_EXTINCTION_DURATION_MS;
-                brightness += random(RAILWAYCROSSLIGHTS_EXTINCTION_FLICKER_MIN_VARIATION, RAILWAYCROSSLIGHTS_EXTINCTION_FLICKER_MAX_VARIATION);
-                brightness = constrain(brightness, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
+                int16_t step = (RAILWAYCROSSLIGHTS_MAX_INTENSITY * RAILWAYCROSSLIGHTS_EXTINCTION_STEP_MS) / RAILWAYCROSSLIGHTS_EXTINCTION_DURATION_MS;
+                if (brightness0 > 0)
+                {
+                    brightness0 -= step;
+                    brightness0 += random(RAILWAYCROSSLIGHTS_EXTINCTION_FLICKER_MIN_VARIATION, RAILWAYCROSSLIGHTS_EXTINCTION_FLICKER_MAX_VARIATION);
+                    brightness0 = constrain(brightness0, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
+                }
+                if (brightness1 > 0)
+                {
+                    brightness1 -= step;
+                    brightness1 += random(RAILWAYCROSSLIGHTS_EXTINCTION_FLICKER_MIN_VARIATION, RAILWAYCROSSLIGHTS_EXTINCTION_FLICKER_MAX_VARIATION);
+                    brightness1 = constrain(brightness1, 0, RAILWAYCROSSLIGHTS_MAX_INTENSITY);
+                }
                 startTime = millis();
             }
-            // Transition to OFF_STATE when brightness reaches zero.
-            if (brightness <= 0)
+            // Transition to OFF_STATE when both pins reach zero.
+            if (brightness0 <= 0 && brightness1 <= 0)
             {
                 outputInactive(getPin(0));
                 outputInactive(getPin(1));
@@ -120,25 +135,28 @@ int RailwayCrossingLights::runCoroutine()
             }
             else
             {
-                // Drive both pins simultaneously to avoid alternating flicker.
-                // NON-BLOCKING software PWM: COROUTINE_DELAY_MICROS yields to the
-                // scheduler between phases. A raw delayMicroseconds() here busy-blocks
-                // Core 1 for up to a full PWM period (~10 ms) on every pass, starving
-                // every other coroutine and shredding the software-PWM timing of all
-                // other fades (this was the real cause of backlog #48). `brightness`
-                // is a member, so it survives the yields. Mirrors simulatePWM / the
-                // FLASHING phase above.
-                if (brightness > 0)
+                // Drive both pins simultaneously (each at its own brightness) to avoid
+                // alternating flicker. NON-BLOCKING software PWM: COROUTINE_DELAY_MICROS
+                // yields to the scheduler between phases. A raw delayMicroseconds() here
+                // busy-blocks Core 1 for up to a full PWM period (~10 ms) on every pass,
+                // starving every other coroutine and shredding the software-PWM timing of
+                // all other fades (this was the real cause of backlog #48).
+                uint32_t onUs0 = (uint32_t)brightness0 * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255;
+                uint32_t onUs1 = (uint32_t)brightness1 * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255;
+                uint32_t onUs  = max(onUs0, onUs1);
+                if (onUs > 0)
                 {
-                    outputActive(getPin(0));
-                    outputActive(getPin(1));
-                    COROUTINE_DELAY_MICROS((uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
+                    if (brightness0 > 0) outputActive(getPin(0));
+                    if (brightness1 > 0) outputActive(getPin(1));
+                    COROUTINE_DELAY_MICROS(onUs);
+                    if (onUs0 < onUs) outputInactive(getPin(0));
+                    if (onUs1 < onUs) outputInactive(getPin(1));
                 }
-                if (brightness < RAILWAYCROSSLIGHTS_MAX_INTENSITY)
+                if (onUs < RAILWAYCROSSLIGHTS_PWM_PERIOD_US)
                 {
                     outputInactive(getPin(0));
                     outputInactive(getPin(1));
-                    COROUTINE_DELAY_MICROS(RAILWAYCROSSLIGHTS_PWM_PERIOD_US - (uint32_t)brightness * RAILWAYCROSSLIGHTS_PWM_PERIOD_US / 255);
+                    COROUTINE_DELAY_MICROS(RAILWAYCROSSLIGHTS_PWM_PERIOD_US - onUs);
                 }
             }
             break;

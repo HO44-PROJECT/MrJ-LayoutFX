@@ -66,6 +66,8 @@ public:
 
 protected:
     uint32_t startTime = 0;                                                                         ///< Timestamp (ms) for tracking phase transitions.
-    int16_t brightness = 0;                                                                         ///< Current LED brightness level (0 to 255).
+    int16_t brightness = 0;                                                                         ///< Current LED brightness level (0 to 255), used during FLASHING.
+    int16_t brightness0 = 0;                                                                        ///< Pin 0's own brightness during extinction (RUN_TRANSIT_STATE).
+    int16_t brightness1 = 0;                                                                        ///< Pin 1's own brightness during extinction (RUN_TRANSIT_STATE).
     bool isFlashOn = false;                                                                         ///< Tracks whether the LED is in ON or OFF state during flashing phase.
 };
