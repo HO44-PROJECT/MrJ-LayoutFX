@@ -650,11 +650,14 @@ function deUpdateWiring(prefillPin, dev) {
         availOpts.sort(function (a, b) { return a.val - b.val; });
       }
     }
+    // Stashed so deRefreshWiringOptions() can re-filter siblings without
+    // recomputing config/sys_pins usage on every slot change.
+    grp._deAvailOpts = availOpts;
     for (var i = 0; i < count; i++) {
       var curVal = pins[i] !== undefined ? pins[i] : '';
       var selLabel = count > 1 ? ' (' + (i + 1) + ')' : '';
       if (showTest) html += '<div class="de-wire-block"><div class="de-wire-head">';
-      html += '<select class="de-w" onchange="deUpdateIdPlaceholder()">';
+      html += '<select class="de-w" onchange="deUpdateIdPlaceholder();deRefreshWiringOptions()">';
       html += '<option value="">— pin' + selLabel + ' —</option>';
       availOpts.forEach(function (o) {
         if (o.used && o.val !== curVal) return;
@@ -686,6 +689,7 @@ function deUpdateWiring(prefillPin, dev) {
   grp.innerHTML = html;
   renderExtraGrp();
   deUpdateIdPlaceholder();
+  deRefreshWiringOptions();
 }
 
 // Add a new (empty) position row to the positions list editor.
@@ -741,6 +745,38 @@ function deUpdateIdPlaceholder() {
   var firstPin = (count > 0 && firstPinEl) ? (parseInt(firstPinEl.value, 10) || '') : '';
   var shortType = type.replace(/^MrJDB/, '').toLowerCase().replace(/[^a-z0-9]/g, '');
   idEl.placeholder = shortType ? shortType + (firstPin !== '' ? firstPin : '') : 'auto';
+}
+
+// Re-filter every wiring <select>'s options against the values currently picked
+// in its *sibling* slots (same device, other wiring dropdowns) — so choosing pin
+// 32 in slot 1 removes 32 from slot 2/3's list. Each select keeps its own current
+// value in its own list so re-picking the same pin doesn't self-invalidate (#36).
+function deRefreshWiringOptions() {
+  var grp = document.getElementById('de-wiring-grp');
+  var availOpts = grp && grp._deAvailOpts;
+  if (!availOpts) return;
+  var sels = grp.querySelectorAll('select.de-w');
+  if (sels.length < 2) return;
+  var allVals = [];
+  sels.forEach(function (s) {
+    var v = parseInt(s.value, 10);
+    if (!isNaN(v)) allVals.push(v);
+  });
+  sels.forEach(function (sel) {
+    var curVal = parseInt(sel.value, 10);
+    if (isNaN(curVal)) curVal = '';
+    var otherVals = allVals.slice();
+    var idx = otherVals.indexOf(curVal);
+    if (idx >= 0) otherVals.splice(idx, 1); // don't exclude this select's own value from its own list
+    var html = sel.options[0].outerHTML; // "— pin (n) —" placeholder, always first
+    availOpts.forEach(function (o) {
+      if (o.used && o.val !== curVal) return; // taken by another device
+      if (otherVals.indexOf(o.val) >= 0) return; // taken by a sibling slot
+      var s = (o.val === curVal) ? ' selected' : '';
+      html += '<option value="' + o.val + '"' + s + '>' + o.val + '</option>';
+    });
+    sel.innerHTML = html;
+  });
 }
 
 // Show or hide the device editor inline status message (cls: 'ok' | 'err').
