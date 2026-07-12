@@ -7,6 +7,10 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-12
 
+- OilLamp: the flicker phase no longer strobes — intensity now glides toward
+  a periodically-redrawn target every PWM cycle (exponential smoothing),
+  instead of jumping straight to a new independently-drawn value every
+  150ms. (#80)
 - RailwayCrossingLights: stopping the effect no longer flashes both LEDs
   full-bright before fading out — the fade now starts from each pin's own
   actual brightness left by the flashing phase instead of resetting both to

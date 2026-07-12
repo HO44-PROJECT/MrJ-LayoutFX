@@ -24,14 +24,20 @@
 // Stable phase — lamp burns calmly
 #define OIL_LAMP_STABLE_INTENSITY 95         ///< Base intensity during stable phase (0–255).
 #define OIL_LAMP_STABLE_VARIATION 8          ///< Max random variation (±) during stable phase.
-#define OIL_LAMP_STABLE_STEP_MS 150          ///< Delay between brightness steps in stable phase.
 #define OIL_LAMP_STABLE_MIN_MS 2000          ///< Minimum duration of a stable phase in ms.
 #define OIL_LAMP_STABLE_MAX_MS 6000          ///< Maximum duration of a stable phase in ms.
 
-// Flicker phase — lamp flickers briefly
-#define OIL_LAMP_MIN_INTENSITY 30            ///< Minimum intensity during flicker phase (0–255).
-#define OIL_LAMP_MAX_INTENSITY 70            ///< Maximum intensity during flicker phase (0–255).
-#define OIL_LAMP_BASE_DELAY_MS 80            ///< Delay between intensity updates in flicker phase.
+// Flicker phase — lamp flickers briefly.
+// Same target/current split as Torch: targetIntensity is redrawn every
+// OIL_LAMP_TARGET_UPDATE_MS, but the PWM cycle runs continuously every
+// OIL_LAMP_PWM_PERIOD_US (~20ms) and currentIntensity glides toward the
+// target by OIL_LAMP_SMOOTHING_FACTOR each cycle. A step applied only once
+// per 150ms, with nothing updating in between, is what reads as a strobe —
+// the PWM refresh rate itself must carry the transition (#80).
+#define OIL_LAMP_MIN_INTENSITY 45            ///< Floor for target intensity during flicker phase (0–255).
+#define OIL_LAMP_MAX_INTENSITY 75            ///< Ceiling for target intensity during flicker phase (0–255).
+#define OIL_LAMP_TARGET_UPDATE_MS 150        ///< Interval between target intensity redraws in flicker phase.
+#define OIL_LAMP_SMOOTHING_FACTOR 0.15f      ///< Weight of the target in the per-cycle glide (0.0–1.0).
 #define OIL_LAMP_FLICKER_MIN_MS 400          ///< Minimum duration of a flicker phase in ms.
 #define OIL_LAMP_FLICKER_MAX_MS 1200         ///< Maximum duration of a flicker phase in ms.
 
@@ -61,8 +67,10 @@ public:
     virtual int runCoroutine() override;
 
 protected:
-    int16_t intensity = 0;       ///< Current LED intensity (0–255).
-    uint32_t phaseStart = 0;     ///< Timestamp (ms) when the current phase started.
-    uint32_t phaseDuration = 0;  ///< Duration (ms) of the current phase.
-    bool stablePhase = true;     ///< true = stable phase, false = flicker phase.
+    float currentIntensity = 0.0f;   ///< Current LED intensity, glides toward targetIntensity each PWM cycle (0–255).
+    float targetIntensity = 0.0f;    ///< Target intensity, redrawn periodically (0–255).
+    uint32_t lastTargetUpdate = 0;   ///< Timestamp (ms) of the last target intensity redraw.
+    uint32_t phaseStart = 0;         ///< Timestamp (ms) when the current phase started.
+    uint32_t phaseDuration = 0;      ///< Duration (ms) of the current phase.
+    bool stablePhase = true;         ///< true = stable phase, false = flicker phase.
 };

@@ -43,6 +43,9 @@ int OilLamp::runCoroutine()
                 stablePhase = true;
                 phaseStart = millis();
                 phaseDuration = random(OIL_LAMP_STABLE_MIN_MS, OIL_LAMP_STABLE_MAX_MS);
+                currentIntensity = OIL_LAMP_STABLE_INTENSITY;
+                targetIntensity = OIL_LAMP_STABLE_INTENSITY;
+                lastTargetUpdate = 0;
             }
 
             // Switch phase when duration elapsed.
@@ -53,25 +56,37 @@ int OilLamp::runCoroutine()
                 phaseDuration = stablePhase
                     ? random(OIL_LAMP_STABLE_MIN_MS, OIL_LAMP_STABLE_MAX_MS)
                     : random(OIL_LAMP_FLICKER_MIN_MS, OIL_LAMP_FLICKER_MAX_MS);
+                lastTargetUpdate = 0; // force an immediate target redraw on phase entry
             }
 
-            if (stablePhase)
+            // Redraw the target intensity periodically — the actual output
+            // (currentIntensity) glides toward it every PWM cycle below, it
+            // never jumps straight to this value.
+            if (millis() - lastTargetUpdate >= OIL_LAMP_TARGET_UPDATE_MS)
             {
-                // Stable: near-constant brightness with tiny variation.
-                intensity = OIL_LAMP_STABLE_INTENSITY + random(-OIL_LAMP_STABLE_VARIATION, OIL_LAMP_STABLE_VARIATION + 1);
-                intensity = constrain(intensity, 0, OIL_LAMP_MAX_PWM);
-                simulatePWM(_pin, intensity, OIL_LAMP_PWM_PERIOD_US);
-                COROUTINE_DELAY(OIL_LAMP_STABLE_STEP_MS);
+                lastTargetUpdate = millis();
+                if (stablePhase)
+                {
+                    // Stable: near-constant brightness with tiny variation.
+                    targetIntensity = OIL_LAMP_STABLE_INTENSITY + random(-OIL_LAMP_STABLE_VARIATION, OIL_LAMP_STABLE_VARIATION + 1);
+                    targetIntensity = constrain(targetIntensity, 0, (float)OIL_LAMP_MAX_PWM);
+                }
+                else
+                {
+                    // Flicker: bounded random walk (each redraw nudges the target
+                    // by a step within the flicker range) with an occasional surge.
+                    targetIntensity = OIL_LAMP_MIN_INTENSITY + random(OIL_LAMP_MAX_INTENSITY - OIL_LAMP_MIN_INTENSITY + 1);
+                    if (random(OIL_LAMP_SURGE_PROBABILITY) < OIL_LAMP_SURGE_CHANCE)
+                        targetIntensity = min((float)OIL_LAMP_MAX_PWM, targetIntensity + random(OIL_LAMP_SURGE_BOOST));
+                }
             }
-            else
-            {
-                // Flicker: rapid random oscillation with occasional surge.
-                intensity = random(OIL_LAMP_MIN_INTENSITY, OIL_LAMP_MAX_INTENSITY + 1);
-                if (random(OIL_LAMP_SURGE_PROBABILITY) < OIL_LAMP_SURGE_CHANCE)
-                    intensity = min(OIL_LAMP_MAX_PWM, intensity + (int)random(OIL_LAMP_SURGE_BOOST));
-                simulatePWM(_pin, intensity, OIL_LAMP_PWM_PERIOD_US);
-                COROUTINE_DELAY(OIL_LAMP_BASE_DELAY_MS);
-            }
+
+            // Glide the output toward the target every PWM cycle (~20ms) — this
+            // is what actually removes the strobe: the LED is re-driven far more
+            // often than the target changes, so consecutive frames are always
+            // close together instead of jumping the full step in one refresh.
+            currentIntensity = (1.0f - OIL_LAMP_SMOOTHING_FACTOR) * currentIntensity + OIL_LAMP_SMOOTHING_FACTOR * targetIntensity;
+            simulatePWM(_pin, (int16_t)currentIntensity, OIL_LAMP_PWM_PERIOD_US);
 
             break;
 
