@@ -760,3 +760,11 @@ fetch('/api/device-types')
   .then(function (dt) { _applyDeviceTypes(dt); poll(); })
   .catch(function () { poll(); });
 _pollTimer = setInterval(poll, POLL);
+// Set the browser tab title from the active config's name on initial load too —
+// applyLayoutName() otherwise only runs from loadDebug() (boards/buses tabs or
+// after a config-editor action), so a fresh cockpit load kept the bare brand
+// title until the user navigated to Configuration (#75).
+fetch('/api/config')
+  .then(function (r) { return r.json(); })
+  .then(function (cfg) { applyLayoutName((cfg && cfg.name) || ''); })
+  .catch(function () { });
