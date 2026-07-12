@@ -76,15 +76,25 @@ void DeviceApi::init(const DeviceFactory &factory) {
 // Device listing
 // ---------------------------------------------------------------------------
 
-/** @brief Return a JSON array of all devices with id, type, state, pins, board. */
+/**
+ * @brief Return a JSON array of all devices with id, type, state, pins, board.
+ *        Streamed one device at a time (chunked transfer) instead of building
+ *        the whole array in one String — keeps RAM use flat as device count
+ *        grows, instead of O(device count) for a single grow-only buffer.
+ */
 void DeviceApi::_onGetDevices() {
   LOG_PRINTLN(F("API: GET /api/devices"));
-  String json = "[";
+  WebServer &server = ApiServer::server();
+  server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(kOk, "application/json", "");
+  server.sendContent(F("["));
   for (size_t i = 0; i < _factory->count(); i++) {
     Device *d = _factory->device(i);
     uint8_t board = _factory->deviceBoard(i);
     size_t pc = d->getPinCount();
 
+    String json;
     if (i > 0)
       json += ",";
     json += F("{\"id\":\"");
@@ -157,9 +167,9 @@ void DeviceApi::_onGetDevices() {
     }
   #endif
     json += F("}");
+    server.sendContent(json);
   }
-  json += "]";
-  ApiServer::sendJson(kOk, json);
+  server.sendContent(F("]"));
 }
 
 // ---------------------------------------------------------------------------
