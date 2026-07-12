@@ -87,6 +87,19 @@
  * @note Range read results (e.g., angle limits) are stored in members and accessed via getters.
  */
 class LobotServo : public ace_routine::Coroutine {
+public:
+#ifdef ARDUINO_ARCH_ESP32
+    // ace_routine::Coroutine deliberately keeps a non-virtual destructor
+    // (saves ~500-600 bytes of flash on 8-bit AVR by not pulling in
+    // free()/malloc() — see Coroutine.h) on the assumption a Coroutine is
+    // created statically, never deleted through a base pointer. DeviceFactory
+    // breaks that assumption for LobotServo (heap new/delete on config
+    // reload, see fullReset()). On ESP32 the flash cost of a vtable entry is
+    // negligible, so give it a virtual destructor here instead of paying for
+    // it on the Nano build, which never deletes a LobotServo dynamically.
+    virtual ~LobotServo() = default;
+#endif
+
 private:
     HardwareSerial &_bus;  ///< Reference to HardwareSerial (e.g., Serial on Nano).
     uint8_t _id;           ///< Servo ID (0-253, or 254 for broadcast).
@@ -203,6 +216,10 @@ public:
 
             byte rxBuf = _bus.read();
             switch (_receiveState) {
+                case IDLE:
+                    // Unreachable: guarded by the IDLE check at the top of the loop.
+                    // Listed only so the switch covers every ReceiveState value.
+                    break;
                 case WAIT_HEADER1:
                     if (rxBuf == LOBOT_SERVO_FRAME_HEADER) {
                         _frameCount++;
