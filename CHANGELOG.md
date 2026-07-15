@@ -46,6 +46,9 @@ earlier project history (pre-#3) lives only in `git log`.
   of a just-armed startup, so no effect's own logic changed. New WebUI fields
   in the device editor (i18n ×4). Validated on hardware (6 staggered GasLamp
   on SPI). (#8)
+- Board editor: the Buses tab's applicative bus list and its wizard "+ Add"
+  linked-bus suggestions are now sorted alphabetically by key instead of
+  following JSON insertion order. (#118)
 
 ## 2026-07-12
 
