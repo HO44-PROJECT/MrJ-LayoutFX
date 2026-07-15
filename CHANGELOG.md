@@ -29,6 +29,10 @@ earlier project history (pre-#3) lives only in `git log`.
   activates right after board parsing as soon as one SPI card is declared,
   and the identify endpoint gained the same "SPI not ready" guard the test
   endpoint already had. Validated on hardware. (#115)
+- Config list: filenames were truncated right after ".js", making a `.json`
+  file look like a `.js` one — `.cfg-fname` had a fixed `140px` width. Widened
+  to `33ch` to fit `kFsNameMax` (32 chars incl. extension) in full, and added
+  a tooltip with the full name as a safety net. Validated on hardware. (#112)
 
 ## 2026-07-12
 
