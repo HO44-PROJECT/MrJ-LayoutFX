@@ -37,6 +37,15 @@ earlier project history (pre-#3) lives only in `git log`.
   state buttons. Added i18n tooltips (`servo.*` keys, fr/de/es/en) in both the
   cockpit card and the board editor's bus device row. Validated on hardware.
   (#34)
+- Devices with `default_state` ON can now stagger their activation instead of
+  all popping on at once at boot/hot-reload — new optional per-device
+  `start_delay_ms` (fixed) and `start_delay_random_ms` (extra random, drawn
+  once) config fields. `DeviceFactory::applyDefaultStates()` arms the delay;
+  each effect's coroutine consumes it via a new `DEVICE_APPLY_START_DELAY()`
+  macro placed right after its existing state-change wait — a no-op outside
+  of a just-armed startup, so no effect's own logic changed. New WebUI fields
+  in the device editor (i18n ×4). Validated on hardware (6 staggered GasLamp
+  on SPI). (#8)
 
 ## 2026-07-12
 
