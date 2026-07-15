@@ -158,6 +158,10 @@ void DeviceApi::_onIdentify() {
     }
   } else if (doc[kCard].is<int>() && doc[kChannel].is<int>()) {
   #ifdef LFX_SPI_CARDS_ENABLED
+    if (!Spi595Bus::ready()) {
+      ApiServer::sendJson(kServiceUnavailable, F("{\"error\":\"SPI not ready\"}"));
+      return;
+    }
     int card = doc[kCard].as<int>(), ch = doc[kChannel].as<int>();
     if (_factory) {
       for (size_t i = 0; i < _factory->count(); i++) {

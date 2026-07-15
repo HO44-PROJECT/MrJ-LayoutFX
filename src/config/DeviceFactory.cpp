@@ -187,6 +187,14 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
     }
   }
 
+  // Activate the SPI bus as soon as at least one SPI card is declared, rather
+  // than waiting for the first device — the identify/test-pin endpoints need
+  // Spi595Bus::ready() to work on a freshly-added, still-empty SPI card (#115).
+  #ifdef LFX_SPI_CARDS_ENABLED
+  if (_spiCardCount > 0)
+    BusRegistry::activateSpi();
+  #endif
+
   // Pass 3 — devices. Bus hardware is activated lazily on first device creation.
   // Parse idle_pins before iterating devices so _idlePinCount is ready before initAll().
   _idlePinCount = 0;
