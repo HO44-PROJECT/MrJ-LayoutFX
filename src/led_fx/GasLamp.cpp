@@ -38,6 +38,7 @@ int GasLamp::runCoroutine()
     {
         // Wait for a state change (ON_STATE or OFF_STATE).
         DEVICE_WAIT_STATE_CHANGE(getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         delayMs = 0; // Delay for COROUTINE_DELAY
         currentTime = millis();

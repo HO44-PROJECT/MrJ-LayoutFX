@@ -32,6 +32,7 @@ int SolderLamp::runCoroutine()
     {
         // Wait until a state change is requested.
         DEVICE_WAIT_STATE_CHANGE(getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         switch (getTargetState())
         {

@@ -107,6 +107,7 @@ int I2cPwmMotorDevice::runCoroutine() {
   COROUTINE_LOOP() {
     // Wait until a state change is requested (target transitions out of current state).
     DEVICE_WAIT_STATE_CHANGE(getTargetState());
+    DEVICE_APPLY_START_DELAY();
 
     if (getTargetState() == OFF_STATE) {
       // ── OFF: ramp to neutral then hold ────────────────────────────────────

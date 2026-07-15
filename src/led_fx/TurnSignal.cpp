@@ -30,6 +30,7 @@ int TurnSignal::runCoroutine()
     {
         // Wait for a change in the desired state.
         DEVICE_WAIT_STATE_CHANGE(getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         switch (getTargetState())
         {

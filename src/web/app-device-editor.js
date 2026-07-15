@@ -203,6 +203,8 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
     // default_state = persisted boot state — read from config, never from runtime desired.
     var cfgBd = _deCfgDevById(id);
     if (cfgBd && cfgBd.default_state !== undefined) merged.default_state = cfgBd.default_state;
+    if (cfgBd && cfgBd.start_delay_ms !== undefined) merged.start_delay_ms = cfgBd.start_delay_ms;
+    if (cfgBd && cfgBd.start_delay_random_ms !== undefined) merged.start_delay_random_ms = cfgBd.start_delay_random_ms;
     openDevEditor(boardApiIdx, pin, merged, typeFilter);
     return;
   }
@@ -242,6 +244,8 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
         if (cfgDev.angle_a !== undefined) cfgOnlyDev.angle_a = cfgDev.angle_a;
         if (cfgDev.angle_b !== undefined) cfgOnlyDev.angle_b = cfgDev.angle_b;
         if (cfgDev.default_state !== undefined) cfgOnlyDev.default_state = cfgDev.default_state;
+        if (cfgDev.start_delay_ms !== undefined) cfgOnlyDev.start_delay_ms = cfgDev.start_delay_ms;
+        if (cfgDev.start_delay_random_ms !== undefined) cfgOnlyDev.start_delay_random_ms = cfgDev.start_delay_random_ms;
         openDevEditor(boardApiIdx, pin, cfgOnlyDev, typeFilter);
         return;
       }
@@ -291,12 +295,16 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
     // runtime state (desired). Using desired here silently baked default_state:"on"
     // into the config whenever a device was edited while running (e.g. a tested motor).
     // The default-state select itself is (re)built by deUpdateDefState(dev) below.
+    document.getElementById('de-start-delay').value = dev.start_delay_ms > 0 ? dev.start_delay_ms : '';
+    document.getElementById('de-start-delay-random').value = dev.start_delay_random_ms > 0 ? dev.start_delay_random_ms : '';
     document.getElementById('de-del-btn').style.display = '';
   } else {
     document.getElementById('de-title').textContent = t('de.new');
     document.getElementById('de-id').value = '';
     if (boardApiIdx !== undefined) boardEl.value = boardApiIdx;
     document.getElementById('de-addr').value = '';
+    document.getElementById('de-start-delay').value = '';
+    document.getElementById('de-start-delay-random').value = '';
     document.getElementById('de-del-btn').style.display = 'none';
   }
 
@@ -798,6 +806,8 @@ function saveDevEditor() {
   if (isI2cType && _deFixedBoardApiIdx !== undefined) boardIdx = _deFixedBoardApiIdx;
   var addrStr = (document.getElementById('de-addr').value || '').trim();
   var defState = document.getElementById('de-defstate').value;
+  var startDelayStr = (document.getElementById('de-start-delay').value || '').trim();
+  var startDelayRandomStr = (document.getElementById('de-start-delay-random').value || '').trim();
   var count = (_deviceTypes[type] || {}).wires !== undefined ? (_deviceTypes[type] || {}).wires : 1;
 
   if (!id) {
@@ -870,6 +880,8 @@ function saveDevEditor() {
     var dsn = parseInt(defState, 10);
     dev.default_state = isNaN(dsn) ? defState : dsn; // number for state values, 'on' for binary
   }
+  if (startDelayStr) { var sd = parseInt(startDelayStr, 10); if (sd > 0) dev.start_delay_ms = sd; }
+  if (startDelayRandomStr) { var sdr = parseInt(startDelayRandomStr, 10); if (sdr > 0) dev.start_delay_random_ms = sdr; }
 
   if (isI2cServo2) {
     var rows = document.querySelectorAll('#de-positions-list .de-pos-row');

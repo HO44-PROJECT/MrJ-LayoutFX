@@ -59,6 +59,8 @@ constexpr char kFPinCount[] = "pin_count"; ///< Fallback output count for board 
 constexpr char kFAddress[] = "address";
 constexpr char kFDefaultState[] = "default_state";
 constexpr char kVOn[] = "on";
+constexpr char kFStartDelayMs[] = "start_delay_ms";             ///< #8 fixed startup delay before applying default_state ON.
+constexpr char kFStartDelayRandomMs[] = "start_delay_random_ms"; ///< #8 additional random startup delay, drawn once at boot/reload.
 
 // ── UART bus key names ────────────────────────────────────────────────────
 constexpr char kUartKey0[] = "uart0";

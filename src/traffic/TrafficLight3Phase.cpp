@@ -182,6 +182,7 @@ int TrafficLight3Phases::runCoroutine()
     COROUTINE_LOOP()
     {
         DEVICE_WAIT_STATE_CHANGE(this->getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         if (getState() == INIT_STATE)
         {

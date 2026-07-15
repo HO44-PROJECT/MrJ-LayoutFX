@@ -69,6 +69,7 @@ int CharliePlexingSignal<PinCount>::runCoroutine()
     {
         // Wait for a change in the desired state (e.g., new signal state or OFF_STATE).
         DEVICE_WAIT_STATE_CHANGE(this->getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         this->working_state = this->getTargetState();
 

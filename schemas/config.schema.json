@@ -472,6 +472,16 @@
           ],
           "description": "Initial state applied at boot. Omit or 'off' to start inactive."
         },
+        "start_delay_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "#8: fixed delay (ms) before applying default_state at boot/hot-reload, so effects don't all activate at once. Omit or 0 to activate immediately."
+        },
+        "start_delay_random_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "#8: additional random delay (ms, 0..value) added to start_delay_ms, drawn once per boot/hot-reload. Omit or 0 for no randomisation."
+        },
         "positions": {
           "type": "array",
           "description": "PCA9685Servo: list of named positions. State 0 = emergency stop; states 1..N map to positions[0..N-1].",

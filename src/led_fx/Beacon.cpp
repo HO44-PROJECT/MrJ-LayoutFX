@@ -24,6 +24,7 @@ int Beacon::runCoroutine()
     {
         // Wait for transition needed (ie current state not the target state)
         DEVICE_WAIT_STATE_CHANGE(getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         switch (getTargetState())
         {

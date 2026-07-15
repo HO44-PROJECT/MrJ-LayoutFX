@@ -98,6 +98,7 @@ int SerialServoMotor::runCoroutine() {
   COROUTINE_LOOP() {
     // Wake when state != targetState, i.e. when activateNewTarget() or start() sets INIT_STATE.
     DEVICE_WAIT_STATE_CHANGE(getTargetState());
+    DEVICE_APPLY_START_DELAY();
 
     if (getTargetState() == OFF_STATE) {
       servo->motor_mode(SERVO_SPEED_STOP);

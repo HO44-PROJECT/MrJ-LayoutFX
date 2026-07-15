@@ -49,6 +49,7 @@ int I2cPwmServoDevice::runCoroutine() {
   COROUTINE_LOOP() {
     // Wait until a state change is requested (state transitions to INIT_STATE).
     DEVICE_WAIT_STATE_CHANGE(getTargetState());
+    DEVICE_APPLY_START_DELAY();
 
     if (getTargetState() == OFF_STATE) {
       // Stop: cut PWM so the servo de-energizes (goes limp).

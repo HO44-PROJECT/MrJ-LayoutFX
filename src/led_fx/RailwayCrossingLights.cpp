@@ -34,6 +34,7 @@ int RailwayCrossingLights::runCoroutine()
     {
         // Wait for a change in the desired state (ON_STATE or OFF_STATE).
         DEVICE_WAIT_STATE_CHANGE(getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         switch (getTargetState())
         {

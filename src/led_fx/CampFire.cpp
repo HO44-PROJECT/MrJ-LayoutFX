@@ -24,6 +24,7 @@ int CampFire::runCoroutine()
     {
         // Wait for a state change request.
         DEVICE_WAIT_STATE_CHANGE(getTargetState());
+        DEVICE_APPLY_START_DELAY();
 
         switch (getTargetState())
         {

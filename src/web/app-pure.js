@@ -37,7 +37,8 @@ function mergeDeviceForEditor(rtDev, cfgDev) {
   };
   if (cfgDev) {
     var keys = ['angle_a', 'angle_b', 'positions', 'pulse_min_us', 'pulse_max_us',
-                'speed', 'states', 'neutral_us', 'default_state'];
+                'speed', 'states', 'neutral_us', 'default_state',
+                'start_delay_ms', 'start_delay_random_ms'];
     for (var i = 0; i < keys.length; i++) {
       if (cfgDev[keys[i]] !== undefined) d[keys[i]] = cfgDev[keys[i]];
     }

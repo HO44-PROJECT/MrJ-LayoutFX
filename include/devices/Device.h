@@ -62,6 +62,11 @@ struct TransitionPtr {
 
 #define DEVICE_WAIT_STATE_CHANGE(target) COROUTINE_AWAIT((this->getState() != (target)))
 
+// Apply a device's pending startup delay (#8), if any. A no-op (COROUTINE_DELAY(0))
+// outside of the boot/hot-reload default-state activation, since _startDelayMs is
+// only ever armed by DeviceFactory::applyDefaultStates() and consumed once here.
+#define DEVICE_APPLY_START_DELAY() COROUTINE_DELAY(this->consumeStartDelayMs())
+
 /**
  * @class Device
  * @brief Abstract base class for asynchronous device control using coroutines.
@@ -213,6 +218,30 @@ public:
    */
   inline STATE_TYPE getTargetState() const {
     return targetState;
+  }
+
+  /**
+   * @brief Arms a one-shot startup delay (#8), consumed by DEVICE_APPLY_START_DELAY()
+   * the next time this device's coroutine re-enters its state machine.
+   *
+   * Used by DeviceFactory::applyDefaultStates() only — a plain newState()/switchOn()
+   * during normal operation is unaffected (delay stays 0).
+   *
+   * @param ms Delay in milliseconds before the pending default state is applied.
+   */
+  inline void armStartDelay(uint16_t ms) {
+    _startDelayMs = ms;
+  }
+
+  /**
+   * @brief Returns the armed startup delay and resets it to 0 (one-shot).
+   *
+   * @return uint16_t Delay in milliseconds (0 outside of a just-armed startup).
+   */
+  inline uint16_t consumeStartDelayMs() {
+    uint16_t ms = _startDelayMs;
+    _startDelayMs = 0;
+    return ms;
   }
 
   /**
@@ -541,6 +570,7 @@ protected:
   STATE_TYPE state = OFF_STATE;        ///< Current operational state of the device. use setState or getState.
   STATE_TYPE targetState = OFF_STATE;  ///< Target state for the current transition. (stable). Use getTargetState. target is modified by activateNewTarget
   STATE_TYPE desiredState = OFF_STATE; ///< Target state for the next transition. (stable). use newState or getDesiredState
+  uint16_t _startDelayMs = 0;          ///< One-shot startup delay (#8), armed by armStartDelay(), consumed by consumeStartDelayMs().
 
   char label = ' ';
 
