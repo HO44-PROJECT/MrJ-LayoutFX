@@ -274,8 +274,6 @@ private:
   char _ids[LFX_FACTORY_MAX_DEVICES][FACTORY_ID_LEN];
   uint8_t _boards[LFX_FACTORY_MAX_DEVICES];
   STATE_TYPE _deviceDefaultStates[LFX_FACTORY_MAX_DEVICES]; ///< Default states from JSON config.
-  uint16_t _deviceStartDelayMs[LFX_FACTORY_MAX_DEVICES];       ///< #8 fixed startup delay (ms), from JSON config.
-  uint16_t _deviceStartDelayRandomMs[LFX_FACTORY_MAX_DEVICES]; ///< #8 random startup delay upper bound (ms), from JSON config.
   size_t _count = 0;
 
   char _configName[FACTORY_LABEL_LEN] = {}; ///< Config "name" field, for OLED display.

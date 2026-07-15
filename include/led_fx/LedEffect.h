@@ -104,12 +104,12 @@ public:
      * Requests a transition to ON_STATE by calling setDesiredState(ON_STATE) to
      * enable the flickering effect.
      */
-    inline virtual void switchOn()
+    inline virtual void switchOn(bool skipDelay = false)
     {
         // static const char MSG_switchOn[] PROGMEM = "%S: switch on"; // Déclarer en PROGMEM
         // DEBUG_PRINTLN(MSG_switchOn, getDeviceName());
 
-        newState(ON_STATE);
+        newState(ON_STATE, skipDelay);
     }
 
     /**

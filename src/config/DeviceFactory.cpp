@@ -225,9 +225,10 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
       _deviceDefaultStates[_count] = _ds.is<int>()
           ? (uint8_t)_ds.as<int>()
           : ((strcmp(_ds | "", kVOn) == 0) ? 1 : 0);
-      // #8: optional startup delay before applying the default state above.
-      _deviceStartDelayMs[_count] = (uint16_t)(obj[kFStartDelayMs] | 0);
-      _deviceStartDelayRandomMs[_count] = (uint16_t)(obj[kFStartDelayRandomMs] | 0);
+      // #8: optional startup delay, applied by the device itself on every
+      // OFF -> active transition (default state at boot, ALL ON, DCC, ...).
+      d->setStartDelayConfig((uint16_t)(obj[kFStartDelayMs] | 0),
+                              (uint16_t)(obj[kFStartDelayRandomMs] | 0));
       _devices[_count++] = d;
     }
   }
@@ -256,19 +257,12 @@ void DeviceFactory::initAll() {
  * coroutine and ensure proper hardware initialization (e.g. motors need to
  * send neutral pulse, even when OFF).
  *
- * #8: if start_delay_ms/start_delay_random_ms was set, arm the device's
- * one-shot startup delay first — DEVICE_APPLY_START_DELAY() in the device's
- * own coroutine consumes it right after its DEVICE_WAIT_STATE_CHANGE() gate,
- * so lamps/effects with a default ON state can stagger their activation
- * instead of all popping on at once. No-op (0ms) when neither field is set.
+ * #8: devices with start_delay_ms/start_delay_random_ms configured stagger
+ * their activation via DEVICE_APPLY_START_DELAY() in their own coroutine —
+ * no special handling needed here, see Device::setStartDelayConfig().
  */
 void DeviceFactory::applyDefaultStates() {
   for (size_t i = 0; i < _count; i++) {
-    uint16_t delayMs = _deviceStartDelayMs[i];
-    if (_deviceStartDelayRandomMs[i] > 0)
-      delayMs += random(0, _deviceStartDelayRandomMs[i] + 1);
-    if (delayMs > 0)
-      _devices[i]->armStartDelay(delayMs);
     // Always call newState() to trigger coroutine, even for OFF (state 0)
     _devices[i]->newState(_deviceDefaultStates[i]);
   }

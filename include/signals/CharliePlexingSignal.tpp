@@ -110,7 +110,7 @@ int CharliePlexingSignal<PinCount>::runCoroutine()
 }
 
 template <size_t PinCount>
-bool CharliePlexingSignal<PinCount>::activateNewTarget()
+bool CharliePlexingSignal<PinCount>::activateNewTarget(bool /*skipDelay*/)
 // TODO: revoirle modèle de classe avec une classe SuperSignal intermédiaire
 {
     if (!this->busy())

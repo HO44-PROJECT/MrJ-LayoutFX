@@ -237,7 +237,7 @@ int TrafficLight3Phases::runCoroutine()
  *
  * @return true if a new target was activated, false otherwise.
  */
-bool TrafficLight3Phases::activateNewTarget()
+bool TrafficLight3Phases::activateNewTarget(bool /*skipDelay*/)
 {
     if (!busy() && targetState != desiredState)
     {

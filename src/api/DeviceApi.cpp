@@ -196,7 +196,8 @@ void DeviceApi::_onPostDevice() {
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
       Device *d = _factory->device(i);
-      d->newState((STATE_TYPE)state);
+      // #8: a single manual state pick from the cockpit skips the startup delay.
+      d->newState((STATE_TYPE)state, true);
   #ifdef LFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, state);
   #endif
@@ -229,10 +230,11 @@ void DeviceApi::_onSwitch() {
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
       Device *d = _factory->device(i);
+      // #8: a single manual click on the device's own icon skips the startup delay.
       if (on)
-        d->switchOn();
+        d->switchOn(true);
       else
-        d->switchOff();
+        d->switchOff(true);
   #ifdef LFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, on ? 1 : 0);
   #endif

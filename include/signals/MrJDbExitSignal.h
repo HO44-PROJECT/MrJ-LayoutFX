@@ -38,7 +38,7 @@ public:
 
     virtual const __FlashStringHelper *getDeviceName() const override { return F("MrJDBExitSignal"); }
     virtual uint8_t getStateCount() const override { return 5; } ///< OFF · HP00 · HP1 · HP2 · HP0_SH1
-    inline virtual void switchOn() override { newState(HP00_STATE); }
+    inline virtual void switchOn(bool skipDelay = false) override { newState(HP00_STATE, skipDelay); }
 
     static const STATE_TYPE OFF_STATE = 0;  ///< Signal is off (no light).
     static const STATE_TYPE HP00_STATE = 1; ///< Stop signal (red light).

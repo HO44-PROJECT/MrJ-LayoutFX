@@ -60,7 +60,7 @@ public:
   bool   initPins() override;
 
   void setDccAccessoryState(uint8_t state) override { newState((STATE_TYPE)state); }
-  void switchOn() override { if (_posCount > 0) newState(1); }
+  void switchOn(bool skipDelay = false) override { if (_posCount > 0) newState(1, skipDelay); }
 
   uint8_t         getPosCount() const              { return _posCount; }
   const Position &getPosition(uint8_t idx) const   { return _positions[idx]; }

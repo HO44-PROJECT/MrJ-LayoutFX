@@ -64,7 +64,7 @@ public:
   bool   initPins() override;
 
   void setDccAccessoryState(uint8_t state) override { newState(state ? 1 : 0); }
-  void switchOn() override { if (_stateCount > 0) newState(1); }
+  void switchOn(bool skipDelay = false) override { if (_stateCount > 0) newState(1, skipDelay); }
 
   uint16_t          getNeutralUs() const               { return _neutralUs; }
   uint8_t           getMotorStateCount() const         { return _stateCount; }

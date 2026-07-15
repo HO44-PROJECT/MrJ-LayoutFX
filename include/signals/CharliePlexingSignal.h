@@ -93,7 +93,7 @@ protected:
      * signal state. Outputs debug information when enabled.
      * @return true if a new target state is activated, false otherwise.
      */
-    virtual bool activateNewTarget();
+    virtual bool activateNewTarget(bool skipDelay = false);
 
     /**
      * @brief Configures the worker pins for the signal effect.

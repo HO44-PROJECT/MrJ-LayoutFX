@@ -73,6 +73,37 @@ function dbgFindDev(boardApiIdx, wiring) {
   return null;
 }
 
+// Find a device's raw config entry (board+wiring match), regardless of runtime
+// state — needed for fields like start_delay_ms that /api/devices doesn't carry.
+function dbgFindCfgDev(boardApiIdx, wiring) {
+  var boardId = _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardApiIdx]
+    ? _dbgCfg.boards[boardApiIdx].id : null;
+  if (!boardId) return null;
+  var cfgDevs = (_dbgCfg && _dbgCfg.devices) || [];
+  for (var i = 0; i < cfgDevs.length; i++) {
+    var cd = cfgDevs[i];
+    if (cd.board !== boardId) continue;
+    var w = cd.wiring;
+    var match = Array.isArray(w) ? w.indexOf(wiring) >= 0 : w === wiring;
+    if (match) return cd;
+  }
+  return null;
+}
+
+// Format a device's configured startup delay (#8) as a compact pin label,
+// e.g. "4.0s+2s" (fixed + random upper bound), "500ms" (fixed only, <1s), or
+// null when neither start_delay_ms nor start_delay_random_ms is set.
+function fmtStartDelayLabel(cfgDev) {
+  if (!cfgDev) return null;
+  var fixed = cfgDev.start_delay_ms | 0;
+  var rand = cfgDev.start_delay_random_ms | 0;
+  if (fixed <= 0 && rand <= 0) return null;
+  function fmt(ms) { return ms >= 1000 ? (ms / 1000) + 's' : ms + 'ms'; }
+  var label = fmt(fixed);
+  if (rand > 0) label += '+' + fmt(rand);
+  return label;
+}
+
 // ── Rendering ────────────────────────────────────────────────────────
 
 // Captured once at load, before applyLayoutName ever touches document.title —
@@ -427,16 +458,20 @@ function renderPin(board, boardApiIdx, pin) {
   var grp = (dev && dev.pins && dev.pins.length > 1) ? dev.id : null;
 
   // In DCC-label mode, a pin carrying a device with a DCC address shows "#<addr>"
-  // instead of its GPIO/channel number (see setPinLabel). On SPI/I2C expansion
-  // boards pin.label is the only meaningful channel name ("Q3", "CH7") so it's
-  // always kept; on plain GPIO boards it's a static alt-function name ("TXD0")
-  // that's misleading once a device sits there outside a bus — show the bare
-  // GPIO number instead, unless a bus currently reserves the pin (_dbgSysPins),
-  // e.g. a device config-only-skipped by the uart0 guard (#66) still shows
-  // "TXD0" while the log bus owns it (#70).
+  // instead of its GPIO/channel number (see setPinLabel). In delay-label mode
+  // (#8), it shows the device's configured start_delay_ms/_random_ms instead,
+  // e.g. "4.0s+2s" — falls through to the normal label when no delay is set.
+  // On SPI/I2C expansion boards pin.label is the only meaningful channel name
+  // ("Q3", "CH7") so it's always kept; on plain GPIO boards it's a static
+  // alt-function name ("TXD0") that's misleading once a device sits there
+  // outside a bus — show the bare GPIO number instead, unless a bus currently
+  // reserves the pin (_dbgSysPins), e.g. a device config-only-skipped by the
+  // uart0 guard (#66) still shows "TXD0" while the log bus owns it (#70).
+  var delayLabel = _dbgPinLabel === 'delay' && dev ? fmtStartDelayLabel(dbgFindCfgDev(boardApiIdx, num)) : null;
   var numLabel = (_dbgPinLabel === 'dcc' && dev && dev.addr > 0) ? '#' + dev.addr
-    : (isSpi || isI2c) ? pin.label
-      : (dev ? (_dbgSysPins[num] || num) : pin.label);
+    : delayLabel ? delayLabel
+      : (isSpi || isI2c) ? pin.label
+        : (dev ? (_dbgSysPins[num] || num) : pin.label);
 
   // Build a small LED toggle button for a free MCU GPIO (direct hardware test).
   function mkLedBtn(gpio) {
@@ -555,11 +590,12 @@ function setTheme(name) {
   });
 }
 
-// Board view: switch pin-cell labels between the GPIO/channel number and the device's
-// DCC address ("#<addr>"). Persisted in localStorage; re-renders the pinout (RAM only).
+// Board view: switch pin-cell labels between the GPIO/channel number, the device's
+// DCC address ("#<addr>"), and its configured startup delay (#8, "4.0s+2s").
+// Persisted in localStorage; re-renders the pinout (RAM only).
 var _dbgPinLabel = localStorage.getItem('mrj-pinlabel') || 'gpio';
 function setPinLabel(mode) {
-  _dbgPinLabel = (mode === 'dcc') ? 'dcc' : 'gpio';
+  _dbgPinLabel = (mode === 'dcc' || mode === 'delay') ? mode : 'gpio';
   localStorage.setItem('mrj-pinlabel', _dbgPinLabel);
   document.querySelectorAll('.pinlbl-btn').forEach(function (b) {
     b.classList.toggle('active', b.getAttribute('data-mode') === _dbgPinLabel);

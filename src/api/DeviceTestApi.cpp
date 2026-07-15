@@ -111,7 +111,9 @@ void DeviceApi::_onIdentify() {
   // Silence any device driving GPIO `p` so it doesn't fight the blink: an ON
   // device re-asserts its pin every loop (e.g. Led ON keeps calling outputActive)
   // and would relight steady as identify moves on. switchOff() parks its coroutine
-  // in await(), leaving the pin to identify and dark afterwards.
+  // in await(), leaving the pin to identify and dark afterwards. #8: skip the
+  // startup delay here — the pin must go dark immediately, not after several
+  // seconds, or the identify blink would be fought/masked in the meantime.
   auto silence = [](int p) {
     if (!_factory) return;
     for (size_t i = 0; i < _factory->count(); i++) {
@@ -119,9 +121,9 @@ void DeviceApi::_onIdentify() {
       for (size_t j = 0; j < d->getPinCount(); j++) {
   #ifdef LFX_SPI_CARDS_ENABLED
         PIN_ID gp = d->getPin(j);
-        if (!gp.isSpi() && (int)gp.pin == p) d->switchOff();
+        if (!gp.isSpi() && (int)gp.pin == p) d->switchOff(true);
   #else
-        if ((int)d->getPin(j) == p) d->switchOff();
+        if ((int)d->getPin(j) == p) d->switchOff(true);
   #endif
       }
     }
@@ -168,7 +170,7 @@ void DeviceApi::_onIdentify() {
         Device *d = _factory->device(i);
         for (size_t j = 0; j < d->getPinCount(); j++) {
           PIN_ID sp = d->getPin(j);
-          if (sp.isSpi() && (int)sp.card == card && (int)sp.pin == ch) d->switchOff();
+          if (sp.isSpi() && (int)sp.card == card && (int)sp.pin == ch) d->switchOff(true);
         }
       }
     }

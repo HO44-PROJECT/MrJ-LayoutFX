@@ -70,9 +70,9 @@ public:
      *
      * Requests a transition to ON_STATE to start the alternating effect.
      */
-    virtual void switchOn()
+    virtual void switchOn(bool skipDelay = false)
     {
-        newState(ON_STATE);
+        newState(ON_STATE, skipDelay);
     }
 
 protected:

@@ -230,10 +230,12 @@ public:
    *
    * Does NOT call setSpeed(0) to avoid zeroing speed.
    * Goes directly through the state machine (desiredState → OFF_STATE).
+   *
+   * @param skipDelay #8: see Device::newState().
    */
-  inline virtual void stop() {
+  inline virtual void stop(bool skipDelay = false) {
     desiredState = OFF_STATE;
-    activateNewTarget(); // sets state=INIT_STATE, targetState=OFF → coroutine wakes
+    activateNewTarget(skipDelay); // sets state=INIT_STATE, targetState=OFF → coroutine wakes
   }
 
   /**
@@ -241,11 +243,13 @@ public:
    *
    * Forces state=INIT_STATE before activateNewTarget() so the coroutine wakes
    * even when targetState is already RUN_STATE (speed change while running).
+   *
+   * @param skipDelay #8: see Device::newState().
    */
-  inline virtual void start() {
+  inline virtual void start(bool skipDelay = false) {
     desiredState = RUN_STATE;
     setState(INIT_STATE); // force wake regardless of previous target
-    activateNewTarget();  // aligns targetState = RUN_STATE (does not overwrite INIT)
+    activateNewTarget(skipDelay);  // aligns targetState = RUN_STATE (does not overwrite INIT)
   }
 
   /**
@@ -264,18 +268,18 @@ public:
    *
    * stop()/start() use activateNewTarget() directly — no recursion with newState().
    */
-  inline virtual void newState(STATE_TYPE s) override {
+  inline virtual void newState(STATE_TYPE s, bool skipDelay = false) override {
     if (s == OFF_STATE)
-      stop();
+      stop(skipDelay);
     else
-      start();
+      start(skipDelay);
   }
 
   /** @brief ALL ON alias (same as start). */
-  inline virtual void switchOn() override { start(); }
+  inline virtual void switchOn(bool skipDelay = false) override { start(skipDelay); }
 
   /** @brief ALL OFF alias (same as stop, speed preserved). */
-  inline virtual void switchOff() override { stop(); }
+  inline virtual void switchOff(bool skipDelay = false) override { stop(skipDelay); }
 
   #ifdef DEMO
   void demo(uint32_t *lastSwitchTime, uint16_t delay = 2000) {

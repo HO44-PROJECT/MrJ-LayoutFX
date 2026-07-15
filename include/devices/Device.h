@@ -62,10 +62,15 @@ struct TransitionPtr {
 
 #define DEVICE_WAIT_STATE_CHANGE(target) COROUTINE_AWAIT((this->getState() != (target)))
 
-// Apply a device's pending startup delay (#8), if any. A no-op (COROUTINE_DELAY(0))
-// outside of the boot/hot-reload default-state activation, since _startDelayMs is
-// only ever armed by DeviceFactory::applyDefaultStates() and consumed once here.
-#define DEVICE_APPLY_START_DELAY() COROUTINE_DELAY(this->consumeStartDelayMs())
+// Apply a device's pending startup delay (#8), if any. The delay is rolled
+// (fixed + fresh random draw) by activateNewTarget() the moment it detects a
+// transition touching OFF_STATE, in either direction (OFF -> active or
+// active -> OFF) — by the time the coroutine reaches this macro, `state` has
+// already been overwritten with INIT_STATE, so the check can't be done here.
+// A no-op (COROUTINE_DELAY(0)) for any other state change (e.g. SLOW -> FAST),
+// when no delay is configured, or when the transition was requested with
+// skipDelay=true (e.g. a single manual click in the cockpit).
+#define DEVICE_APPLY_START_DELAY() COROUTINE_DELAY(this->consumePendingStartDelayMs())
 
 /**
  * @class Device
@@ -132,11 +137,14 @@ public:
    * Updates the desired state, which will be processed once in a stable state.
    *
    * @param newState The new desired state (e.g., ON_STATE or OFF_STATE).
+   * @param skipDelay #8: true to ignore this device's configured startup delay
+   * for this transition (e.g. a single manual click in the cockpit). Default
+   * false — boot default state, ALL ON/OFF, group actions, and DCC all honour it.
    */
-  virtual void newState(STATE_TYPE newState) {
+  virtual void newState(STATE_TYPE newState, bool skipDelay = false) {
     desiredState = newState;
 
-    activateNewTarget();
+    activateNewTarget(skipDelay);
   }
 
   /**
@@ -144,15 +152,19 @@ public:
    *
    * No-op by default. Each subclass overrides to define what "on" means
    * (e.g. ON_STATE for LEDs, HP0_STATE for DB signals).
+   *
+   * @param skipDelay #8: see newState().
    */
-  inline virtual void switchOn() {}
+  inline virtual void switchOn(bool /*skipDelay*/ = false) {}
 
   /**
    * @brief Requests the device to switch to the OFF_STATE.
    *
    * Calls `trigger(OFF_STATE)` to deactivate the device asynchronously.
+   *
+   * @param skipDelay #8: see newState().
    */
-  inline virtual void switchOff() { newState(OFF_STATE); }
+  inline virtual void switchOff(bool skipDelay = false) { newState(OFF_STATE, skipDelay); }
 
   /**
    * @brief Set motor speed — no-op for non-motor devices.
@@ -180,7 +192,7 @@ public:
    * comma-prefixed key:value pairs, e.g. `,\"mode\":1,\"speed\":300`.
    * Default: no extra fields.
    */
-  inline virtual void appendHealthJson(String& /*json*/) {}
+  inline virtual void appendHealthJson(String & /*json*/) {}
 
   /**
    * @brief Checks if the device is in a non-interruptible state transition.
@@ -221,26 +233,29 @@ public:
   }
 
   /**
-   * @brief Arms a one-shot startup delay (#8), consumed by DEVICE_APPLY_START_DELAY()
-   * the next time this device's coroutine re-enters its state machine.
+   * @brief Configures this device's startup delay (#8), read once from JSON
+   * config by DeviceFactory. Applied by DEVICE_APPLY_START_DELAY() on every
+   * transition away from OFF_STATE, whatever triggers it (boot default
+   * state, ALL ON, an individual button, DCC).
    *
-   * Used by DeviceFactory::applyDefaultStates() only — a plain newState()/switchOn()
-   * during normal operation is unaffected (delay stays 0).
-   *
-   * @param ms Delay in milliseconds before the pending default state is applied.
+   * @param fixedMs Fixed delay in milliseconds (0 = none).
+   * @param randomMs Extra random delay upper bound in milliseconds, redrawn
+   * on every OFF -> active transition (0 = no randomisation).
    */
-  inline void armStartDelay(uint16_t ms) {
-    _startDelayMs = ms;
+  inline void setStartDelayConfig(uint16_t fixedMs, uint16_t randomMs) {
+    _startDelayMs = fixedMs;
+    _startDelayRandomMs = randomMs;
   }
 
   /**
-   * @brief Returns the armed startup delay and resets it to 0 (one-shot).
+   * @brief Returns the pending startup delay armed by activateNewTarget()
+   * and resets it to 0 (one-shot, consumed by DEVICE_APPLY_START_DELAY()).
    *
-   * @return uint16_t Delay in milliseconds (0 outside of a just-armed startup).
+   * @return uint16_t Delay in milliseconds (0 outside of an OFF -> active transition).
    */
-  inline uint16_t consumeStartDelayMs() {
-    uint16_t ms = _startDelayMs;
-    _startDelayMs = 0;
+  inline uint16_t consumePendingStartDelayMs() {
+    uint16_t ms = _pendingStartDelayMs;
+    _pendingStartDelayMs = 0;
     return ms;
   }
 
@@ -464,8 +479,8 @@ public:
    * (Core 1 / Arduino loop), and only between two scheduler passes.
    * After detachment the object is safe to delete.
    */
-  static void detachCoroutineFromScheduler(ace_routine::Coroutine* c) {
-    ace_routine::Coroutine** prev = ace_routine::Coroutine::getRoot();
+  static void detachCoroutineFromScheduler(ace_routine::Coroutine *c) {
+    ace_routine::Coroutine **prev = ace_routine::Coroutine::getRoot();
     while (*prev != nullptr) {
       if (*prev == c) {
         *prev = *c->getNext();
@@ -503,7 +518,7 @@ public:
   }
 
 protected:
-  virtual bool activateNewTarget() {
+  virtual bool activateNewTarget(bool skipDelay = false) {
     // DEBUG_PRINTLN(F("activateNewTarget device"));
     if (!busy()) {
       DEBUG_PRINTLN(F("activateNewTarget not busy"));
@@ -511,6 +526,17 @@ protected:
       DEBUG_PRINTLN(desiredState);
       if (targetState != desiredState) {
         // DEBUG_PRINTLN("%s: New state %d", getDeviceName(), desiredState);
+        // #8: roll a fresh delay right here, while `state` still holds the
+        // pre-transition value — by the time the coroutine reaches
+        // DEVICE_APPLY_START_DELAY(), state has already become INIT_STATE.
+        // Applies symmetrically to OFF -> active and active -> OFF, skipped
+        // entirely for a single manual click (skipDelay=true).
+        bool touchesOff = (state == OFF_STATE) != (desiredState == OFF_STATE);
+        if (!skipDelay && touchesOff) {
+          _pendingStartDelayMs = _startDelayMs;
+          if (_startDelayRandomMs > 0)
+            _pendingStartDelayMs += random(0, _startDelayRandomMs + 1);
+        }
         targetState = desiredState;
         state = INIT_STATE;
         return true;
@@ -570,7 +596,9 @@ protected:
   STATE_TYPE state = OFF_STATE;        ///< Current operational state of the device. use setState or getState.
   STATE_TYPE targetState = OFF_STATE;  ///< Target state for the current transition. (stable). Use getTargetState. target is modified by activateNewTarget
   STATE_TYPE desiredState = OFF_STATE; ///< Target state for the next transition. (stable). use newState or getDesiredState
-  uint16_t _startDelayMs = 0;          ///< One-shot startup delay (#8), armed by armStartDelay(), consumed by consumeStartDelayMs().
+  uint16_t _startDelayMs = 0;          ///< Configured startup delay (#8), fixed part, in ms. Set once by setStartDelayConfig().
+  uint16_t _startDelayRandomMs = 0;    ///< Configured startup delay (#8), extra random upper bound, in ms. Set once by setStartDelayConfig().
+  uint16_t _pendingStartDelayMs = 0;   ///< One-shot startup delay (#8), rolled by activateNewTarget(), consumed by consumePendingStartDelayMs().
 
   char label = ' ';
 

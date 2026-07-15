@@ -52,14 +52,14 @@ public:
     static const STATE_TYPE FLASHING_STATE = 3;     ///< Idle flashing amber
     static const STATE_TYPE FLASHING_RUN_STATE = 4; ///< Transitional flashing amber
 
-    virtual bool activateNewTarget() override;
+    virtual bool activateNewTarget(bool skipDelay = false) override;
 
     virtual uint8_t getStateCount() const override { return 4; } ///< OFF · STOP · GO · FLASHING
 
     /**
      * @brief Switches on to the default STOP (red) state.
      */
-    inline virtual void switchOn() override { newState(STOP_STATE); }
+    inline virtual void switchOn(bool skipDelay = false) override { newState(STOP_STATE, skipDelay); }
 
     /**
      * @brief Provides a single-char status code for external monitoring/debug.
