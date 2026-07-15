@@ -448,7 +448,7 @@ function renderBusesTab() {
 
   // ── Bus applicatifs (config.json) ──
   var buses = cfg.buses || {};
-  var keys = Object.keys(buses);
+  var keys = Object.keys(buses).sort();
 
   if (html === '' && keys.length === 0) {
     el.innerHTML = '<div class="prm-info">' + t('bue.no_buses') + '</div>';
@@ -498,17 +498,25 @@ function renderBusesTab() {
     });
   }
   var seenLbKeys = {};
+  var linkedSuggestions = [];
   ((_dbgCfg && _dbgCfg.boards) || []).forEach(function (b) {
     var def = _boardTypes[b.type] || {};
     (def.linkedBuses || []).forEach(function (lb) {
       if (seenLbKeys[lb.key] || linkedBusAlreadyPresent(lb)) return;
       seenLbKeys[lb.key] = true;
+      linkedSuggestions.push({ lb: lb, boardType: b.type });
+    });
+  });
+  linkedSuggestions
+    .sort(function (a, b) { return a.lb.key < b.lb.key ? -1 : a.lb.key > b.lb.key ? 1 : 0; })
+    .forEach(function (entry) {
+      var lb = entry.lb;
       var fields = (_busTypes[lb.type] || {}).fields || [];
       var rows = fields.map(function (f) {
         return busRow(f.label.split(' ')[0], lb[f.key]);
       }).join('');
       var lks = lb.key.replace(/'/g, "\\'");
-      var bts = b.type.replace(/'/g, "\\'");
+      var bts = entry.boardType.replace(/'/g, "\\'");
       html += '<div class="bus-card bus-suggestion">'
         + busTitle(lb.label || lb.key, lb.type || '?')
         + rows
@@ -517,7 +525,6 @@ function renderBusesTab() {
         + '</div>'
         + '</div>';
     });
-  });
 
   el.innerHTML = html;
 }
