@@ -322,7 +322,8 @@ function renderBusDevice(boardApiIdx, dev) {
       var action = s.v === 'REV'
         ? 'revServo(\'' + sf + '\')'
         : 'setServo(\'' + sf + '\',' + s.v + ')';
-      html += '<button class="dbg-hbtn ' + s.c + '" onclick="' + action + '">' + s.l + '</button>';
+      var mk = SERVO_MEANING[s.l];
+      html += '<button class="dbg-hbtn ' + s.c + '" title="' + (mk ? t(mk) : s.l) + '" onclick="' + action + '">' + s.l + '</button>';
     });
   }
   html += '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '"'

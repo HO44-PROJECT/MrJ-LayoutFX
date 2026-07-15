@@ -171,6 +171,11 @@ var ASPECT_MEANING = {
   HP1: 'aspect.clear', HP2: 'aspect.slow', 'HP0+Sh1': 'aspect.shunting'
 };
 
+// SERVO_STATES label (STOP/SLOW/MID/FAST/REV, from device_types.json) -> i18n tooltip key.
+var SERVO_MEANING = {
+  STOP: 'servo.stop', SLOW: 'servo.slow', MID: 'servo.mid', FAST: 'servo.fast', REV: 'servo.rev'
+};
+
 // Render a railway signal card with dynamic state buttons from device_types.json.
 function cardSignal(d) {
   var states = (_deviceTypes[d.type] || {}).states;
@@ -211,7 +216,8 @@ function cardServo(d) {
     var onclick = s.v === 'REV'
       ? 'revServo(\'' + d.id + '\')'
       : 'setServo(\'' + d.id + '\',' + s.v + ')';
-    return '<button class="tbtn ' + s.c + ' ' + act + '" onclick="' + onclick + '">' + s.l + '</button>';
+    var mk = SERVO_MEANING[s.l];
+    return '<button class="tbtn ' + s.c + ' ' + act + '" title="' + (mk ? t(mk) : s.l) + '" onclick="' + onclick + '">' + s.l + '</button>';
   }
   return '<div class="card ' + c + '">'
     + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
