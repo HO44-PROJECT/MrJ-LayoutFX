@@ -16,6 +16,26 @@ var PROJECT_URLS = {
   wiki:   '' // placeholder — to be filled when wiki is published
 };
 
+// Status bar warn/crit color thresholds (percent), shared by every metric
+// bar in this panel (heap, flash, devices, temp, RSSI...). See abtCard.
+var BAR_PCT_WARN = 65;
+var BAR_PCT_CRIT = 85;
+
+// WiFi RSSI bands (dBm), typical for ESP32/IoT devices: >=GOOD is a strong
+// link, between WEAK and GOOD is usable but marginal, below WEAK is poor.
+// Named thresholds so the emoji label and the status bar's warn/crit
+// coloring (BAR_PCT_WARN/CRIT above) can never drift apart.
+var RSSI_DBM_GOOD = -70;
+var RSSI_DBM_WEAK = -80;
+
+// CPU temperature bar range (°C): the bar is 0% at MIN and 100% at MAX —
+// arbitrary display bounds (ESP32 chips run warm at idle; not a datasheet limit).
+var TEMP_C_BAR_MIN = 20;
+var TEMP_C_BAR_MAX = 100;
+
+// heapPct / fsPct / devPct / fwPct below are plain used/total ratios (0-100%
+// falls out of the math directly) — no arbitrary bound to name there.
+
 /* ── About ──────────────────────────────────────────────────────────── */
 
 // Zero-pad (duplicate of the one in app-core.js — kept here to avoid cross-section dependency).
@@ -77,7 +97,7 @@ function abtCard(title, rows) {
     + rows.map(function (r) {
       var barHtml = '';
       if (r.bar !== undefined) {
-        var cls = r.bar > 85 ? ' crit' : r.bar > 65 ? ' warn' : '';
+        var cls = r.bar > BAR_PCT_CRIT ? ' crit' : r.bar > BAR_PCT_WARN ? ' warn' : '';
         barHtml = '<div class="abt-bar-wrap"><div class="abt-bar' + cls
           + '" style="width:' + r.bar + '%"></div></div>';
       }
@@ -144,7 +164,8 @@ function renderAbout(s) {
 
   // Temperature
   if (s.temp_c !== undefined) {
-    var tempPct = Math.min(100, Math.max(0, Math.round((s.temp_c - 20) * 100 / 80)));
+    var tempPct = Math.min(100, Math.max(0, Math.round(
+      (s.temp_c - TEMP_C_BAR_MIN) * 100 / (TEMP_C_BAR_MAX - TEMP_C_BAR_MIN))));
     html += abtCard(t('abt.temp'), [
       { label: 'CPU', value: s.temp_c.toFixed(1) + ' °C / ' + (s.temp_c * 9 / 5 + 32).toFixed(1) + ' °F', bar: tempPct },
     ]);
@@ -153,8 +174,14 @@ function renderAbout(s) {
   // WiFi
   if (s.wifi_ssid !== undefined) {
     var rssi = s.wifi_rssi || 0;
-    var rssiPct = Math.min(100, Math.max(0, Math.round((rssi + 100) * 2)));
-    var rssiLabel = rssi >= -60 ? '🟢' : rssi >= -75 ? '🟡' : '🔴';
+    // Bar reflects signal weakness (like the other cards: high bar = worse),
+    // so a strong signal (rssi close to 0) yields a low/green bar. Linear fit
+    // through (RSSI_DBM_GOOD -> BAR_PCT_WARN) and (RSSI_DBM_WEAK -> BAR_PCT_CRIT)
+    // so the bar's warn/crit coloring always lines up with the RSSI bands below.
+    var rssiSlope = (BAR_PCT_CRIT - BAR_PCT_WARN) / (RSSI_DBM_WEAK - RSSI_DBM_GOOD);
+    var rssiPct = Math.min(100, Math.max(0, Math.round(
+      BAR_PCT_WARN + (rssi - RSSI_DBM_GOOD) * rssiSlope)));
+    var rssiLabel = rssi >= RSSI_DBM_GOOD ? '🟢' : rssi >= RSSI_DBM_WEAK ? '🟡' : '🔴';
     html += abtCard(t('abt.wifi'), [
       { label: t('abt.wifi_ssid'), value: s.wifi_ssid || '—' },
       { label: t('abt.wifi_rssi'), value: rssiLabel + ' ' + rssi + ' dBm', bar: rssiPct },
