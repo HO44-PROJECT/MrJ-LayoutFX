@@ -22,6 +22,13 @@ earlier project history (pre-#3) lives only in `git log`.
   `spi`) — matching is now done on bus type + pins instead. Reproduced on a
   fresh install with I2C + Serial2 activated via the wizard; validated on
   hardware. (#114)
+- SPI: the identify button did nothing until at least one device existed on
+  the card. `Spi595Bus::activateSpi()` was only called when an actual device
+  got parsed (`DeviceFactory::_pin()`), so a bare SPI card left the bus
+  permanently un-initialised and `Spi595Bus::ready()` false. The bus now
+  activates right after board parsing as soon as one SPI card is declared,
+  and the identify endpoint gained the same "SPI not ready" guard the test
+  endpoint already had. Validated on hardware. (#115)
 
 ## 2026-07-12
 
