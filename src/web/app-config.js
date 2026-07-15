@@ -123,7 +123,7 @@ function loadConfigs() {
 
         return '<div class="' + cls + '">'
           + dot
-          + '<span class="cfg-fname">' + f + '</span>'
+          + '<span class="cfg-fname" title="' + f + '">' + f + '</span>'
           + '<span class="cfg-flayout">' + (cname ? cname : '') + '</span>'
           + btns
           + '</div>';

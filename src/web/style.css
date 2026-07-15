@@ -891,7 +891,9 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       min-width: 0;
-      width: 140px;
+      /* kFsNameMax (DeviceApi.h) allows up to 32 chars incl. ".json" — size the
+         column to fit that in full instead of clipping mid-extension (#112). */
+      width: 33ch;
       flex-shrink: 0
     }
 
