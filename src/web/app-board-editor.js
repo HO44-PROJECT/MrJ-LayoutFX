@@ -307,10 +307,19 @@ function addLinkedBus(btType, lbKey) {
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function (cfg) {
       if (!cfg.buses) cfg.buses = {};
-      if (cfg.buses[lb.key]) return Promise.resolve(null); // already present
+      // Match by type+pins, not just key — the same physical bus may already
+      // exist under a different key (e.g. wizard-created "i2c0" vs this
+      // linked bus's "i2c") (#114).
+      var fieldKeys = ((_busTypes[lb.type] || {}).fields || []).map(function (f) { return f.key; });
+      var already = Object.keys(cfg.buses).some(function (k) {
+        var bus = cfg.buses[k];
+        if (bus.type !== lb.type) return false;
+        return fieldKeys.every(function (fk) { return lb[fk] === undefined || bus[fk] === lb[fk]; });
+      });
+      if (already) return Promise.resolve(null); // already present
       var entry = { type: lb.type };
-      ((_busTypes[lb.type] || {}).fields || []).forEach(function (f) {
-        if (lb[f.key] !== undefined) entry[f.key] = lb[f.key];
+      fieldKeys.forEach(function (f) {
+        if (lb[f] !== undefined) entry[f] = lb[f];
       });
       cfg.buses[lb.key] = entry;
       return fetch('/api/config', {
@@ -475,11 +484,24 @@ function renderBusesTab() {
   }).join('');
 
   // ── Linked bus suggestions (from board types, not yet in cfg.buses) ──
+  // A linked bus is considered already present when some cfg.buses entry has the
+  // same type AND the same pins — matching by key alone breaks as soon as the
+  // wizard (or a user rename) uses a different key than linkedBuses[].key for
+  // the same physical bus, which used to show a ghost "+ Add" suggestion next
+  // to the bus that's already active (#114).
+  function linkedBusAlreadyPresent(lb) {
+    var fields = ((_busTypes[lb.type] || {}).fields || []).map(function (f) { return f.key; });
+    return Object.keys(buses).some(function (k) {
+      var bus = buses[k];
+      if (bus.type !== lb.type) return false;
+      return fields.every(function (fk) { return lb[fk] === undefined || bus[fk] === lb[fk]; });
+    });
+  }
   var seenLbKeys = {};
   ((_dbgCfg && _dbgCfg.boards) || []).forEach(function (b) {
     var def = _boardTypes[b.type] || {};
     (def.linkedBuses || []).forEach(function (lb) {
-      if (buses[lb.key] || seenLbKeys[lb.key]) return;
+      if (seenLbKeys[lb.key] || linkedBusAlreadyPresent(lb)) return;
       seenLbKeys[lb.key] = true;
       var fields = (_busTypes[lb.type] || {}).fields || [];
       var rows = fields.map(function (f) {
