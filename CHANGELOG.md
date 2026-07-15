@@ -5,6 +5,24 @@ issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.
 
+## 2026-07-15
+
+- About page: the WiFi signal bar was inverted — a strong signal (less
+  negative dBm) drew a long/red bar and a weak signal drew a short/green
+  one. Fixed the percentage formula's polarity and moved the RSSI good/weak
+  bands to -70/-80 dBm (from -60/-75), better suited to ESP32/IoT links.
+  RSSI bands, the temperature bar's display range, and the shared bar
+  warn/crit color thresholds are now named constants so they can't silently
+  drift apart. Validated on hardware. (#113)
+- Board editor: the Buses tab and its wizard "+ Add" shortcut could show a
+  bus that was already active as a ghost "not yet added" suggestion. The
+  check compared a board type's `linkedBuses[].key` against the config's own
+  bus keys, but the wizard assigns its own default keys (`i2c0`, `uart1`,
+  `spi`) independently of a board type's declared key (`i2c`, `uart2`,
+  `spi`) — matching is now done on bus type + pins instead. Reproduced on a
+  fresh install with I2C + Serial2 activated via the wizard; validated on
+  hardware. (#114)
+
 ## 2026-07-12
 
 - Servo motor mode: a DCC reverse command no longer fails to reverse the
