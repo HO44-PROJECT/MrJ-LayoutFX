@@ -7,6 +7,13 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-16
 
+- Interface tab: the "Refresh"/"Rafraîchissement" setting is now labelled
+  "Auto refresh"/"Rafraîchissement auto" (fr/de/es/en) — clearer that it
+  controls the auto-refresh interval, not a manual refresh action. Also
+  removed the dead legacy `feat.serial` badge constant and its orphaned
+  tooltip (superseded by `log_serial`/`debug_serial`, and never actually
+  populated or rendered since that split — nothing to restore). Validated
+  on hardware. (#21)
 - New light effect `GasLampDefect`: same ignition/flicker/brightening/
   stable-flame/extinction phases as `GasLamp`, plus a rare, brief dark
   glitch during the stable flame — a "gas lamp that occasionally
