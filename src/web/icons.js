@@ -50,6 +50,23 @@ var ICONS = {
     + '<path d="M10,23.5 L14,23.5 L13,25 L11,25 Z" fill="currentColor"/>'
     + E,
 
+  'GasLampDefect': S
+    // mat central
+    + '<line x1="12" y1="22" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+    // bras gauche : arc montant et arrondi
+    + '<path d="M12,12 C10,11 8,9 7,7.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+    // bras central : arc dessiné mais SANS lampe (ampoule manquante = signe du défaut)
+    + '<path d="M12,12 C12,11 12,9 12,7.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="1.5 1.5"/>'
+    // bras droit : arc montant et arrondi
+    + '<path d="M12,12 C14,11 16,9 17,7.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+    // lampes (seulement gauche et droite — la centrale manque)
+    + '<circle cx="7" cy="7.5" r="1.5" fill="currentColor"/>'
+    + '<circle cx="17" cy="7.5" r="1.5" fill="currentColor"/>'
+    // socle du lampadaire
+    + '<rect x="10" y="22" width="4" height="1.5" fill="currentColor"/>'
+    + '<path d="M10,23.5 L14,23.5 L13,25 L11,25 Z" fill="currentColor"/>'
+    + E,
+
   'ElectricLamp': S
     + '<path d="M10 21h4M11 21v-2M13 21v-2"/>'
     + '<path d="M12 3a6 6 0 0 1 4 10.5V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-3.5A6 6 0 0 1 12 3Z"/>'

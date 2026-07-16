@@ -690,6 +690,19 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
     return;
   }
 
+  // ── Gas Lamp (defective) ──────────────────────────────────────────────────
+  // Same as Gas Lamp but missing the centre arm/bulb — the gap signals the
+  // defect (issue #111), instead of an overlay X.
+  if (strcmp(type, factory_keys::kDevGasLampDefect) == 0) {
+    _u8g2.drawVLine(ox + 16, oy + 16, 13);
+    _u8g2.drawLine(ox + 16, oy + 16, ox + 9, oy + 10);
+    _u8g2.drawLine(ox + 16, oy + 16, ox + 23, oy + 10);
+    _u8g2.drawDisc(ox + 9, oy + 10, 2);
+    _u8g2.drawDisc(ox + 23, oy + 10, 2);
+    _u8g2.drawHLine(ox + 13, oy + 29, 6);
+    return;
+  }
+
   // ── Electric Lamp ────────────────────────────────────────────────────────
   // SVG: bulb path (≈ circle r=6 cx=12 cy=9) + flat bottom at y=17-19
   //      connectors: M10 21h4 / M11 21v-2 M13 21v-2

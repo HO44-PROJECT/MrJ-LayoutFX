@@ -44,6 +44,7 @@
 #include "led_fx/DoubleBeacon.h"
 #include "led_fx/ElectricLamp.h"
 #include "led_fx/GasLamp.h"
+#include "led_fx/GasLampDefect.h"
 #include "led_fx/Led.h"
 #include "led_fx/NeonSign.h"
 #include "led_fx/OilLamp.h"

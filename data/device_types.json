@@ -42,6 +42,12 @@
     "wires": 1,
     "ctor_style": "single_pin"
   },
+  "GasLampDefect": {
+    "label": "Gas Lamp (defective)",
+    "category": "light",
+    "wires": 1,
+    "ctor_style": "single_pin"
+  },
   "MrJDBBlocSignal": {
     "label": "DB Bloc Signal",
     "dropdownLabel": "DB Bloc Signal by MrJ",

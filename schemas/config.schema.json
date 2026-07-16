@@ -415,6 +415,7 @@
             "DoubleBeacon",
             "ElectricLamp",
             "GasLamp",
+            "GasLampDefect",
             "MrJDBBlocSignal",
             "MrJDBEntrySignal",
             "MrJDBExitSignal",

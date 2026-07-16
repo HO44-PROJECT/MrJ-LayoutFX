@@ -19,6 +19,7 @@
   #include "led_fx/DoubleBeacon.h"
   #include "led_fx/ElectricLamp.h"
   #include "led_fx/GasLamp.h"
+  #include "led_fx/GasLampDefect.h"
   #include "led_fx/Led.h"
   #include "led_fx/NeonSign.h"
   #include "led_fx/OilLamp.h"
@@ -664,8 +665,8 @@ size_t DeviceFactory::_pins(JsonVariant v, PIN_ID *out, size_t maxPins, uint8_t 
  *
  * Device types by pin count:
  *   single-pin  : Beacon, CampFire, Led, DefectLamp, ElectricLamp, GasLamp,
- *                 NeonSign, OilLamp, SignalFlare, SolderLamp, Storm, Torch,
- *                 TrainHeadLamp, TurnSignal
+ *                 GasLampDefect, NeonSign, OilLamp, SignalFlare, SolderLamp,
+ *                 Storm, Torch, TrainHeadLamp, TurnSignal
  *   variable    : StaticLow
  *   two-pin     : DoubleBeacon, RailwayCrossingLights, MrJDBBlocSignal
  *   three-pin   : MrJDBEntrySignal, TrafficLight3Phase, TrafficLight4Phase
@@ -748,6 +749,8 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
     d = new ElectricLamp(_pin(wiring, boardIdx));
   else if (strcmp(type, kDevGasLamp) == 0)
     d = new GasLamp(_pin(wiring, boardIdx));
+  else if (strcmp(type, kDevGasLampDefect) == 0)
+    d = new GasLampDefect(_pin(wiring, boardIdx));
   else if (strcmp(type, kDevNeonSign) == 0)
     d = new NeonSign(_pin(wiring, boardIdx));
   else if (strcmp(type, kDevOilLamp) == 0)

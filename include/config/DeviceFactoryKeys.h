@@ -74,6 +74,7 @@ constexpr char kDevLed[] = "Led";
 constexpr char kDevDefectLamp[] = "DefectLamp";
 constexpr char kDevElectricLamp[] = "ElectricLamp";
 constexpr char kDevGasLamp[] = "GasLamp";
+constexpr char kDevGasLampDefect[] = "GasLampDefect";
 constexpr char kDevNeonSign[] = "NeonSign";
 constexpr char kDevOilLamp[] = "OilLamp";
 constexpr char kDevSignalFlare[] = "SignalFlare";

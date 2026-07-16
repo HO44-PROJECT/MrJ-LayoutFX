@@ -94,6 +94,18 @@
 #define GASLAMP_BRIGHTENING_INCREMENT_2 3                   ///< Brightness increment for second range (GASLAMP_BRIGHTENING_RANGE_1_MAX to GASLAMP_BRIGHTENING_RANGE_2_MAX)
 #define GASLAMP_BRIGHTENING_INCREMENT_3 5                   ///< Brightness increment for third range (GASLAMP_BRIGHTENING_RANGE_2_MAX to GASLAMP_MAX_INTENSITY)
 
+// Gas lamp defect effect configuration constants (issue #111) — reuses every
+// GASLAMP_* constant above for ignition/flicker/brightening/extinction; these
+// are only the added rare-malfunction-during-stable-flame parameters. Distinct
+// namespace on purpose: must not touch GASLAMP_* (GasLamp) or DEFECT_LAMP_*
+// (DefectLamp) — see doc/workshop/adding-a-device-type.md.
+#define GASLAMPDEFECT_MALFUNCTION_CHANCE 300        ///< Chance per stable-flame tick of a glitch, out of GASLAMPDEFECT_MALFUNCTION_CHANCE_RANGE
+#define GASLAMPDEFECT_MALFUNCTION_CHANCE_RANGE 1000 ///< Roll range for the malfunction chance (300/1000 = 30% per tick, ~1 glitch/2-3s at a ~750ms average flicker interval)
+#define GASLAMPDEFECT_MALFUNCTION_MIN_MS 80       ///< Minimum malfunction duration in milliseconds
+#define GASLAMPDEFECT_MALFUNCTION_MAX_MS 250      ///< Maximum malfunction duration in milliseconds
+#define GASLAMPDEFECT_MALFUNCTION_MIN_BRIGHTNESS 0  ///< Minimum brightness during a malfunction (0-255)
+#define GASLAMPDEFECT_MALFUNCTION_MAX_BRIGHTNESS 30 ///< Maximum brightness during a malfunction (0-255)
+
 // Charlieplexing signal configuration constants
 #define CHARLIEPLEXING_POV_MICROS 10000U             ///< Maximum time for one POV cycle in microseconds (100 Hz)
 #define CHARLIEPLEXING_LIGHT_UP_CHANGE_TIME_MS 2000U ///< Duration of the lighting-up effect in milliseconds
