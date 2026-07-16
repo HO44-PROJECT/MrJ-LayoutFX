@@ -5,6 +5,15 @@ issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.
 
+## 2026-07-16
+
+- New light effect `GasLampDefect`: same ignition/flicker/brightening/
+  stable-flame/extinction phases as `GasLamp`, plus a rare, brief dark
+  glitch during the stable flame — a "gas lamp that occasionally
+  malfunctions," distinct from `DefectLamp` (untouched, still cycles
+  quickly and often by design). Registered as a full device type (factory,
+  OLED icon, WebUI icon/i18n, config schema). Validated on hardware. (#111)
+
 ## 2026-07-15
 
 - About page: the WiFi signal bar was inverted — a strong signal (less
