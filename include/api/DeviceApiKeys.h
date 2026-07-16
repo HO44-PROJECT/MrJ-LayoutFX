@@ -52,7 +52,6 @@ constexpr char kFeatLx16aServo[] = "lx16a_servo";
 constexpr char kFeatDcc[] = "dcc";
 constexpr char kFeatAudio[] = "audio";
 constexpr char kFeatOta[] = "ota";
-constexpr char kFeatSerial[] = "serial"; // legacy (kept; superseded by the two below)
 // Logging sinks
 constexpr char kFeatLogSerial[]   = "log_serial";
 constexpr char kFeatDebugSerial[] = "debug_serial";
