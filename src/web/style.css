@@ -628,8 +628,8 @@
     }
 
     .btn.busy {
-      background: #3d3d3d;
-      color: #666;
+      background: #52525f;
+      color: #e2e2e6;
       cursor: default
     }
 
@@ -675,8 +675,8 @@
     }
 
     .tbtn.t-off {
-      background: #2c2c3e;
-      color: #aaa
+      background: #52525f;
+      color: #e2e2e6
     }
 
     .tbtn.t-stop {
