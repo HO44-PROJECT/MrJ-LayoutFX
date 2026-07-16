@@ -7,6 +7,13 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-16
 
+- Cockpit: the device card action button used a near-black background for
+  both the OFF state and the busy/transitioning state — softened to a
+  slate gray (#52525f) with light text. The OFF label also moved from
+  all-caps "ALLUMER"/"EINSCHALTEN"/"ENCENDER"/"TURN ON" to normal-case
+  "Allumage"/"Einschalten"/"Encender"/"Turn on" (fr/de/es/en); the busy
+  state keeps its "…" label, only its color changed. Validated on
+  hardware. (#120)
 - Interface tab: the "Refresh"/"Rafraîchissement" setting is now labelled
   "Auto refresh"/"Rafraîchissement auto" (fr/de/es/en) — clearer that it
   controls the auto-refresh interval, not a manual refresh action. Also
