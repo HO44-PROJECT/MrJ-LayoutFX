@@ -2468,10 +2468,9 @@
 
     .abt-feat.off {
       background: var(--bg2);
-      color: var(--t4);
+      color: var(--t3);
       border: 1px solid var(--bd);
-      text-decoration: line-through;
-      opacity: .65
+      text-decoration: line-through
     }
 
     /* Feature description shown on hover (replaces the old click popup). */
