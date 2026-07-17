@@ -200,10 +200,10 @@ function renderDbgBoard(board, boardApiIdx) {
     + '<div class="dbg-board-hdr">'
     + '<span class="dbg-board-name">' + name + badge + '</span>'
     + '<div class="dbg-board-actions">'
-    + '<button class="dbg-hbtn on"  onclick="dbgAll(' + boardApiIdx + ',1)">' + t('dbg.all_on') + '</button>'
-    + '<button class="dbg-hbtn off" onclick="dbgAll(' + boardApiIdx + ',0)">' + t('dbg.all_off') + '</button>'
-    + (cfgIdx >= 0 ? '<button class="dbg-hbtn" onclick="openBoardEditor(' + cfgIdx + ')">' + t('be.edit') + '</button>' : '')
-    + (cfgIdx >= 0 ? '<button class="dbg-hbtn off" onclick="deleteBoard(\'' + board.id.replace(/'/g, "\\'") + '\')">' + t('de.del') + '</button>' : '')
+    + '<button class="dbg-hbtn on" title="' + t('dbg.all_on_tip') + '" onclick="dbgAll(' + boardApiIdx + ',1)">' + t('dbg.all_on') + '</button>'
+    + '<button class="dbg-hbtn off" title="' + t('dbg.all_off_tip') + '" onclick="dbgAll(' + boardApiIdx + ',0)">' + t('dbg.all_off') + '</button>'
+    + (cfgIdx >= 0 ? '<button class="dbg-hbtn" title="' + t('be.edit_tip') + '" onclick="openBoardEditor(' + cfgIdx + ')">' + t('be.edit') + '</button>' : '')
+    + (cfgIdx >= 0 ? '<button class="dbg-hbtn off" title="' + t('be.del_tip') + '" onclick="deleteBoard(\'' + board.id.replace(/'/g, "\\'") + '\')">' + t('de.del') + '</button>' : '')
     + '</div></div>'
     + (def ? renderDipPcb(board, boardApiIdx, def) : '')
     + '</div>';

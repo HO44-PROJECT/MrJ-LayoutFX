@@ -7,6 +7,27 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-17
 
+- Cockpit: the grouped "ALL ON"/"ALL OFF" header buttons and the per-type
+  group "TURN ON"/"TURN OFF" buttons were still all-caps — #120 had only
+  normalized the individual device-card button's OFF-state label. Now
+  normal-case in all 4 languages (e.g. "Tout allumer"/"Alles ein"/"Encender
+  todo"/"All on", "Allumer"/"Einschalten"/"Encender"/"Turn on"), matching
+  #120's precedent. The individual device-card button's ON-state label
+  ("Éteindre"/"Ausschalten"/"Apagar"/"Turn off", shown while the device is
+  active) was also normal-cased to match, since it reads as a plain action
+  button next to the already-fixed OFF-state label. Validated on hardware.
+  (#124)
+- Added tooltips to every board-toolbar and cockpit action button that had
+  none, or a redundant one restating its own label (e.g. the GPIO/DCC pin-
+  label toggles just showed "GPIO"/"DCC"): header ALL ON/OFF, Config→Boards
+  "+ Carte"/"Actualiser" and the GPIO/DCC/DÉLAI pin-label toggles, each
+  board card's All ON/All OFF/edit/Delete buttons, and the cockpit's
+  per-device toggle and per-type group Turn on/off buttons. Static HTML
+  buttons now support a new `data-i18n-title` attribute (mirroring the
+  existing `data-i18n-placeholder` mechanism) so their `title` is set from
+  i18n on load and language change; JS-rendered buttons use the existing
+  inline `title="' + t('key') + '"'` pattern. 15 new i18n keys × 4
+  languages. Validated on hardware. (#125)
 - Fixed a startup-delay bug chain found while re-testing the cockpit path
   (follow-up to #8/#119): a grouped Turn-Off glitched (instant off, flash
   back on, then fade) because the delay macro used to block the whole

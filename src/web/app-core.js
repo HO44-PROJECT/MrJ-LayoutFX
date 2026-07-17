@@ -122,6 +122,13 @@ function lbl(c) {
   return t('ck.off');
 }
 
+// Button tooltip text for a generic device card (mirrors lbl()).
+function btnTip(c) {
+  if (c === 'on') return t('ck.on_tip');
+  if (c === 'off' || c === 'stop' || c === 'flash') return t('ck.off_tip');
+  return '';
+}
+
 // Renders the metadata tag strip below the device icon:
 //   – DCC address badge (if configured)
 //   – For UART servo: "Carte N · servo ID"
@@ -302,7 +309,7 @@ function card(d) {
     + '<div class="icon" title="' + tip + '">' + ico + '</div>'
     + '<span class="badge">' + dtLabel(d.type) + '</span>'
     + meta(d)
-    + '<button class="btn ' + c + '" onclick="tog(\'' + d.id + '\',' + d.desired + ')" ' + dis + '>' + lbl(c) + '</button>'
+    + '<button class="btn ' + c + '" title="' + btnTip(c) + '" onclick="tog(\'' + d.id + '\',' + d.desired + ')" ' + dis + '>' + lbl(c) + '</button>'
     + '</div>';
 }
 
@@ -364,8 +371,8 @@ function renderGrid(devs) {
     html += '<div class="ghdr"><span class="gname">' + type + ' <span class="gcnt">(' + list.length + ')</span></span>';
     if (!isStatic) {
       html += '<div class="gbtns">'
-        + '<button class="gbtn on" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
-        + '<button class="gbtn off" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
+        + '<button class="gbtn on" title="' + t('ck.grp_on_tip') + '" onclick="groupDevices(\'' + type + '\',1)">' + t('ck.grp_on') + '</button>'
+        + '<button class="gbtn off" title="' + t('ck.grp_off_tip') + '" onclick="groupDevices(\'' + type + '\',0)">' + t('ck.grp_off') + '</button>'
         + '</div>';
     }
     html += '</div>';
