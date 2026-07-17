@@ -7,6 +7,13 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-16
 
+- About page: `fmtBytes()` gained a GB tier (was capped at MB, so a value
+  ≥ 1 GB would have rendered as e.g. "2048.0 MB") and `fmtUptime()` gained
+  a days tier ("Xj HH:MM:SS", i18n ×4) instead of hours rolling past two
+  digits. The `millis()` wraparound at ~49.7 days of continuous uptime is
+  a known Arduino-core limitation, accepted as-is (a DCC layout reboots far
+  more often than that in practice) — documented in code, not guarded
+  against. (#116)
 - Cockpit: the device card action button used a near-black background for
   both the OFF state and the busy/transitioning state — softened to a
   slate gray (#52525f) with light text. The OFF label also moved from
