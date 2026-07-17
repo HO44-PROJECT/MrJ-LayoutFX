@@ -65,6 +65,7 @@ constexpr char kFeatOledEvents[]  = "oled_events";
 // Network / bus / behaviour options
 constexpr char kFeatWifiForceAp[] = "wifi_force_ap";
 constexpr char kFeatDccAudit[]    = "dcc_audit";
+constexpr char kFeatApiAudit[]    = "api_audit";
 constexpr char kFeatI2cScan[]     = "i2c_scan";
 constexpr char kFeatJtag[]        = "jtag";
 constexpr char kFeatDemo[]        = "demo";

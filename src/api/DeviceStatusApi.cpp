@@ -32,7 +32,9 @@ using namespace http_status;
  *        WiFi details, and reserved system pins.
  */
 void DeviceApi::_onGetStatus() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/status"));
+  #endif
   JsonDocument doc;
 
   doc[kVersion] = LFX_FIRMWARE_VERSION;
@@ -112,7 +114,7 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatLogSerial] = false;
   #endif
-  #ifdef DEBUG_SERIAL
+  #ifdef MRJ_DEBUG_SERIAL
   feat[kFeatDebugSerial] = true;
   #else
   feat[kFeatDebugSerial] = false;
@@ -122,7 +124,7 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatLogOled] = false;
   #endif
-  #ifdef DEBUG_OLED
+  #ifdef MRJ_DEBUG_OLED
   feat[kFeatDebugOled] = true;
   #else
   feat[kFeatDebugOled] = false;
@@ -159,6 +161,11 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatDccAudit] = false;
   #endif
+  #ifdef LFX_API_AUDIT_ENABLED
+  feat[kFeatApiAudit] = true;
+  #else
+  feat[kFeatApiAudit] = false;
+  #endif
   #ifdef LFX_I2C_SCAN_ENABLED
   feat[kFeatI2cScan] = true;
   #else
@@ -175,7 +182,7 @@ void DeviceApi::_onGetStatus() {
   feat[kFeatDemo] = false;
   #endif
 
-  #if defined(LOG_SERIAL) || defined(DEBUG_SERIAL) || defined(LFX_DCC_ENABLED)
+  #if defined(LOG_SERIAL) || defined(MRJ_DEBUG_SERIAL) || defined(LFX_DCC_ENABLED)
   {
     JsonObject sp = doc[kSysPins].to<JsonObject>();
     #if defined(LOG_SERIAL)
@@ -183,7 +190,7 @@ void DeviceApi::_onGetStatus() {
       sp[String(1)] = kPinTx0;
       sp[String(3)] = kPinRx0;
     }
-    #elif defined(DEBUG_SERIAL)
+    #elif defined(MRJ_DEBUG_SERIAL)
     sp[String(1)] = kPinTx0;
     sp[String(3)] = kPinRx0;
     #endif
@@ -246,7 +253,9 @@ void DeviceApi::_onGetStatus() {
 
 /** @brief Return a JSON array of configured boards with id, type, bus, pinCount, spiRank. */
 void DeviceApi::_onGetBoards() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/boards"));
+  #endif
   String json = "[";
   for (uint8_t i = 1; i <= _factory->boardCount(); i++) {
     const DeviceFactory::BoardCfg &b = _factory->board(i);
@@ -280,19 +289,27 @@ static void _serveEmbeddedJson(const uint8_t *data, size_t len) {
 }
 
 void DeviceApi::_onGetBoardTypes() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/board-types (PROGMEM)"));
+  #endif
   _serveEmbeddedJson(BOARD_TYPES_GZ, BOARD_TYPES_GZ_LEN);
 }
 void DeviceApi::_onGetDeviceTypes() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/device-types (PROGMEM)"));
+  #endif
   _serveEmbeddedJson(DEVICE_TYPES_GZ, DEVICE_TYPES_GZ_LEN);
 }
 void DeviceApi::_onGetBusTypes() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/bus-types (PROGMEM)"));
+  #endif
   _serveEmbeddedJson(BUS_TYPES_GZ, BUS_TYPES_GZ_LEN);
 }
 void DeviceApi::_onGetI2cKnown() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/i2c-known (PROGMEM)"));
+  #endif
   _serveEmbeddedJson(I2C_KNOWN_GZ, I2C_KNOWN_GZ_LEN);
 }
 
@@ -345,7 +362,9 @@ void DeviceApi::_onGetHealth() {
  *        from "bus alive but wrong address/CV" (raw increments, others don't).
  */
 void DeviceApi::_onGetDccStatus() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/dcc-status"));
+  #endif
   JsonDocument doc;
 
   #ifdef LFX_DCC_ENABLED
@@ -423,7 +442,9 @@ void DeviceApi::_onGetDccStatus() {
 
 /** @brief Send a 200 OK response then trigger an immediate ESP32 restart. */
 void DeviceApi::_onRestart() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/restart"));
+  #endif
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
   #ifdef LFX_OLED_ENABLED
   OledDisplay::showMessage(LFX_PROJECT_NAME, "Redemarrage...");
@@ -440,7 +461,9 @@ void DeviceApi::_onRestart() {
  * Works regardless of whether devices are currently running.
  */
 void DeviceApi::_onReload() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/reload"));
+  #endif
   ConfigManager::requestReload();
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }

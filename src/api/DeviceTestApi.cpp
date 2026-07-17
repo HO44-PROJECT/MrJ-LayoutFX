@@ -197,7 +197,9 @@ void DeviceApi::_onIdentify() {
  *        Response: {"sda":<n>,"scl":<n>,"count":<n>,"found":[addr,…]}.
  */
 void DeviceApi::_onScanI2c() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/scan/i2c"));
+  #endif
   const int sda = I2C_SDA, scl = I2C_SCL;
 
   JsonDocument doc;

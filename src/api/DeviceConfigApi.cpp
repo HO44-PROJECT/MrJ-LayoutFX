@@ -120,7 +120,9 @@ bool DeviceApi::_safeRename(const char *from, const char *to) {
 
 /** @brief Download the active config.json as an attachment. Returns 404 if absent. */
 void DeviceApi::_onGetConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/config"));
+  #endif
   if (!ConfigManager::configExists()) {
     ApiServer::sendJson(kNotFound, F("{\"error\":\"config not found\"}"));
     return;
@@ -131,7 +133,9 @@ void DeviceApi::_onGetConfig() {
 
 /** @brief Overwrite config.json with the raw JSON body. No reboot triggered. */
 void DeviceApi::_onPostConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/config"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;
@@ -145,7 +149,9 @@ void DeviceApi::_onPostConfig() {
 
 /** @brief Delete config.json then hot-reload (all devices stop, firmware keeps running). */
 void DeviceApi::_onDeleteConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: DELETE /api/config"));
+  #endif
   ConfigManager::deleteConfig();
   ConfigManager::requestReload();
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
@@ -161,7 +167,9 @@ void DeviceApi::_onDeleteConfig() {
  *        The active file is determined from /config_source.txt, falling back to config.json.
  */
 void DeviceApi::_onGetConfigs() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/configs"));
+  #endif
   String activeName;
   File src = LittleFS.exists(kPathConfigSource) ? LittleFS.open(kPathConfigSource, "r") : File();
   if (src) {
@@ -217,7 +225,9 @@ void DeviceApi::_onGetConfigs() {
 
 /** @brief Download a named config file as attachment. Query param: ?name=<filename>. */
 void DeviceApi::_onGetNamedConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/config/file"));
+  #endif
   String name = ApiServer::server().arg(kName);
   if (!_sanitizeCfgName(name)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"invalid filename\"}"));
@@ -244,7 +254,9 @@ void DeviceApi::_onGetNamedConfig() {
  *        Rejects attempts to overwrite the active config.json directly.
  */
 void DeviceApi::_onPostNamedConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/configs"));
+  #endif
   String name = ApiServer::server().header("X-Config-Name");
   if (name.isEmpty())
     name = ApiServer::server().arg(kName);
@@ -290,7 +302,9 @@ void DeviceApi::_onPostNamedConfig() {
  *        Body: {"file":"<filename>"}. Rejects deletion of config.json.
  */
 void DeviceApi::_onDeleteNamedConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: DELETE /api/configs"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;
@@ -321,7 +335,9 @@ void DeviceApi::_onDeleteNamedConfig() {
  *        (use /api/config/activate instead).
  */
 void DeviceApi::_onCopyConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/config/copy"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;
@@ -361,7 +377,9 @@ void DeviceApi::_onCopyConfig() {
  *        Body: {"from":"<old>","to":"<new>"}. Rejects renaming config.json.
  */
 void DeviceApi::_onRenameConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/config/rename"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;
@@ -401,7 +419,9 @@ void DeviceApi::_onRenameConfig() {
  *        Body: {"file":"<filename>"}. Records the source in /config_source.txt.
  */
 void DeviceApi::_onActivateConfig() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/config/activate"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;

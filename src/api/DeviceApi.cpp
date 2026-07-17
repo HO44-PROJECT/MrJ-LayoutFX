@@ -83,7 +83,9 @@ void DeviceApi::init(const DeviceFactory &factory) {
  *        grows, instead of O(device count) for a single grow-only buffer.
  */
 void DeviceApi::_onGetDevices() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: GET /api/devices"));
+  #endif
   WebServer &server = ApiServer::server();
   server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -213,7 +215,9 @@ void DeviceApi::_onPostDevice() {
  *        Body: {"id":"<id>","on":<bool>}. Returns 404 if id not found.
  */
 void DeviceApi::_onSwitch() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/switch"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;
@@ -261,13 +265,17 @@ void DeviceApi::_onAllDevices() {
   }
   int state = doc[kState].as<int>();
   int board = doc[kBoard] | 0;
+  // #8: the Boards tab (hardware wiring test) wants an instant response, not
+  // a staggered one — same as a single manual click. The cockpit's ALL
+  // ON/OFF buttons omit this field, so they keep honouring the delay.
+  bool skipDelay = doc[kSkipDelay] | false;
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (board > 0 && _factory->deviceBoard(i) != (uint8_t)board)
       continue;
     Device *d = _factory->device(i);
     if (strcmp("StaticLow", (const char *)d->getDeviceName()) != 0)
-      d->newState((STATE_TYPE)state);
+      d->newState((STATE_TYPE)state, skipDelay);
   }
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }
@@ -306,7 +314,9 @@ void DeviceApi::_onGroupDevices() {
  *        Body: {"id":"<id>","speed":<-1000..1000>} or {"id":"<id>","action":"reverse"}.
  */
 void DeviceApi::_onServo() {
+  #ifdef LFX_API_AUDIT_ENABLED
   LOG_PRINTLN(F("API: POST /api/servo"));
+  #endif
   if (!ApiServer::server().hasArg(kArgPlain)) {
     ApiServer::sendJson(kBadRequest, F("{\"error\":\"body required\"}"));
     return;
