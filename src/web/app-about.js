@@ -79,16 +79,22 @@ function otaUpload() {
 
 function fmtBytes(b) {
   if (b === undefined || b === null) return '—';
+  if (b >= 1073741824) return (b / 1073741824).toFixed(1) + ' GB';
   if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
   if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
   return b + ' B';
 }
 
+// uptime_s comes from millis()/1000UL, a uint32_t that wraps at ~49.7 days —
+// a known Arduino-core limitation, not handled here (DCC layouts reboot far
+// more often than that in practice).
 function fmtUptime(s) {
-  var h = Math.floor(s / 3600);
+  var d = Math.floor(s / 86400);
+  var h = Math.floor((s % 86400) / 3600);
   var m = Math.floor((s % 3600) / 60);
   var sec = s % 60;
-  return pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
+  var hms = pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
+  return d > 0 ? d + t('abt.uptime_day') + ' ' + hms : hms;
 }
 
 function abtCard(title, rows) {
