@@ -13,11 +13,15 @@
  *   #define OLED                 // enable this module
  *   #define OLED_SDA  21         // optional — default 21
  *   #define OLED_SCL  22         // optional — default 22
- *   #define OLED_HEIGHT  64      // optional — 64 or 32
+ *   #define OLED_HEIGHT  64      // optional — default/fallback height, 64 or 32
  *   #define OLED_EVENT_MS 3000   // optional — event screen duration in ms
  *
- * This display is STRUCTURAL (wired once, configured at compile time).
- * It is distinct from I²C devices declared in config.json (type SSD1306).
+ * This display is STRUCTURAL (wired once), but its presence and resolution
+ * are now config-driven (#51): ConfigManager declares an "SSD1306" board in
+ * config.json (with an optional "oled_height": 32|64) and calls
+ * OledDisplay::configure() after every load/hot-reload — so plugging a
+ * different panel and updating the config adapts the rendering without a
+ * reboot. OLED_HEIGHT is only the fallback used before the first config load.
  *
  * @project MrJ-ArduinoRailwayFX
  * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
@@ -103,8 +107,37 @@ public:
    */
   static void setSafeMode();
 
+  /**
+   * @brief Apply the config-declared presence/resolution of the SSD1306 board (#51).
+   *
+   * Called by ConfigManager after every init() / reload() / handlePendingReload(),
+   * mirroring setConfigName(). Idempotent — safe to call every time even when
+   * nothing changed. Only records the request (_present/_pendingHeight): the
+   * actual U8G2 re-configuration happens inside the Core 0 render task, which
+   * is the sole owner of _u8g2 — this call may run on Core 1 (ConfigManager),
+   * so it must never touch _u8g2 directly.
+   *
+   * The FreeRTOS render task always runs once the physical display ACKs on I²C
+   * at boot (probed by init(), independent of config) — this call only gates
+   * what it draws:
+   *   - present == false: render loop shows a blank screen; notify()/log() become
+   *     effective no-ops (their state is still recorded but never drawn).
+   *   - present == true: if @p height differs from the currently active height
+   *     (or the display had been blanked), the render task re-configures the
+   *     U8G2 driver at runtime for the new panel size on its next iteration —
+   *     no reboot, no dual-driver compilation (both SSD1306 sizes share the
+   *     same U8G2 base class and differ only by which u8g2_Setup_ssd1306_i2c_*
+   *     function initialises them).
+   * No-op (besides recording _active=false) if init() never found a display.
+   *
+   * @param present Whether an "SSD1306" board is declared in the loaded config.
+   * @param height  Declared panel height in px (32 or 64). Ignored when !present.
+   */
+  static void configure(bool present, uint8_t height);
+
 private:
   bool _begin(); ///< Returns false if no display ACKs on the I²C bus — suppresses task creation.
+  void _applySize(uint8_t height); ///< Re-run the U8G2 setup function for the given panel height. Core 0 (_task) only.
   void _drawIdle();
   void _drawSafeMode();
   void _drawEvent();
@@ -143,15 +176,24 @@ private:
   // Safe-mode screen (config bypassed) — persistent until reboot.
   static volatile bool _safeMode;
 
-  // U8g2 driver — selected at compile time by OLED_HEIGHT.
-  // Pins (SCL, SDA) are passed at construction so U8G2 initialises Wire internally.
-  #if OLED_HEIGHT == 32
-  U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C _u8g2;
-  #else
-  U8G2_SSD1306_128X64_NONAME_F_HW_I2C _u8g2;
-  #endif
-  // Note: constructor uses U8X8_PIN_NONE for clock+data — Wire is pre-initialized
-  //       by LayoutFX::init(); passing pins would re-call Wire.begin() (breaking arduino-esp32 v3).
+  // Presence/resolution, driven by ConfigManager via configure() (#51).
+  // _height gates every draw function's layout at runtime (replaces the old
+  // compile-time #if OLED_HEIGHT branches) and is only ever written by the
+  // Core 0 render task (_task/_applySize) — never by configure() itself,
+  // which may run on Core 1 and must not touch _u8g2 or _height directly.
+  static volatile bool _found;   ///< True once init()'s I²C probe ACKs (physical presence).
+  static volatile bool _active;  ///< True when _found AND the config currently declares the board present.
+  static volatile bool _present; ///< Latest request from configure() — consumed by _task().
+  static volatile uint8_t _pendingHeight; ///< Latest requested height from configure() — consumed by _task().
+  static uint8_t _height; ///< Currently active height — Core 0 (_task) only.
+
+  // U8g2 driver — a single instance re-configured at runtime by _applySize()
+  // via the u8g2_Setup_ssd1306_i2c_* function, instead of picking one of two
+  // compiled subclasses. Both SSD1306 sizes share the same U8G2 base class and
+  // differ only by which one-line C setup function initialises the u8g2_t.
+  // Pins (SCL, SDA) are passed as U8X8_PIN_NONE — Wire is pre-initialized by
+  // LayoutFX::init(); passing pins would re-call Wire.begin() (breaks arduino-esp32 v3).
+  U8G2 _u8g2;
 };
 
 /** @brief Single global instance — auto-registered with AceRoutine. */

@@ -32,6 +32,11 @@ char OledDisplay::_logMsg[44] = {};
 volatile bool OledDisplay::_hasLog = false;
 char OledDisplay::_stateNameBuf[8] = {};
 volatile bool OledDisplay::_safeMode = false;
+volatile bool OledDisplay::_found = false;
+volatile bool OledDisplay::_active = false;
+volatile bool OledDisplay::_present = false;
+volatile uint8_t OledDisplay::_pendingHeight = OLED_HEIGHT;
+uint8_t OledDisplay::_height = OLED_HEIGHT;
 
 // ---------------------------------------------------------------------------
 // Global singleton — auto-registered with AceRoutine at construction.
@@ -43,20 +48,44 @@ OledDisplay oledDisplay;
 // Construction / init
 // ---------------------------------------------------------------------------
 
-// U8G2 HW I2C constructor: pass U8X8_PIN_NONE for clock and data so that
-// begin() uses the pre-initialized Wire instance without calling Wire.begin()
-// again.  On arduino-esp32 v3.x, a second Wire.begin() call reinitialises the
-// I2C peripheral and corrupts the bus.  Wire is started in LayoutFX::init().
-OledDisplay::OledDisplay()
-    : _u8g2(U8G2_R0, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE) {}
+// Default-constructed U8G2 base — _applySize() runs the actual per-panel setup
+// function (equivalent of what the compile-time subclass constructors used to
+// do), so a single instance can be re-configured at runtime for either SSD1306
+// size (#51). Pins (SCL, SDA) are passed as U8X8_PIN_NONE so begin() uses the
+// pre-initialized Wire instance without calling Wire.begin() again — on
+// arduino-esp32 v3.x, a second Wire.begin() call reinitialises the I2C
+// peripheral and corrupts the bus. Wire is started in LayoutFX::init().
+OledDisplay::OledDisplay() {}
+
+void OledDisplay::_applySize(uint8_t height) {
+  if (height >= 64) {
+    u8g2_Setup_ssd1306_i2c_128x64_noname_f(_u8g2.getU8g2(), U8G2_R0, u8x8_byte_arduino_hw_i2c, u8x8_gpio_and_delay_arduino);
+  } else {
+    u8g2_Setup_ssd1306_i2c_128x32_univision_f(_u8g2.getU8g2(), U8G2_R0, u8x8_byte_arduino_hw_i2c, u8x8_gpio_and_delay_arduino);
+  }
+  u8x8_SetPin_HW_I2C(_u8g2.getU8x8(), U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE);
+  _height = height;
+}
 
 void OledDisplay::init() {
+  oledDisplay._applySize(OLED_HEIGHT);
   if (!oledDisplay._begin()) {
     Serial.println(F("[OLED] no display found at 0x3C/0x3D — OLED disabled"));
     return;
   }
   Serial.println(F("[OLED] display found, task starting"));
+  _found = true;
+  _active = true;   // Boot default: present at OLED_HEIGHT until configure() says otherwise.
+  _present = true;  // Kept in sync with _active so _task()'s first iteration is a no-op.
   xTaskCreatePinnedToCore(_task, "oled", 8192, nullptr, 1, nullptr, 0); // Core 0
+}
+
+void OledDisplay::configure(bool present, uint8_t height) {
+  // May run on Core 1 (ConfigManager) — only ever touches these request
+  // flags, never _u8g2 itself. _task() (Core 0, the sole owner of _u8g2)
+  // picks the request up and applies it on its next iteration.
+  _present = present;
+  _pendingHeight = height;
 }
 
 bool OledDisplay::_begin() {
@@ -285,9 +314,29 @@ void OledDisplay::_task(void *) {
   oledDisplay._drawSplash();
   #endif
   for (;;) {
+    // Pick up the latest configure() request (#51). Runs here, on Core 0,
+    // since this task is the sole owner of _u8g2 — configure() itself (which
+    // may run on Core 1) only ever writes the _present/_pendingHeight flags.
+    if (!_present) {
+      if (_active) {
+        _active = false;
+        oledDisplay._u8g2.clearBuffer();
+        oledDisplay._u8g2.sendBuffer();
+      }
+    } else if (!_active || _pendingHeight != _height) {
+      oledDisplay._applySize(_pendingHeight);
+      oledDisplay._u8g2.begin();
+      _active = true;
+    }
+
     if (_safeMode) {
       oledDisplay._drawSafeMode();
       vTaskDelay(pdMS_TO_TICKS(1000));
+    } else if (!_active) {
+      // No SSD1306 board declared in the config (#51) — screen stays blank.
+      // _hasEvent/_hasLog are intentionally left set so the pending event/log
+      // is shown once the board becomes present again.
+      vTaskDelay(pdMS_TO_TICKS(500));
     } else if (_hasEvent) {
       oledDisplay._drawEvent();
       _hasEvent = false;
@@ -311,7 +360,7 @@ void OledDisplay::setSafeMode() { _safeMode = true; }
 
 void OledDisplay::_drawSafeMode() {
   _u8g2.clearBuffer();
-  _u8g2.drawFrame(0, 0, 128, OLED_HEIGHT);
+  _u8g2.drawFrame(0, 0, 128, _height);
   _u8g2.setFont(u8g2_font_8x13B_tr);
   _u8g2.drawStr(6, 17, "SAFE MODE");
   _u8g2.setFont(u8g2_font_6x10_tr);
@@ -337,7 +386,7 @@ void OledDisplay::_drawSafeMode() {
 void OledDisplay::_drawIdle() {
   _u8g2.clearBuffer();
 
-  #if OLED_HEIGHT >= 64
+  if (_height >= 64) {
   // ── Line 1 (y=10): config name or project name ────────────────────────────
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(0, 10, _configName[0] ? _configName : LFX_PROJECT_NAME);
@@ -405,7 +454,7 @@ void OledDisplay::_drawIdle() {
     _u8g2.drawStr(0, 52, kFeats);
   }
 
-  #else // 128×32
+  } else { // 128×32
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(0, 8, LFX_PROJECT_NAME);
 
@@ -425,7 +474,7 @@ void OledDisplay::_drawIdle() {
   snprintf(uptime, sizeof(uptime), "%02lu:%02lu:%02lu",
            s / 3600UL, (s % 3600UL) / 60UL, s % 60UL);
   _u8g2.drawStr(0, 30, uptime);
-  #endif
+  }
 
   _u8g2.sendBuffer();
 }
@@ -437,7 +486,7 @@ void OledDisplay::_drawIdle() {
 void OledDisplay::_drawEvent() {
   _u8g2.clearBuffer();
 
-  #if OLED_HEIGHT >= 64
+  if (_height >= 64) {
   // Icon: 32×32 at (0, 16) — vertically centred on 64 px
   _drawIcon(_evtType, 0, 16);
 
@@ -461,7 +510,7 @@ void OledDisplay::_drawEvent() {
   _u8g2.setFont(u8g2_font_8x13B_tr);
   _u8g2.drawStr(37, 50, _stateName(_evtType, _evtState));
 
-  #else // 128×32 — no icon, text only
+  } else { // 128×32 — no icon, text only
   _u8g2.setFont(u8g2_font_5x7_tr);
   char tname[22];
   strncpy(tname, _evtType, sizeof(tname) - 1);
@@ -475,7 +524,7 @@ void OledDisplay::_drawEvent() {
 
   _u8g2.setFont(u8g2_font_7x13B_tr);
   _u8g2.drawStr(0, 30, _stateName(_evtType, _evtState));
-  #endif
+  }
 
   _u8g2.sendBuffer();
 }
@@ -488,7 +537,7 @@ void OledDisplay::_drawLog() {
   _u8g2.clearBuffer();
   _u8g2.setFont(u8g2_font_6x10_tr);
 
-  #if OLED_HEIGHT >= 64
+  if (_height >= 64) {
   _u8g2.drawStr(0, 10, "LOG");
   _u8g2.drawHLine(0, 13, 128);
   // Word-wrap: two lines of ~21 chars each
@@ -503,13 +552,13 @@ void OledDisplay::_drawLog() {
   }
   _u8g2.drawStr(0, 28, line1);
   _u8g2.drawStr(0, 42, line2);
-  #else // 128×32
+  } else { // 128×32
   _u8g2.drawStr(0, 8, "LOG");
   // One truncated line
   char line[22] = {};
   strncpy(line, _logMsg, 21);
   _u8g2.drawStr(0, 24, line);
-  #endif
+  }
 
   _u8g2.sendBuffer();
 }

@@ -1521,8 +1521,8 @@
     "pins": []
   },
   "SSD1306": {
-    "label": "OLED SSD1306 128×64",
-    "description": "I²C OLED display — driven by SSD1306, no physical pin representation",
+    "label": "OLED SSD1306",
+    "description": "I²C OLED display — 128×64 or 128×32 (oled_height), no physical pin representation",
     "rows": 0,
     "busType": "i2c",
     "no_devices": true,

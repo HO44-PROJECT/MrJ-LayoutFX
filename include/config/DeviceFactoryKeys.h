@@ -99,6 +99,8 @@ constexpr char kDevI2cPwmMotor[] = "PCA9685Motor";
 // ── I2C device field keys ─────────────────────────────────────────────────────
 constexpr char kFI2cAddress[]   = "i2c_address";
 constexpr char kFOscillatorHz[] = "oscillator_hz";
+constexpr char kFOledHeight[]   = "oled_height"; ///< SSD1306 board field — panel height in px (32 or 64, default 64).
+constexpr char kBoardTypeSSD1306[] = "SSD1306";  ///< Board "type" string identifying the structural OLED (#51).
 constexpr char kFPositions[]  = "positions";  ///< Array of {angle, duration_ms[, label]} for PCA9685Servo.
 constexpr char kFAngle[]      = "angle";       ///< Angle in degrees (0–180) for a servo position.
 constexpr char kFDurationMs[] = "duration_ms"; ///< Transition duration in ms for a servo position.

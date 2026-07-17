@@ -95,6 +95,11 @@ void ConfigManager::init(const char *configPath) {
       _factory.initIdlePins();
   #ifdef LFX_OLED_ENABLED
       OledDisplay::setConfigName(_factory.configName());
+      {
+        uint8_t h = 64;
+        bool present = _factory.findOledBoard(h);
+        OledDisplay::configure(present, h);
+      }
   #endif
       LOG_PRINT(F("[Factory] "));
       LOG_PRINT(_factory.count());
@@ -195,6 +200,14 @@ bool ConfigManager::reload() {
   _factory.initAll();
   _factory.applyDefaultStates();
 
+  #ifdef LFX_OLED_ENABLED
+  {
+    uint8_t h = 64;
+    bool present = _factory.findOledBoard(h);
+    OledDisplay::configure(present, h);
+  }
+  #endif
+
   #ifdef LOG_SERIAL
   {
     DeviceFactory::LogBusReq req = _factory.logBusRequest();
@@ -280,6 +293,14 @@ void ConfigManager::handlePendingReload() {
   _factory.initAll();
   _factory.applyDefaultStates();
   ace_routine::CoroutineScheduler::setup();
+
+  #ifdef LFX_OLED_ENABLED
+  {
+    uint8_t h = 64;
+    bool present = _factory.findOledBoard(h);
+    OledDisplay::configure(present, h);
+  }
+  #endif
 
   #ifdef LOG_SERIAL
   {

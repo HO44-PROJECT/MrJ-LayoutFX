@@ -293,6 +293,14 @@
           "minimum": 1000000,
           "maximum": 30000000,
           "description": "PCA9685 actual oscillator frequency in Hz. Default 25000000. Adjust if servos/motors drift at neutral (e.g. 22059000 if neutral is 1700 µs instead of 1500 µs)."
+        },
+        "oled_height": {
+          "type": "integer",
+          "enum": [
+            32,
+            64
+          ],
+          "description": "SSD1306 panel height in pixels. Default 64 if omitted."
         }
       },
       "allOf": [

@@ -166,6 +166,15 @@ function beUpdateFields(board) {
     document.getElementById('be-i2c-addr').value = (board && board.i2c_address !== undefined) ? board.i2c_address : 64;
     document.getElementById('be-osc-hz').value = (board && board.oscillator_hz) ? board.oscillator_hz : '';
   }
+
+  // oled_height: only for the SSD1306 board type — declares the physical
+  // panel wired up so the structural OLED can adapt its layout at runtime (#51).
+  var isOled = type === 'SSD1306';
+  var oledField = document.getElementById('be-oled-height-field');
+  if (oledField) oledField.style.display = isOled ? '' : 'none';
+  if (isOled) {
+    document.getElementById('be-oled-height').value = (board && board.oled_height) ? String(board.oled_height) : '64';
+  }
 }
 
 // Close the board editor modal without saving.
@@ -213,6 +222,10 @@ function saveBoardEditor() {
     if (!isNaN(i2cAddr) && i2cAddr !== 64) entry.i2c_address = i2cAddr;
     var oscHz = parseInt(document.getElementById('be-osc-hz').value, 10);
     if (!isNaN(oscHz) && oscHz !== 25000000) entry.oscillator_hz = oscHz;
+  }
+  if (type === 'SSD1306') {
+    var oledHeight = parseInt(document.getElementById('be-oled-height').value, 10);
+    if (oledHeight === 32) entry.oled_height = 32;
   }
 
   document.getElementById('be-save-btn').disabled = true;

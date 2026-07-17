@@ -148,6 +148,7 @@ public:
     uint8_t spiRank = 0;                ///< 1-based daisy-chain rank (SPI boards only).
     uint8_t  i2cAddress   = 0x40;       ///< I2C address (I2C boards only, default 0x40).
     uint32_t oscillatorHz = 25000000;   ///< PCA9685 oscillator frequency in Hz (default 25 MHz).
+    uint8_t  oledHeight   = 64;         ///< SSD1306 panel height in px (SSD1306 boards only, default 64).
 
     bool isRoot() const { return busType == BUS_NONE; }
   };
@@ -267,6 +268,24 @@ public:
   const BoardCfg &board(uint8_t i) const {
     static const BoardCfg empty;
     return (i >= 1 && i <= _boardCount) ? _boards_cfg[i - 1] : empty;
+  }
+
+  /**
+   * @brief Look up the SSD1306 board declared in the loaded config, if any (#51).
+   *        Used by ConfigManager to drive OledDisplay::configure() so the
+   *        structural OLED's presence and resolution follow the config,
+   *        instead of being fixed at compile time.
+   * @param heightOut Set to the board's oled_height when found (untouched otherwise).
+   * @return true if an SSD1306 board is declared, false otherwise.
+   */
+  bool findOledBoard(uint8_t &heightOut) const {
+    for (uint8_t i = 0; i < _boardCount; i++) {
+      if (strcmp(_boards_cfg[i].typeStr, factory_keys::kBoardTypeSSD1306) == 0) {
+        heightOut = _boards_cfg[i].oledHeight;
+        return true;
+      }
+    }
+    return false;
   }
 
 private:

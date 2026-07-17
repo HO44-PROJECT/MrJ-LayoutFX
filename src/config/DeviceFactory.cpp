@@ -142,6 +142,12 @@ bool DeviceFactory::load(const char *json, const BtPinCount *btPinCounts, uint8_
         bcfg.oscillatorHz = bd[kFOscillatorHz] | 25000000U;
       }
 
+      // oled_height is SSD1306-specific, not a generic I2C field — driven from
+      // config so the structural OLED can adapt to the panel actually wired (#51).
+      if (strcmp(bcfg.typeStr, kBoardTypeSSD1306) == 0) {
+        bcfg.oledHeight = (uint8_t)(bd[kFOledHeight] | 64);
+      }
+
       if (bcfg.busType == BUS_SPI_MASTER) {
         if (_spiCardCount >= LFX_FACTORY_MAX_SPI_CARDS) {
           LOG_PRINTLN(F("DeviceFactory: LFX_FACTORY_MAX_SPI_CARDS reached"));

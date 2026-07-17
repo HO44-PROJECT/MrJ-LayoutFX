@@ -7,6 +7,18 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-17
 
+- The structural OLED (`OledDisplay`) is now config-driven instead of fixed
+  at compile time: deleting the "SSD1306" board in the WebUI now actually
+  blanks the screen, and re-adding it (or changing its declared
+  `oled_height`, 32 or 64) re-configures the display at runtime — no
+  reboot. Both SSD1306 sizes are handled by a single `U8G2` instance
+  re-configured via the same `u8g2_Setup_ssd1306_i2c_*` call the compiled
+  subclasses used internally (no dual-driver compilation, no more
+  `#if OLED_HEIGHT` in the draw functions). `DeviceFactory::findOledBoard()`
+  is the new source of truth, pushed to `OledDisplay::configure()` by
+  `ConfigManager` after every init/reload/hot-reload — the actual U8G2
+  mutation happens on the OLED's own Core 0 task, since `configure()` may be
+  called from Core 1. Validated on hardware. (#51)
 - Added 3 new UI theme variants — grey (neutral concrete), dark (low-light,
   brightened accents for readability), light (pure white, max contrast) —
   alongside the existing night/amber/signal, following the same 17-variable
