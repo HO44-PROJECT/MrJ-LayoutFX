@@ -71,10 +71,10 @@ unsigned long DccDrivable::lastResetTime = 0;
  */
 void DccDrivable::notifyDccState(uint16_t Addr, uint8_t State) {
   #ifdef LFX_DCC_AUDIT_ENABLED
-  DEBUG_PRINT(F("[notifyDccState] Addr="));
-  DEBUG_PRINT(Addr);
-  DEBUG_PRINT(F(", state="));
-  DEBUG_PRINT(State);
+  MRJ_DEBUG_PRINT(F("[notifyDccState] Addr="));
+  MRJ_DEBUG_PRINT(Addr);
+  MRJ_DEBUG_PRINT(F(", state="));
+  MRJ_DEBUG_PRINT(State);
   #endif
 
   // Iterate through registered devices to find matching address
@@ -99,10 +99,10 @@ void DccDrivable::notifyDccState(uint16_t Addr, uint8_t State) {
 void DccDrivable::notifyDccSigOutputState(uint16_t Addr, uint8_t State) {
   trackDccMsg(DCC_MSG_SIGNAL);
   #ifdef LFX_DCC_AUDIT_ENABLED
-  DEBUG_PRINT(F("[notifyDccSigOutputState] Addr="));
-  DEBUG_PRINT(Addr);
-  DEBUG_PRINT(F(", state="));
-  DEBUG_PRINTLN(State);
+  MRJ_DEBUG_PRINT(F("[notifyDccSigOutputState] Addr="));
+  MRJ_DEBUG_PRINT(Addr);
+  MRJ_DEBUG_PRINT(F(", state="));
+  MRJ_DEBUG_PRINTLN(State);
   #endif
   bool matched = false;
   for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {
@@ -130,14 +130,14 @@ void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP 
   if (!GET_BIT(dccSeenFunc, Addr)) {
     SET_BIT(dccSeenFunc, Addr);
 
-    DEBUG_PRINT(F("[notifyDccFunc] Addr="));
-    DEBUG_PRINT(Addr);
-    DEBUG_PRINT(F(", AddrType="));
-    DEBUG_PRINT(AddrType);
-    DEBUG_PRINT(F(", FuncGrp="));
-    DEBUG_PRINT(FuncGrp);
-    DEBUG_PRINT(F(", FuncState="));
-    DEBUG_PRINTLN(FuncState);
+    MRJ_DEBUG_PRINT(F("[notifyDccFunc] Addr="));
+    MRJ_DEBUG_PRINT(Addr);
+    MRJ_DEBUG_PRINT(F(", AddrType="));
+    MRJ_DEBUG_PRINT(AddrType);
+    MRJ_DEBUG_PRINT(F(", FuncGrp="));
+    MRJ_DEBUG_PRINT(FuncGrp);
+    MRJ_DEBUG_PRINT(F(", FuncState="));
+    MRJ_DEBUG_PRINTLN(FuncState);
   }
 
   #endif
@@ -169,14 +169,14 @@ void DccDrivable::notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t 
   if (!GET_BIT(dccSeenSpeed, Addr)) {
     SET_BIT(dccSeenSpeed, Addr);
 
-    DEBUG_PRINT(F("[notifyDccSpeed] Addr="));
-    DEBUG_PRINT(Addr);
-    DEBUG_PRINT(F(", Speed="));
-    DEBUG_PRINT(Speed);
-    DEBUG_PRINT(F(", Direction="));
-    DEBUG_PRINT(Dir);
-    DEBUG_PRINT(F(", SpeedSteps="));
-    DEBUG_PRINTLN(SpeedSteps);
+    MRJ_DEBUG_PRINT(F("[notifyDccSpeed] Addr="));
+    MRJ_DEBUG_PRINT(Addr);
+    MRJ_DEBUG_PRINT(F(", Speed="));
+    MRJ_DEBUG_PRINT(Speed);
+    MRJ_DEBUG_PRINT(F(", Direction="));
+    MRJ_DEBUG_PRINT(Dir);
+    MRJ_DEBUG_PRINT(F(", SpeedSteps="));
+    MRJ_DEBUG_PRINTLN(SpeedSteps);
   }
   #endif
 
@@ -222,12 +222,12 @@ void DccDrivable::notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t 
 void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, uint8_t OutputPower) {
   trackDccMsg(DCC_MSG_ACCESSORY);
   #ifdef LFX_DCC_AUDIT_ENABLED
-  DEBUG_PRINT(F("[notifyDccAccTurnoutOutput] Addr="));
-  DEBUG_PRINT(Addr);
-  DEBUG_PRINT(F(", direction="));
-  DEBUG_PRINT(Direction);
-  DEBUG_PRINT(F(", OutputPower ="));
-  DEBUG_PRINTLN(OutputPower);
+  MRJ_DEBUG_PRINT(F("[notifyDccAccTurnoutOutput] Addr="));
+  MRJ_DEBUG_PRINT(Addr);
+  MRJ_DEBUG_PRINT(F(", direction="));
+  MRJ_DEBUG_PRINT(Direction);
+  MRJ_DEBUG_PRINT(F(", OutputPower ="));
+  MRJ_DEBUG_PRINTLN(OutputPower);
   #endif
 
   bool matched = false;
@@ -257,14 +257,14 @@ void DccDrivable::notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, ui
 void DccDrivable::notifyDccAccTurnoutBoard(uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower) {
   trackDccMsg(DCC_MSG_ACCESSORY);
   #ifdef LFX_DCC_AUDIT_ENABLED
-  DEBUG_PRINT(F("[notifyDccAccTurnoutBoard] Addr="));
-  DEBUG_PRINT(BoardAddr);
-  DEBUG_PRINT(F(", OutputPair="));
-  DEBUG_PRINT(OutputPair);
-  DEBUG_PRINT(F(", direction="));
-  DEBUG_PRINT(Direction);
-  DEBUG_PRINT(F(", OutputPower="));
-  DEBUG_PRINTLN(OutputPower);
+  MRJ_DEBUG_PRINT(F("[notifyDccAccTurnoutBoard] Addr="));
+  MRJ_DEBUG_PRINT(BoardAddr);
+  MRJ_DEBUG_PRINT(F(", OutputPair="));
+  MRJ_DEBUG_PRINT(OutputPair);
+  MRJ_DEBUG_PRINT(F(", direction="));
+  MRJ_DEBUG_PRINT(Direction);
+  MRJ_DEBUG_PRINT(F(", OutputPower="));
+  MRJ_DEBUG_PRINTLN(OutputPower);
   #endif
   bool matched = false;
   for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {

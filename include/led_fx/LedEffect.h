@@ -107,7 +107,7 @@ public:
     inline virtual void switchOn(bool skipDelay = false)
     {
         // static const char MSG_switchOn[] PROGMEM = "%S: switch on"; // Déclarer en PROGMEM
-        // DEBUG_PRINTLN(MSG_switchOn, getDeviceName());
+        // MRJ_DEBUG_PRINTLN(MSG_switchOn, getDeviceName());
 
         newState(ON_STATE, skipDelay);
     }

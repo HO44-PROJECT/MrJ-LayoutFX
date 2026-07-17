@@ -32,8 +32,8 @@ const PIN_STATE MrJDBBlocSignal::PIN_STATE_HP1[MrJDBBlocSignalState_PIN_COUNT] =
  */
 void MrJDBBlocSignal::setDccSigOutputState(uint8_t State)
 {
-    DEBUG_PRINTLN(F("dcc callback for bloc signal"));
-    DEBUG_PRINTLN(State);
+    MRJ_DEBUG_PRINTLN(F("dcc callback for bloc signal"));
+    MRJ_DEBUG_PRINTLN(State);
 
     newState(State == DB_SIGNAL_ASPECT_ID_HP0 ? HP0_STATE : State == DB_SIGNAL_ASPECT_ID_HP1 ? HP1_STATE
                                                                                              : OFF_STATE);

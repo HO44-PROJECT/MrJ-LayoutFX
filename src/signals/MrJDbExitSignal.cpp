@@ -34,8 +34,8 @@ const PIN_STATE MrJDBExitSignal::PIN_STATE_HP0_SH1[MrJDBExitSignalState_PIN_COUN
  */
 void MrJDBExitSignal::setDccSigOutputState(uint8_t State)
 {
-    DEBUG_PRINTLN(F("dcc callback for exit signal"));
-    DEBUG_PRINTLN(State);
+    MRJ_DEBUG_PRINTLN(F("dcc callback for exit signal"));
+    MRJ_DEBUG_PRINTLN(State);
 
     switch (State)
     {

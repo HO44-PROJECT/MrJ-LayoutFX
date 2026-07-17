@@ -10,7 +10,7 @@
  * @license MIT License
  */
 
-#ifdef DEBUG_OLED
+#ifdef MRJ_DEBUG_OLED
 
 #include "DebugOled.h"
 #include <avr/pgmspace.h>

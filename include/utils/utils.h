@@ -18,7 +18,7 @@
 #include <Arduino.h>
 #include <LayoutFX_define.h>
 
-#ifdef DEBUG_OLED
+#ifdef MRJ_DEBUG_OLED
   #include "DebugOled.h"
 #endif
 
@@ -104,9 +104,9 @@ void debugPrintln(uint8_t value);
 /** @brief Print size_t to Serial with newline */
 void debugPrintln(size_t value);
 
-#ifdef DEBUG_SERIAL
+#ifdef MRJ_DEBUG_SERIAL
 
-  #define DEBUG_INIT(speed) \
+  #define MRJ_DEBUG_INIT(speed) \
     do {                    \
       Serial.begin(speed);  \
       while (!Serial) {     \
@@ -115,22 +115,22 @@ void debugPrintln(size_t value);
       delay(1000);          \
     } while (0)
 
-  #define DEBUG_PRINT(x, ...) debugPrint(x, ##__VA_ARGS__)
-  #define DEBUG_PRINTLN(x, ...) debugPrintln(x, ##__VA_ARGS__)
+  #define MRJ_DEBUG_PRINT(x, ...) debugPrint(x, ##__VA_ARGS__)
+  #define MRJ_DEBUG_PRINTLN(x, ...) debugPrintln(x, ##__VA_ARGS__)
 
-#elif defined(DEBUG_OLED)
+#elif defined(MRJ_DEBUG_OLED)
 
-  #define DEBUG_INIT(speed) oled_init(speed)
-  #define DEBUG_PRINT(x, ...) oled_print(x, ##__VA_ARGS__)
-  #define DEBUG_PRINTLN(x, ...) oled_println(x, ##__VA_ARGS__)
-  #define DEBUG_PRINTF(x, ...) oled_printf(x, ##__VA_ARGS__)
+  #define MRJ_DEBUG_INIT(speed) oled_init(speed)
+  #define MRJ_DEBUG_PRINT(x, ...) oled_print(x, ##__VA_ARGS__)
+  #define MRJ_DEBUG_PRINTLN(x, ...) oled_println(x, ##__VA_ARGS__)
+  #define MRJ_DEBUG_PRINTF(x, ...) oled_printf(x, ##__VA_ARGS__)
 
 #else
 
-  #define DEBUG_INIT(speed)
-  #define DEBUG_PRINT(x, ...)
-  #define DEBUG_PRINTLN(x, ...)
-  #define DEBUG_PRINTF(x, ...)
+  #define MRJ_DEBUG_INIT(speed)
+  #define MRJ_DEBUG_PRINT(x, ...)
+  #define MRJ_DEBUG_PRINTLN(x, ...)
+  #define MRJ_DEBUG_PRINTF(x, ...)
 
 #endif
 
@@ -158,7 +158,7 @@ void debugPrintln(size_t value);
 inline bool lfxUart0Reserved() {
 #if defined(LOG_SERIAL)
   return g_lfxLogActive;
-#elif defined(DEBUG_SERIAL)
+#elif defined(MRJ_DEBUG_SERIAL)
   return true;
 #else
   return false;

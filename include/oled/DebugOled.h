@@ -16,7 +16,7 @@
 
 #include "utils/utils.h"
 
-#ifdef DEBUG_OLED
+#ifdef MRJ_DEBUG_OLED
 
 #include <U8g2lib.h>
 #include <WString.h>
@@ -82,4 +82,4 @@ void oled_println(const __FlashStringHelper *fmt, ...);
  */
 void oled_printf(const __FlashStringHelper *fmt, ...);
 
-#endif // DEBUG_OLED
+#endif // MRJ_DEBUG_OLED

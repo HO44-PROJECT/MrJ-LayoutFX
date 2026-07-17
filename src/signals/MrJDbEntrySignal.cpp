@@ -33,8 +33,8 @@ const PIN_STATE MrJDBEntrySignal::PIN_STATE_HP2[MrJDBEntrySignalState_PIN_COUNT]
  */
 void MrJDBEntrySignal::setDccSigOutputState(uint8_t State)
 {
-    DEBUG_PRINTLN(F("dcc callback for entry signal"));
-    DEBUG_PRINTLN(State);
+    MRJ_DEBUG_PRINTLN(F("dcc callback for entry signal"));
+    MRJ_DEBUG_PRINTLN(State);
 
     switch (State)
     {

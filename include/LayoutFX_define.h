@@ -23,6 +23,7 @@
  * Core / config / network (ESP32 only):
  *   CONFIG "file.json"    Load the device config from LittleFS (filename, no '/').
  *   API                   REST API server (/api/…). Requires WIFI + CONFIG.
+ *   API_AUDIT             Log every handled API request (diagnostics).
  *   WEBUI                 Web control panel (/ui). Implies API. Requires WIFI + CONFIG.
  *   WIFI_SSID "…"     \   STA credentials — BOTH required to join WiFi and start
  *   WIFI_PASSWORD "…" /   the HTTP server.
@@ -63,9 +64,9 @@
  *                         (banner, IP, config). Always on — NOT config-toggleable.
  *   LOG_SERIAL            Operational Tier-2 logs on UART0 (LOG_PRINT…). Runtime-
  *                         gated by the uart0 bus; remove it to free GPIO1/3.
- *   DEBUG_SERIAL          Verbose debug logs on UART0 (DEBUG_PRINT…).
+ *   MRJ_DEBUG_SERIAL      Verbose debug logs on UART0 (MRJ_DEBUG_PRINT…).
  *   LOG_OLED              Mirror operational logs to the OLED.
- *   DEBUG_OLED            Send debug logs to the OLED instead of serial.
+ *   MRJ_DEBUG_OLED         Send debug logs to the OLED instead of serial.
  *
  * Behaviour:
  *   DEMO                  Built-in demo sequences (traffic, signals, servo, LED FX).
@@ -154,6 +155,12 @@
   #endif // WEBUI
 #else
   #undef LFX_API_SERVER_ENABLED // WEBUI is only supported on ESP32.
+#endif
+
+#ifdef API_AUDIT // Log every handled API request (diagnostics), same spirit as DCC_AUDIT.
+  #define LFX_API_AUDIT_ENABLED 1
+#else
+  #undef LFX_API_AUDIT_ENABLED
 #endif
 
 #ifdef OLED // OLED support is enabled if OLED is defined (value is ignored).

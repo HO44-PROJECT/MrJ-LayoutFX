@@ -143,9 +143,9 @@ void notifyDccMsg(DCC_MSG *Msg)
         return;
 
     // Debug: Print raw byte values in hexadecimal (commented out)
-    // DEBUG_PRINT("Raw: b1=0x"); LOG_PRINT(b1, HEX);
-    // DEBUG_PRINT(", b2=0x"); LOG_PRINT(b2, HEX);
-    // DEBUG_PRINTLN();
+    // MRJ_DEBUG_PRINT("Raw: b1=0x"); LOG_PRINT(b1, HEX);
+    // MRJ_DEBUG_PRINT(", b2=0x"); LOG_PRINT(b2, HEX);
+    // MRJ_DEBUG_PRINTLN();
 
     // Calculate the board address (1 to 511)
     // Extract the lower 6 bits of the first byte (b1)
@@ -156,9 +156,9 @@ void notifyDccMsg(DCC_MSG *Msg)
     uint16_t boardAddr = ((uint16_t)high3 << 6) | low6;
 
     // Debug: Print address calculation details (commented out)
-    // DEBUG_PRINT("Address calc: low6=0x"); LOG_PRINT(low6, HEX);
-    // DEBUG_PRINT(", high3=0x"); LOG_PRINT(high3, HEX);
-    // DEBUG_PRINT(", BoardAddr="); LOG_PRINTLN(boardAddr);
+    // MRJ_DEBUG_PRINT("Address calc: low6=0x"); LOG_PRINT(low6, HEX);
+    // MRJ_DEBUG_PRINT(", high3=0x"); LOG_PRINT(high3, HEX);
+    // MRJ_DEBUG_PRINT(", BoardAddr="); LOG_PRINTLN(boardAddr);
 
     // Check if the packet is a Basic Accessory packet (b2 bit 7 = 1) or Extended Accessory packet (b2 bit 7 = 0)
     if (b2 & 0x80)
@@ -184,11 +184,11 @@ void notifyDccMsg(DCC_MSG *Msg)
 #endif
 
         // Debug: Print Basic Accessory packet details (commented out)
-        // DEBUG_PRINT("Basic Packet: BoardAddr="); LOG_PRINT(boardAddr);
-        // DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
-        // DEBUG_PRINT(", Dir="); LOG_PRINT(dir);
-        // DEBUG_PRINT(", State="); LOG_PRINT(state);
-        // DEBUG_PRINT(", CalcAddr="); LOG_PRINTLN(addr);
+        // MRJ_DEBUG_PRINT("Basic Packet: BoardAddr="); LOG_PRINT(boardAddr);
+        // MRJ_DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
+        // MRJ_DEBUG_PRINT(", Dir="); LOG_PRINT(dir);
+        // MRJ_DEBUG_PRINT(", State="); LOG_PRINT(state);
+        // MRJ_DEBUG_PRINT(", CalcAddr="); LOG_PRINTLN(addr);
 
         // Check if in output-oriented mode
         if (DccDrivable::IS_OUTPUT_MODE())
@@ -225,10 +225,10 @@ void notifyDccMsg(DCC_MSG *Msg)
 #endif
 
         // Debug: Print Extended Accessory packet details (commented out)
-        // DEBUG_PRINT("Extended Packet: BoardAddr="); LOG_PRINT(boardAddr);
-        // DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
-        // DEBUG_PRINT(", Aspect="); LOG_PRINT(aspect);
-        // DEBUG_PRINT(", CalcAddr="); LOG_PRINTLN(addr);
+        // MRJ_DEBUG_PRINT("Extended Packet: BoardAddr="); LOG_PRINT(boardAddr);
+        // MRJ_DEBUG_PRINT(", Pair="); LOG_PRINT(pair);
+        // MRJ_DEBUG_PRINT(", Aspect="); LOG_PRINT(aspect);
+        // MRJ_DEBUG_PRINT(", CalcAddr="); LOG_PRINTLN(addr);
 
         // Notify signal output state with the calculated address and aspect
         notifyDccSigOutputState(addr, aspect);

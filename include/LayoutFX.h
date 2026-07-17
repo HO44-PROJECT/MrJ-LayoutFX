@@ -20,7 +20,7 @@
  *   WIFI_PASSWORD  "…"   Connect to WiFi and start the HTTP server.
  *   HTTP_PORT  <n>        HTTP port — defaults to 80 if not defined.
  *   SPI_CARDS             Enable the 74HC595 SPI shift-register bus.
- *   DEBUG                 Enable DEBUG_PRINT / DEBUG_PRINTLN output.
+ *   DEBUG                 Enable MRJ_DEBUG_PRINT / MRJ_DEBUG_PRINTLN output.
  *   LOBOT                 Enable the Lobot LX-16A servo protocol.
  *
  * @project MrJ-ArduinoRailwayFX
@@ -156,7 +156,7 @@ public:
       for (uint8_t p : _p) { pinMode(p, OUTPUT); digitalWrite(p, LOW); } }
 #endif
 
-#if defined(LOG_SERIAL) || defined(DEBUG_SERIAL)
+#if defined(LOG_SERIAL) || defined(MRJ_DEBUG_SERIAL)
     Serial.begin(115200);
 #endif
 
