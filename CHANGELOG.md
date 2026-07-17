@@ -7,6 +7,15 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-17
 
+- Added 3 new UI theme variants — grey (neutral concrete), dark (low-light,
+  brightened accents for readability), light (pure white, max contrast) —
+  alongside the existing night/amber/signal, following the same 17-variable
+  CSS custom-property structure so every theme covers the same surface.
+  `setTheme()` and the theme-dot switcher updated accordingly. The "blue
+  icon on the green theme" bug mentioned in the original issue could not be
+  reproduced (no theme named "green" exists, no hardcoded blue color found
+  in the icon set) and was dropped from scope. Validated in-browser via
+  `tools/local_server.py` (no reflash needed — pure CSS/JS). (#38)
 - Cockpit: the grouped "ALL ON"/"ALL OFF" header buttons and the per-type
   group "TURN ON"/"TURN OFF" buttons were still all-caps — #120 had only
   normalized the individual device-card button's OFF-state label. Now

@@ -69,6 +69,69 @@
       --d4: #b4cce0
     }
 
+    body.th-grey {
+      /* Béton — gris neutre */
+      --bg0: #eeeeee;
+      --bg1: #ffffff;
+      --bg2: #e2e2e2;
+      --bg3: #d4d4d4;
+      --bd: #b8b8b8;
+      --acc: #5a5a5a;
+      --t0: #202020;
+      --t1: #3a3a3a;
+      --t2: #5c5c5c;
+      --t3: #808080;
+      --t4: #a4a4a4;
+      --ico: #5a5a5a;
+      --d0: #cfdec8;
+      --d1: #daebd2;
+      --d2: #8cb888;
+      --d3: #2a6030;
+      --d4: #c2d6ba
+    }
+
+    body.th-dark {
+      /* Nuit — sombre, faible luminosité */
+      --bg0: #14161a;
+      --bg1: #1e2128;
+      --bg2: #262a32;
+      --bg3: #30343e;
+      --bd: #3c4150;
+      --acc: #6f9ceb;
+      --t0: #e8ecf4;
+      --t1: #c4cbdc;
+      --t2: #9aa4bc;
+      --t3: #74809c;
+      --t4: #545e78;
+      --ico: #6f9ceb;
+      --d0: #2a3a2c;
+      --d1: #345038;
+      --d2: #4c8850;
+      --d3: #7ad080;
+      --d4: #3a4c3c
+    }
+
+    body.th-light {
+      /* Papier — blanc pur, contraste maximal */
+      --bg0: #ffffff;
+      --bg1: #ffffff;
+      --bg2: #f4f4f4;
+      --bg3: #e8e8e8;
+      --bd: #cccccc;
+      --acc: #2a5cc0;
+      --t0: #000000;
+      --t1: #202020;
+      --t2: #444444;
+      --t3: #707070;
+      --t4: #999999;
+      --ico: #2a5cc0;
+      --d0: #d8ecd0;
+      --d1: #e4f4dc;
+      --d2: #6cb070;
+      --d3: #205020;
+      --d4: #c8e0c0
+    }
+
     /* Theme switcher */
     .theme-sw {
       display: flex;
@@ -112,6 +175,19 @@
 
     .theme-dot-signal {
       background: #1868b8
+    }
+
+    .theme-dot-grey {
+      background: #5a5a5a
+    }
+
+    .theme-dot-dark {
+      background: #14161a
+    }
+
+    .theme-dot-light {
+      background: #ffffff;
+      border-color: #cccccc
     }
 
     body {

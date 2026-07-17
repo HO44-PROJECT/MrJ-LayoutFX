@@ -579,9 +579,9 @@ function dbgCycleDev(id, desired, stateCount) {
     .catch(function (e) { console.error('dbgCycleDev', e); });
 }
 
-// Apply a UI theme (night | amber | signal); persists choice in localStorage.
+// Apply a UI theme (night | amber | signal | grey | dark | light); persists choice in localStorage.
 function setTheme(name) {
-  document.body.classList.remove('th-amber', 'th-signal');
+  document.body.classList.remove('th-amber', 'th-signal', 'th-grey', 'th-dark', 'th-light');
   if (name !== 'night') document.body.classList.add('th-' + name);
   localStorage.setItem('mrj-theme', name);
   document.querySelectorAll('.theme-dot').forEach(function (b) {
