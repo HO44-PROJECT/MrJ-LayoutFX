@@ -7,6 +7,13 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-16
 
+- About page: feature badges were already grouped by category (Core/Bus/
+  Oled/Logging/Behaviour) — confirmed still in place, no code change
+  needed there. Fixed while checking: disabled ("off") badges used the
+  palette's palest text tone plus an extra `opacity: .65`, making them
+  unreadable — now uses a darker, still-muted tone with no added opacity
+  (badge stays visually distinct via its grey background + strikethrough).
+  Validated on hardware. (#93)
 - About page: `fmtBytes()` gained a GB tier (was capped at MB, so a value
   ≥ 1 GB would have rendered as e.g. "2048.0 MB") and `fmtUptime()` gained
   a days tier ("Xj HH:MM:SS", i18n ×4) instead of hours rolling past two
