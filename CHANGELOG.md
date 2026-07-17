@@ -5,6 +5,32 @@ issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.
 
+## 2026-07-17
+
+- Fixed a startup-delay bug chain found while re-testing the cockpit path
+  (follow-up to #8/#119): a grouped Turn-Off glitched (instant off, flash
+  back on, then fade) because the delay macro used to block the whole
+  effect coroutine instead of just the target-state flip; then, once made
+  non-blocking, `DEVICE_WAIT_STATE_CHANGE()`'s `COROUTINE_AWAIT` never fell
+  through to commit the switch, silently leaving devices stuck off; then,
+  once fixed, effects re-invoking their own `setState()` internally (e.g.
+  `GasLampDefect`'s "stay OFF" branch) kept re-arming the same deadline
+  forever, spamming `[#8] delayed switch armed/fired` in a loop. Now fixed
+  with a `_pendingDesiredState` guard so a delay is only (re-)armed for a
+  genuinely new target, while the deadline is still committed as a side
+  effect of the existing `COROUTINE_AWAIT`. The armed/fired trace is now
+  always-on info (`LOG_SERIAL`), not gated behind the debug flag. Validated
+  on hardware. (#121)
+- Renamed the whole `DEBUG_*` macro family (`DEBUG_SERIAL`, `DEBUG_OLED`,
+  `DEBUG_INIT`, `DEBUG_PRINT`, `DEBUG_PRINTLN`, `DEBUG_PRINTF`) to
+  `MRJ_DEBUG_*` across every config and the library, to stop colliding with
+  Adafruit BusIO's own `DEBUG_SERIAL` convention. Pure rename, no behaviour
+  change. Validated on hardware. (#122)
+- New `API_AUDIT` build flag (mirrors `DCC_AUDIT`): gates the 23 per-request
+  `API: ...` log lines across the 4 API source files behind an opt-in
+  `#define`, off by default. Added to the About page's feature badge system
+  (key, JSON emission, label/group, i18n ×4). Validated on hardware. (#123)
+
 ## 2026-07-16
 
 - About page: feature badges were already grouped by category (Core/Bus/
