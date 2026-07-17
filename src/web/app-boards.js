@@ -715,7 +715,8 @@ function dbgAll(boardApiIdx, state) {
     }
   }
   Promise.all(clearCalls).then(function () {
-    post('/api/all', { state: state, board: boardApiIdx + 1 })
+    // #8: instant response for a wiring test, not staggered like the cockpit.
+    post('/api/all', { state: state, board: boardApiIdx + 1, skip_delay: true })
       .then(poll); // refresh devices only (RAM), not boards/config (flash) — avoids POV jitter
   });
 }

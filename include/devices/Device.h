@@ -60,17 +60,19 @@ struct TransitionPtr {
   }
 };
 
-#define DEVICE_WAIT_STATE_CHANGE(target) COROUTINE_AWAIT((this->getState() != (target)))
+// this->switchDue() is called as a side effect of the awaited condition, so
+// it re-runs on every scheduler tick that COROUTINE_AWAIT stays blocked —
+// not just once execution resumes. This is what actually commits a delayed
+// switch (#8): without it, a pending switch would never flip targetState,
+// so the COROUTINE_AWAIT below would never unblock (deadlock).
+#define DEVICE_WAIT_STATE_CHANGE(target) \
+  COROUTINE_AWAIT((this->switchDue(), this->getState() != (target)))
 
-// Apply a device's pending startup delay (#8), if any. The delay is rolled
-// (fixed + fresh random draw) by activateNewTarget() the moment it detects a
-// transition touching OFF_STATE, in either direction (OFF -> active or
-// active -> OFF) — by the time the coroutine reaches this macro, `state` has
-// already been overwritten with INIT_STATE, so the check can't be done here.
-// A no-op (COROUTINE_DELAY(0)) for any other state change (e.g. SLOW -> FAST),
-// when no delay is configured, or when the transition was requested with
-// skipDelay=true (e.g. a single manual click in the cockpit).
-#define DEVICE_APPLY_START_DELAY() COROUTINE_DELAY(this->consumePendingStartDelayMs())
+// Kept as a no-op call site for source compatibility with every effect's
+// COROUTINE_LOOP() (placed right after DEVICE_WAIT_STATE_CHANGE()) — the
+// actual commit now happens inside DEVICE_WAIT_STATE_CHANGE()'s condition,
+// above, so it also runs while the coroutine is still blocked waiting.
+#define DEVICE_APPLY_START_DELAY() do {} while (0)
 
 /**
  * @class Device
@@ -139,7 +141,12 @@ public:
    * @param newState The new desired state (e.g., ON_STATE or OFF_STATE).
    * @param skipDelay #8: true to ignore this device's configured startup delay
    * for this transition (e.g. a single manual click in the cockpit). Default
-   * false — boot default state, ALL ON/OFF, group actions, and DCC all honour it.
+   * false — boot default state, ALL ON/OFF, group actions, and DCC all honour
+   * it, in either direction (OFF -> active or active -> OFF). The delay never
+   * blocks the running effect: it only postpones the targetState/state flip,
+   * so the device keeps running its current effect until the delay elapses
+   * (see activateNewTarget()). A newState() call made while a delay is still
+   * pending simply replaces it — last request always wins.
    */
   virtual void newState(STATE_TYPE newState, bool skipDelay = false) {
     desiredState = newState;
@@ -234,13 +241,16 @@ public:
 
   /**
    * @brief Configures this device's startup delay (#8), read once from JSON
-   * config by DeviceFactory. Applied by DEVICE_APPLY_START_DELAY() on every
-   * transition away from OFF_STATE, whatever triggers it (boot default
-   * state, ALL ON, an individual button, DCC).
+   * config by DeviceFactory. Armed by activateNewTarget() on any transition
+   * (whatever triggers it: boot default state, ALL ON/OFF, group actions, an
+   * individual button, DCC), in either direction. Never blocks the running
+   * effect: DEVICE_APPLY_START_DELAY() only commits the targetState/state
+   * flip once the delay elapses, so the device keeps running its current
+   * effect (including its own pin write) during the wait.
    *
    * @param fixedMs Fixed delay in milliseconds (0 = none).
    * @param randomMs Extra random delay upper bound in milliseconds, redrawn
-   * on every OFF -> active transition (0 = no randomisation).
+   * on every transition (0 = no randomisation).
    */
   inline void setStartDelayConfig(uint16_t fixedMs, uint16_t randomMs) {
     _startDelayMs = fixedMs;
@@ -248,15 +258,25 @@ public:
   }
 
   /**
-   * @brief Returns the pending startup delay armed by activateNewTarget()
-   * and resets it to 0 (one-shot, consumed by DEVICE_APPLY_START_DELAY()).
+   * @brief If a delayed switch (#8) armed by activateNewTarget() is due,
+   * commits it now (targetState = desiredState, state = INIT_STATE) and
+   * clears the pending marker. One-shot, non-blocking, called every loop
+   * iteration via DEVICE_APPLY_START_DELAY() — a no-op until the deadline
+   * is reached.
    *
-   * @return uint16_t Delay in milliseconds (0 outside of an OFF -> active transition).
+   * @return true if the switch was just committed, false otherwise.
    */
-  inline uint16_t consumePendingStartDelayMs() {
-    uint16_t ms = _pendingStartDelayMs;
-    _pendingStartDelayMs = 0;
-    return ms;
+  inline bool switchDue() {
+    if (!_switchPending) return false;
+    if ((int32_t)(millis() - _pendingSwitchAtMs) < 0) return false;
+    _switchPending = false;
+    targetState = desiredState;
+    state = INIT_STATE;
+    LOG_PRINT(F("[#8] delayed switch fired for "));
+    LOG_PRINT(getDeviceName());
+    LOG_PRINT(F(" -> target "));
+    LOG_PRINTLN(targetState);
+    return true;
   }
 
   /**
@@ -289,8 +309,8 @@ public:
    * @param pins The array of pin identifiers.
    */
   virtual bool setPins(size_t pin_count, const PIN_ID pins[]) {
-    // DEBUG_PRINTLN("set_pin");
-    // DEBUG_PRINTLN(getPinCount());
+    // MRJ_DEBUG_PRINTLN("set_pin");
+    // MRJ_DEBUG_PRINTLN(getPinCount());
     // Assign pins from the input array, filling unused slots with NO_PIN
     for (size_t i = 0; i < getPinCount(); i++) {
       setPin(i, i < pin_count ? pins[i] : NO_PIN);
@@ -323,31 +343,31 @@ public:
   }
 #endif // !LFX_SPI_CARDS_ENABLED
   virtual bool validatePins() {
-    // DEBUG_PRINTF("validate pins for device %s\n", getDeviceName());
-    // DEBUG_PRINT(F("Validate pins for device "));
-    // DEBUG_PRINTLN(getDeviceName());
+    // MRJ_DEBUG_PRINTF("validate pins for device %s\n", getDeviceName());
+    // MRJ_DEBUG_PRINT(F("Validate pins for device "));
+    // MRJ_DEBUG_PRINTLN(getDeviceName());
 
     validePins = true;
     for (size_t i = 0; i < getPinCount(); i++) {
       if (!VALID_PIN(getPin(i))) {
         validePins = false;
-        // DEBUG_PRINT("Pin #");
-        // DEBUG_PRINT(i);
-        // DEBUG_PRINT("(");
-        // DEBUG_PRINT(getPin(i));
-        // DEBUG_PRINT(")");
-        // DEBUG_PRINTLN(" is invalid.");
+        // MRJ_DEBUG_PRINT("Pin #");
+        // MRJ_DEBUG_PRINT(i);
+        // MRJ_DEBUG_PRINT("(");
+        // MRJ_DEBUG_PRINT(getPin(i));
+        // MRJ_DEBUG_PRINT(")");
+        // MRJ_DEBUG_PRINTLN(" is invalid.");
         break;
       }
-      // DEBUG_PRINT("Pin #");
-      // DEBUG_PRINT(i);
-      // DEBUG_PRINT("(");
-      // DEBUG_PRINT(getPin(i));
-      // DEBUG_PRINT(")");
-      // DEBUG_PRINTLN(" is valid.");
+      // MRJ_DEBUG_PRINT("Pin #");
+      // MRJ_DEBUG_PRINT(i);
+      // MRJ_DEBUG_PRINT("(");
+      // MRJ_DEBUG_PRINT(getPin(i));
+      // MRJ_DEBUG_PRINT(")");
+      // MRJ_DEBUG_PRINTLN(" is valid.");
     }
 
-    // DEBUG_PRINTLN(validePins ? "ok" : "KO");
+    // MRJ_DEBUG_PRINTLN(validePins ? "ok" : "KO");
 
     return validePins;
   }
@@ -512,33 +532,50 @@ public:
     case INIT_STATE:
       return 'i';
     }
-    DEBUG_PRINT(F("Unknown state char "));
-    DEBUG_PRINTLN(state);
+    MRJ_DEBUG_PRINT(F("Unknown state char "));
+    MRJ_DEBUG_PRINTLN(state);
     return '?';
   }
 
 protected:
   virtual bool activateNewTarget(bool skipDelay = false) {
-    // DEBUG_PRINTLN(F("activateNewTarget device"));
     if (!busy()) {
-      DEBUG_PRINTLN(F("activateNewTarget not busy"));
-      DEBUG_PRINTLN(targetState);
-      DEBUG_PRINTLN(desiredState);
       if (targetState != desiredState) {
-        // DEBUG_PRINTLN("%s: New state %d", getDeviceName(), desiredState);
-        // #8: roll a fresh delay right here, while `state` still holds the
-        // pre-transition value — by the time the coroutine reaches
-        // DEVICE_APPLY_START_DELAY(), state has already become INIT_STATE.
-        // Applies symmetrically to OFF -> active and active -> OFF, skipped
-        // entirely for a single manual click (skipDelay=true).
-        bool touchesOff = (state == OFF_STATE) != (desiredState == OFF_STATE);
-        if (!skipDelay && touchesOff) {
-          _pendingStartDelayMs = _startDelayMs;
-          if (_startDelayRandomMs > 0)
-            _pendingStartDelayMs += random(0, _startDelayRandomMs + 1);
+        // #8: a delay is already pending for this exact desiredState — leave
+        // its deadline alone. Without this guard, any non-busy internal
+        // setState() call from the effect's own coroutine (e.g. GasLamp's
+        // "stay OFF" branch, re-entered every tick once extinguished) would
+        // re-invoke activateNewTarget() and roll _pendingSwitchAtMs forward
+        // forever, turning the one-shot deadline into a never-firing one and
+        // spamming the armed/fired log on every tick.
+        if (_switchPending && desiredState == _pendingDesiredState) {
+          return false;
         }
-        targetState = desiredState;
-        state = INIT_STATE;
+        // #8: if a delay is configured and not skipped, arm a deadline
+        // instead of flipping targetState/state right away — the coroutine
+        // keeps running its current effect untouched until switchDue()
+        // (called via DEVICE_APPLY_START_DELAY()) commits the switch. A
+        // later newState() call for a *different* desiredState simply
+        // overwrites this pending deadline — last request always wins.
+        uint16_t delayMs = _startDelayMs;
+        if (_startDelayRandomMs > 0)
+          delayMs += random(0, _startDelayRandomMs + 1);
+        if (!skipDelay && delayMs > 0) {
+          _pendingSwitchAtMs = millis() + delayMs;
+          _switchPending = true;
+          _pendingDesiredState = desiredState;
+          LOG_PRINT(F("[#8] delayed switch armed for "));
+          LOG_PRINT(getDeviceName());
+          LOG_PRINT(F(" -> target "));
+          LOG_PRINT(desiredState);
+          LOG_PRINT(F(" in "));
+          LOG_PRINT(delayMs);
+          LOG_PRINTLN(F(" ms"));
+        } else {
+          _switchPending = false;
+          targetState = desiredState;
+          state = INIT_STATE;
+        }
         return true;
       }
     }
@@ -549,9 +586,6 @@ protected:
       device has changed its state. If the new state is stable, take care of potential new desiredState
   */
   virtual void setState(STATE_TYPE newState) {
-    DEBUG_PRINT(F("Set state as "));
-    DEBUG_PRINTLN(newState);
-
     state = newState;
 
     // Refresh status on display
@@ -598,7 +632,9 @@ protected:
   STATE_TYPE desiredState = OFF_STATE; ///< Target state for the next transition. (stable). use newState or getDesiredState
   uint16_t _startDelayMs = 0;          ///< Configured startup delay (#8), fixed part, in ms. Set once by setStartDelayConfig().
   uint16_t _startDelayRandomMs = 0;    ///< Configured startup delay (#8), extra random upper bound, in ms. Set once by setStartDelayConfig().
-  uint16_t _pendingStartDelayMs = 0;   ///< One-shot startup delay (#8), rolled by activateNewTarget(), consumed by consumePendingStartDelayMs().
+  uint32_t _pendingSwitchAtMs = 0;     ///< Deadline (#8, millis()) armed by activateNewTarget(), committed by switchDue().
+  bool _switchPending = false;         ///< True while a delayed switch (#8) is armed and not yet due.
+  STATE_TYPE _pendingDesiredState = OFF_STATE; ///< desiredState the pending deadline (#8) was armed for — re-arm guard.
 
   char label = ' ';
 
