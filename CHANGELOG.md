@@ -7,6 +7,11 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-18
 
+- Disabled feature badges in the About/Features modal no longer use
+  `text-decoration: line-through` — the grey background/color/border already
+  communicate "disabled" clearly, and the strikethrough hurt readability.
+  Pure CSS change. (#126)
+
 - The DCC pin is now reserved at runtime — only while a `dcc` bus is actually
   configured — instead of always being reserved at compile time
   (`DCC_PIN`), mirroring how uart0's GPIO1/3 reservation became config-driven
