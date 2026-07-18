@@ -507,6 +507,11 @@ function _wizBuildConfig() {
   if (feat.dcc) {
     var dccPin = null;
     Object.keys(sp).forEach(function (g) { if (sp[g] === 'DCC') dccPin = parseInt(g, 10); });
+    // sys_pins only lists DCC while a dcc bus is active (#19) — on a fresh
+    // wizard config none is active yet, so fall back to the compiled default.
+    if (dccPin === null && _dbgStatus && _dbgStatus.dcc_pin_default !== undefined) {
+      dccPin = parseInt(_dbgStatus.dcc_pin_default, 10);
+    }
     if (dccPin !== null) cfg.buses.dcc = { type: 'dcc', pin: dccPin };
   }
   if (feat.log_serial || feat.debug_serial) {

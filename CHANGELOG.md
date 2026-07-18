@@ -5,6 +5,28 @@ issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.
 
+## 2026-07-18
+
+- The DCC pin is now reserved at runtime — only while a `dcc` bus is actually
+  configured — instead of always being reserved at compile time
+  (`DCC_PIN`), mirroring how uart0's GPIO1/3 reservation became config-driven
+  (#65/#18). `sys_pins` lists the pin only when `DeviceFactory::dccPin() >= 0`,
+  `/api/test/gpio` and the identify/wiring-test endpoints now reject that pin
+  only while the bus is active, and `DeviceFactory` skips (rather than
+  silently double-drives) any device wired to the same pin as the configured
+  dcc bus — same pattern as the existing uart0 wiring-conflict guard (#66).
+  Removing the `dcc` bus releases the pin **immediately**, not after a
+  reboot: `DccDrivable::end()` calls `detachInterrupt()` on the pin NmraDcc's
+  ISR was attached to (NmraDcc itself has no teardown API, but on ESP32 the
+  pin number we pass to `NmraDcc::pin()`/`init()` is the same one
+  `attachInterrupt()` uses internally, so external code can detach it without
+  any library changes); re-adding the bus re-attaches cleanly. The WebUI
+  wizard and bus editor previously read the compiled DCC pin straight out of
+  `sys_pins` to suggest it when adding the bus — since that entry is now
+  runtime-only, a new always-present `dcc_pin_default` status field
+  (the compiled `DCC_PIN`) was added for them to fall back on before the bus
+  exists. Validated on hardware. (#19)
+
 ## 2026-07-17
 
 - The structural OLED (`OledDisplay`) is now config-driven instead of fixed

@@ -25,6 +25,7 @@
 uint8_t DccDrivable::DccDrivableDeviceNumber = 0;
 #ifdef LFX_DCC_ENABLED
 NmraDcc DccDrivable::dcc;
+int8_t DccDrivable::_activePin = -1;
 uint32_t DccDrivable::dccMsgCount[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
 unsigned long DccDrivable::dccMsgLastMs[DccDrivable::DCC_MSG_KIND_COUNT] = {0};
 DccDrivable::DccLogEntry DccDrivable::dccLog[DccDrivable::DCC_MSG_KIND_COUNT][DccDrivable::DCC_LOG_CAPACITY] = {};

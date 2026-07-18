@@ -106,6 +106,8 @@ void ConfigManager::init(const char *configPath) {
       LOG_PRINTLN(F(" device(s) ready"));
       if (_factory.dccPin() >= 0) {
         DccDrivable::init((uint8_t)_factory.dccPin());
+      } else if (DccDrivable::isActive()) {
+        DccDrivable::end();
       }
     } else {
       LOG_PRINTLN(F("[Factory] JSON parse error"));
@@ -226,6 +228,8 @@ bool ConfigManager::reload() {
 
   if (_factory.dccPin() >= 0)
     DccDrivable::init((uint8_t)_factory.dccPin());
+  else if (DccDrivable::isActive())
+    DccDrivable::end();
 
   return true;
 }
@@ -321,6 +325,8 @@ void ConfigManager::handlePendingReload() {
 
   if (_factory.dccPin() >= 0)
     DccDrivable::init((uint8_t)_factory.dccPin());
+  else if (DccDrivable::isActive())
+    DccDrivable::end();
 }
 
 /** @brief Delete the active config file from LittleFS. Does nothing if absent. */

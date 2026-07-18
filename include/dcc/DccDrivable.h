@@ -61,6 +61,7 @@ public:
 #ifdef LFX_DCC_ENABLED
     dcc.pin(pin_id, pullup ? 1 : 0); // Enable Pullup
     dcc.init(MAN_ID_DIY, 3, 0, 0);   // Version 3, OpsModeAddressBaseCV=0
+    _activePin = (int8_t)pin_id;
 #endif
     forceLinkDccCallbacks();
     LOG_PRINT(F("[DCC] ready, pin "));
@@ -69,6 +70,35 @@ public:
 #ifdef LFX_DCC_AUDIT_ENABLED
     LOG_PRINTLN(F("[DCC] audit mode active"));
     resetSeenMessages();
+#endif
+  }
+
+  /**
+   * @brief Releases the DCC pin immediately (#19), so it can be reused by another
+   *        device or reported as free, without waiting for a reboot.
+   * @details NmraDcc has no teardown API — on ESP32, NmraDcc::pin()/init() attach
+   *          the ISR via attachInterrupt(pin, ...) using the pin number we pass in,
+   *          so detachInterrupt() on that same pin releases it cleanly from outside
+   *          the library. Safe to call even if the DCC bus was never active.
+   *          dcc.process() (called every loop() regardless) becomes a harmless no-op
+   *          once detached: it only acts when its internal DataReady flag is set,
+   *          which requires the now-detached ISR to have fired.
+   */
+  static void end() {
+#ifdef LFX_DCC_ENABLED
+    if (_activePin >= 0) {
+      detachInterrupt(digitalPinToInterrupt((uint8_t)_activePin));
+      _activePin = -1;
+    }
+#endif
+  }
+
+  /** @brief True while a DCC pin is currently attached (config declares a dcc bus). */
+  static bool isActive() {
+#ifdef LFX_DCC_ENABLED
+    return _activePin >= 0;
+#else
+    return false;
 #endif
   }
 
@@ -269,6 +299,11 @@ protected:
   ADDRESS decoderAddress = 0;
 #ifdef LFX_DCC_ENABLED
   static NmraDcc dcc;
+
+  // Pin currently attached to the NmraDcc ISR, or -1 when none (#19). Tracked here
+  // rather than derived from DeviceFactory since this class owns the NmraDcc
+  // interrupt lifecycle (attach in init(), detach in end()).
+  static int8_t _activePin;
 
   // Per-category packet counters + last-seen timestamp, exposed via /api/dcc-status
   // for the WebUI diagnostic screen — always on (cheap: DCC_MSG_KIND_COUNT x 8 bytes),

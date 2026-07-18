@@ -449,6 +449,12 @@ function renderBusesTab() {
   if (feat.dcc && !(cfg.buses && cfg.buses.dcc)) {
     var dccPin = null;
     Object.keys(sp).forEach(function (g) { if (sp[g] === 'DCC') dccPin = g; });
+    // sys_pins only lists DCC while a dcc bus is active (#19) — while none is
+    // configured yet, fall back to the compiled default so the suggestion card
+    // still proposes the right pin.
+    if (dccPin === null && _dbgStatus && _dbgStatus.dcc_pin_default !== undefined) {
+      dccPin = _dbgStatus.dcc_pin_default;
+    }
     html += '<div class="bus-card bus-suggestion">'
       + busTitle('dcc', 'dcc')
       + busRow('PIN', dccPin)

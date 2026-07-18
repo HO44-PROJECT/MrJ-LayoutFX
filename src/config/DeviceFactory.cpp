@@ -738,6 +738,32 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   }
   #endif
 
+  // dcc bus contention guard (#19): mirrors the uart0 guard above — _dccPin is
+  // already parsed in pass 1, so it's authoritative here. Any device wired to
+  // the same physical pin as the configured dcc bus is SKIPPED rather than
+  // allowed to fight the NmraDcc ISR for the pin. Stays in the config and
+  // revives once the dcc bus is removed (same UX as the uart0 guard).
+  {
+    bool rootBoard = (boardIdx == 0) ||
+                     (boardIdx <= _boardCount && _boards_cfg[boardIdx - 1].isRoot());
+    if (_dccPin >= 0 && rootBoard) {
+      bool onDccPin = false;
+      if (wiring.is<JsonArray>()) {
+        for (JsonVariant v : wiring.as<JsonArray>()) {
+          if (v.as<int>() == _dccPin) onDccPin = true;
+        }
+      } else if (wiring.is<int>()) {
+        if (wiring.as<int>() == _dccPin) onDccPin = true;
+      }
+      if (onDccPin) {
+        LOG_PRINT(F("DeviceFactory: device '"));
+        LOG_PRINT(obj[kFId] | "");
+        LOG_PRINTLN(F("' SKIPPED — GPIO reserved by the dcc bus"));
+        return nullptr;
+      }
+    }
+  }
+
   Device *d = nullptr;
 
   // ------------------------------------------------------------------

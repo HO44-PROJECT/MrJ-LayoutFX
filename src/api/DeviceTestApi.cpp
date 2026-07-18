@@ -46,6 +46,10 @@ void DeviceApi::_onTestGpio() {
     ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved UART pin\"}"));
     return;
   }
+  if (_factory && _factory->dccPin() >= 0 && pin == _factory->dccPin()) {
+    ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved DCC pin\"}"));
+    return;
+  }
   pinMode(pin, OUTPUT);
   digitalWrite(pin, state ? HIGH : LOW);
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
@@ -139,6 +143,10 @@ void DeviceApi::_onIdentify() {
       ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved UART pin\"}"));
       return;
     }
+    if (_factory && _factory->dccPin() >= 0 && pin == _factory->dccPin()) {
+      ApiServer::sendJson(kForbidden, F("{\"error\":\"reserved DCC pin\"}"));
+      return;
+    }
     if (doc[kLow].is<JsonArray>()) {
       // Charlieplex wiring test ({"pin":n,"low":[...]}): blink `pin` HIGH while
       // holding the signal's other candidate wires LOW, so one LED lights
@@ -149,6 +157,7 @@ void DeviceApi::_onIdentify() {
         int lp = v.as<int>();
         if (lp < 0 || lp > kGpioPinMax || lp == pin) continue;
         if (lfxUart0Reserved() && (lp == kUart0TxPin || lp == kUart0RxPin)) continue;
+        if (_factory && _factory->dccPin() >= 0 && lp == _factory->dccPin()) continue;
         silence(lp);
         if (n < sizeof(low)) low[n++] = (uint8_t)lp;
       }

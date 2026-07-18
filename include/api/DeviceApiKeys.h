@@ -78,6 +78,12 @@ constexpr char kPinSda[] = "SDA";
 constexpr char kPinScl[] = "SCL";
 constexpr char kPinDcc[] = "DCC";
 
+// Compiled default DCC pin (DCC_PIN), always present when LFX_DCC_ENABLED —
+// independent of whether a dcc bus is currently configured (#19). Lets the
+// WebUI wizard/bus-editor propose the right pin when suggesting to add the
+// bus, since sys_pins[DCC] only appears once that bus is actually active.
+constexpr char kDccPinDefault[] = "dcc_pin_default";
+
 // ── WiFi fields ────────────────────────────────────────────────────────────
 constexpr char kWifiSsid[] = "wifi_ssid";
 constexpr char kWifiRssi[] = "wifi_rssi";

@@ -93,6 +93,7 @@ void DeviceApi::_onGetStatus() {
   #endif
   #ifdef LFX_DCC_ENABLED
   feat[kFeatDcc] = true;
+  doc[kDccPinDefault] = DCC_PIN;
   #else
   feat[kFeatDcc] = false;
   #endif
@@ -195,7 +196,9 @@ void DeviceApi::_onGetStatus() {
     sp[String(3)] = kPinRx0;
     #endif
     #ifdef LFX_DCC_ENABLED
-    sp[String(DCC_PIN)] = kPinDcc;
+    if (_factory->dccPin() >= 0) { // runtime: reserved only while a dcc bus is configured (#19)
+      sp[String(_factory->dccPin())] = kPinDcc;
+    }
     #endif
   }
   #endif
