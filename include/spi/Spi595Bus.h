@@ -59,6 +59,21 @@ public:
                    const uint8_t* cardPinCounts, uint8_t cardCount);
 
   /**
+   * @brief Recompute chain sizing (card count, per-card pin counts, byte offsets)
+   *        and repaint the hardware — without touching SPI.begin()/pinMode() (#56).
+   *
+   * init() must have been called at least once before this. Safe to call on every
+   * config hot-reload: recomputes _totalBytes/_cardBitOffset/_cardPinCount from
+   * the current config and clears the image, so a pin_count change or a card
+   * being added/removed takes effect immediately instead of only after a reboot.
+   * Passing cardCount == 0 correctly zeroes _totalBytes, turning ready() back off.
+   *
+   * @param cardPinCounts Array of pin_count values, one per card (must be multiple of 8).
+   * @param cardCount     Number of entries in cardPinCounts (1-based index in setPin).
+   */
+  static void resize(const uint8_t* cardPinCounts, uint8_t cardCount);
+
+  /**
    * @brief Set one output bit and flush the full chain to hardware.
    *
    * @param card1based  Card index (1-based, matching JSON "board" field).

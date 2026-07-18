@@ -141,14 +141,21 @@ HardwareSerial *BusRegistry::activateUart(const char *key) {
 }
 
 /**
- * @brief Initialise Spi595Bus with the registered pins and card list.
- *        Idempotent — hardware is touched only on the first call.
+ * @brief Initialise Spi595Bus with the registered pins and card list, or —
+ *        once already active — resize it to match the current registration (#56).
+ *        Hardware (SPI.begin()/pinMode()) is touched only on the first call;
+ *        later calls (config hot-reload) only recompute chain sizing, so a
+ *        pin_count change or a card being added/removed takes effect
+ *        immediately instead of only after a reboot.
  * @return true if SPI is ready after the call, false if not configured.
  */
 bool BusRegistry::activateSpi() {
-  if (_spiReady)
-    return true;
   #ifdef LFX_SPI_CARDS_ENABLED
+  if (_spiReady) {
+    // Physical bus pins never change at runtime — only the card list does.
+    Spi595Bus::resize(_spiCardPinCounts, _spiCardCount);
+    return true;
+  }
   if (_spiMosi < 0 || _spiSclk < 0 || _spiLatch < 0 || _spiCardCount == 0)
     return false;
   Spi595Bus::init(_spiMosi, _spiSclk, _spiLatch, _spiCardPinCounts, _spiCardCount);
@@ -161,6 +168,9 @@ bool BusRegistry::activateSpi() {
   LOG_PRINT(_spiLatch);
   LOG_PRINT(F(" cards="));
   LOG_PRINTLN(_spiCardCount);
+  #else
+  if (_spiReady)
+    return true;
   #endif
   return _spiReady;
 }

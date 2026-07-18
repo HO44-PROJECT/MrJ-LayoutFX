@@ -7,6 +7,18 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-18
 
+- The SPI 74HC595 daisy-chain now resizes on hot-reload instead of requiring
+  a full reboot: changing a card's `pin_count`, or adding/removing a card,
+  takes effect immediately. `Spi595Bus::init()` now only handles one-time
+  hardware bring-up (`SPI.begin()`/`pinMode()`), while a new `Spi595Bus::resize()`
+  recomputes chain sizing (`_totalBytes`/`_cardBitOffset`/`_cardPinCount`) and
+  repaints the hardware — safe to call on every config load.
+  `BusRegistry::activateSpi()` now calls `resize()` instead of no-op'ing once
+  the bus is already active, and `DeviceFactory::load()` calls it even when
+  the reloaded config has zero SPI cards, so removing the last card correctly
+  zeroes `Spi595Bus` (`ready()` back to `false`) instead of leaving stale
+  sizing and phantom outputs behind. Validated on hardware. (#56)
+
 - Disabled feature badges in the About/Features modal no longer use
   `text-decoration: line-through` — the grey background/color/border already
   communicate "disabled" clearly, and the strikethrough hurt readability.

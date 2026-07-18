@@ -28,16 +28,6 @@ bool Spi595Bus::_dirty = false;
 void Spi595Bus::init(int mosi, int sclk, int latch,
                      const uint8_t *cardPinCounts, uint8_t cardCount) {
   _latch = latch;
-  _cardCount = (cardCount < MAX_CARDS) ? cardCount : MAX_CARDS;
-  _totalBytes = 0;
-
-  for (uint8_t i = 0; i < _cardCount; i++) {
-    _cardBitOffset[i] = _totalBytes * 8;
-    _cardPinCount[i] = cardPinCounts[i];
-    _totalBytes += cardPinCounts[i] / 8;
-  }
-
-  memset(_buf, 0, sizeof(_buf));
 
   pinMode(latch, OUTPUT);
   digitalWrite(latch, HIGH);
@@ -49,10 +39,32 @@ void Spi595Bus::init(int mosi, int sclk, int latch,
   pinMode(19, OUTPUT);
   digitalWrite(19, LOW);
 
-  _dirty = true; // force the initial zero-image push below
-  flush();       // All outputs LOW at startup.
+  resize(cardPinCounts, cardCount);
 
   LOG_PRINT(F("Spi595Bus: init ok — totalBytes="));
+  LOG_PRINT(_totalBytes);
+  LOG_PRINT(F(" cards="));
+  LOG_PRINTLN(_cardCount);
+}
+
+// ---------------------------------------------------------------------------
+
+void Spi595Bus::resize(const uint8_t *cardPinCounts, uint8_t cardCount) {
+  _cardCount = (cardCount < MAX_CARDS) ? cardCount : MAX_CARDS;
+  _totalBytes = 0;
+
+  for (uint8_t i = 0; i < _cardCount; i++) {
+    _cardBitOffset[i] = _totalBytes * 8;
+    _cardPinCount[i] = cardPinCounts[i];
+    _totalBytes += cardPinCounts[i] / 8;
+  }
+
+  memset(_buf, 0, sizeof(_buf));
+
+  _dirty = true; // force the next flush() to repaint hardware with the new sizing
+  flush();
+
+  LOG_PRINT(F("Spi595Bus: resize — totalBytes="));
   LOG_PRINT(_totalBytes);
   LOG_PRINT(F(" cards="));
   LOG_PRINTLN(_cardCount);
