@@ -55,11 +55,24 @@ except ImportError:
     import rcssmin  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Paths — resolved relative to this file so the library regenerates its own
-# assets whether PlatformIO runs here directly (this repo) or from a parent
-# project that pulls this in as lib/<name>/ (the dev repo).
+# Paths — resolved from PROJECT_DIR regardless of caller layout. SCons
+# exec()s pre: hook scripts rather than importing them, so __file__ is not
+# defined here. PlatformIO runs this either as the project itself
+# (PROJECT_DIR IS the library root) or as a dependency pulled in by a parent
+# project (PROJECT_DIR/lib/<name>/ is the library root, the dev repo's
+# layout).
 # ---------------------------------------------------------------------------
-_LIB = str(Path(__file__).resolve().parent.parent)
+def _library_root() -> Path:
+    project_dir = Path(env.get("PROJECT_DIR"))  # noqa: F821
+    if (project_dir / "tools" / "build_webui.py").exists():
+        return project_dir
+    for candidate in (project_dir / "lib").glob("*"):
+        if (candidate / "tools" / "build_webui.py").exists():
+            return candidate
+    raise RuntimeError(f"Could not locate library root from PROJECT_DIR={project_dir}")
+
+
+_LIB = str(_library_root())
 _WEB = os.path.join(_LIB, "src", "web")
 _HDR = os.path.join(_LIB, "include", "generated", "webui_html.h")
 

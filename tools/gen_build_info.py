@@ -28,10 +28,22 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-# Resolved relative to this file so the library writes its own generated
-# header whether PlatformIO runs here directly (this repo) or from a parent
-# project that pulls this in as lib/<name>/ (the dev repo).
-_LIB = str(Path(__file__).resolve().parent.parent)
+# Resolved from PROJECT_DIR regardless of caller layout. SCons exec()s pre:
+# hook scripts rather than importing them, so __file__ is not defined here.
+# PlatformIO runs this either as the project itself (PROJECT_DIR IS the
+# library root) or as a dependency pulled in by a parent project
+# (PROJECT_DIR/lib/<name>/ is the library root, the dev repo's layout).
+def _library_root() -> Path:
+    project_dir = Path(env.get("PROJECT_DIR"))  # noqa: F821
+    if (project_dir / "tools" / "gen_build_info.py").exists():
+        return project_dir
+    for candidate in (project_dir / "lib").glob("*"):
+        if (candidate / "tools" / "gen_build_info.py").exists():
+            return candidate
+    raise RuntimeError(f"Could not locate library root from PROJECT_DIR={project_dir}")
+
+
+_LIB = str(_library_root())
 _OUT = os.path.join(_LIB, "include", "generated", "build_info.h")
 
 
