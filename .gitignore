@@ -1,6 +1,10 @@
 .pio
 .vscode
 
+# Built firmware binaries (.bin/.elf/.map), copied here per-env by
+# scripts/copy_to_dist.py after each build.
+dist/
+
 # WiFi credentials (use configurations/auth/wifi.h.example as a template)
 configurations/auth/wifi.h
 
