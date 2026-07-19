@@ -5,6 +5,21 @@ issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.
 
+## 2026-07-19
+
+- Devices can now carry an optional free-text `comment` field (e.g. "quai 1",
+  "montagne") for the layout author's own reference — pure metadata, no
+  functional effect on firmware. Added to `config.schema.json`, the device
+  editor form, and surfaced as a tooltip on the device's pin cell / bus row.
+  `config.json` round-trips raw through `/api/config` (never parsed by
+  firmware), so no C++ changes were needed for persistence — but three
+  separate WebUI code paths that rebuild the device object for the editor
+  (`openDevEditorById`'s bus/runtime/cfg-only branches in
+  `app-device-editor.js`, and `mergeDeviceForEditor` in `app-pure.js`) each
+  keep their own field allowlist and were silently dropping `comment` on
+  reopen even though the save path worked correctly — all three now carry
+  it forward. Validated in the browser. (#83)
+
 ## 2026-07-18
 
 - The SPI 74HC595 daisy-chain now resizes on hot-reload instead of requiring

@@ -456,6 +456,11 @@
           "pattern": "^[A-Za-z0-9]$",
           "description": "Single alphanumeric character shown on the OLED status display."
         },
+        "comment": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Optional free-text note for the layout author (e.g. location). No functional effect on firmware; surfaced in the WebUI only."
+        },
         "wiring": {
           "description": "Pin(s) or ID. Scalar for single-pin/single-servo devices; array for multi-pin devices. Semantics depend on the referenced board type.",
           "oneOf": [

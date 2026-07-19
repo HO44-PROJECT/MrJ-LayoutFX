@@ -200,6 +200,7 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
     if (bd.neutral_us !== undefined) merged.neutral_us = bd.neutral_us;
     if (bd.angle_a !== undefined) merged.angle_a = bd.angle_a;
     if (bd.angle_b !== undefined) merged.angle_b = bd.angle_b;
+    if (bd.comment !== undefined) merged.comment = bd.comment;
     // default_state = persisted boot state — read from config, never from runtime desired.
     var cfgBd = _deCfgDevById(id);
     if (cfgBd && cfgBd.default_state !== undefined) merged.default_state = cfgBd.default_state;
@@ -243,6 +244,7 @@ function openDevEditorById(id, boardApiIdx, pin, typeFilter) {
         if (cfgDev.neutral_us !== undefined) cfgOnlyDev.neutral_us = cfgDev.neutral_us;
         if (cfgDev.angle_a !== undefined) cfgOnlyDev.angle_a = cfgDev.angle_a;
         if (cfgDev.angle_b !== undefined) cfgOnlyDev.angle_b = cfgDev.angle_b;
+        if (cfgDev.comment !== undefined) cfgOnlyDev.comment = cfgDev.comment;
         if (cfgDev.default_state !== undefined) cfgOnlyDev.default_state = cfgDev.default_state;
         if (cfgDev.start_delay_ms !== undefined) cfgOnlyDev.start_delay_ms = cfgDev.start_delay_ms;
         if (cfgDev.start_delay_random_ms !== undefined) cfgOnlyDev.start_delay_random_ms = cfgDev.start_delay_random_ms;
@@ -278,6 +280,7 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
   if (dev) {
     document.getElementById('de-title').textContent = t('de.edit_prefix') + dev.id;
     document.getElementById('de-id').value = dev.id;
+    document.getElementById('de-comment').value = dev.comment || '';
     typeEl.value = dev.type;
     // dev.board may be a string ID (from config) or a 1-based integer (from runtime API).
     // Resolve to 0-based index in _dbgBoards.
@@ -301,6 +304,7 @@ function openDevEditor(boardApiIdx, prefillPin, dev, typeFilter) {
   } else {
     document.getElementById('de-title').textContent = t('de.new');
     document.getElementById('de-id').value = '';
+    document.getElementById('de-comment').value = '';
     if (boardApiIdx !== undefined) boardEl.value = boardApiIdx;
     document.getElementById('de-addr').value = '';
     document.getElementById('de-start-delay').value = '';
@@ -873,6 +877,8 @@ function saveDevEditor() {
   if (!board) { deStatus(t('de.err_board'), 'err'); return; }
 
   var dev = { id: id, type: type, board: board.id };
+  var commentStr = (document.getElementById('de-comment').value || '').trim();
+  if (commentStr) dev.comment = commentStr;
   if (count === 1) dev.wiring = wiring[0];
   else if (count > 1) dev.wiring = wiring;
   if (addrStr) { var addr = parseInt(addrStr, 10); if (addr >= 1 && addr <= 10239) dev.address = addr; }

@@ -272,6 +272,10 @@
         <input type="text" id="de-id" placeholder="ex: lamp01" autocomplete="off">
       </div>
       <div class="de-field">
+        <label data-i18n="de.lbl_comment">Commentaire</label>
+        <input type="text" id="de-comment" maxlength="64" placeholder="ex: quai 1" autocomplete="off" data-i18n-placeholder="de.lbl_comment_hint">
+      </div>
+      <div class="de-field">
         <label data-i18n="de.lbl_type">Type</label>
         <div class="de-type-dd" id="de-type-dd">
           <select id="de-type" style="display:none" onchange="deUpdateWiring();deUpdateAddrLabel();deUpdateIdPlaceholder();deUpdateDefState();deSyncTypeTrigger()"></select>

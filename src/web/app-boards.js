@@ -241,6 +241,7 @@ function renderDipPcb(board, boardApiIdx, def) {
       if (cfgDev.neutral_us !== undefined) merged.neutral_us = cfgDev.neutral_us;
       if (cfgDev.angle_a !== undefined) merged.angle_a = cfgDev.angle_a;
       if (cfgDev.angle_b !== undefined) merged.angle_b = cfgDev.angle_b;
+      if (cfgDev.comment !== undefined) merged.comment = cfgDev.comment;
       _busDev[cfgDev.id] = merged; // cache for openDevEditorById
       return merged;
     });
@@ -338,7 +339,8 @@ function renderBusDevice(boardApiIdx, dev) {
   var isOn = dev.desired > 0;
   var sf = dev.id.replace(/'/g, "\\'");
   var html = '<div class="dbg-bus-dev">';
-  html += '<span class="dbg-bus-id">' + dev.id + '</span>';
+  var commentTip = dev.comment ? ' title="' + dev.comment.replace(/"/g, '&quot;') + '"' : '';
+  html += '<span class="dbg-bus-id"' + commentTip + '>' + dev.id + '</span>';
   // For servo: show bus ID from servoId field. For others: show DCC addr if set.
   var busId = isServo
     ? (dev.servoId !== undefined ? dev.servoId : '?')
@@ -490,10 +492,14 @@ function renderPin(board, boardApiIdx, pin) {
   }
 
   var i2cTypeFilter = isI2c ? ',I2C_SERVO_TYPES.concat(I2C_MOTOR_TYPES)' : '';
+  // Config-only comment/location note (#83) — appended to the icon tooltip when set.
+  var devComment = dev ? (dbgFindCfgDev(boardApiIdx, num) || {}).comment : null;
+  if (devComment) devComment = devComment.replace(/"/g, '&quot;');
+
   if (dev && dev._cfgOnly) {
     cls = 'cfg';
     var ico = ICONS[dev.type] || ICONS['_'];
-    var tip = tooltip(dev.type);
+    var tip = tooltip(dev.type) + (devComment ? ' — ' + devComment : '');
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
       + '<span class="dbg-pin-num">' + numLabel + '</span>';
     editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
@@ -511,7 +517,7 @@ function renderPin(board, boardApiIdx, pin) {
       onclick = ' onclick="dbgToggleDev(\'' + dev.id + '\',' + ns + ')"';
     }
     var ico = ICONS[dev.type] || ICONS['_'];
-    var tip = tooltip(dev.type);
+    var tip = tooltip(dev.type) + (devComment ? ' — ' + devComment : '');
     var stateLabel = multi && dev.desired > 0 ? '<span class="dbg-pin-state">' + (isDevI2cServo ? 'P' : '') + dev.desired + '</span>' : '';
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
       + '<span class="dbg-pin-num">' + numLabel + '</span>' + stateLabel;

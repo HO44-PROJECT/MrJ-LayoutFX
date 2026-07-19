@@ -30,6 +30,7 @@ constexpr char kSecPins[] = "pins"; ///< board_types.json only
 constexpr char kFId[] = "id";
 constexpr char kFType[] = "type";
 constexpr char kFLabel[] = "label";
+constexpr char kFComment[] = "comment"; ///< Free-text note, WebUI-only — not read by firmware (#83)
 constexpr char kFWiring[] = "wiring";
 constexpr char kFBus[] = "bus";
 constexpr char kFBoard[] = "board";
