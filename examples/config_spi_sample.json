@@ -1,0 +1,111 @@
+{
+  "$schema": "../schemas/config.schema.json",
+  "buses": {
+    "spi": {
+      "type": "spi_master_only",
+      "mosi": 23,
+      "sclk": 18,
+      "latch": 5
+    },
+    "uart2": {
+      "type": "uart",
+      "tx": 17,
+      "rx": 16,
+      "baud": 115200
+    }
+  },
+  "boards": [
+    {
+      "id": "esp32",
+      "type": "ESP32DevkitC"
+    },
+    {
+      "id": "ext1",
+      "type": "HC595x2_biface",
+      "bus": "spi"
+    },
+    {
+      "id": "ext2",
+      "type": "HC595x2_biface",
+      "bus": "spi"
+    },
+    {
+      "id": "servo_bus",
+      "type": "LobotChain",
+      "bus": "uart2"
+    }
+  ],
+  "devices": [
+    {
+      "id": "signal_entree",
+      "type": "MrJDBEntrySignal",
+      "board": "esp32",
+      "wiring": [
+        25,
+        26,
+        27
+      ],
+      "address": 110,
+      "default_state": "off"
+    },
+    {
+      "id": "servo_aiguille",
+      "type": "SerialServo",
+      "board": "servo_bus",
+      "wiring": 1,
+      "address": 200
+    },
+    {
+      "id": "lampe_quai_1",
+      "type": "GasLamp",
+      "board": "ext1",
+      "wiring": 0,
+      "default_state": "on"
+    },
+    {
+      "id": "lampe_quai_2",
+      "type": "GasLamp",
+      "board": "ext1",
+      "wiring": 1,
+      "default_state": "on"
+    },
+    {
+      "id": "feu_pn",
+      "type": "RailwayCrossingLights",
+      "board": "ext1",
+      "wiring": [
+        8,
+        9
+      ],
+      "default_state": "off"
+    },
+    {
+      "id": "beacon_depot",
+      "type": "Beacon",
+      "board": "ext1",
+      "wiring": 15,
+      "default_state": "off"
+    },
+    {
+      "id": "lampe_gare",
+      "type": "ElectricLamp",
+      "board": "ext2",
+      "wiring": 0,
+      "default_state": "on"
+    },
+    {
+      "id": "torche_chantier",
+      "type": "Torch",
+      "board": "ext2",
+      "wiring": 4,
+      "default_state": "off"
+    },
+    {
+      "id": "neon_atelier",
+      "type": "NeonSign",
+      "board": "ext2",
+      "wiring": 2,
+      "default_state": "off"
+    }
+  ]
+}

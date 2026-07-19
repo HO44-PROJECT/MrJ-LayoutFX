@@ -1,0 +1,226 @@
+{
+  "$schema": "../schemas/config.schema.json",
+  "buses": {
+    "dcc": {
+      "type": "dcc",
+      "pin": 34
+    },
+    "spi": {
+      "type": "spi_master_only",
+      "mosi": 23,
+      "sclk": 18,
+      "latch": 5
+    },
+    "uart2": {
+      "type": "uart",
+      "tx": 17,
+      "rx": 16,
+      "baud": 115200
+    },
+    "i2c": {
+      "type": "i2c",
+      "sda": 21,
+      "scl": 22
+    },
+    "debug": {
+      "type": "uart",
+      "tx": 1,
+      "rx": 3,
+      "baud": 115200
+    }
+  },
+  "boards": [
+    {
+      "id": "esp32",
+      "type": "ESP32DevkitC"
+    },
+    {
+      "id": "ext1",
+      "type": "HC595x2_biface",
+      "bus": "spi"
+    },
+    {
+      "id": "ext2",
+      "type": "HC595x2_biface",
+      "bus": "spi"
+    },
+    {
+      "id": "servo_bus",
+      "type": "LobotChain",
+      "bus": "uart2"
+    }
+  ],
+  "devices": [
+    {
+      "id": "servo01",
+      "type": "SerialServo",
+      "board": "servo_bus",
+      "address": 20,
+      "wiring": 1
+    },
+    {
+      "id": "exit01",
+      "type": "MrJDBExitSignal",
+      "board": "esp32",
+      "wiring": [
+        26,
+        27,
+        14,
+        12
+      ],
+      "address": 45
+    },
+    {
+      "id": "entry01",
+      "type": "MrJDBEntrySignal",
+      "board": "esp32",
+      "wiring": [
+        32,
+        33,
+        25
+      ]
+    },
+    {
+      "id": "bloc01",
+      "type": "MrJDBBlocSignal",
+      "board": "esp32",
+      "wiring": [
+        2,
+        15
+      ]
+    },
+    {
+      "id": "crossing01",
+      "type": "GasLamp",
+      "board": "esp32",
+      "wiring": 4,
+      "default_state": "off"
+    },
+    {
+      "id": "oillamp01",
+      "type": "TurnSignal",
+      "board": "esp32",
+      "wiring": 19,
+      "default_state": "off"
+    },
+    {
+      "id": "gaslamp01",
+      "type": "GasLamp",
+      "board": "ext1",
+      "wiring": 8,
+      "address": 208,
+      "default_state": "off"
+    },
+    {
+      "id": "solderlamp01",
+      "type": "SolderLamp",
+      "board": "ext1",
+      "wiring": 1,
+      "default_state": "off"
+    },
+    {
+      "id": "electriclamp01",
+      "type": "ElectricLamp",
+      "board": "ext1",
+      "wiring": 2,
+      "default_state": "off"
+    },
+    {
+      "id": "defectlamp01",
+      "type": "DefectLamp",
+      "board": "ext1",
+      "wiring": 3,
+      "default_state": "off"
+    },
+    {
+      "id": "trainheadlamp01",
+      "type": "TrainHeadLamp",
+      "board": "ext1",
+      "wiring": 4,
+      "default_state": "off"
+    },
+    {
+      "id": "storm01",
+      "type": "Storm",
+      "board": "ext1",
+      "wiring": 5,
+      "default_state": "off"
+    },
+    {
+      "id": "doublebeacon01",
+      "type": "DoubleBeacon",
+      "board": "ext1",
+      "wiring": [
+        6,
+        7
+      ],
+      "default_state": "off"
+    },
+    {
+      "id": "beacon01",
+      "type": "Beacon",
+      "board": "ext1",
+      "wiring": 16,
+      "default_state": "on"
+    },
+    {
+      "id": "traffic01",
+      "type": "TrafficLight4ph",
+      "board": "ext1",
+      "wiring": [
+        9,
+        13,
+        11
+      ],
+      "default_state": "off"
+    },
+    {
+      "id": "campfire01",
+      "type": "CampFire",
+      "board": "ext1",
+      "wiring": 10,
+      "default_state": "off"
+    },
+    {
+      "id": "torch01",
+      "type": "Torch",
+      "board": "ext1",
+      "wiring": 12,
+      "default_state": "off"
+    },
+    {
+      "id": "neonsign01",
+      "type": "NeonSign",
+      "board": "ext1",
+      "wiring": 14,
+      "default_state": "off"
+    },
+    {
+      "id": "signalflare01",
+      "type": "TurnSignal",
+      "board": "ext1",
+      "wiring": 15,
+      "default_state": "on"
+    },
+    {
+      "id": "lamp",
+      "type": "Beacon",
+      "board": "ext2",
+      "wiring": 1
+    },
+    {
+      "id": "beacon",
+      "type": "Beacon",
+      "board": "ext2",
+      "wiring": 2,
+      "default_state": "on"
+    },
+    {
+      "id": "beacon03",
+      "type": "Beacon",
+      "board": "ext2",
+      "wiring": 14,
+      "default_state": "on"
+    }
+  ]
+}

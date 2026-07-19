@@ -17,6 +17,8 @@ controlling it day-to-day. No PlatformIO, no C++.
 | [about.md](user/about.md) | What this project does, what it can drive, the big picture. |
 | [getting-started.md](user/getting-started.md) | Flash a device (browser installer or from source) and reach the WebUI for the first time. |
 | [usage.md](user/usage.md) | Every screen and button in the WebUI: cockpit, boards & extensions, buses, diagnostics, About/OTA. |
+| [device-types.md](user/device-types.md) | Every device type the WebUI's device editor can create, grouped by category. |
+| [config-examples.md](user/config-examples.md) | Three ready-to-use `config.json` files, from simplest to most elaborate. |
 
 ## [advanced/](advanced/) — reconfigure the firmware yourself
 
