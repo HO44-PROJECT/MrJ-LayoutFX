@@ -14,8 +14,8 @@
  *   // Then start everything:
  *   ApiServer::init(WIFI_SSID, WIFI_PASSWORD);
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author  MrJ
  * @date    2026-04-22
  * @license MIT License. See the LICENSE file in the project root for details.

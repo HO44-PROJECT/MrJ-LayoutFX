@@ -1,5 +1,7 @@
 # Building from source
 
+[Docs](../README.md) / Advanced / Building from source
+
 Use this instead of the [browser flasher](../user/getting-started.md) when you
 need your own WiFi credentials, a different board (e.g. an AVR Nano), or a
 hardware feature outside the generic browser build (a specific bus mix, DCC,

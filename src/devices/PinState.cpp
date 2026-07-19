@@ -6,8 +6,8 @@
  * for an Arduino pin (mode and value) and defines common presets like
  * INPUT, INPUT_PULLUP, and OUTPUT states.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License

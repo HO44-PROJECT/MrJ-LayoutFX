@@ -6,8 +6,8 @@
  * The effect includes a startup phase with brief flickers, a flashing phase with alternating
  * ON/OFF periods, and an extinction phase with gradual dimming.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-05
  * @license MIT License. See the LICENSE file in the project root for details.

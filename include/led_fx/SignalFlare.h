@@ -4,8 +4,8 @@
  *
  * This class simulates a railway signal flare with rapid ignition, intense burning with strong flickering, and quick burnout. It inherits from `LedPerpetualEffect` to manage a single LED pin using a coroutine-based state machine with automatic burnout.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-07
  * @license MIT License. See the LICENSE file in the project root for details.

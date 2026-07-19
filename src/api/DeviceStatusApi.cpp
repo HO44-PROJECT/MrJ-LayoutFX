@@ -3,7 +3,7 @@
  * @brief DeviceApi — system introspection endpoints (/api/status, /api/boards,
  *        /api/board-types, /api/health, /api/restart).
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

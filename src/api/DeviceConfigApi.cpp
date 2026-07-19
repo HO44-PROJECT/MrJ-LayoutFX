@@ -2,7 +2,7 @@
  * @file DeviceConfigApi.cpp
  * @brief DeviceApi — config file management endpoints (/api/config*, /api/configs*).
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

@@ -9,3 +9,4 @@ include/generated/
 # Python bytecode (tools/ scripts)
 __pycache__/
 *.pyc
+tests

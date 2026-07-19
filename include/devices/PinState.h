@@ -8,7 +8,7 @@
  *   LFX_SPI_CARDS_ENABLED undefined  →  PinStateGPIO.h  (PIN_ID = uint8_t, Nano-safe)
  *   LFX_SPI_CARDS_ENABLED defined    →  PinStateSPI.h   (PIN_ID = struct{pin, card}, ESP32 + 74HC595)
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

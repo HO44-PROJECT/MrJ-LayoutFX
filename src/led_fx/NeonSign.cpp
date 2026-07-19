@@ -6,8 +6,8 @@
  * including flickering startup, smooth brightening, stable glow with occasional buzz-like drops,
  * and stuttering extinction.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-06
  * @license MIT License. See the LICENSE file in the project root for details.

@@ -7,8 +7,8 @@
  * coroutine environment. These macros are designed to provide a non-blocking
  * "lamp" effect on LEDs by rapidly switching them on and off.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License

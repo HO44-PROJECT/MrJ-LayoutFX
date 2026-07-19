@@ -9,8 +9,8 @@
  * PREPARE and CAUTION are non-interruptible states with fixed durations.
  * Other states reuse the base 3-phase implementation.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License
  */
 

@@ -9,8 +9,8 @@
  * device-specific behaviors. Pin initialization is explicitly triggered via the `initPins`
  * method to ensure proper setup.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-21
  * @license MIT License. See the LICENSE file in the project root for details.

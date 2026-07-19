@@ -5,8 +5,8 @@
  * Contains French translations for device types, UI labels, and tooltips.
  * Currently supports French (fr) with English fallback.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

@@ -25,7 +25,7 @@
  *
  * @note Only compiled when LFX_SPI_CARDS_ENABLED is defined.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

@@ -3,7 +3,7 @@
  * @brief WiFi + HTTP server implementation — singleton WebServer lifecycle,
  *        CORS headers, route registration, and Core-0 system task.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

@@ -1,6 +1,6 @@
 /**
  * @file BusRegistry.cpp
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

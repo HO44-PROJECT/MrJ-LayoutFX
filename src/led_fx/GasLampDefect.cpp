@@ -5,8 +5,8 @@
  * Same ignition, unstable flicker, brightening, stable flame, and extinction phases as
  * GasLamp, plus a rare, brief dark glitch reached from the stable flame phase.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 

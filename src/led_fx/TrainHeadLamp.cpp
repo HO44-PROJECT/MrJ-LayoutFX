@@ -5,8 +5,8 @@
  * This file contains the state transition and timing logic for the train headlamp effect.
  * It simulates a warmup phase, a stable beam, and a gradual extinction, managed by a non-blocking coroutine.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License. See the LICENSE file in the project root for details.

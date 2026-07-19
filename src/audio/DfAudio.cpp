@@ -6,8 +6,8 @@
  * (7-byte frames: 0x7E <cmd> <ack> <len> <param_hi> <param_lo> 0xEF) for playback control,
  * volume adjustment, playback modes, and power management in railway sound effect applications.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-17
  * @license MIT License. See the LICENSE file in the project root for details.

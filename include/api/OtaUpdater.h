@@ -9,8 +9,8 @@
  * The web endpoint reuses the existing ApiServer WebServer, so it needs
  * LFX_API_SERVER_ENABLED; ArduinoOTA only needs an active WiFi connection.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

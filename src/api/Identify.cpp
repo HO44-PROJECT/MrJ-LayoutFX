@@ -2,7 +2,7 @@
  * @file Identify.cpp
  * @brief Implementation of the LED identify blinker. See Identify.h.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 #include "api/Identify.h"

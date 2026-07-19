@@ -1,5 +1,7 @@
 # ✅ résolu — le journal DCC diagnostics n'affichait aucune trace lors de bascules rapides
 
+[Docs](../../README.md) / [Contributing](../README.md) / [Troubleshooting](README.md) / DCC log ring-buffer eviction
+
 **Symptôme**: sur l'onglet Diagnostics WebUI (#76), des bascules ON/OFF rapides
 d'un signal ou d'un accessoire (dans la fenêtre d'allumage ~1500ms de la pastille)
 ne produisaient **aucune ligne** dans le journal détaillé, alors que la pastille

@@ -22,8 +22,8 @@
  * @note Read operations require calling runCoroutine() to process responses.
  * @note Error codes: -2048 (timeout), -2049 (receive error).
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author Grok 4 (based on user specifications)
  * @date 2025-09-23
  * @license MIT License.

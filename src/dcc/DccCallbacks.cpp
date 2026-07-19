@@ -6,8 +6,8 @@
  * in the MrJ-ArduinoRailwayFX project. Delegates speed commands to the DccDrivable class and provides
  * placeholders for handling signals, functions, and accessories (e.g., controlling LEDs).
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-21
  * @license MIT License

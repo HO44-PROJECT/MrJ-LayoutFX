@@ -5,8 +5,8 @@
  * This class simulates a railway crossing light with startup flickers, alternating flashing, and gradual extinction.
  * It inherits from LedPerpetualEffect to control a single LED pin using a coroutine for non-blocking operation.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-05
  * @license MIT License. See the LICENSE file in the project root for details.

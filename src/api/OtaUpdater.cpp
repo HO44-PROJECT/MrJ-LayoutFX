@@ -2,7 +2,7 @@
  * @file OtaUpdater.cpp
  * @brief Implementation of ArduinoOTA (espota) + web /update firmware updates.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

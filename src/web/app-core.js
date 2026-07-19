@@ -5,11 +5,11 @@
  * Core WebUI module bundled with other app-*.js modules by build_webui.py.
  * Manages device cards, real-time polling, and main navigation.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

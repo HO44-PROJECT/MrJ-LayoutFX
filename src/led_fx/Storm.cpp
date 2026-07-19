@@ -5,8 +5,8 @@
  * This file simulates a lightning storm with subtle glow, intense flash bursts,
  * and calm blackout periods using a non-blocking coroutine for realistic timing.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License. See the LICENSE file in the project root for details.

@@ -6,8 +6,8 @@
  * for Charlieplexing-based signal effects, supporting persistence of vision (POV) and
  * state transitions for lighting up or turning off the signal with configurable durations.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-04
  * @license MIT License. See the LICENSE file in the project root for details.

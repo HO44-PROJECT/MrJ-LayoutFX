@@ -11,8 +11,8 @@
  * Non-persistent: the next normal boot loads the config again. The config file
  * itself is never touched — the user fixes/deletes it from the WebUI.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 #pragma once

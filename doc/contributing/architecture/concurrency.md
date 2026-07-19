@@ -1,5 +1,7 @@
 # Concurrency & control model
 
+[Docs](../../README.md) / [Contributing](../README.md) / [Architecture](README.md) / Concurrency
+
 ## The one rule
 All control — WebUI, HTTP API, DCC, boot defaults — reaches a device **only** through its
 state primitives: `newState(STATE_TYPE)` (and `switchOn()` / `switchOff()`, which call

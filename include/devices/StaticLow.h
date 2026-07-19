@@ -7,8 +7,8 @@
  * sets any inactive pins to a LOW state, rather than an INPUT state. It is a
  * concrete implementation of the `VariablePinDevice` base class.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License

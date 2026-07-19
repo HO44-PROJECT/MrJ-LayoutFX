@@ -1,5 +1,7 @@
 # Architecture overview
 
+[Docs](../../README.md) / [Contributing](../README.md) / [Architecture](README.md) / Overview
+
 A **config-driven** firmware: a JSON config describes the hardware (boards, buses, devices);
 a factory instantiates device objects; each device is an **AceRoutine coroutine** that drives
 its output(s). Control (WebUI / API / DCC) only sets *intent*; the coroutines do the work.

@@ -5,8 +5,8 @@
  * Do not include directly. Include devices/PinState.h which routes to this file
  * or to PinStateSPI.h depending on the LFX_SPI_CARDS_ENABLED build flag.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @license MIT License
  */

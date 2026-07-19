@@ -8,8 +8,8 @@
  * and charlieplexing signals. The constants are used to control timing, intensity, and behavior
  * of various devices and effects in railway signaling applications.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-17
  * @license MIT License. See the LICENSE file in the project root for details.
@@ -23,7 +23,7 @@
 // WebUI bundle and the embedded JSON catalogs at build time: build_webui.py and
 // build_embedded_data.py parse this line and substitute every %%BRAND%% token.
 // Rebranding the project display name = editing this one line.
-#define LFX_PROJECT_NAME "LayoutFX"
+#define LFX_PROJECT_NAME "MrJ-RailwayFX"
 
 // ── Firmware version ──────────────────────────────────────────────────────────
 #define LFX_FIRMWARE_VERSION "v1.0"

@@ -9,8 +9,8 @@
  * (e.g., dual-beacon or railway crossing lights). It uses a coroutine-based state
  * machine for non-blocking operation.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-04
  * @license MIT License. See the LICENSE file in the project root for details.

@@ -1,5 +1,7 @@
 # Usage
 
+[Docs](../README.md) / User guide / Usage
+
 Everything is driven from the WebUI at `http://<ip>/ui`. The header has a burger
 menu (☰) with four views — **Cockpit**, **Vue plan** (map), **Configuration**,
 **About** — plus 6 theme dots (night/amber/signal/grey/dark/light, persisted).

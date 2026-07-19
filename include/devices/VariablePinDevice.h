@@ -6,8 +6,8 @@
  * than one output pin, such as complex signals or lighting effects. It provides
  * a flexible constructor and methods for handling an array of pins.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License

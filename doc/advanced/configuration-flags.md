@@ -1,5 +1,7 @@
 # Configuration flags reference
 
+[Docs](../README.md) / Advanced / Configuration flags reference
+
 Every behaviour of the firmware is driven by `#define`s in your **`config.h`**
 (force-included at build time). This page lists **all** user-settable flags,
 their type, default, and effect.

@@ -1,5 +1,7 @@
 # Memory frugality by design
 
+[Docs](../../README.md) / [Contributing](../README.md) / [Architecture](README.md) / Memory
+
 ## Why it is a hard constraint
 The same library targets an **ESP32 and an AVR Arduino Nano** (~2 KB RAM, 32 KB flash). The Nano
 makes frugality non-negotiable; the ESP32 build inherits the discipline. Every choice favours the

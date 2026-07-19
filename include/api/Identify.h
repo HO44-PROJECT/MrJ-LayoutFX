@@ -10,7 +10,7 @@
  * Started/stopped by the WebUI "Identify" button via POST /api/test/identify.
  * Runs until explicitly stopped (no timeout).
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 #pragma once

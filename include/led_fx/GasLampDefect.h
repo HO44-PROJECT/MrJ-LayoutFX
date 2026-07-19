@@ -7,8 +7,8 @@
  * dark glitch), in the spirit of DefectLamp — far rarer and shorter than DefectLamp's own
  * flicker/outage cycling, which is untouched by this effect.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License. See the LICENSE file in the project root for details.
  */
 

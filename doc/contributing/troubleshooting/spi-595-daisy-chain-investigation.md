@@ -1,5 +1,7 @@
 # Investigation — 74HC595 SPI : le 2ᵉ registre (sorties 9-16) ne se pilote pas depuis l'UI
 
+[Docs](../../README.md) / [Contributing](../README.md) / [Troubleshooting](README.md) / SPI 74HC595 daisy-chain investigation
+
 > Journal de débogage complet (breadboard + carte MrJ). Écrit après une longue
 > session ; conservé pour ne pas refaire les mêmes tests. **Ce n'est pas une doc
 > structurelle** — c'est un compte-rendu d'enquête, avec ce qui a été testé,

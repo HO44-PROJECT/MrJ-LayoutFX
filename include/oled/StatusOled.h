@@ -8,8 +8,8 @@
  * and unified print methods reduce code size. Designed for Arduino Nano in the
  * MrJ-ArduinoRailwayFX project.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-09-14
  * @license MIT License. See the LICENSE file in the project root for details.

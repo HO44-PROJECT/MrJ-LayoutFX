@@ -10,8 +10,8 @@
  * Stable states (STOP, GO, OFF, FLASHING) can be interrupted anytime.
  * Non-stable states (CAUTION, PREPARE) run until completion.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @date 2025-08-04
  * @license MIT License
  */

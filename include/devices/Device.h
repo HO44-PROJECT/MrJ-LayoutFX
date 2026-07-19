@@ -8,8 +8,8 @@
  * relays, lamps). Derived classes must override pure virtual methods to implement specific
  * behaviors. Pin initialization must be triggered explicitly by calling `initPins` when needed.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-04
  * @license MIT License. See the LICENSE file in the project root for details.

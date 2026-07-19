@@ -1,5 +1,7 @@
 # The pre-build code-generation pipeline
 
+[Docs](../README.md) / [Contributing](README.md) / Build pipeline
+
 Several kinds of "source" in this project are not C++: the device/board/bus
 catalogs are JSON, the WebUI is HTML/CSS/JS, and the declared library versions
 live in `platformio.ini`. None of that can be `#include`d directly. Three

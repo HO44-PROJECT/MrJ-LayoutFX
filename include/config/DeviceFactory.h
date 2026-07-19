@@ -43,8 +43,8 @@
  *       For SerialServo, also requires the LFX_LOBOT_SERVO_ENABLED build flag.
  *       UART bus keys must match the hardware serial name (uart0, uart1, uart2).
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author  MrJ
  * @date    2026-04-22
  * @license MIT License. See the LICENSE file in the project root for details.

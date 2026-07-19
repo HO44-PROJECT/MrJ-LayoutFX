@@ -10,8 +10,8 @@
  *   flush()     — propagate the SPI image to hardware (call from LayoutFX::loop).
  *   reset()     — clear all internal state (tests only, no hardware interaction).
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author  MrJ
  * @date    2026-04-22
  * @license MIT License. See the LICENSE file in the project root for details.

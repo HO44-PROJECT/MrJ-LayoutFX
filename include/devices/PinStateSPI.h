@@ -13,7 +13,7 @@
  * Comparison with NO_PIN and between PIN_IDs uses operator== / operator!=,
  * so all existing  if (p == NO_PIN) / if (p != NO_PIN)  sites compile unchanged.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

@@ -16,7 +16,7 @@
  * States 1..N = MotorState[0..N-1] — runs through ramp-up, timed run, ramp-down.
  *   duration_ms = 0 → perpetual until newState(OFF) or next state.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

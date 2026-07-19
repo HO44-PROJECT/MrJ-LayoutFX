@@ -1,5 +1,7 @@
 # Adding a new device type — playbook
 
+[Docs](../README.md) / [Contributing](README.md) / Adding a new device type
+
 A worked checklist for adding a brand-new device/effect type to the firmware
 and WebUI, using **issue #111 — `GasLampDefect`** as the running example.
 Read [conventions.md](conventions.md) and

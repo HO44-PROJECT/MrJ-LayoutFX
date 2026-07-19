@@ -6,8 +6,8 @@
  * Uses AceRoutine coroutines to sequence states and apply POV fading
  * for realistic lamp behavior.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @date 2025-08-01
  * @license MIT License
  */

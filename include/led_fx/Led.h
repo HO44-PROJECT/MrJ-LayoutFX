@@ -5,8 +5,8 @@
  * Instant on/off with no animation. Useful for simple indicator LEDs or
  * as a debug/test device type.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2026-03-30
  * @license MIT License. See the LICENSE file in the project root for details.

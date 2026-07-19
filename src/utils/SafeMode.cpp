@@ -2,7 +2,7 @@
  * @file SafeMode.cpp
  * @brief NVS-backed double-reset detector — see SafeMode.h.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

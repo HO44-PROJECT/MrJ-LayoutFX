@@ -23,8 +23,8 @@
  *   DEBUG                 Enable MRJ_DEBUG_PRINT / MRJ_DEBUG_PRINTLN output.
  *   LOBOT                 Enable the Lobot LX-16A servo protocol.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo    https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

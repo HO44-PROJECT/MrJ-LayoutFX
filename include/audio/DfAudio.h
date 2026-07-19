@@ -7,8 +7,8 @@
  * volume control, playback modes (repeat, random, folder/file), and power management, using
  * a simple 7-byte frame protocol (0x7E ... 0xEF) for railway sound effect applications.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-17
  * @license MIT License. See the LICENSE file in the project root for details.

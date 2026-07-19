@@ -6,8 +6,8 @@
  * to manage a fixed number of output pins. It provides functionality to set and retrieve
  * pin identifiers for devices that require multiple pins, such as signals or multi-LED setups.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-04
  * @license MIT License. See the LICENSE file in the project root for details.

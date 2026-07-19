@@ -4,8 +4,8 @@
  *
  * This file contains the implementation of the `SignalFlare` class, simulating a flare with rapid ignition (50–150 brightness, 20–100ms delays), intense burning around 230 (180–255, ±50 flicker), and quick burnout with ±30 flicker over 800ms. It uses a coroutine for non-blocking operation with automatic burnout.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-07
  * @license MIT License. See the LICENSE file in the project root for details.

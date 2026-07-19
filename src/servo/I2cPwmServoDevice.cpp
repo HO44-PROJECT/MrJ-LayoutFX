@@ -2,7 +2,7 @@
  * @file I2cPwmServoDevice.cpp
  * @brief Positional servo device driven by a PCA9685 PWM controller via I²C.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
@@ -17,9 +17,10 @@ I2cPwmServoDevice::I2cPwmServoDevice(Adafruit_PWMServoDriver *pwm, uint8_t chann
       _pulseMinUs(pulseMinUs), _pulseMaxUs(pulseMaxUs) {
   for (uint8_t i = 0; i < _posCount; i++)
     _positions[i] = positions[i];
-  // _currentAngle stays at 0 (member default) — do NOT copy positions[0].angle here.
-  // After de-energize the servo is limp and its physical angle is unknown; starting
-  // every slew from 0° ensures the slew loop always runs and produces visible motion.
+  // _currentAngle stays at 0 (member default): the physical servo's actual angle
+  // at boot is unknown, so the first slew always starts from 0°. After that,
+  // _currentAngle is kept up to date by runCoroutine() and reflects the last
+  // angle actually commanded, even across the auto-release to OFF_STATE.
 }
 
 bool I2cPwmServoDevice::initPins() {
@@ -55,9 +56,10 @@ int I2cPwmServoDevice::runCoroutine() {
       // Stop: cut PWM so the servo de-energizes (goes limp).
       // 4096 sets the PCA9685 channel to full-OFF (permanently inactive).
       if (_pwm) _pwm->setPWM(_channel, 0, 4096);
-      // Physical angle is now unknown (servo is limp). Reset to neutral so the
-      // next position command always produces a full slew from 0°.
-      _currentAngle = 0;
+      // Keep _currentAngle as-is: the servo was left at that angle (de-energized
+      // but not moved), so the next position command slews from the true last
+      // angle instead of always restarting from 0° (which caused a visible
+      // 0°-then-target double move on every repeat command).
       setState(OFF_STATE);
     } else {
       uint8_t s = (uint8_t)getTargetState();
@@ -71,12 +73,18 @@ int I2cPwmServoDevice::runCoroutine() {
         _slewStartMs    = millis();
         _slewEaseOut    = _positions[s - 1].ease_out;
         setState(s);
+#ifdef LFX_SERVO_SLEW_DEBUG
+        Serial.printf("[servo CH%u] slew start: from=%d to=%d dur=%lums easeOut=%d now=%lu slewStartMs=%lu\n",
+          _channel, (int)_slewFrom, (int)_slewTo, (unsigned long)_slewDurationMs, (int)_slewEaseOut,
+          (unsigned long)millis(), (unsigned long)_slewStartMs);
+#endif
 
         // Slew loop: runs every 20 ms until the target is reached or interrupted.
         // getState() drops to INIT_STATE (< 0) when a new newState() arrives,
         // which breaks the loop and allows the outer loop to process the new target.
         while (getState() > OFF_STATE && _currentAngle != _slewTo) {
-          uint32_t elapsed = millis() - _slewStartMs;
+          uint32_t nowMs = millis();
+          uint32_t elapsed = nowMs - _slewStartMs;
           if (elapsed >= _slewDurationMs) {
             _currentAngle = _slewTo;
           } else if (_slewEaseOut) {
@@ -89,12 +97,21 @@ int I2cPwmServoDevice::runCoroutine() {
               (int32_t)(_slewTo - _slewFrom) * elapsed / _slewDurationMs);
           }
           if (_pwm) _pwm->writeMicroseconds(_channel, _degreesToUs(_currentAngle));
+#ifdef LFX_SERVO_SLEW_DEBUG
+          Serial.printf("[servo CH%u] step: angle=%d us=%u now=%lu slewStartMs=%lu elapsed=%lu\n",
+            _channel, (int)_currentAngle, _degreesToUs(_currentAngle),
+            (unsigned long)nowMs, (unsigned long)_slewStartMs, (unsigned long)elapsed);
+#endif
           COROUTINE_DELAY(20);
         }
         // Slew completed (non-interrupted): write exact final angle then auto-release.
         if (getState() > OFF_STATE) {
           _currentAngle = _slewTo;
           if (_pwm) _pwm->writeMicroseconds(_channel, _degreesToUs(_currentAngle));
+#ifdef LFX_SERVO_SLEW_DEBUG
+          Serial.printf("[servo CH%u] slew done: angle=%d us=%u -> auto-release\n",
+            _channel, (int)_currentAngle, _degreesToUs(_currentAngle));
+#endif
           newState(OFF_STATE); // triggers de-energize via the OFF_STATE branch above
         }
       }

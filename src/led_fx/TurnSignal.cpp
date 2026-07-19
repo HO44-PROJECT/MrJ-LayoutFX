@@ -6,8 +6,8 @@
  * It simulates a smooth fading in and out effect by incrementally adjusting the
  * PWM signal intensity, all managed within a non-blocking coroutine.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
  * @license MIT License

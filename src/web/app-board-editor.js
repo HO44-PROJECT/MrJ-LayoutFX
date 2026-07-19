@@ -5,8 +5,8 @@
  * Handles creation and editing of expansion boards (PCA9685, MCP23017, 74HC595)
  * in the WebUI configuration panel.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

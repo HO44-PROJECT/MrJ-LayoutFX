@@ -4,8 +4,8 @@
  *
  * Simulates a vintage gas lamp with ignition, unstable flicker, brightening, stable flame, and extinction phases using a coroutine.
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-05
  * @license MIT License. See the LICENSE file in the project root for details.

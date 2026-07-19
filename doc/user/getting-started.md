@@ -1,5 +1,7 @@
 # Getting started
 
+[Docs](../README.md) / User guide / Getting started
+
 Two ways to get a device running, from easiest to most flexible.
 
 ## Option A — browser flash (no install, no PlatformIO)

@@ -8,7 +8,7 @@
  * them for the tests; in the browser bundle `module` is undefined and the guard
  * is a no-op.
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 

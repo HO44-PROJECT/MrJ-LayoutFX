@@ -1,5 +1,7 @@
 # The PlatformIO project model
 
+[Docs](../README.md) / [Contributing](README.md) / PlatformIO project model
+
 The firmware targets several boards (ESP32 variants and the AVR Nano) from a
 single tree. `platformio.ini` (in the main project, not the library) expresses
 that with a small set of reusable **template sections** and a longer list of

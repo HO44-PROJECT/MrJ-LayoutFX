@@ -1,5 +1,7 @@
 # Project conventions
 
+[Docs](../README.md) / [Contributing](README.md) / Conventions
+
 The rules below aren't enforced by a compiler — they're the shared habits that
 keep a config-driven, multi-target, multi-language firmware coherent. Most bugs
 that survive a build come from breaking one of these.

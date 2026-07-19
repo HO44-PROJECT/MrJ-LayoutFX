@@ -3,7 +3,7 @@
  * @brief DeviceApi — raw hardware diagnostic endpoints (/api/test/gpio,
  *        /api/test/spi, /api/scan/i2c).
  *
- * @project MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 
