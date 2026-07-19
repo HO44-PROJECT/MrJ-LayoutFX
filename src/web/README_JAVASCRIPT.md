@@ -1,4 +1,4 @@
-# JavaScript Files — MrJ-ArduinoRailwayFX WebUI
+# JavaScript Files — MrJ-LayoutFX WebUI
 
 ## Vue d'ensemble
 
@@ -15,8 +15,8 @@ Tous les fichiers JavaScript du projet suivent maintenant un format d'en-tête s
  *
  * <description détaillée facultative>
  *
- * @project MrJ-ArduinoRailwayFX
- * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+ * @project MrJ-LayoutFX
+ * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @license MIT License — Copyright (c) 2026 HO44 PROJECT
  */
 ```
@@ -159,8 +159,8 @@ var msg = "Device created";
     *
     * Description détaillée (optionnelle)
     *
-    * @project MrJ-ArduinoRailwayFX
-    * @repo https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX
+    * @project MrJ-LayoutFX
+    * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
     * @license MIT License — Copyright (c) 2026 HO44 PROJECT
     */
    ```
@@ -186,7 +186,7 @@ var msg = "Device created";
 find src/web -name "*.js"
 
 # Vérifier que tous ont l'en-tête standard
-grep -L "@project MrJ-ArduinoRailwayFX" src/web/*.js
+grep -L "@project MrJ-LayoutFX" src/web/*.js
 ```
 
 ### **Format automatique** (si configuré)
@@ -212,4 +212,4 @@ eslint --fix src/web/*.js
 
 **Date de standardisation** : 2026-06-02  
 **Version** : 1.0  
-**Projet** : MrJ-ArduinoRailwayFX
+**Projet** : MrJ-LayoutFX

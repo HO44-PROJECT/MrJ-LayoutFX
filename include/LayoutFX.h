@@ -1,6 +1,6 @@
 /**
  * @file LayoutFX.h
- * @brief Single entry point for the MrJ-RailwayFX library.
+ * @brief Single entry point for the MrJ-LayoutFX library.
  *
  * Aggregates all public headers and exposes LayoutFX::init() / LayoutFX::loop()
  * for a minimal user main.cpp:

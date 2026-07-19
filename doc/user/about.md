@@ -1,8 +1,8 @@
-# About MrJ-RailwayFX
+# About MrJ-LayoutFX
 
 [Docs](../README.md) / User guide / About
 
-MrJ-RailwayFX is an Arduino/ESP32 library that turns a microcontroller into a
+MrJ-LayoutFX is an Arduino/ESP32 library that turns a microcontroller into a
 **model-railway lighting & signalling controller**. You describe your layout
 (boards, buses, devices) in a JSON file; the firmware brings it to life and
 exposes a **web control panel** to drive every device — no recompilation needed

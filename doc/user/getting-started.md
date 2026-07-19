@@ -17,7 +17,7 @@ Safari, or on mobile — those show a notice instead of the install button).
    from a checkout).
 2. Plug in the ESP32, click **Install**, wait for it to finish.
 3. The board reboots with an **empty configuration** and starts its own WiFi
-   access point (default SSID `MrJ-RailwayFX`, password `mrjfx1234`) since it
+   access point (default SSID `MrJ-LayoutFX`, password `mrjfx1234`) since it
    has no home network to join yet.
 4. Connect your computer/phone to that access point, browse to
    `http://192.168.4.1/ui`.

@@ -192,7 +192,7 @@ Cette approche permet de **publier la bibliothèque** sur PlatformIO Library Reg
 # Dans le platformio.ini de l'utilisateur
 [env:my_project]
 lib_deps =
-    MrJ-RailwayFX  # ← Types embarqués dans la lib !
+    MrJ-LayoutFX  # ← Types embarqués dans la lib !
 ```
 
 **Aucun fichier à uploader** — tout est dans le firmware.
@@ -316,6 +316,6 @@ Ou attendre 24h (expiration cache)
 
 **Version** : 1.0  
 **Date** : 2026-06-02  
-**Projet** : MrJ-ArduinoRailwayFX  
+**Projet** : MrJ-LayoutFX  
 **Auteur** : Migration LittleFS → PROGMEM  
 **Licence** : MIT License — Copyright (c) 2026 HO44 PROJECT

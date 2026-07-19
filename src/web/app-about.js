@@ -11,8 +11,8 @@
  */
 
 var PROJECT_URLS = {
-  git:    'https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX',
-  issues: 'https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX/issues',
+  git:    'https://github.com/HO44-PROJECT/MrJ-LayoutFX',
+  issues: 'https://github.com/HO44-PROJECT/MrJ-LayoutFX/issues',
   wiki:   '' // placeholder — to be filled when wiki is published
 };
 

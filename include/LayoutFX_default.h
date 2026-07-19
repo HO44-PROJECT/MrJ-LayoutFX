@@ -1,9 +1,9 @@
 /**
  * @file LayoutFX_default.h
- * @brief General configuration for the MrJ-ArduinoRailwayFX project.
+ * @brief General configuration for the MrJ-LayoutFX project.
  *
  * This header file defines configuration constants and preprocessor directives for the
- * MrJ-ArduinoRailwayFX project. It includes settings for DCC message decoding, OLED display,
+ * MrJ-LayoutFX project. It includes settings for DCC message decoding, OLED display,
  * debug output, servo support, and various effects such as campfire, gas lamp, traffic lights,
  * and charlieplexing signals. The constants are used to control timing, intensity, and behavior
  * of various devices and effects in railway signaling applications.
@@ -23,7 +23,7 @@
 // WebUI bundle and the embedded JSON catalogs at build time: build_webui.py and
 // build_embedded_data.py parse this line and substitute every %%BRAND%% token.
 // Rebranding the project display name = editing this one line.
-#define LFX_PROJECT_NAME "MrJ-RailwayFX"
+#define LFX_PROJECT_NAME "MrJ-LayoutFX"
 
 // ── Firmware version ──────────────────────────────────────────────────────────
 #define LFX_FIRMWARE_VERSION "v1.0"

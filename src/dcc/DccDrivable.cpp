@@ -3,7 +3,7 @@
  * @brief Implementation of NmraDcc callback functions for controlling DCC devices.
  *
  * Defines callback functions for handling DCC commands (speed, signals, functions, and accessories)
- * in the MrJ-ArduinoRailwayFX project. Delegates speed commands to the DccDrivable class and provides
+ * in the MrJ-LayoutFX project. Delegates speed commands to the DccDrivable class and provides
  * placeholders for handling signals, functions, and accessories (e.g., controlling LEDs).
  *
  * @project MrJ-LayoutFX

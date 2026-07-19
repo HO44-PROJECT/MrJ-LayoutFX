@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes to MrJ-RailwayFX, newest first. Each entry links the backlog
+Notable changes to MrJ-LayoutFX, newest first. Each entry links the backlog
 issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.

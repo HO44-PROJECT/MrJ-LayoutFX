@@ -144,4 +144,4 @@ find data -name "*.json" -exec sed -i '' 's/–/-/g' {} \;
 **Date de correction :** 2026-06-02  
 **Fichiers corrigés :** 6 fichiers JSON  
 **Caractères remplacés :** ~10 occurrences de U+2013  
-**Projet :** MrJ-ArduinoRailwayFX
+**Projet :** MrJ-LayoutFX

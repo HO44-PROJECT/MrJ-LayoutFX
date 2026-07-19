@@ -1,4 +1,4 @@
-# MrJ-RailwayFX
+# MrJ-LayoutFX
 
 This project addresses the need for a versatile, DCC-controlled accessory decoder for model railway enthusiasts. The primary objective is to create a compact PCB that interfaces an ESP32 microcontroller with the Digital Command Control (DCC) system, enabling sophisticated control of lighting effects and various peripherals directly from DCC commands.
 

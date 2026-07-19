@@ -1,4 +1,4 @@
-# MrJ-RailwayFX — documentation
+# MrJ-LayoutFX — documentation
 
 Model-railway lighting & signalling for Arduino/ESP32: declarative JSON layout,
 a self-served web control panel, and a rich set of signal/lamp/servo effects.

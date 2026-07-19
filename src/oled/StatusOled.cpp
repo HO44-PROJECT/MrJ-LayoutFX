@@ -6,7 +6,7 @@
  * a 128x32 OLED display using the U8g2 library over I2C. It supports printing text to line 3
  * and updating status indicators on lines 1 and 2. A single shared buffer minimizes SRAM usage,
  * and unified print methods reduce code size. Designed for Arduino Nano in the
- * MrJ-ArduinoRailwayFX project.
+ * MrJ-LayoutFX project.
  *
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX

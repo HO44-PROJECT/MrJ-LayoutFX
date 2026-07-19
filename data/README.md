@@ -1,4 +1,4 @@
-# Library Data Files — MrJ-RailwayFX
+# Library Data Files — MrJ-LayoutFX
 
 ## Vue d'ensemble
 
@@ -235,5 +235,5 @@ Ces fichiers sont servis par l'API REST du framework :
 
 **Version** : 1.0  
 **Date** : 2026-06-02  
-**Projet** : MrJ-ArduinoRailwayFX  
+**Projet** : MrJ-LayoutFX  
 **Licence** : MIT License — Copyright (c) 2026 HO44 PROJECT

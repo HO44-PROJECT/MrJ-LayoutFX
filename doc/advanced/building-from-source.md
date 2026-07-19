@@ -47,7 +47,7 @@ Every flag, with its default, is in
 
 > WiFi needs **both** `WIFI_SSID` and `WIFI_PASSWORD`. `WEBUI`/`API` additionally
 > need `CONFIG`. If WiFi can't join, the device falls back to a SoftAP
-> (`WIFI_AP_SSID` / `WIFI_AP_PASSWORD`, defaults `MrJ-RailwayFX` / `mrjfx1234`).
+> (`WIFI_AP_SSID` / `WIFI_AP_PASSWORD`, defaults `MrJ-LayoutFX` / `mrjfx1234`).
 
 ## 3. Build & upload
 
@@ -71,7 +71,7 @@ pio run -e <your-env> -t uploadfs
 1. Open a serial monitor at **115200 baud**. The boot prints structural logs
    (banner, then the WiFi **IP address**). Note the IP.
 2. Browse to `http://<ip>/ui`.
-   - If the device started in SoftAP mode, connect to the `MrJ-RailwayFX`
+   - If the device started in SoftAP mode, connect to the `MrJ-LayoutFX`
      network first, then open `http://192.168.4.1/ui`.
 3. The cockpit is empty until you add devices — go to the **Configuration** tab to
    declare your boards, buses and devices, or upload a `config.json`.

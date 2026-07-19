@@ -1,6 +1,6 @@
 /**
  * @file LayoutFX_define.h
- * @brief Feature-gate and size-limit defines for the MrJ-RailwayFX library.
+ * @brief Feature-gate and size-limit defines for the MrJ-LayoutFX library.
  *
  * Aggregates all public headers and exposes LayoutFX::init() / LayoutFX::loop()
  * for a minimal user main.cpp:

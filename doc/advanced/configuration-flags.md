@@ -29,7 +29,7 @@ Conventions:
 | `WEBUI` | toggle | off | Web control panel (`/ui`). Implies `API`. Requires WiFi **and** `CONFIG`. |
 | `WIFI_SSID` | `"…"` | — | STA SSID. **Both** SSID and password are required to join WiFi and start the HTTP server. |
 | `WIFI_PASSWORD` | `"…"` | — | STA password. |
-| `WIFI_AP_SSID` | `"…"` | `"MrJ-RailwayFX"` | Access-point fallback SSID. |
+| `WIFI_AP_SSID` | `"…"` | `"MrJ-LayoutFX"` | Access-point fallback SSID. |
 | `WIFI_AP_PASSWORD` | `"…"` | `"mrjfx1234"` | AP fallback password (min 8 chars, or `""` for an open network). |
 | `WIFI_FORCE_AP` | toggle | off | Skip STA entirely and boot straight into access-point mode. |
 | `HTTP_PORT` | `<n>` | `80` | HTTP server port. |

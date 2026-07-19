@@ -1,6 +1,6 @@
 /**
  * @file OledDisplay.h
- * @brief Structural OLED status display for MrJ-RailwayFX — ESP32 + SSD1306 I²C.
+ * @brief Structural OLED status display for MrJ-LayoutFX — ESP32 + SSD1306 I²C.
  *
  * Drives a 128×64 (or 128×32) SSD1306 display via U8g2 in full-buffer mode.
  * Two screens alternate as an AceRoutine coroutine:

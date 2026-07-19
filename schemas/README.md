@@ -1,8 +1,8 @@
-# JSON Schemas — MrJ-RailwayFX
+# JSON Schemas — MrJ-LayoutFX
 
 ## Vue d'ensemble
 
-Ce répertoire contient les schémas JSON pour valider les fichiers de configuration et de données du projet MrJ-ArduinoRailwayFX.
+Ce répertoire contient les schémas JSON pour valider les fichiers de configuration et de données du projet MrJ-LayoutFX.
 
 ---
 
@@ -150,8 +150,8 @@ Tous les schémas suivent le standard **JSON Schema Draft 2020-12** :
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/HO44-PROJECT/MrJ-ArduinoRailwayFX/schemas/config.schema.json",
-  "title": "MrJ-ArduinoRailwayFX Configuration",
+  "$id": "https://github.com/HO44-PROJECT/MrJ-LayoutFX/schemas/config.schema.json",
+  "title": "MrJ-LayoutFX Configuration",
   "description": "...",
   "type": "object",
   "properties": { ... },
@@ -232,5 +232,5 @@ npm install -g prettier        # Formatter JSON
 
 **Date de migration** : 2026-06-02  
 **Version** : 1.0  
-**Projet** : MrJ-ArduinoRailwayFX  
+**Projet** : MrJ-LayoutFX  
 **Licence** : MIT License — Copyright (c) 2026 HO44 PROJECT
