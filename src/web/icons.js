@@ -17,6 +17,10 @@ var LED_ICO = S + '<circle cx="12" cy="11" r="4"/>'
   + '<path d="M12 1v2M12 18v2M3 11H1M23 11h-2M5.6 4.6l1.4 1.4M15 15.4l1.4 1.4M5.6 17.4l1.4-1.4M15 6.6l1.4-1.4"/>'
   + '<line x1="9" y1="21" x2="15" y2="21"/><line x1="12" y1="15" x2="12" y2="21"/>'
   + E;
+// Mini pencil SVG for the device-edit button (replaces the Unicode "✎" glyph, #127)
+var EDIT_ICO = S + '<path d="M12 20h9"/>'
+  + '<path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>'
+  + E;
 var ICONS = {
   'Beacon': S
     + '<circle cx="12" cy="10" r="3.5"/>'

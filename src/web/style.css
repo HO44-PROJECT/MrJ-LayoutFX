@@ -2025,11 +2025,15 @@
     }
 
     .dbg-pin-state {
-      font-size: .55rem;
+      position: absolute;
+      top: 2px;
+      right: 3px;
+      font-size: .85rem;
       font-weight: 700;
       line-height: 1;
       color: inherit;
-      opacity: .8
+      opacity: .9;
+      z-index: 2
     }
 
     /* Raw GPIO test sub-button (LED icon) overlaid on pin */
@@ -2276,9 +2280,9 @@
       width: 18px;
       height: 18px;
       border-radius: 3px;
-      border: 1px solid var(--t3);
-      background: var(--bg1);
-      color: var(--t1);
+      border: 1px solid #c0392b;
+      background: rgba(192,57,43,.12);
+      color: #e87070;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2287,10 +2291,13 @@
       line-height: 1;
       z-index: 2;
       padding: 0;
-      opacity: .5;
-      transition: opacity .12s, border-color .12s, color .12s
+      opacity: 1;
+      transition: all .12s
     }
-    .dbg-pin:hover .dbg-edit-btn { opacity: 1 }
+    .dbg-edit-btn svg {
+      width: 12px;
+      height: 12px
+    }
     .dbg-edit-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }
 
     /* Edit button inside bus device rows — override absolute positioning */
@@ -2302,6 +2309,10 @@
       opacity: 1;
       margin-left: auto;
       font-size: .78rem
+    }
+    .dbg-bus-dev .dbg-edit-btn svg {
+      width: 13px;
+      height: 13px
     }
     .dbg-del-btn {
       padding: .18rem .45rem;

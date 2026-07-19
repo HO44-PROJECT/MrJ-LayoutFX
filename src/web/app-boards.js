@@ -360,7 +360,7 @@ function renderBusDevice(boardApiIdx, dev) {
     });
   }
   html += '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '"'
-    + ' onclick="openDevEditorById(\'' + sf + '\',' + boardApiIdx + ',1,SERVO_TYPES)">&#9998;</button>';
+    + ' onclick="openDevEditorById(\'' + sf + '\',' + boardApiIdx + ',1,SERVO_TYPES)">' + EDIT_ICO + '</button>';
   html += '<button class="dbg-del-btn" title="' + t('de.del') + '"'
     + ' onclick="deleteBusDev(\'' + sf + '\')">&#10005;</button>';
   html += '</div>';
@@ -502,7 +502,7 @@ function renderPin(board, boardApiIdx, pin) {
     var tip = tooltip(dev.type) + (devComment ? ' — ' + devComment : '');
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
       + '<span class="dbg-pin-num">' + numLabel + '</span>';
-    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
+    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">' + EDIT_ICO + '</button>';
   } else if (dev) {
     var isDevI2cServo = I2C_SERVO_TYPES.indexOf(dev.type) >= 0;
     var sc = dev.stateCount || 2;
@@ -522,7 +522,7 @@ function renderPin(board, boardApiIdx, pin) {
     inner = '<div class="dbg-pin-ico" title="' + tip + '">' + ico + '</div>'
       + '<span class="dbg-pin-num">' + numLabel + '</span>' + stateLabel;
     if (!isI2c) ledBtn = isSpi ? mkSpiLedBtn(board.spiRank, num) : mkLedBtn(num);
-    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">✎</button>';
+    editBtn = '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '" onclick="event.stopPropagation();openDevEditorById(\'' + dev.id + '\',' + boardApiIdx + ',' + num + i2cTypeFilter + ')">' + EDIT_ICO + '</button>';
   } else if (isI2c) {
     // I²C expansion channel — no GPIO test, open I2C servo editor
     inner = '<span class="dbg-pin-num">' + pin.label + '</span>';

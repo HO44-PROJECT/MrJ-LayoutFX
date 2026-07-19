@@ -7,6 +7,14 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-19
 
+- The pin edit button on the Boards & extensions page now uses an inline SVG
+  pencil icon (matching the existing icon set's style) instead of a Unicode
+  glyph, and its styling now mirrors the raw-GPIO test button (`.dbg-led-btn`)
+  it sits next to — same red-tinted badge look — instead of a plain grey box.
+  The multi-state device badge (`.dbg-pin-state`) moved from below the pin
+  number to the top-right corner and got larger, so it no longer clashes with
+  the edit button now anchored top-left. Validated in the browser. (#127)
+
 - Fixed: the cockpit's per-device "Turn on"/"Turn off" button (generic card)
   ignored the device's configured startup delay (`start_delay_ms`/
   `start_delay_random_ms`, #8), switching instantly instead of honouring it
