@@ -7,6 +7,17 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-19
 
+- Fixed: the cockpit's per-device "Turn on"/"Turn off" button (generic card)
+  ignored the device's configured startup delay (`start_delay_ms`/
+  `start_delay_random_ms`, #8), switching instantly instead of honouring it
+  like the global ALL and group buttons already did.
+  `DeviceApi::_onPostDevice()` (`/api/device`) had `skipDelay` hardcoded to
+  `true` for every caller; it now reads an optional `skip_delay` field
+  (same convention as `/api/all`), defaulting to `false`. The Boards tab's
+  multi-state pin cycling (`dbgCycleDev`), which must stay instant for
+  wiring tests, now passes `skip_delay: true` explicitly to keep its
+  existing behaviour. Validated in the browser. (#128)
+
 - Devices can now carry an optional free-text `comment` field (e.g. "quai 1",
   "montagne") for the layout author's own reference — pure metadata, no
   functional effect on firmware. Added to `config.schema.json`, the device

@@ -580,7 +580,8 @@ function dbgToggleDev(id, on) {
 // desired=current state, stateCount=total states (0=STOP + N positions).
 function dbgCycleDev(id, desired, stateCount) {
   var next = (desired + 1) % stateCount;
-  post('/api/device', { id: id, state: next })
+  // #8: instant response for a wiring test, not staggered like the cockpit.
+  post('/api/device', { id: id, state: next, skip_delay: true })
     .then(poll) // state-only change: refresh devices (RAM), not boards/config (flash) — avoids POV jitter
     .catch(function (e) { console.error('dbgCycleDev', e); });
 }

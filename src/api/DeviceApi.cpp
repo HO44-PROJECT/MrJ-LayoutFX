@@ -194,12 +194,15 @@ void DeviceApi::_onPostDevice() {
   }
   const char *id = doc[kId] | "";
   int state = doc[kState].as<int>();
+  // A cockpit state pick honours the configured startup delay, same as the
+  // ALL/group buttons; the Boards tab's hardware test passes skip_delay to
+  // get an instant response instead (same convention as /api/all).
+  bool skipDelay = doc[kSkipDelay] | false;
 
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
       Device *d = _factory->device(i);
-      // #8: a single manual state pick from the cockpit skips the startup delay.
-      d->newState((STATE_TYPE)state, true);
+      d->newState((STATE_TYPE)state, skipDelay);
   #ifdef LFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, state);
   #endif
