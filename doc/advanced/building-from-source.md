@@ -1,6 +1,9 @@
-# Setup
+# Building from source
 
-This page takes you from nothing to a running device with the WebUI reachable.
+Use this instead of the [browser flasher](../user/getting-started.md) when you
+need your own WiFi credentials, a different board (e.g. an AVR Nano), or a
+hardware feature outside the generic browser build (a specific bus mix, DCC,
+OLED…).
 
 ## Prerequisites
 
@@ -68,17 +71,13 @@ pio run -e <your-env> -t uploadfs
 2. Browse to `http://<ip>/ui`.
    - If the device started in SoftAP mode, connect to the `MrJ-RailwayFX`
      network first, then open `http://192.168.4.1/ui`.
-3. The cockpit is empty until you add devices — go to the **Config** tab to
+3. The cockpit is empty until you add devices — go to the **Configuration** tab to
    declare your boards, buses and devices, or upload a `config.json`.
-
-## 5. Recovery — safe mode
-
-If a saved config makes the device crash or unreachable, **reset twice quickly**
-(or power-cycle twice). The device boots into a **safe mode**: config is bypassed
-(no devices) and it comes up as a SoftAP so the WebUI is always reachable to fix
-or delete the config. The next normal boot loads the config again.
 
 ## Next
 
-- [usage.md](usage.md) — drive and configure devices from the WebUI.
+- [../user/usage.md](../user/usage.md) — drive and configure devices from the WebUI.
 - [configuration-flags.md](configuration-flags.md) — full flag reference.
+- [../contributing/](../contributing/) — project conventions, build pipeline,
+  how the firmware is put together, if you're going to change the code itself
+  rather than just its configuration.

@@ -39,7 +39,7 @@ byte array in PROGMEM:
 Each catalog is minified, gzip-compressed, and served straight from flash by the
 API with `Content-Encoding: gzip` — the browser inflates it. Keeping the catalogs
 in PROGMEM instead of LittleFS is a deliberate memory/partition choice (see
-[`../architecture/memory.md`](../architecture/memory.md)).
+[`architecture/memory.md`](architecture/memory.md)).
 
 The script also emits one **uncompressed** header, `embedded_board_pincounts.h`:
 a compact `type → pin_count` table built from the `spi_master_only` entries of

@@ -3,7 +3,7 @@
 A worked checklist for adding a brand-new device/effect type to the firmware
 and WebUI, using **issue #111 — `GasLampDefect`** as the running example.
 Read [conventions.md](conventions.md) and
-[../architecture/concurrency.md](../architecture/concurrency.md) first — this
+[architecture/concurrency.md](architecture/concurrency.md) first — this
 document is the concrete step-by-step application of the rules they set out,
 not a replacement for them.
 

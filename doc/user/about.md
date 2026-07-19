@@ -14,8 +14,8 @@ lamps, servo-driven mechanisms, sound) **declarative and reconfigurable**:
 - **Describe, don't code.** Devices and wiring live in `config.json`, edited from
   the WebUI. Changing a pin or adding a signal does **not** require a rebuild.
 - **One firmware, many layouts.** Hardware features are selected by compile flags
-  in `config.h` (see [configuration-flags.md](configuration-flags.md)); the actual
-  devices are runtime config.
+  in `config.h` (see [configuration-flags.md](../advanced/configuration-flags.md));
+  the actual devices are runtime config.
 - **Control from anywhere.** A self-contained WebUI (served from the device)
   gives a cockpit, a configuration editor, diagnostics and OTA updates.
 
@@ -64,6 +64,6 @@ lamps, servo-driven mechanisms, sound) **declarative and reconfigurable**:
 
 ## Where to go next
 
-- [setup.md](setup.md) — build your first firmware.
-- [configuration-flags.md](configuration-flags.md) — every `config.h` flag.
+- [getting-started.md](getting-started.md) — flash a device and reach the WebUI.
 - [usage.md](usage.md) — day-to-day operation from the WebUI.
+- [configuration-flags.md](../advanced/configuration-flags.md) — every `config.h` flag.

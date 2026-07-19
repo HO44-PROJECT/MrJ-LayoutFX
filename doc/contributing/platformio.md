@@ -65,7 +65,7 @@ Each environment combines four mechanisms:
    compile-time configuration (feature `#define`s, pin maps) is force-included
    into every translation unit via a `build_flags` entry. Nothing has to `#include`
    it explicitly; it is always present. See
-   [configuration-flags.md](../configuration-flags.md) for the flags themselves.
+   [configuration-flags.md](../advanced/configuration-flags.md) for the flags themselves.
 
 4. **`lib_deps`** — the third-party libraries, usually `${libs_esp32.lib_deps}`,
    occasionally a hand-trimmed subset for a proof-of-concept env.

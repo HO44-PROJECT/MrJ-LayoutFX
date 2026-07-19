@@ -3,8 +3,8 @@
 Post-mortems of real debugging sessions: what was observed, tested, ruled out and
 concluded — kept so the same ground is never covered twice. This section completes
 the developer docs: [`../architecture/`](../architecture/) describes how the
-firmware *runs*, [`../workshop/`](../workshop/) how it is *built*, and this one
-what happened when it *misbehaved*.
+firmware *runs*, [the rest of `contributing/`](../) how it is *built*, and this
+one what happened when it *misbehaved*.
 
 Unlike the architecture docs, these are **historical records**, not structural
 descriptions: chronology, dead ends, backlog card numbers and hardware photos all

@@ -2,7 +2,7 @@
 
 Developer-facing notes on **how the firmware is built** — the toolchain, the
 code-generation pipeline, and the project conventions that keep the whole thing
-consistent. This is the counterpart to [`../architecture/`](../architecture/),
+consistent. This is the counterpart to [`architecture/`](architecture/),
 which describes how the firmware *runs*; here we describe how it is *produced*.
 
 - [platformio.md](platformio.md) — the PlatformIO project model: the off-Drive

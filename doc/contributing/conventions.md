@@ -31,7 +31,7 @@ under the project's `lib/` — no `lib_extra_dirs` needed.
 | `src/web/` | the WebUI sources (HTML/CSS/JS) that get bundled into the firmware |
 | `schemas/` | `config.schema.json` — the JSON schema the configs validate against |
 | `tools/` | the pre-build code generators |
-| `doc/` | these developer docs (`architecture/` = how it runs, `workshop/` = how it's built) |
+| `doc/` | user docs (`user/`, `advanced/`) plus these developer docs under `contributing/` (`architecture/` = how it runs, the rest = how it's built) |
 
 The per-environment `main.cpp` and `config.h` live in the **main project** under
 `configurations/<env>/`, not in the library (see [platformio.md](platformio.md)).
@@ -52,7 +52,7 @@ must drive a device through its `newState()` / `switchOn()` primitives, **never*
 by touching pins or effects directly. This is a hard design rule, not a style
 preference: it is what makes a single mutex sufficient for cross-core safety. The
 full rationale and the concurrency model are in
-[`../architecture/concurrency.md`](../architecture/concurrency.md).
+[`architecture/concurrency.md`](architecture/concurrency.md).
 
 ## Writing device coroutines
 
@@ -79,7 +79,7 @@ value that must persist across a yield — phase, brightness, timers, counters �
 a **private member** of the device class. A local is safe only for a value computed and
 fully consumed *between* two yields (never across one).
 
-See [`../architecture/concurrency.md`](../architecture/concurrency.md) for the
+See [`architecture/concurrency.md`](architecture/concurrency.md) for the
 single-core cooperative-scheduler model these two rules follow from.
 
 ## Memory frugality by design
@@ -88,7 +88,7 @@ Types, allocation, and I/O are sized for the smallest target (the AVR Nano):
 smallest-integer-that-fits, static allocation over the heap, constants in flash
 (`F()` / `PROGMEM`), compile-time stripping of disabled features, and bounded,
 chunked filesystem writes. When in doubt, size for the Nano. The reasoning is in
-[`../architecture/memory.md`](../architecture/memory.md).
+[`architecture/memory.md`](architecture/memory.md).
 
 ## i18n by design
 
@@ -117,7 +117,7 @@ compile-time reflection of the `#define`s set in a configuration's `config.h`.
 The authoritative inventory of those flags is
 `include/LayoutFX_define.h`; adding a flag/badge means updating the coordinated
 set of files that surface it, keeping the define, its badge, and its UI text in
-step. See [`../configuration-flags.md`](../configuration-flags.md) for the flag
+step. See [`../advanced/configuration-flags.md`](../advanced/configuration-flags.md) for the flag
 catalog.
 
 ## Build / validate / commit workflow

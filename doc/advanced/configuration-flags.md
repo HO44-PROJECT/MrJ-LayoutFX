@@ -5,8 +5,8 @@ Every behaviour of the firmware is driven by `#define`s in your **`config.h`**
 their type, default, and effect.
 
 The canonical, in-source copy of this list lives in
-[`include/LayoutFX_define.h`](../include/LayoutFX_define.h) (flags →
-`LFX_*_ENABLED`) and [`include/LayoutFX_default.h`](../include/LayoutFX_default.h)
+[`include/LayoutFX_define.h`](../../include/LayoutFX_define.h) (flags →
+`LFX_*_ENABLED`) and [`include/LayoutFX_default.h`](../../include/LayoutFX_default.h)
 (default values). The WebUI **feature badges** (About → Features) mirror these
 flags: a badge is green when the flag is *compiled in* ("built"), not necessarily
 *active* at runtime.
@@ -119,4 +119,5 @@ Override only if you hit a ceiling; larger values use more RAM.
 #define LOG_SERIAL                      // operational logs on UART0
 ```
 
-See [setup.md](setup.md) for the full first-build walkthrough.
+See [building-from-source.md](building-from-source.md) for the full first-build
+walkthrough.

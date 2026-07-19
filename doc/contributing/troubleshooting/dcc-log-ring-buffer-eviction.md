@@ -55,4 +55,4 @@ réussissent) plutôt que de la *valeur* elle-même.
 ## Voir aussi
 
 - Issue [#76](https://github.com/HO44-PROJECT/MrJ-RailwayFX-backlog/issues/76) — historique complet des itérations (v1 à v5).
-- [`usage.md`](../usage.md#dcc-activity-diagnostics-tab) — documentation utilisateur de l'onglet Diagnostics DCC.
+- [`usage.md`](../../user/usage.md#diagnostics) — documentation utilisateur de l'onglet Diagnostics DCC.
