@@ -1,0 +1,21 @@
+/**
+ * @file wifi.h.example
+ *
+ * @brief Template for WiFi credentials — copy to wifi.h and fill in your values.
+ *        wifi.h is gitignored and never committed.
+ *
+ * @project MrJ-LayoutFX-dev
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
+ */
+#pragma once
+
+#define WIFI_SSID     "your_ssid"
+#define WIFI_PASSWORD "your_password"
+
+// Optional — override the AP fallback credentials (used when STA connection fails).
+// Defaults: SSID="MrJ-LayoutFX", password="mrjfx1234", IP=192.168.4.1
+// #define WIFI_AP_SSID     "MrJ-LayoutFX"
+// #define WIFI_AP_PASSWORD "mrjfx1234"
+
+// Optional — skip STA entirely and start directly in AP mode.
+// #define WIFI_FORCE_AP
