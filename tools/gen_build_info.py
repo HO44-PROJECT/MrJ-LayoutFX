@@ -26,8 +26,12 @@ Import("env")  # noqa: F821 — PlatformIO global
 
 import os
 from datetime import datetime
+from pathlib import Path
 
-_LIB = os.path.join(env.subst("$PROJECT_DIR"), "lib", "MrJ-RailwayFX.local")  # noqa: F821
+# Resolved relative to this file so the library writes its own generated
+# header whether PlatformIO runs here directly (this repo) or from a parent
+# project that pulls this in as lib/<name>/ (the dev repo).
+_LIB = str(Path(__file__).resolve().parent.parent)
 _OUT = os.path.join(_LIB, "include", "generated", "build_info.h")
 
 

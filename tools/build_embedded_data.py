@@ -3,14 +3,14 @@
 Build embedded data files (JSON types) as PROGMEM C++ headers.
 
 Converts structural JSON files to compressed byte arrays embedded in firmware:
-  - lib/MrJ-RailwayFX.local/data/*.json → lib/.../include/generated/embedded_*.h
+  - data/*.json → include/generated/embedded_*.h
 
 Similar to build_webui.py but for JSON catalogs (types, i2c_known).
 Files are gzipped and served with Content-Encoding: gzip by the API.
 
 Called automatically by PlatformIO before build (see platformio.ini extra_scripts).
 
-@project MrJ-ArduinoRailwayFX
+@project MrJ-LayoutFX
 @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
 """
 
@@ -235,13 +235,11 @@ def main():
     """Build all embedded data files."""
 
     # This script lives in the library's own tools/ dir, so resolve paths from
-    # the library root — keeps the library self-contained (it regenerates its own
-    # embedded headers, which are gitignored). Works as a PlatformIO hook and
-    # standalone (python3 tools/build_embedded_data.py).
-    if IS_PLATFORMIO:
-        lib = Path(env.get("PROJECT_DIR")) / "lib" / "MrJ-RailwayFX.local"
-    else:
-        lib = Path(__file__).resolve().parent.parent  # tools/ → library root
+    # the library root (relative to this file) regardless of caller — keeps the
+    # library self-contained (it regenerates its own embedded headers, which are
+    # gitignored) whether PlatformIO runs here directly (this repo) or from a
+    # parent project that pulls this in as lib/<name>/ (the dev repo).
+    lib = Path(__file__).resolve().parent.parent  # tools/ → library root
 
     lib_data_dir = lib / "data"
     output_dir = lib / "include" / "generated"

@@ -27,7 +27,7 @@
   Output:
     include/generated/webui_html.h — PROGMEM gzip payload for WebUI.cpp
 
-@project MrJ-ArduinoRailwayFX
+@project MrJ-LayoutFX
 @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
 """
 
@@ -38,6 +38,7 @@ import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Auto-install minifier dependencies if missing
@@ -54,9 +55,11 @@ except ImportError:
     import rcssmin  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Paths
+# Paths — resolved relative to this file so the library regenerates its own
+# assets whether PlatformIO runs here directly (this repo) or from a parent
+# project that pulls this in as lib/<name>/ (the dev repo).
 # ---------------------------------------------------------------------------
-_LIB = os.path.join(env.subst("$PROJECT_DIR"), "lib", "MrJ-RailwayFX.local")  # noqa: F821
+_LIB = str(Path(__file__).resolve().parent.parent)
 _WEB = os.path.join(_LIB, "src", "web")
 _HDR = os.path.join(_LIB, "include", "generated", "webui_html.h")
 
