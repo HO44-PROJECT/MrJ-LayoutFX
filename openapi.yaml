@@ -1,0 +1,1597 @@
+openapi: 3.0.3
+info:
+  title: MrJ-LayoutFX API
+  description: >
+    REST API exposed by the ESP32 firmware for controlling railway effect
+    devices (LEDs, signals, servos, relays) over Wi-Fi.
+    All endpoints are served at the IP address assigned to the ESP32 on port 80 (configurable via `HTTP_PORT`).
+    Routes are registered in `src/api/DeviceApi.cpp`
+    (`ApiServer::on(...)` calls); JSON keys come from
+    `include/api/DeviceApiKeys.h`. Whenever an `/api/*` route is added, removed,
+    or its request/response shape changes, update this file in the same PR —
+    do not let it drift, it is the only reference consumers (WebUI, scripts,
+    third parties) have for the wire format.
+  version: "v1"
+  license:
+    name: AGPL-3.0-or-later
+    url: https://www.gnu.org/licenses/agpl-3.0.html
+
+servers:
+  - url: http://{esp32_ip}
+    variables:
+      esp32_ip:
+        default: "10.0.20.30"
+        description: IP address of the ESP32 on the local network.
+
+tags:
+  - name: devices
+    description: Control individual or groups of devices.
+  - name: config
+    description: Upload, download, and manage the JSON configuration file.
+  - name: system
+    description: System status, board metadata, and hardware tests.
+
+paths:
+
+  # --------------------------------------------------------------------------
+  # Devices
+  # --------------------------------------------------------------------------
+
+  /api/devices:
+    get:
+      tags: [devices]
+      summary: List all devices and their current state.
+      responses:
+        "200":
+          description: Array of device descriptors.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceInfo"
+              example:
+                - id: "signal01"
+                  type: "TrafficLight3ph"
+                  state: 1
+                  desired: 1
+                  addr: 10
+                  board: 1
+                  stateCount: 3
+                  pinCount: 3
+                  pins: [1, 2, 3]
+
+  /api/device:
+    post:
+      tags: [devices]
+      summary: Set the state of a single device.
+      description: >
+        Triggers `device->newState(state)`. The coroutine handles the physical
+        transition asynchronously. Negative states are non-stable transitions
+        (e.g. blink sequences); positive states are stable targets.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceStateRequest"
+            example:
+              id: "signal01"
+              state: 2
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/switch:
+    post:
+      tags: [devices]
+      summary: Switch a device on or off.
+      description: >
+        Calls `switchOn()` or `switchOff()` on the device.
+        Equivalent to `newState(NEXT_STABLE)` / `newState(OFF_STATE)`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwitchRequest"
+            example:
+              id: "lamp01"
+              on: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/all:
+    post:
+      tags: [devices]
+      summary: Apply the same state to all devices (or all devices on one board).
+      description: >
+        Iterates all devices and calls `newState(state)`, skipping `StaticLow`
+        devices. If `board` is specified and non-zero, only devices on that
+        board index are affected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AllDevicesRequest"
+            examples:
+              all_off:
+                summary: Turn every device off
+                value:
+                  state: 0
+              board_on:
+                summary: Activate all devices on board 2
+                value:
+                  state: 1
+                  board: 2
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/group:
+    post:
+      tags: [devices]
+      summary: Apply a state to all devices of a given type.
+      description: >
+        Matches devices by `getDeviceName()` string (e.g. `"GasLamp"`,
+        `"TrafficLight3ph"`). All matching devices receive `newState(state)`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+            example:
+              type: "GasLamp"
+              state: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/servo:
+    post:
+      tags: [devices]
+      summary: Control a servo motor (SerialServo device).
+      description: >
+        Two usage modes, mutually exclusive:
+
+        **Speed** (`speed` field) — calls `device->setMotorSpeed(speed)`.
+        The coroutine sends a single `motor_mode(speed)` command; the servo
+        runs continuously until a new command is received (no watchdog refresh
+        needed for the HTS-35H / Hiwonder bus servo family).
+        Send `speed: 0` to stop.
+
+        **Reverse** (`action: "reverse"`) — calls `device->reverseMotor()`,
+        which negates the current speed in firmware. The caller does not need
+        to know the current speed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServoRequest"
+            examples:
+              slow_forward:
+                summary: Slow forward
+                value:
+                  id: "servo01"
+                  speed: 300
+              fast_forward:
+                summary: Fast forward
+                value:
+                  id: "servo01"
+                  speed: 1000
+              reverse_action:
+                summary: Reverse current direction (firmware negates speed)
+                value:
+                  id: "servo01"
+                  action: "reverse"
+              stop:
+                summary: Stop servo
+                value:
+                  id: "servo01"
+                  speed: 0
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # --------------------------------------------------------------------------
+  # Configuration
+  # --------------------------------------------------------------------------
+
+  /api/config:
+    get:
+      tags: [config]
+      summary: Download the current configuration file.
+      description: >
+        Returns the raw JSON stored in LittleFS (`config.json`).
+        The response includes `Content-Disposition: attachment` so browsers
+        prompt a download.
+      responses:
+        "200":
+          description: Raw JSON configuration.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="config.json"'
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Arbitrary JSON matching the project config schema.
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      tags: [config]
+      summary: Upload and save a new configuration file.
+      description: >
+        Writes the raw JSON body to LittleFS. Does **not** restart the ESP32.
+        Call `POST /api/restart` afterwards to apply the new configuration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Arbitrary JSON matching the project config schema.
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          description: Write to LittleFS failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "write failed"
+
+    delete:
+      tags: [config]
+      summary: Delete the configuration file and hot-reload.
+      description: >
+        Deletes `config.json` from LittleFS then calls
+        `ConfigManager::requestReload()`, which hot-reloads the (now absent)
+        configuration on the next `loop()` pass — all devices stop. The ESP32
+        does **not** reboot.
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+
+  /api/configs:
+    get:
+      tags: [config]
+      summary: List available configuration files on LittleFS.
+      description: >
+        Returns the list of `*.json` files in the LittleFS root (excluding
+        `board_types.json`, `device_types.json`, `bus_types.json` and
+        `i2c_known.json`) and the currently active config name. Each entry
+        also carries the config's own display `name` field (from inside the
+        file), read on the fly — empty string if the file has no `name` key
+        or fails to parse.
+      responses:
+        "200":
+          description: Config file list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [active, files]
+                properties:
+                  active:
+                    type: string
+                    example: config_2_ext.json
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      required: [file, name]
+                      properties:
+                        file:
+                          type: string
+                          description: Filename on LittleFS.
+                          example: config_2_ext.json
+                        name:
+                          type: string
+                          description: Display name from the config's own `name` field (empty if absent).
+                          example: "Zou breadboard"
+                    example:
+                      - file: config.json
+                        name: "Main layout"
+                      - file: config_2_ext.json
+                        name: "Zou breadboard"
+
+    post:
+      tags: [config]
+      summary: Upload a named configuration file to LittleFS.
+      description: >
+        Raw JSON body saved to LittleFS under the filename given by the
+        `X-Config-Name` request header (or `?name=` query param). The file
+        must not be named `config.json` (use `POST /api/config` for that).
+        After upload, the file appears in `GET /api/configs` and can be
+        activated with `POST /api/config/activate`.
+      parameters:
+        - in: header
+          name: X-Config-Name
+          required: true
+          schema:
+            type: string
+          example: config_2_ext.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Arbitrary JSON matching the project config schema.
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          description: Write to LittleFS failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags: [config]
+      summary: Delete a named configuration file from LittleFS.
+      description: >
+        Body: `{"file":"<filename>"}`. Rejects invalid filenames and refuses
+        to delete `config.json` (the active config — use `DELETE /api/config`
+        for that).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  example: config_2_ext.json
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/config/file:
+    get:
+      tags: [config]
+      summary: Download a named configuration file.
+      description: >
+        Streams the given file from LittleFS as an attachment. Filename is
+        sanitised the same way as other config endpoints (must resolve to a
+        safe `.json` path).
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+          example: config_2_ext.json
+      responses:
+        "200":
+          description: Raw JSON file content.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="config_2_ext.json"'
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/config/copy:
+    post:
+      tags: [config]
+      summary: Copy a config file within LittleFS.
+      description: >
+        Body: `{"from":"<src>","to":"<dst>"}`. Rejects `to == "config.json"`
+        — use `POST /api/config/activate` to make a file the active config
+        instead of copying over it directly.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                  example: config_2_ext.json
+                to:
+                  type: string
+                  example: config_2_ext_copy.json
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          description: Copy failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/config/rename:
+    post:
+      tags: [config]
+      summary: Rename a config file within LittleFS.
+      description: >
+        Body: `{"from":"<old>","to":"<new>"}`. Implemented as copy-then-delete
+        (LittleFS has no native rename). Rejects renaming to or from
+        `config.json`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                  example: config_2_ext_old.json
+                to:
+                  type: string
+                  example: config_2_ext_new.json
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          description: Rename failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/config/activate:
+    post:
+      tags: [config]
+      summary: Set a named config file as the active configuration.
+      description: >
+        Copies the named file to `/config.json` and records the source name in
+        `/config_source.txt`. Does **not** restart — call `POST /api/restart`
+        afterwards (or let the dirty banner handle it).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  example: config_2_ext.json
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          description: Copy to config.json failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # --------------------------------------------------------------------------
+  # System
+  # --------------------------------------------------------------------------
+
+  /api/status:
+    get:
+      tags: [system]
+      summary: Get firmware and hardware status.
+      description: >
+        Returns the full system snapshot backing the WebUI's About page:
+        firmware/build identity, uptime, network, LittleFS/heap/CPU metrics,
+        the compile-time `features` flag set, reserved system pins (only
+        present when at least one reservation-capable feature is compiled
+        in), live WiFi details, and detected library versions.
+      responses:
+        "200":
+          description: System status object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+              example:
+                version: "v1"
+                build_date: "Apr  9 2026 12:00:00"
+                env: "zou_debug"
+                uptime_s: 3742
+                ip: "192.168.1.42"
+                wifiMode: "sta"
+                config: true
+                devices: 8
+                devices_max: 64
+                cpu_mhz: 240
+                chip: "ESP32-D0WD-V3"
+                chip_rev: 3
+                heap_free: 218432
+                heap_total: 327680
+                heap_min: 195000
+                temp_c: 43.5
+                sketch_size: 512000
+                sketch_free: 249856
+                fs_total: 1441792
+                fs_used: 8192
+                features:
+                  wifi: true
+                  api: true
+                  webui: true
+                  config: true
+                  oled: true
+                  i2c: true
+                  spi: true
+                  lobot_servo: false
+                  lx16a_servo: false
+                  dcc: true
+                  audio: false
+                  ota: true
+                  log_serial: true
+                  debug_serial: false
+                  log_oled: false
+                  debug_oled: false
+                  oled_status: true
+                  oled_splash: true
+                  oled_metrics: false
+                  oled_events: false
+                  wifi_force_ap: false
+                  dcc_audit: false
+                  i2c_scan: true
+                  jtag: false
+                  demo: false
+                sys_pins:
+                  "1": "TX0"
+                  "3": "RX0"
+                  "17": "DCC"
+                wifi_ssid: "MyHomeNetwork"
+                wifi_rssi: -66
+                wifi_mac: "AA:BB:CC:DD:EE:FF"
+                libs:
+                  ESP-IDF: "v4.4.7"
+                  Arduino-ESP32: "2.0.14"
+                  ArduinoJson: "7.0.4"
+                  AceRoutine: "1.5.1 (1.5.1)"
+                  NmraDcc: "2.0.20 (2.0.20)"
+                  U8g2: "2.35.19 (2.35.19)"
+
+  /api/boards:
+    get:
+      tags: [system]
+      summary: List all instantiated boards.
+      description: >
+        Returns metadata for each board registered in the `DeviceFactory`,
+        indexed from 1.
+      responses:
+        "200":
+          description: Array of board descriptors.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BoardInfo"
+              example:
+                - id: "main_board"
+                  type: "Hc595Chain"
+                  bus: "spi1"
+                  pinCount: 16
+                  spiRank: 1
+
+  /api/board-types:
+    get:
+      tags: [system]
+      summary: Stream the board type catalogue.
+      description: >
+        Serves the catalogue of supported board types used by the web editor
+        to populate drop-downs. Content is gzip-compressed and embedded in
+        firmware PROGMEM at build time (not read from LittleFS) — response
+        includes `Content-Encoding: gzip` and a 24h `Cache-Control` header.
+      responses:
+        "200":
+          description: Raw `board_types.json` content (gzip-encoded).
+          headers:
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/device-types:
+    get:
+      tags: [system]
+      summary: Stream the device type catalogue.
+      description: >
+        Serves the catalogue of supported device types used by the web editor
+        to populate drop-downs. Same PROGMEM/gzip serving as
+        `GET /api/board-types`.
+      responses:
+        "200":
+          description: Raw `device_types.json` content (gzip-encoded).
+          headers:
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/bus-types:
+    get:
+      tags: [system]
+      summary: Stream the bus type catalogue.
+      description: >
+        Serves the catalogue of supported bus types (I2C, SPI, UART, …) used
+        by the web editor's Buses tab. Same PROGMEM/gzip serving as
+        `GET /api/board-types`.
+      responses:
+        "200":
+          description: Raw `bus_types.json` content (gzip-encoded).
+          headers:
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/i2c-known:
+    get:
+      tags: [system]
+      summary: Stream the known I2C device address table.
+      description: >
+        Serves a lookup table of well-known I2C addresses to device names,
+        used by `GET /api/scan/i2c` and the web editor to label scan results.
+        Same PROGMEM/gzip serving as `GET /api/board-types`.
+      responses:
+        "200":
+          description: Raw `i2c_known.json` content (gzip-encoded).
+          headers:
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/health:
+    get:
+      tags: [system]
+      summary: State snapshot and optional hardware health check for all devices.
+      description: >
+        Returns `desired` and `state` for every device, allowing the UI to detect
+        whether effects have fully settled (desired == state) or are still
+        transitioning (state < 0 means busy/in-progress).
+
+        Additionally, for devices that implement a hardware read-back (e.g.
+        SerialServo), an `ok` field is included. For SerialServo the ESP32 sends
+        `LOBOT_SERVO_OR_MOTOR_MODE_READ` (cmd 30) and validates the response
+        within 20 ms — this part is blocking per device. Use for diagnostics only.
+      responses:
+        "200":
+          description: Array of health results, one entry per device.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HealthResult"
+              examples:
+                settling:
+                  summary: Mix of settled and transitioning devices
+                  value:
+                    - id: "beacon01"
+                      desired: 0
+                      state: 0
+                    - id: "gaslamp01"
+                      desired: 0
+                      state: -1
+                    - id: "servo01"
+                      desired: 0
+                      state: 0
+                      ok: true
+                servo_no_response:
+                  summary: Servo not responding
+                  value:
+                    - id: "servo01"
+                      desired: 1
+                      state: 1
+                      ok: false
+                      error: 1
+
+  /api/restart:
+    post:
+      tags: [system]
+      summary: Restart the ESP32.
+      description: >
+        Responds 200 then calls `ESP.restart()` after a 400 ms delay.
+        Use this after `POST /api/config` to apply a newly uploaded configuration.
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+
+  /api/reload:
+    post:
+      tags: [system]
+      summary: Hot-reload config.json without rebooting.
+      description: >
+        Calls `ConfigManager::requestReload()` and returns immediately; the
+        actual reload runs on Core 1 on the next `loop()` pass. Use this
+        instead of `POST /api/restart` when the goal is only to re-apply
+        `config.json` — no reboot, shorter downtime, works regardless of
+        whether devices are currently running.
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+
+  /api/dcc-status:
+    get:
+      tags: [system]
+      summary: DCC packet counters and recent decoded event log.
+      description: >
+        Powers the WebUI Diagnostics/DCC tab. Returns per-category packet
+        counters (raw/speed/func/accessory/signal) with last-seen timestamps,
+        plus a merged, timestamp-ordered log of recent speed/func/accessory/
+        signal events (excludes `raw`) — lets the user distinguish "bus dead"
+        (nothing increments, not even `raw`) from "bus alive but wrong
+        address/CV" (`raw` increments, the others don't).
+        Returns `{"enabled":false}` when compiled without `LFX_DCC_ENABLED`.
+      responses:
+        "200":
+          description: DCC status object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DccStatusResponse"
+              examples:
+                enabled:
+                  summary: DCC support compiled in, bus active
+                  value:
+                    enabled: true
+                    uptime_ms: 128340
+                    messages:
+                      raw: {count: 512, last_ms: 128300}
+                      speed: {count: 40, last_ms: 128100}
+                      func: {count: 12, last_ms: 90210}
+                      accessory: {count: 8, last_ms: 61500}
+                      signal: {count: 3, last_ms: 40000}
+                    log:
+                      - kind: "speed"
+                        address: 3
+                        value: 64
+                        last_ms: 128100
+                        device: "loco03"
+                        repeat: 1
+                disabled:
+                  summary: Compiled without DCC support
+                  value:
+                    enabled: false
+
+  /api/test/gpio:
+    post:
+      tags: [system]
+      summary: Write a GPIO pin directly (raw hardware test).
+      description: >
+        Sets `pin` to OUTPUT and drives it HIGH (state=1) or LOW (state=0).
+        GPIO 1 and 3 (UART0 TX/RX) return 403, but only while the UART0 log
+        bus is actually active at runtime (`lfxUart0Reserved()` — true when
+        compiled with `DEBUG_SERIAL`, or with `LOG_SERIAL` while the log bus
+        is live); when UART0 isn't reserved, pins 1/3 are testable like any
+        other GPIO. Valid GPIO range: 0–39.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestGpioRequest"
+            example:
+              pin: 25
+              state: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Pin is reserved (UART0 TX/RX).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "reserved UART pin"
+
+  /api/test/spi:
+    post:
+      tags: [system]
+      summary: Write a single channel on a 74HC595 SPI shift-register (raw hardware test).
+      description: >
+        Calls `Spi595Bus::setPin(card, channel, state)`.
+        `card` is the chip index (1-based); `channel` is the output bit (0-based, 0–7).
+        Returns 503 if SPI is not initialised, 501 if compiled without `SPI_CARDS`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestSpiRequest"
+            example:
+              card: 1
+              channel: 3
+              state: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "501":
+          description: SPI support not compiled in.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "SPI not enabled"
+        "503":
+          description: SPI bus not initialised yet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "SPI not ready"
+
+  /api/test/identify:
+    post:
+      tags: [system]
+      summary: Blink a pin with a distinctive pattern to locate it physically.
+      description: >
+        Start or stop the "identify" blink used to visually find which wire
+        on the board corresponds to a given pin/channel, before or after a
+        device is configured on it. Three mutually exclusive body shapes:
+
+        - `{"pin":<n>}` — blink a bare GPIO.
+        - `{"pin":<n>,"low":[<n>,…]}` — charlieplex wiring test: blink `pin`
+          HIGH while holding the listed candidate wires LOW, so one LED lights
+          predictably even before the device is saved.
+        - `{"card":<n>,"channel":<n>}` — blink one output channel on a 74HC595
+          SPI card. Requires the SPI bus to already be initialised (503 if not
+          — a bare SPI card with no devices yet still auto-activates the bus,
+          see #115).
+        - `{}` (empty body) — stop any identify blink in progress.
+
+        Any device currently driving the targeted pin is switched off first,
+        so it doesn't fight the blink pattern.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentifyRequest"
+            examples:
+              gpio:
+                summary: Identify a bare GPIO
+                value:
+                  pin: 25
+              charlieplex:
+                summary: Charlieplex wiring test
+                value:
+                  pin: 25
+                  low: [26, 27]
+              spi:
+                summary: Identify an SPI 74HC595 channel
+                value:
+                  card: 1
+                  channel: 3
+              stop:
+                summary: Stop the current identify blink
+                value: {}
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Pin is reserved (UART0 TX/RX) while the log bus is active.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "reserved UART pin"
+        "501":
+          description: SPI support not compiled in (only for the `{card,channel}` form).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "SPI not enabled"
+        "503":
+          description: SPI bus not initialised yet (only for the `{card,channel}` form).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "SPI not ready"
+
+  /api/scan/i2c:
+    get:
+      tags: [system]
+      summary: Scan the I2C bus and return found device addresses.
+      description: >
+        Initialises Wire on the configured SDA/SCL pins (defaults: SDA=21, SCL=22;
+        uses OLED_SDA/OLED_SCL if compiled with `OLED`), then probes addresses 1–126.
+        Returns 501 if compiled without `I2C_SCAN`.
+      responses:
+        "200":
+          description: Scan complete.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/I2cScanResponse"
+              example:
+                sda: 21
+                scl: 22
+                found: [60, 104]
+                count: 2
+                names:
+                  "60": "SSD1306 OLED"
+                  "104": "DS3231 RTC"
+        "501":
+          description: I2C scan support not compiled in.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not found"
+
+# =============================================================================
+# Components
+# =============================================================================
+
+components:
+
+  schemas:
+
+    # --- Device ---------------------------------------------------------------
+
+    DeviceInfo:
+      type: object
+      required: [id, type, state, desired, addr, board, stateCount, pinCount, pins]
+      properties:
+        id:
+          type: string
+          description: Unique device identifier from config.json.
+          example: "signal01"
+        type:
+          type: string
+          description: Device class name returned by `getDeviceName()`.
+          example: "TrafficLight3ph"
+        state:
+          type: integer
+          description: >
+            Current hardware state. 0 = OFF, positive = stable state index,
+            negative = busy (transitioning).
+          example: 1
+        desired:
+          type: integer
+          description: Target state requested by the last command.
+          example: 1
+        addr:
+          type: integer
+          description: DCC address (0 if not assigned).
+          example: 10
+        board:
+          type: integer
+          description: Board index (1-based) the device is wired to.
+          example: 1
+        stateCount:
+          type: integer
+          description: Number of stable states this device supports.
+          example: 3
+        pinCount:
+          type: integer
+          description: Number of output pins (wiring channels) used.
+          example: 3
+        pins:
+          type: array
+          items:
+            type: integer
+          description: >
+            Physical wiring channel indices. With SPI_CARDS enabled these are
+            74HC595 bit addresses; otherwise raw GPIO numbers.
+          example: [1, 2, 3]
+
+    DeviceStateRequest:
+      type: object
+      required: [id, state]
+      properties:
+        id:
+          type: string
+          description: Device identifier.
+          example: "signal01"
+        state:
+          type: integer
+          description: >
+            Target state index. 0 = OFF, 1 = first stable state (NEXT_STABLE),
+            higher values = additional stable states. Negative values trigger
+            non-stable (transient) sequences if supported by the device.
+          example: 2
+
+    SwitchRequest:
+      type: object
+      required: [id, on]
+      properties:
+        id:
+          type: string
+          example: "lamp01"
+        on:
+          type: boolean
+          description: true → switchOn() (NEXT_STABLE), false → switchOff() (OFF_STATE).
+          example: true
+
+    AllDevicesRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: integer
+          description: State to apply to all matching devices.
+          example: 0
+        board:
+          type: integer
+          description: >
+            If non-zero, restrict to devices on this board index only.
+            Omit or set to 0 to target all boards.
+          example: 0
+
+    GroupRequest:
+      type: object
+      required: [type, state]
+      properties:
+        type:
+          type: string
+          description: Device type name (matches `getDeviceName()` exactly).
+          example: "GasLamp"
+        state:
+          type: integer
+          example: 1
+
+    ServoRequest:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          description: Device identifier of a SerialServo device.
+          example: "servo01"
+        speed:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: >
+            Motor speed in range [−1000, +1000]. 0 = stop.
+            Positive = forward, negative = reverse.
+            Required unless `action` is provided.
+          example: 600
+        action:
+          type: string
+          enum: [reverse]
+          description: >
+            Optional action. `reverse` calls `reverse()` on the device,
+            which negates the current speed without requiring the caller
+            to know it. Mutually exclusive with `speed`.
+
+    # --- System ---------------------------------------------------------------
+
+    StatusResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: "v1"
+        build_date:
+          type: string
+          example: "Apr  9 2026 12:00:00"
+        env:
+          type: string
+          description: PlatformIO environment name the firmware was built for. Omitted if not embedded in the build.
+          example: "zou_debug"
+        uptime_s:
+          type: integer
+          description: Seconds since last boot.
+          example: 3742
+        ip:
+          type: string
+          format: ipv4
+          description: Station IP, or SoftAP IP when `wifiMode` is "ap".
+          example: "192.168.1.42"
+        wifiMode:
+          type: string
+          enum: [sta, ap]
+          description: Whether WiFi is connected as a client ("sta") or running its own access point ("ap").
+          example: "sta"
+        config:
+          type: boolean
+          description: Whether config.json exists in LittleFS.
+          example: true
+        devices:
+          type: integer
+          description: Number of devices registered in the factory.
+          example: 8
+        devices_max:
+          type: integer
+          description: Compile-time maximum device count (`LFX_FACTORY_MAX_DEVICES`).
+          example: 64
+        cpu_mhz:
+          type: integer
+          example: 240
+        chip:
+          type: string
+          example: "ESP32-D0WD-V3"
+        chip_rev:
+          type: integer
+          example: 3
+        heap_free:
+          type: integer
+          description: Current free heap bytes.
+          example: 218432
+        heap_total:
+          type: integer
+          example: 327680
+        heap_min:
+          type: integer
+          description: Minimum free heap since boot.
+          example: 195000
+        temp_c:
+          type: number
+          format: float
+          description: Internal chip temperature in °C.
+          example: 43.5
+        sketch_size:
+          type: integer
+          description: Firmware size in bytes.
+          example: 512000
+        sketch_free:
+          type: integer
+          description: Available OTA space in bytes.
+          example: 249856
+        fs_total:
+          type: integer
+          description: LittleFS partition total size in bytes.
+          example: 1441792
+        fs_used:
+          type: integer
+          description: LittleFS bytes used.
+          example: 8192
+        features:
+          type: object
+          description: >
+            Compile-time flag mirror (see `LayoutFX_define.h`) — reflects what
+            was *built into* this firmware image, not runtime activation state.
+          properties:
+            wifi: {type: boolean}
+            api: {type: boolean}
+            webui: {type: boolean}
+            config: {type: boolean}
+            oled: {type: boolean}
+            i2c: {type: boolean}
+            spi: {type: boolean}
+            lobot_servo: {type: boolean}
+            lx16a_servo: {type: boolean}
+            dcc: {type: boolean}
+            audio: {type: boolean}
+            ota: {type: boolean}
+            log_serial: {type: boolean}
+            debug_serial: {type: boolean}
+            log_oled: {type: boolean}
+            debug_oled: {type: boolean}
+            oled_status: {type: boolean}
+            oled_splash: {type: boolean}
+            oled_metrics: {type: boolean}
+            oled_events: {type: boolean}
+            wifi_force_ap: {type: boolean}
+            dcc_audit: {type: boolean}
+            i2c_scan: {type: boolean}
+            jtag: {type: boolean}
+            demo: {type: boolean}
+        sys_pins:
+          type: object
+          description: >
+            Reserved system pin -> label map, keyed by pin number as a string.
+            Only present in the response when at least one of `LOG_SERIAL`,
+            `DEBUG_SERIAL`, or `LFX_DCC_ENABLED` is compiled in. TX0/RX0 entries
+            for the UART0 log bus only appear while it's actually reserved at
+            runtime (`LOG_SERIAL`'s `g_lfxLogActive` flag), not just compiled in.
+          additionalProperties:
+            type: string
+          example:
+            "1": "TX0"
+            "3": "RX0"
+            "17": "DCC"
+        wifi_ssid:
+          type: string
+          description: Connected SSID (station mode) or the SoftAP's own SSID (AP mode).
+          example: "MyHomeNetwork"
+        wifi_rssi:
+          type: integer
+          description: Signal strength in dBm (station mode); always 0 in AP mode. Less negative = stronger signal.
+          example: -66
+        wifi_mac:
+          type: string
+          example: "AA:BB:CC:DD:EE:FF"
+        libs:
+          type: object
+          description: >
+            Detected versions of key runtime libraries. Keys are library names
+            (e.g. "ESP-IDF", "Arduino-ESP32", "ArduinoJson", "AceRoutine",
+            "NmraDcc", "U8g2") — the exact set present depends on which
+            optional libraries are compiled in.
+          additionalProperties:
+            type: string
+          example:
+            ESP-IDF: "v4.4.7"
+            Arduino-ESP32: "2.0.14"
+            ArduinoJson: "7.0.4"
+
+    BoardInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Board identifier from config.json.
+          example: "main_board"
+        type:
+          type: string
+          description: Board type string.
+          example: "Hc595Chain"
+        bus:
+          type: string
+          description: Bus key the board is connected to.
+          example: "spi1"
+        pinCount:
+          type: integer
+          description: Total number of channels on the board.
+          example: 16
+        spiRank:
+          type: integer
+          description: Position in the SPI daisy-chain (0 if not SPI).
+          example: 1
+
+    HealthResult:
+      type: object
+      required: [id, desired, state]
+      properties:
+        id:
+          type: string
+          description: Device identifier.
+          example: "beacon01"
+        desired:
+          type: integer
+          description: >
+            Requested state (set via switchOn/switchOff or newState).
+            0 = off, positive values are device-specific states.
+          example: 0
+        state:
+          type: integer
+          description: >
+            Actual coroutine state. Equals `desired` when settled.
+            Negative value (-1) means the coroutine is still transitioning
+            (e.g. an effect finishing its fade-out cycle).
+          example: -1
+        ok:
+          type: boolean
+          description: >
+            Hardware read-back result. Only present for devices that implement
+            `healthCheck()` (e.g. SerialServo). Absent for LED/SPI devices.
+          example: true
+        error:
+          type: integer
+          description: >
+            Error code when ok is false.
+            1 = no response (timeout), 2 = bad response (frame/checksum).
+          example: 1
+        hw_mode:
+          type: integer
+          enum: [0, 1]
+          description: >
+            Mode reported by the servo hardware (only when ok is true).
+            0 = position mode (stopped), 1 = motor mode (continuous rotation).
+          example: 1
+        hw_speed:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: >
+            Speed reported by the servo hardware (only when ok is true).
+            Should match the last speed sent via POST /api/servo.
+          example: 300
+
+    TestGpioRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: integer
+          minimum: 0
+          maximum: 39
+          description: GPIO number to drive (1 and 3 are reserved).
+          example: 25
+        state:
+          type: integer
+          enum: [0, 1]
+          default: 0
+          description: 1 = HIGH, 0 = LOW.
+          example: 1
+
+    TestSpiRequest:
+      type: object
+      required: [card, channel]
+      properties:
+        card:
+          type: integer
+          minimum: 1
+          description: 74HC595 chip index in the daisy-chain (1-based).
+          example: 1
+        channel:
+          type: integer
+          minimum: 0
+          maximum: 7
+          description: Output bit index on the chip (0-based).
+          example: 3
+        state:
+          type: integer
+          enum: [0, 1]
+          default: 0
+          description: 1 = HIGH, 0 = LOW.
+          example: 1
+
+    IdentifyRequest:
+      type: object
+      description: >
+        Exactly one of `pin` or `card`+`channel` should be given to start a
+        blink; an empty object stops any identify blink in progress.
+      properties:
+        pin:
+          type: integer
+          minimum: 0
+          maximum: 39
+          description: Bare GPIO to identify (1 and 3 are reserved while the UART0 log bus is active).
+          example: 25
+        low:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 39
+          description: >
+            Charlieplex wiring test only (requires `pin`): candidate wires to
+            hold LOW while `pin` blinks HIGH.
+          example: [26, 27]
+        card:
+          type: integer
+          minimum: 1
+          description: 74HC595 chip index in the daisy-chain (1-based). Must be paired with `channel`.
+          example: 1
+        channel:
+          type: integer
+          minimum: 0
+          maximum: 7
+          description: Output bit index on the chip (0-based). Must be paired with `card`.
+          example: 3
+
+    DccStatusResponse:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+          description: Whether the firmware was compiled with `LFX_DCC_ENABLED`. All other fields are absent when false.
+          example: true
+        uptime_ms:
+          type: integer
+          description: Milliseconds since boot (DCC subsystem clock).
+          example: 128340
+        messages:
+          type: object
+          description: Per-category packet counters.
+          properties:
+            raw: {$ref: "#/components/schemas/DccCounter"}
+            speed: {$ref: "#/components/schemas/DccCounter"}
+            func: {$ref: "#/components/schemas/DccCounter"}
+            accessory: {$ref: "#/components/schemas/DccCounter"}
+            signal: {$ref: "#/components/schemas/DccCounter"}
+        log:
+          type: array
+          description: >
+            Recent decoded events (speed/func/accessory/signal only — `raw`
+            packets are counted but not logged individually), merged across
+            categories and sorted by timestamp, most ring buffers hold a
+            handful of entries per category.
+          items:
+            type: object
+            required: [kind, address, value, last_ms, device, repeat]
+            properties:
+              kind:
+                type: string
+                enum: [speed, func, accessory, signal]
+              address:
+                type: integer
+                description: DCC address the packet targeted.
+                example: 3
+              value:
+                type: integer
+                description: Decoded value (meaning depends on `kind`, e.g. speed step or function mask).
+                example: 64
+              last_ms:
+                type: integer
+                description: Milliseconds since boot when this event was last seen.
+                example: 128100
+              device:
+                type: string
+                description: Matched device id, or empty string if no device claims this address.
+                example: "loco03"
+              repeat:
+                type: integer
+                description: Consecutive repeat count of the same value (DCC packets are typically sent multiple times per command).
+                example: 1
+
+    DccCounter:
+      type: object
+      required: [count, last_ms]
+      properties:
+        count:
+          type: integer
+          description: Total packets of this kind seen since boot.
+          example: 512
+        last_ms:
+          type: integer
+          description: Milliseconds since boot when this kind was last seen (0 if never).
+          example: 128300
+
+    I2cScanResponse:
+      type: object
+      required: [sda, scl, found, count]
+      properties:
+        sda:
+          type: integer
+          description: SDA GPIO pin used for the scan.
+          example: 21
+        scl:
+          type: integer
+          description: SCL GPIO pin used for the scan.
+          example: 22
+        found:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 126
+          description: Decimal I2C addresses of responding devices.
+          example: [60, 104]
+        count:
+          type: integer
+          description: Number of devices found.
+          example: 2
+        names:
+          type: object
+          description: >
+            Known device name per found address (decimal address as string
+            key), looked up from `i2c_known.json`. Only present when at least
+            one match was found.
+          additionalProperties:
+            type: string
+          example:
+            "60": "SSD1306 OLED"
+            "104": "DS3231 RTC"
+
+    # --- Shared ---------------------------------------------------------------
+
+    Ok:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          example: true
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: "device not found"
+
+  responses:
+
+    Ok:
+      description: Operation succeeded.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Ok"
+
+    BadRequest:
+      description: Missing body or invalid JSON.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            missing_body:
+              value:
+                error: "body required"
+            invalid_json:
+              value:
+                error: "invalid JSON"
+
+    NotFound:
+      description: Device or resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "device not found"
