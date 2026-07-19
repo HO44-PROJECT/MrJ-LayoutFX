@@ -459,18 +459,20 @@ function renderPin(board, boardApiIdx, pin) {
   // one tile highlights the whole set (see grpHi / grpPin). Single-pin → no group.
   var grp = (dev && dev.pins && dev.pins.length > 1) ? dev.id : null;
 
-  // In DCC-label mode, a pin carrying a device with a DCC address shows "#<addr>"
-  // instead of its GPIO/channel number (see setPinLabel). In delay-label mode
-  // (#8), it shows the device's configured start_delay_ms/_random_ms instead,
-  // e.g. "4.0s+2s" — falls through to the normal label when no delay is set.
+  // In DCC-label mode, a pin carrying a device shows "@<addr>", or "@-" when
+  // that device has no DCC address configured (#129) — never silently falls
+  // back to the GPIO number, which used to look like a DCC address itself.
+  // In delay-label mode (#8), it shows the device's configured
+  // start_delay_ms/_random_ms, e.g. "4.0s+2s", or "0s" when none is set
+  // (#129) — same reasoning: a bare GPIO number there reads as a delay.
   // On SPI/I2C expansion boards pin.label is the only meaningful channel name
   // ("Q3", "CH7") so it's always kept; on plain GPIO boards it's a static
   // alt-function name ("TXD0") that's misleading once a device sits there
   // outside a bus — show the bare GPIO number instead, unless a bus currently
   // reserves the pin (_dbgSysPins), e.g. a device config-only-skipped by the
   // uart0 guard (#66) still shows "TXD0" while the log bus owns it (#70).
-  var delayLabel = _dbgPinLabel === 'delay' && dev ? fmtStartDelayLabel(dbgFindCfgDev(boardApiIdx, num)) : null;
-  var numLabel = (_dbgPinLabel === 'dcc' && dev && dev.addr > 0) ? '#' + dev.addr
+  var delayLabel = _dbgPinLabel === 'delay' && dev ? (fmtStartDelayLabel(dbgFindCfgDev(boardApiIdx, num)) || '0s') : null;
+  var numLabel = _dbgPinLabel === 'dcc' && dev ? (dev.addr > 0 ? '@' + dev.addr : '@-')
     : delayLabel ? delayLabel
       : (isSpi || isI2c) ? pin.label
         : (dev ? (_dbgSysPins[num] || num) : pin.label);

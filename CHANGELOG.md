@@ -7,6 +7,13 @@ earlier project history (pre-#3) lives only in `git log`.
 
 ## 2026-07-19
 
+- The Boards & extensions page's DCC and DELAY pin-label modes no longer fall
+  back to the raw GPIO/channel number for devices with no DCC address or no
+  configured delay, which was easy to misread as a real value. DCC mode now
+  shows `@<addr>` (was `#<addr>`), or `@-` when the device has no address;
+  DELAY mode shows `0s` when the device has no configured delay. Validated
+  in the browser. (#129)
+
 - The pin edit button on the Boards & extensions page now uses an inline SVG
   pencil icon (matching the existing icon set's style) instead of a Unicode
   glyph, and its styling now mirrors the raw-GPIO test button (`.dbg-led-btn`)
