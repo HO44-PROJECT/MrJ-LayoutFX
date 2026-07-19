@@ -10,7 +10,7 @@
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author MrJ
  * @date 2025-08-01
- * @license MIT License
+ * @license AGPL-3.0-or-later
  */
 
 #include "devices/PinState.h"

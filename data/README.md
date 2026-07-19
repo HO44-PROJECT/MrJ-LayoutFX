@@ -236,4 +236,4 @@ Ces fichiers sont servis par l'API REST du framework :
 **Version** : 1.0  
 **Date** : 2026-06-02  
 **Projet** : MrJ-LayoutFX  
-**Licence** : MIT License — Copyright (c) 2026 HO44 PROJECT
+**Licence** : AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT

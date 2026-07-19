@@ -7,10 +7,10 @@
  *
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  *
  * @project MrJ-LayoutFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 
 /* ── Constants ──────────────────────────────────────────────────────── */

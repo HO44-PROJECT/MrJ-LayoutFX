@@ -9,7 +9,7 @@
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @date 2025-08-01
- * @license MIT License
+ * @license AGPL-3.0-or-later
  */
 
 #include "traffic/TrafficLight3Phase.h"

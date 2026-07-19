@@ -11,7 +11,7 @@
     "name": "MrJ",
     "email": "ho44project@gmail.com"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "frameworks": "arduino",
   "platforms": [
     "atmelavr",

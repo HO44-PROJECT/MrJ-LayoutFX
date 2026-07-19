@@ -17,7 +17,7 @@ Tous les fichiers JavaScript du projet suivent maintenant un format d'en-tête s
  *
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 ```
 
@@ -161,7 +161,7 @@ var msg = "Device created";
     *
     * @project MrJ-LayoutFX
     * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
-    * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+    * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
     */
    ```
 

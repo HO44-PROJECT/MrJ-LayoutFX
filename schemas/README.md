@@ -233,4 +233,4 @@ npm install -g prettier        # Formatter JSON
 **Date de migration** : 2026-06-02  
 **Version** : 1.0  
 **Projet** : MrJ-LayoutFX  
-**Licence** : MIT License — Copyright (c) 2026 HO44 PROJECT
+**Licence** : AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT

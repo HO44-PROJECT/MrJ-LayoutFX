@@ -9,7 +9,7 @@
  *
  * @author MrJ
  * @date 2025-09-03
- * @license MIT License
+ * @license AGPL-3.0-or-later
  */
 
 #pragma once

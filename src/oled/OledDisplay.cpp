@@ -2,7 +2,7 @@
  * @file OledDisplay.cpp
  *
  * @project MrJ-LayoutFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 
 #include "oled/OledDisplay.h"

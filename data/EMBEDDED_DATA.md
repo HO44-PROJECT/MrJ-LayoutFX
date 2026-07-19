@@ -318,4 +318,4 @@ Ou attendre 24h (expiration cache)
 **Date** : 2026-06-02  
 **Projet** : MrJ-LayoutFX  
 **Auteur** : Migration LittleFS → PROGMEM  
-**Licence** : MIT License — Copyright (c) 2026 HO44 PROJECT
+**Licence** : AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT

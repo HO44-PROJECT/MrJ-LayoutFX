@@ -11,7 +11,7 @@ Files are gzipped and served with Content-Encoding: gzip by the API.
 Called automatically by PlatformIO before build (see platformio.ini extra_scripts).
 
 @project MrJ-ArduinoRailwayFX
-@license MIT License — Copyright (c) 2026 HO44 PROJECT
+@license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
 """
 
 # PlatformIO hook support
@@ -72,7 +72,7 @@ def json_to_progmem(input_path: Path, output_path: Path, var_name: str, brand: s
  * Served by /api/{input_path.stem.replace('_', '-')} with Content-Encoding: gzip
  *
  * @project MrJ-ArduinoRailwayFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 
 #pragma once
@@ -138,7 +138,7 @@ def board_pincounts_to_header(input_path: Path, output_path: Path):
  * uncompressed table is emitted alongside it and passed to DeviceFactory::load().
  *
  * @project MrJ-ArduinoRailwayFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 
 #pragma once
@@ -202,7 +202,7 @@ def state_labels_to_header(input_path: Path, output_path: Path):
  * of truth. "REV" is emitted as -1 (reverse-action sentinel, see DeviceApi).
  *
  * @project MrJ-ArduinoRailwayFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 
 #pragma once

@@ -26,7 +26,7 @@
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
  * @author Grok 4 (based on user specifications)
  * @date 2025-09-23
- * @license MIT License.
+ * @license AGPL-3.0-or-later.
  */
 
 #pragma once

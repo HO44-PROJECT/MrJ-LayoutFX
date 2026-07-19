@@ -7,7 +7,7 @@
  *
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
- * @license MIT License — Copyright (c) 2026 HO44 PROJECT
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
  */
 
 // Trigger an I2C bus scan on the ESP32 and display found addresses with chip names from _i2cKnown.

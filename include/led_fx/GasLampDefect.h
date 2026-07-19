@@ -9,7 +9,7 @@
  *
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
- * @license MIT License. See the LICENSE file in the project root for details.
+ * @license AGPL-3.0-or-later. See the LICENSE file in the project root for details.
  */
 
 #pragma once
