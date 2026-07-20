@@ -136,9 +136,11 @@ void ApiServer::init(const char *ssid, const char *password,
       _dns = new DNSServer();
       _dns->start(53, "*", WiFi.softAPIP());
       // HTTP probe routes: Android fallback (/generate_204) and macOS (/hotspot-detect.html).
-      // These are hit when the OS still tries HTTP after HTTPS fails.
+      // These are hit when the OS still tries HTTP after HTTPS fails. Built from
+      // WiFi.softAPIP() rather than hardcoded — 192.168.4.1 is only the default
+      // softAP IP, not guaranteed (custom AP subnet, future config option, ...).
       auto _cpRedirect = []() {
-        _server->sendHeader(F("Location"), F("http://192.168.4.1/ui"));
+        _server->sendHeader(F("Location"), "http://" + WiFi.softAPIP().toString() + "/ui");
         _server->send(302);
       };
       _server->on("/generate_204", HTTP_GET, _cpRedirect);
@@ -190,7 +192,7 @@ void ApiServer::init(const char *ssid, const char *password,
       _server->send(kNoContent);
     } else if (_isAP) {
       // Redirect captive-portal probes (iOS, Android, Windows) to the web UI.
-      _server->sendHeader(F("Location"), F("http://192.168.4.1/ui"));
+      _server->sendHeader(F("Location"), "http://" + WiFi.softAPIP().toString() + "/ui");
       _server->send(302);
     } else {
       _server->send(kNotFound, "application/json", F("{\"error\":\"not found\"}"));

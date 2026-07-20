@@ -57,6 +57,30 @@ public:
    * @brief Connect WiFi in STA mode; fall back to AP mode if STA fails.
    *        Starts the HTTP server and launches the Core-0 system task.
    *
+   * @details
+   *   Flow:
+   *     1. forceAp true (safe mode) or LFX_WIFI_FORCE_AP compiled in → skip
+   *        straight to AP, no STA attempt.
+   *     2. Otherwise, try STA: WiFi.begin(ssid, password), poll up to
+   *        kWifiRetries × kWifiRetryMs (~10 s total). ssid/password come from
+   *        WIFI_SSID/WIFI_PASSWORD — compiled in via configurations/auth/wifi.h,
+   *        absent entirely on the public web-installer build (see #132, no
+   *        runtime provisioning yet).
+   *     3. STA connected → isAP() false, device reachable on the home network
+   *        at WiFi.localIP().
+   *     4. STA failed (bad/no credentials, AP out of range, ...) → AP
+   *        fallback: WiFi.softAP(apSsid, apPassword), isAP() true.
+   *
+   *   AP mode also starts a captive-portal DNS server (DNSServer, wildcard "*"
+   *   → the SoftAP's own IP) so any hostname a client's OS tries to resolve
+   *   answers with this device. Two extra routes handle the HTTP probes each
+   *   OS then makes to detect "is this a real captive portal": /generate_204
+   *   (Android) and /hotspot-detect.html (macOS/iOS) both redirect to /ui.
+   *   onNotFound() applies the same redirect for anything else hit in AP mode,
+   *   so effectively every URL a client tries lands on the web UI. The
+   *   redirect target is built from WiFi.softAPIP() at request time rather
+   *   than hardcoded, since 192.168.4.1 is only the default SoftAP IP.
+   *
    * @param ssid        STA WiFi SSID.
    * @param password    STA WiFi password.
    * @param apSsid      AP fallback SSID (default: WIFI_AP_SSID).
