@@ -742,27 +742,39 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   }
   #endif
 
-  // dcc bus contention guard (#19): mirrors the uart0 guard above — _dccPin is
-  // already parsed in pass 1, so it's authoritative here. Any device wired to
-  // the same physical pin as the configured dcc bus is SKIPPED rather than
-  // allowed to fight the NmraDcc ISR for the pin. Stays in the config and
-  // revives once the dcc bus is removed (same UX as the uart0 guard).
+  // Generic bus contention guard (#134, extends #19/#66): any config-driven
+  // bus can be added at runtime over GPIO effects that were wired directly
+  // to its pins before the bus existed — dcc (single pin), spi (mosi/sclk/
+  // latch, via BusRegistry), i2c (sda/scl per bus, via BusRegistry, #134 —
+  // previously unguarded entirely) and uart1/uart2 (tx/rx, via our own
+  // _ports[], already populated in pass 1). uart0 is deliberately excluded
+  // here — it has its own guard right above, driven by logBusRequest()
+  // rather than a plain reserved-pin set, since "is uart0 owned" depends on
+  // more than just whether a bus entry exists. Any device landing on one of
+  // these pins is SKIPPED rather than left fighting the bus electrically;
+  // it stays in the config and revives once the conflicting bus is removed.
   {
     bool rootBoard = (boardIdx == 0) ||
                      (boardIdx <= _boardCount && _boards_cfg[boardIdx - 1].isRoot());
-    if (_dccPin >= 0 && rootBoard) {
-      bool onDccPin = false;
+    if (rootBoard) {
+      auto pinReserved = [this](int p) {
+        if (p == _dccPin && _dccPin >= 0) return true;
+        if (BusRegistry::isPinReserved(p)) return true;
+        for (size_t i = 0; i < _portCount; i++)
+          if (p == _ports[i].tx || p == _ports[i].rx) return true;
+        return false;
+      };
+      bool conflict = false;
       if (wiring.is<JsonArray>()) {
-        for (JsonVariant v : wiring.as<JsonArray>()) {
-          if (v.as<int>() == _dccPin) onDccPin = true;
-        }
+        for (JsonVariant v : wiring.as<JsonArray>())
+          if (pinReserved(v.as<int>())) conflict = true;
       } else if (wiring.is<int>()) {
-        if (wiring.as<int>() == _dccPin) onDccPin = true;
+        if (pinReserved(wiring.as<int>())) conflict = true;
       }
-      if (onDccPin) {
+      if (conflict) {
         LOG_PRINT(F("DeviceFactory: device '"));
         LOG_PRINT(obj[kFId] | "");
-        LOG_PRINTLN(F("' SKIPPED — GPIO reserved by the dcc bus"));
+        LOG_PRINTLN(F("' SKIPPED — GPIO reserved by an active bus"));
         return nullptr;
       }
     }

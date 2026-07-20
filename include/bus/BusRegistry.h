@@ -107,6 +107,29 @@ public:
   static bool i2cReady() { return _i2cReady; }
 
   /**
+   * @brief Is GPIO @p pin reserved by any registered SPI or I2C bus? (#134)
+   *
+   * Used by DeviceFactory to skip GPIO-wired devices that collide with a
+   * bus's pins — same contention guard already applied to uart0 (#66) and
+   * dcc (#19), generalised here to cover every bus that can be added at
+   * runtime over existing GPIO wiring. UART buses are intentionally NOT
+   * checked here: DeviceFactory holds tx/rx per-port in its own _ports[]
+   * (populated in the same parse pass) and already guards uart0 directly —
+   * checking both would just duplicate that lookup.
+   * @param pin GPIO number, or -1 (always returns false — "no pin").
+   */
+  static bool isPinReserved(int pin) {
+    if (pin < 0)
+      return false;
+    if (pin == _spiMosi || pin == _spiSclk || pin == _spiLatch)
+      return true;
+    for (uint8_t i = 0; i < _i2cCount; i++)
+      if (pin == _i2cs[i].sda || pin == _i2cs[i].scl)
+        return true;
+    return false;
+  }
+
+  /**
    * @brief Mark the I2C bus as already initialised (Wire.begin called externally).
    *        Prevents activateI2c() from calling Wire.begin() a second time, which
    *        corrupts the I2C peripheral on arduino-esp32 v3.x.

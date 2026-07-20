@@ -334,6 +334,12 @@ function addLinkedBus(btType, lbKey) {
       fieldKeys.forEach(function (f) {
         if (lb[f] !== undefined) entry[f] = lb[f];
       });
+      var pins = fieldKeys.filter(function (f) { return f !== 'baud'; }).map(function (f) { return entry[f]; });
+      var conflicts = gpioConflicts(cfg, pins);
+      if (conflicts.length &&
+          !confirm(t('bue.save_conflicts').replace('{{list}}', conflicts.join(', ')))) {
+        return Promise.resolve(null); // user cancelled
+      }
       cfg.buses[lb.key] = entry;
       return fetch('/api/config', {
         method: 'POST',
@@ -345,6 +351,22 @@ function addLinkedBus(btType, lbKey) {
     .catch(function (e) { alert(t('de.err_prefix') + e.message); });
 }
 
+// Return the device IDs that are GPIO-wired (no board, or a board with no bus —
+// i.e. root/GPIO wiring, not addressed through a bus board) directly on any of
+// the given pins. Used to warn before a bus reserves pins out from under
+// devices that write them directly: while the bus is active the firmware
+// SKIPS those devices (#66/#134) — they stay in the config and revive if the
+// bus is later removed.
+function gpioConflicts(cfg, pins) {
+  var gpioBoards = {}; // board ids with no bus (root/GPIO)
+  (cfg.boards || []).forEach(function (b) { if (!b.bus) gpioBoards[b.id] = true; });
+  return (cfg.devices || []).filter(function (d) {
+    if (d.board && !gpioBoards[d.board]) return false; // bus board: wiring ≠ GPIO
+    var w = Array.isArray(d.wiring) ? d.wiring : [d.wiring];
+    return w.some(function (p) { return pins.indexOf(parseInt(p)) >= 0; });
+  }).map(function (d) { return d.id; });
+}
+
 // (Re)enable the uart0 serial-log bus: keeps Tier-2 logging on and reserves GPIO1/3.
 // Removing it (deleteBus('uart0')) frees those pins for use as effect outputs.
 function addLogBus() {
@@ -353,16 +375,7 @@ function addLogBus() {
     .then(function (cfg) {
       if (!cfg.buses) cfg.buses = {};
       if (cfg.buses.uart0) return Promise.resolve(null); // already present
-      // Warn when devices are wired to GPIO 1/3 on a GPIO board: while the log
-      // bus is active the firmware SKIPS them (#66) — they stay in the config
-      // and revive when the bus is removed.
-      var gpioBoards = {}; // board ids with no bus (root/GPIO)
-      (cfg.boards || []).forEach(function (b) { if (!b.bus) gpioBoards[b.id] = true; });
-      var conflicts = (cfg.devices || []).filter(function (d) {
-        if (d.board && !gpioBoards[d.board]) return false; // bus board: wiring ≠ GPIO
-        var w = Array.isArray(d.wiring) ? d.wiring : [d.wiring];
-        return w.indexOf(1) >= 0 || w.indexOf(3) >= 0;
-      }).map(function (d) { return d.id; });
+      var conflicts = gpioConflicts(cfg, [1, 3]);
       if (conflicts.length &&
           !confirm(t('bue.add_log_conflicts').replace('{{list}}', conflicts.join(', ')))) {
         return Promise.resolve(null); // user cancelled
@@ -387,6 +400,11 @@ function addDccBus(pin) {
     .then(function (cfg) {
       if (!cfg.buses) cfg.buses = {};
       if (cfg.buses.dcc) return Promise.resolve(null); // already present
+      var conflicts = gpioConflicts(cfg, [parseInt(pin, 10)]);
+      if (conflicts.length &&
+          !confirm(t('bue.save_conflicts').replace('{{list}}', conflicts.join(', ')))) {
+        return Promise.resolve(null); // user cancelled
+      }
       cfg.buses.dcc = { type: 'dcc', pin: parseInt(pin, 10) };
       return fetch('/api/config', {
         method: 'POST',
@@ -690,6 +708,10 @@ function saveBusEditor() {
   document.getElementById('bue-save-btn').disabled = true;
   bueStatus(t('de.saving'), 'ok');
 
+  // Pins this bus reserves (every field but baud) — same convention as the
+  // bus-vs-bus check in bueUpdateFields().
+  var pins = fields.filter(function (f) { return f.key !== 'baud'; }).map(function (f) { return bus[f.key]; });
+
   fetch('/api/config')
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function (cfg) {
@@ -698,6 +720,14 @@ function saveBusEditor() {
         bueStatus(t('bue.err_dup'), 'err');
         document.getElementById('bue-save-btn').disabled = false;
         return Promise.reject(null);
+      }
+      // Warn before reserving pins that GPIO-wired devices are already using
+      // directly — same protection addLogBus() already gives uart0 (#134).
+      var conflicts = gpioConflicts(cfg, pins);
+      if (conflicts.length &&
+          !confirm(t('bue.save_conflicts').replace('{{list}}', conflicts.join(', ')))) {
+        document.getElementById('bue-save-btn').disabled = false;
+        return Promise.reject(null); // user cancelled
       }
       cfg.buses[key] = bus;
       return fetch('/api/config', {

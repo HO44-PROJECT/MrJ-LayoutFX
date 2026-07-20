@@ -806,8 +806,15 @@ function saveDevEditor() {
   var type = document.getElementById('de-type').value;
   var isI2cType = I2C_SERVO_TYPES.indexOf(type) >= 0 || I2C_MOTOR_TYPES.indexOf(type) >= 0;
   var boardIdx = parseInt(document.getElementById('de-board').value, 10);
-  // For I2C devices the board field is hidden — always use the context-locked index.
-  if (isI2cType && _deFixedBoardApiIdx !== undefined) boardIdx = _deFixedBoardApiIdx;
+  // The board field is hidden whenever the board/pin is fixed by context (the
+  // board that was clicked) — see deUpdateWiringFields()'s boardField.style.display.
+  // In that case #de-board's <select> (populated from _dbgBoards, the runtime
+  // /api/boards list — which excludes the root GPIO board) is stale/irrelevant;
+  // always trust the context-locked, cfg.boards-space index instead. Used to be
+  // I2C-only, which left plain GPIO devices on the root board resolving to
+  // whatever board happened to be _dbgBoards[boardIdx] (often a bus board) —
+  // dev.board ended up wrong, silently defeating the GPIO-conflict guard (#134).
+  if (_deFixedBoardApiIdx !== undefined) boardIdx = _deFixedBoardApiIdx;
   var addrStr = (document.getElementById('de-addr').value || '').trim();
   var defState = document.getElementById('de-defstate').value;
   var startDelayStr = (document.getElementById('de-start-delay').value || '').trim();
@@ -870,9 +877,15 @@ function saveDevEditor() {
     }
   }
 
-  var board = _dbgBoards[boardIdx];
+  // Context-locked saves (see boardIdx above) carry a cfg.boards-space index,
+  // including the root GPIO board that _dbgBoards (runtime /api/boards) never
+  // lists — resolve against cfg.boards first in that case. Otherwise (the
+  // board <select> was actually used) boardIdx is _dbgBoards-space.
+  var board = (_deFixedBoardApiIdx !== undefined && _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardIdx])
+    ? _dbgCfg.boards[boardIdx]
+    : _dbgBoards[boardIdx];
   // Fallback: runtime board list may be stale — try config boards (source of truth for id).
-  if (!board && isI2cType && _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardIdx])
+  if (!board && _dbgCfg && _dbgCfg.boards && _dbgCfg.boards[boardIdx])
     board = _dbgCfg.boards[boardIdx];
   if (!board) { deStatus(t('de.err_board'), 'err'); return; }
 
