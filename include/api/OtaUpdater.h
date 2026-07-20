@@ -33,6 +33,18 @@ void beginArduinoOta();
 void handle();
 
 /**
+ * @brief Is a firmware transfer (espota or web /update) currently in progress?
+ *
+ * Both OTA paths block the main loop unevenly while writing flash
+ * (Update.write() per chunk), which desyncs the effect coroutines' timing
+ * assumptions and makes LEDs flicker instead of pausing cleanly (#133).
+ * LayoutFX::loop() checks this to skip effect scheduling/output for the
+ * transfer's duration; no restore step is needed since both paths reboot
+ * the device on completion.
+ */
+bool inProgress();
+
+/**
  * @brief mDNS / OTA hostname actually in use, e.g. "layoutfx-1a2b" (OTA_HOSTNAME +
  *        a per-device MAC suffix to avoid collisions). Valid after
  *        beginArduinoOta(); empty string before.

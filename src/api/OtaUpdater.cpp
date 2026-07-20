@@ -25,6 +25,7 @@
 
 namespace {
 char _host[24] = {0};
+bool _inProgress = false; // set on transfer start, never cleared (device reboots on completion)
 
 // "<OTA_HOSTNAME>-<2 MAC bytes>" → stable per-device name, avoids mDNS clashes.
 void _buildHostname() {
@@ -37,6 +38,7 @@ void _buildHostname() {
 namespace OtaUpdater {
 
 const char *hostname() { return _host; }
+bool inProgress() { return _inProgress; }
 
 void beginArduinoOta() {
   _buildHostname();
@@ -47,6 +49,7 @@ void beginArduinoOta() {
 
   ArduinoOTA
       .onStart([]() {
+        _inProgress = true;
         Serial.println(F("[OTA] update started (espota)"));
   #ifdef LFX_OLED_ENABLED
         OledDisplay::log("OTA update...");
@@ -107,6 +110,7 @@ void registerWebRoutes() {
   #ifdef OTA_PASSWORD
           if (!s.authenticate(OTA_HOSTNAME, OTA_PASSWORD)) { _denied = true; return; }
   #endif
+          _inProgress = true;
           Serial.printf("[OTA] web upload: %s\n", up.filename.c_str());
           if (!Update.begin(UPDATE_SIZE_UNKNOWN)) Update.printError(Serial);
         } else if (up.status == UPLOAD_FILE_WRITE) {

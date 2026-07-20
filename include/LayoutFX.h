@@ -277,30 +277,46 @@ public:
    *          1. CoroutineScheduler  (all platforms)
    *          2. Spi595Bus::flush()  (if LFX_SPI_CARDS_ENABLED is defined)
    *          3. StatusOled::loop()  (if OLED_STATUS is defined)
+   *
+   * Effect scheduling/output (1, DCC, Identify, BusRegistry::flush()) is
+   * skipped for the duration of an OTA transfer (#133): Update.write()
+   * blocks the loop unevenly per chunk, which desyncs coroutine timing and
+   * makes LEDs flicker instead of pausing cleanly. No restore step is
+   * needed — both OTA paths reboot the device on completion.
    */
   static void loop() {
-    ace_routine::CoroutineScheduler::loop();
+    bool otaBusy = false;
+#ifdef LFX_OTA_ENABLED
+    otaBusy = OtaUpdater::inProgress();
+#endif
+
+    if (!otaBusy)
+      ace_routine::CoroutineScheduler::loop();
 
 #ifdef LFX_OTA_ENABLED
-    // Poll ArduinoOTA (no-op unless an espota push is in progress).
+    // Poll ArduinoOTA (no-op unless an espota push is in progress) — must run
+    // even while otaBusy, it's what drives the transfer itself.
     OtaUpdater::handle();
 #endif
 
 #ifdef LFX_API_SERVER_ENABLED
     // Advance the LED identify blinker (no-op unless a target is active).
     // Before BusRegistry::flush() so an SPI target is propagated this iteration.
-    Identify::loop();
+    if (!otaBusy)
+      Identify::loop();
 #endif
 
 #ifdef LFX_CONFIG_ENABLED
     SafeMode::loop(); // clears the reset counter once past the multi-tap window
     ConfigManager::handlePendingReload();
-    BusRegistry::flush();
+    if (!otaBusy)
+      BusRegistry::flush();
 #endif
 
 #if LFX_DCC_ENABLED
     // Drive the DCC decoder state machine and callbacks.
-    DccDrivable::loop();
+    if (!otaBusy)
+      DccDrivable::loop();
 #endif
 
     // StatusOled auto-update (metrics, event timeouts, etc.)
