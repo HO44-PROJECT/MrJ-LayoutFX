@@ -150,8 +150,10 @@ void ApiServer::init(const char *ssid, const char *password,
     }
   };
 
-  // Force AP when the caller asks (safe mode) or when compiled-in.
-  bool startApDirect = forceAp;
+  // Force AP when the caller asks (safe mode), when compiled-in, or when
+  // there's no SSID to even try (e.g. web_installer with no runtime creds
+  // saved yet, #132) — skips the ~10s STA retry loop for a doomed attempt.
+  bool startApDirect = forceAp || !ssid || !ssid[0];
   #ifdef LFX_WIFI_FORCE_AP
   startApDirect = true;
   #endif

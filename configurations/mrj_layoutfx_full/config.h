@@ -22,8 +22,11 @@
 #define OTA ///< Enable OTA firmware update (espota + web /update). Optional:
             ///< #define OTA_PASSWORD "…"
 
-// --- WiFi (supprimer les 3 lignes pour désactiver le WiFi) --------------
-#include "../auth/wifi.h" // gitignored — définit WIFI_SSID et WIFI_PASSWORD
+// --- WiFi -----------------------------------------------------------------
+// No compile-time WIFI_SSID/WIFI_PASSWORD — this profile ships to the field
+// with no baked-in credentials, same as web_installer. Boots straight to AP;
+// provisioned at runtime via the WebUI's WiFi form (POST /api/wifi, #132),
+// or re-provisioned later via double-reset → forced AP (SafeMode).
 #define HTTP_PORT 80
 // #define AUDIO ///< Not functional yet.
 #define DCC_PIN 34

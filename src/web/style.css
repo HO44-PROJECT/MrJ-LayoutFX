@@ -2135,6 +2135,59 @@
       min-height: 1.8rem
     }
 
+    /* ── WiFi provisioning gate ───────────────────────────────────────── */
+    #wifi-gate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 500
+    }
+    #wifi-gate-overlay.active { display: block }
+    #wifi-gate-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 501;
+      background: var(--d1);
+      border: 1px solid var(--d2);
+      border-radius: 10px;
+      padding: 1.6rem 1.8rem;
+      width: min(380px, 92vw);
+      box-shadow: 0 8px 32px rgba(0,0,0,.6)
+    }
+    #wifi-gate-modal.active { display: block }
+    #wifi-gate-modal h2 {
+      margin: 0 0 .5rem;
+      font-size: 1.1rem;
+      color: var(--t0)
+    }
+    #wifi-gate-modal p {
+      margin: 0 0 1rem;
+      font-size: .85rem;
+      color: var(--t2)
+    }
+    #wifi-gate-modal .de-field { margin-bottom: .7rem }
+    #wifi-ssid-results {
+      max-height: 140px;
+      overflow-y: auto;
+      margin-top: .3rem;
+      border-radius: 6px
+    }
+    #wifi-ssid-results:empty { display: none }
+    .wifi-ssid-row {
+      padding: .5rem .6rem;
+      font-size: .85rem;
+      color: var(--t1);
+      background: var(--d2);
+      border-bottom: 1px solid var(--d1);
+      cursor: pointer
+    }
+    .wifi-ssid-row:last-child { border-bottom: none }
+    .wifi-ssid-row:hover, .wifi-ssid-row:active { background: var(--accent, var(--d1)) }
+
     /* ── Device editor modal ────────────────────────────────────────────── */
     #de-overlay {
       display: none;

@@ -6,6 +6,16 @@ a self-served web control panel, and a rich set of signal/lamp/servo effects.
 > Documentation is in **English** for now. A French translation may follow.
 
 Docs are organized by **who you are**, not by topic — pick your section below.
+Looking for something specific instead? See **Je veux…** right below.
+
+## Je veux…
+
+| | |
+|---|---|
+| …installer depuis le navigateur | [getting-started.md — Option A, browser flash](user/getting-started.md#option-a--browser-flash-no-install-no-platformio) |
+| …compiler moi-même | [building-from-source.md](advanced/building-from-source.md) |
+| …changer le mot de passe WiFi | [wifi-provisioning.md](user/wifi-provisioning.md) |
+| …sauvegarder ma configuration | [usage.md — Files](user/usage.md#files) |
 
 ## [user/](user/) — flash it, run it, drive it from the browser
 
@@ -16,6 +26,7 @@ controlling it day-to-day. No PlatformIO, no C++.
 |---|---|
 | [about.md](user/about.md) | What this project does, what it can drive, the big picture. |
 | [getting-started.md](user/getting-started.md) | Flash a device (browser installer or from source) and reach the WebUI for the first time. |
+| [wifi-provisioning.md](user/wifi-provisioning.md) | Join your home WiFi or change the password at runtime, no recompiling — the setup form, the double-reset recovery flow, what to expect when it disconnects. |
 | [usage.md](user/usage.md) | Every screen and button in the WebUI: cockpit, boards & extensions, buses, diagnostics, About/OTA. |
 | [device-types.md](user/device-types.md) | Every device type the WebUI's device editor can create, grouped by category. |
 | [config-examples.md](user/config-examples.md) | Three ready-to-use `config.json` files, from simplest to most elaborate. |

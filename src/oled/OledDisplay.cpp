@@ -15,7 +15,11 @@
   #include "config/DeviceFactoryKeys.h" // kDev* type strings - single source of truth (no literals here)
   #include "generated/embedded_state_labels.h" // state labels generated from device_types.json (same as the WebUI)
 
-  #ifdef LFX_WIFI_ENABLED
+  // WiFi/AP is unconditionally active whenever the API server is (ApiServer::init()'s
+  // own STA/AP fallback, #132) — LFX_WIFI_ENABLED only means compile-time STA creds
+  // were provided, which is no longer a precondition for having a WiFi connection to
+  // show here.
+  #ifdef LFX_API_SERVER_ENABLED
     #include <WiFi.h>
   #endif
 
@@ -365,7 +369,7 @@ void OledDisplay::_drawSafeMode() {
   _u8g2.drawStr(6, 17, "SAFE MODE");
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawStr(6, 33, "config bypassed");
-  #ifdef LFX_WIFI_ENABLED
+  #ifdef LFX_API_SERVER_ENABLED
   char ip[24] = "No WiFi";
   if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
@@ -394,7 +398,7 @@ void OledDisplay::_drawIdle() {
 
   // ── Line 2 (y=25): IP address + WiFi signal bars (right-aligned) ──────────
   char ip[20] = "No WiFi";
-    #ifdef LFX_WIFI_ENABLED
+    #ifdef LFX_API_SERVER_ENABLED
   if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
   } else {
@@ -404,7 +408,7 @@ void OledDisplay::_drawIdle() {
     #endif
   _u8g2.drawStr(0, 25, ip);
 
-    #ifdef LFX_WIFI_ENABLED
+    #ifdef LFX_API_SERVER_ENABLED
   // WiFi bars: 4 bars right-aligned, anchored at bottom y=24
   {
     int rssi = (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : -100;
@@ -434,7 +438,7 @@ void OledDisplay::_drawIdle() {
   // ── Line 4 (y=52): active features — compile-time constant ────────────────
   {
     static const char kFeats[] =
-    #ifdef LFX_WIFI_ENABLED
+    #ifdef LFX_API_SERVER_ENABLED
       "WiFi "
     #endif
     #ifdef LFX_CONFIG_ENABLED
@@ -459,7 +463,7 @@ void OledDisplay::_drawIdle() {
   _u8g2.drawStr(0, 8, LFX_PROJECT_NAME);
 
   char ip[20] = "No WiFi";
-    #ifdef LFX_WIFI_ENABLED
+    #ifdef LFX_API_SERVER_ENABLED
   if (WiFi.status() == WL_CONNECTED) {
     strncpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip) - 1);
   } else {

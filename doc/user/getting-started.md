@@ -27,10 +27,9 @@ Safari, or on mobile — those show a notice instead of the install button).
 This flashes firmware only, no layout — you always configure the layout
 afterwards from the UI, which is normal, not a sign anything went wrong.
 
-To join your **home WiFi** instead of staying on the access point, you'll need
-a build with your SSID/password baked in (`WIFI_SSID`/`WIFI_PASSWORD`), which
-means [building from source](../advanced/building-from-source.md) — the browser
-flasher currently ships one generic, network-agnostic firmware.
+To join your **home WiFi**, fill in the WiFi form shown on that access point's
+`/ui` page — no separate build needed, credentials are set at runtime and
+stored on the device. See [wifi-provisioning.md](wifi-provisioning.md).
 
 ## Option B — build from source
 

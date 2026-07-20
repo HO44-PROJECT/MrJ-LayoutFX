@@ -62,10 +62,11 @@ public:
    *     1. forceAp true (safe mode) or LFX_WIFI_FORCE_AP compiled in → skip
    *        straight to AP, no STA attempt.
    *     2. Otherwise, try STA: WiFi.begin(ssid, password), poll up to
-   *        kWifiRetries × kWifiRetryMs (~10 s total). ssid/password come from
-   *        WIFI_SSID/WIFI_PASSWORD — compiled in via configurations/auth/wifi.h,
-   *        absent entirely on the public web-installer build (see #132, no
-   *        runtime provisioning yet).
+   *        kWifiRetries × kWifiRetryMs (~10 s total). No ESP32 profile bakes
+   *        in WIFI_SSID/WIFI_PASSWORD (#132) — ssid/password are whatever
+   *        LayoutFX::init() loaded from /wifi.json (WifiApi::load()), or
+   *        empty on first boot, which short-circuits straight to AP (empty
+   *        ssid skips the STA attempt entirely, see startApDirect below).
    *     3. STA connected → isAP() false, device reachable on the home network
    *        at WiFi.localIP().
    *     4. STA failed (bad/no credentials, AP out of range, ...) → AP

@@ -31,19 +31,29 @@ volatile bool ConfigManager::_reloadPending = false;
 // ---------------------------------------------------------------------------
 
 /**
- * @brief Mount LittleFS, load and parse config.json, initialise all devices and DCC.
+ * @brief Mount LittleFS and record configPath() — no device/DCC init.
  *        Boot-critical messages go directly to Serial regardless of LOG_SERIAL so they
  *        are always visible when the filesystem is missing or incomplete.
  * @param configPath LittleFS path to the JSON config file (e.g. "/config.json").
  */
-void ConfigManager::init(const char *configPath) {
+bool ConfigManager::mountFs(const char *configPath) {
   _configPath = configPath;
 
   if (!LittleFS.begin(true)) {
     // Boot-critical: always print directly to Serial, regardless of LOG_SERIAL.
     Serial.println(F("[FS] ERROR: mount failed — check partition scheme (Tools > Partition Scheme)"));
-    return;
+    return false;
   }
+  return true;
+}
+
+/**
+ * @brief Mount LittleFS, load and parse config.json, initialise all devices and DCC.
+ * @param configPath LittleFS path to the JSON config file (e.g. "/config.json").
+ */
+void ConfigManager::init(const char *configPath) {
+  if (!mountFs(configPath))
+    return;
 
   // Check for required files before any open() to suppress noisy vfs_api errors.
   // Boot-critical messages go directly to Serial, not through LOG_PRINTLN,

@@ -800,6 +800,12 @@ fetch('/api/status')
   .then(function (st) {
     if (st && st.env) _dbgStatus = st;
     if (_currentCfgTab === 'files' && _currentView === 'config') loadConfigs();
+    // AP mode (no STA network joined) and not already dismissed this session
+    // (#132) — show the WiFi-connect gate on top of everything else. The rest
+    // of the boot sequence still runs underneath: AP mode already serves the
+    // cockpit fine, this is an opt-in prompt, not a hard block.
+    if (st && st.wifiMode === 'ap' && !sessionStorage.getItem('mrjfx_wifi_gate_dismissed'))
+      wifiGateShow();
   })
   .catch(function () { });
 // Load device-type metadata before the first poll so cockpit cards render correctly.

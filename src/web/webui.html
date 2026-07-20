@@ -250,6 +250,27 @@
   <div id="wizard-overlay"></div>
   <div id="wizard-modal"></div>
 
+  <!-- ── WiFi provisioning gate (shown in AP mode, before anything else) ─ -->
+  <div id="wifi-gate-overlay"></div>
+  <div id="wifi-gate-modal">
+    <h2 data-i18n="wifi.title">Connexion WiFi requise</h2>
+    <p data-i18n="wifi.intro">L'appareil n'est relié à aucun réseau. Renseignez les identifiants de votre réseau WiFi pour continuer.</p>
+    <div class="de-field">
+      <label data-i18n="wifi.lbl_ssid">Réseau (SSID)</label>
+      <input type="text" id="wifi-ssid" autocomplete="off">
+      <div id="wifi-ssid-results"></div>
+    </div>
+    <div class="de-field">
+      <label data-i18n="wifi.lbl_password">Mot de passe</label>
+      <input type="password" id="wifi-password" autocomplete="off">
+    </div>
+    <div id="wifi-gate-status" class="de-status" style="display:none"></div>
+    <div class="de-footer">
+      <button class="de-btn cancel" onclick="wifiGateSkip()" data-i18n="wifi.skip">Continuer sans WiFi</button>
+      <button class="de-btn save" onclick="wifiGateSave()" data-i18n="wifi.connect">Connecter</button>
+    </div>
+  </div>
+
   <!-- ── Reboot modal ─────────────────────────────────────────────────── -->
   <div id="reboot-overlay"></div>
   <div id="reboot-modal">

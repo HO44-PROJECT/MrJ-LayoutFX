@@ -22,11 +22,14 @@
  *
  * Core / config / network (ESP32 only):
  *   CONFIG "file.json"    Load the device config from LittleFS (filename, no '/').
- *   API                   REST API server (/api/…). Requires WIFI + CONFIG.
+ *   API                   REST API server (/api/…). Requires CONFIG.
  *   API_AUDIT             Log every handled API request (diagnostics).
- *   WEBUI                 Web control panel (/ui). Implies API. Requires WIFI + CONFIG.
- *   WIFI_SSID "…"     \   STA credentials — BOTH required to join WiFi and start
- *   WIFI_PASSWORD "…" /   the HTTP server.
+ *   WEBUI                 Web control panel (/ui). Implies API. Requires CONFIG.
+ *   WIFI_SSID "…"     \   STA credentials — optional at compile time; without
+ *   WIFI_PASSWORD "…" /   them the device boots straight into AP mode, and can
+ *                         still be given STA credentials later at runtime via
+ *                         POST /api/wifi (see WifiApi, #132) — same pattern as
+ *                         WLED/Tasmota-style installers.
  *   WIFI_AP_SSID "…"      AP-fallback SSID     (default: LFX_PROJECT_NAME).
  *   WIFI_AP_PASSWORD "…"  AP-fallback password (default "mrjfx1234", min 8 chars).
  *   WIFI_FORCE_AP         Skip STA entirely, boot straight into access-point mode.
@@ -100,17 +103,26 @@
 
 // -- WIFI (ESP32 only) ────────────────────────────────────────────────────────
 // ── HTTP port default (user may override in config.h) ────────────────────────
-#ifdef ESP32 // WiFi is only supported on ESP32, and requires both WIFI_SSID and WIFI_PASSWORD to be defined.
+#ifdef ESP32 // WiFi is only supported on ESP32. WIFI_SSID/WIFI_PASSWORD are optional.
   #ifdef HTTP_PORT
     #define LFX_API_HTTP_PORT HTTP_PORT
   #else
     #define LFX_API_HTTP_PORT 80
   #endif
-  #if defined(WIFI_SSID) && defined(WIFI_PASSWORD) // Both WIFI_SSID and WIFI_PASSWORD must be defined to enable WiFi.
+  #if defined(WIFI_SSID) && defined(WIFI_PASSWORD) // Both must be defined for compile-time STA credentials.
     #define LFX_WIFI_ENABLED 1
   #else
-    #undef LFX_WIFI_ENABLED // WiFi is disabled if either WIFI_SSID or WIFI_PASSWORD is missing.
+    #undef LFX_WIFI_ENABLED // No compile-time credentials — AP mode until runtime provisioning (POST /api/wifi, #132).
   #endif                      // End WIFI check
+  // No compile-time credentials at all (e.g. web_installer) — default to empty,
+  // so ApiServer::init(WIFI_SSID, WIFI_PASSWORD, ...) always has a valid arg and
+  // falls straight into its own AP fallback (WiFi.begin("","") fails cleanly).
+  #ifndef WIFI_SSID
+    #define WIFI_SSID ""
+  #endif
+  #ifndef WIFI_PASSWORD
+    #define WIFI_PASSWORD ""
+  #endif
   // AP fallback credentials — user may override in wifi.h / config.h.
   #ifndef WIFI_AP_SSID
     #define WIFI_AP_SSID LFX_PROJECT_NAME
@@ -137,9 +149,13 @@
 #endif // ESP32
 
 #ifdef ESP32
-  #if defined(API) || defined(WEBUI) // API and WEBUI are only supported on ESP32 with WiFi and CONFIG enabled.
-    #if !defined(LFX_WIFI_ENABLED) || !defined(LFX_CONFIG_ENABLED)
-      #warning "API or WEBUI requires WIFI and CONFIG to be enabled."
+  #if defined(API) || defined(WEBUI) // API and WEBUI are only supported on ESP32 with CONFIG enabled.
+    // WIFI_SSID/WIFI_PASSWORD are NOT required here: ApiServer::init() falls
+    // back to AP mode on its own when STA credentials are absent or fail to
+    // connect (see ApiServer.cpp), which is exactly the boot path the public
+    // web_installer profile relies on (no baked-in credentials, see #132).
+    #if !defined(LFX_CONFIG_ENABLED)
+      #warning "API or WEBUI requires CONFIG to be enabled."
       #undef LFX_API_SERVER_ENABLED
     #else
       #ifdef API
@@ -149,7 +165,7 @@
         #define LFX_WEBUI_ENABLED 1
         #define LFX_API_SERVER_ENABLED 1 // API server is required for the WebUI.
       #endif
-    #endif // End check for WIFI and CONFIG
+    #endif // End check for CONFIG
   #else
     #undef LFX_API_SERVER_ENABLED
   #endif // WEBUI

@@ -370,6 +370,92 @@ function cfgStatus(msg, cls) {
   el.textContent = msg;
 }
 
+/* ── WiFi provisioning gate (#132) ─────────────────────────────────────
+   Shown on top of the normal UI when /api/status reports wifiMode:'ap' —
+   the device isn't joined to a home network yet. Saving POSTs to
+   /api/wifi, which persists the credentials to LittleFS and reboots the
+   device into STA (falling back to AP again if they don't work, same
+   logic as ApiServer::init()). The device then comes up on a DIFFERENT
+   IP (the home network's, not 192.168.4.1) — unlike the config-reload
+   reboot flow (tryReconnect()), this page cannot auto-follow that, so we
+   just tell the user to reconnect their own device to their WiFi and
+   navigate to the new IP themselves. */
+
+function wifiGateShow() {
+  document.getElementById('wifi-gate-overlay').classList.add('active');
+  document.getElementById('wifi-gate-modal').classList.add('active');
+  wifiGateScan();
+}
+
+// Populate a custom clickable results list under the SSID field with nearby
+// networks — a native <datalist> doesn't reliably open on mobile (iOS Safari,
+// most Android browsers require typing before it shows), and this is the
+// dominant use case (phone connected to the device's AP). Clicking a row
+// fills the field; typing your own SSID (hidden network) still works,
+// independent of the results list. Silent on failure/empty scan.
+function wifiGateScan() {
+  var results = document.getElementById('wifi-ssid-results');
+  results.innerHTML = '';
+  fetch('/api/wifi/scan')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      (data.networks || []).forEach(function (net) {
+        var row = document.createElement('div');
+        row.className = 'wifi-ssid-row';
+        row.textContent = net.ssid;
+        row.onclick = function () {
+          document.getElementById('wifi-ssid').value = net.ssid;
+          results.innerHTML = '';
+        };
+        results.appendChild(row);
+      });
+    })
+    .catch(function () { });
+}
+
+function wifiGateHide() {
+  document.getElementById('wifi-gate-overlay').classList.remove('active');
+  document.getElementById('wifi-gate-modal').classList.remove('active');
+}
+
+// "Continue without WiFi" — dismiss for this browser session only (AP mode
+// is inherently transient; don't remember this across a later real reboot).
+function wifiGateSkip() {
+  sessionStorage.setItem('mrjfx_wifi_gate_dismissed', '1');
+  wifiGateHide();
+}
+
+function wifiGateStatus(msg, cls) {
+  var el = document.getElementById('wifi-gate-status');
+  el.style.display = msg ? '' : 'none';
+  el.className = 'de-status ' + cls;
+  el.textContent = msg;
+}
+
+function wifiGateSave() {
+  var ssid = document.getElementById('wifi-ssid').value.trim();
+  var password = document.getElementById('wifi-password').value;
+  if (!ssid) { wifiGateStatus(t('wifi.err_ssid'), 'err'); return; }
+  wifiGateStatus(t('wifi.saving'), 'ok');
+  post('/api/wifi', { ssid: ssid, password: password })
+    .then(function (r) {
+      if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || ('HTTP ' + r.status)); });
+      // The device only ever acks "starting the test" here — it then drops
+      // its own AP to attempt the target network for real (ESP32 has one
+      // radio, can't hold both), so this phone is about to lose its
+      // connection regardless of whether the credentials turn out to be
+      // right or wrong. There is no second response coming.
+      wifiGateStatus(t('wifi.testing'), 'ok');
+    })
+    .catch(function (e) {
+      // Most likely: the request never reached the device (typo'd form
+      // submitted before JS even ran, device already rebooted, etc.) — but
+      // it could also mean the device accepted it and is already dropping
+      // the AP. Either way, tell the user what to check next.
+      wifiGateStatus(t('wifi.err_save') + e.message + ' ' + t('wifi.maybe_saved'), 'err');
+    });
+}
+
 /* ── Dirty state ────────────────────────────────────────────────────── */
 // "Dirty" means config changes are pending that have not yet been applied to the ESP32
 // (board/device/bus edits saved to config.json, or a pending config-file switch).

@@ -35,6 +35,22 @@ public:
    */
   static void init(const char *configPath);
 
+  /**
+   * @brief Mount LittleFS and set configPath() only — no device/GPIO/DCC init.
+   *
+   * Safe-mode entry point (#132): SafeMode skips init() entirely to guarantee a
+   * broken config can never re-crash the boot, but that also left LittleFS
+   * unmounted, breaking anything that touches the filesystem while in safe mode
+   * — WifiApi's /wifi.json read/write (the double-reset "change WiFi" flow) and
+   * DeviceApi's /api/config* routes (LoadProhibited crash on the null
+   * configPath() they dereference). Call this instead of init() when
+   * SafeMode::active().
+   *
+   * @param configPath  LittleFS path to the JSON config file (e.g. "/config.json").
+   * @return true if LittleFS mounted successfully.
+   */
+  static bool mountFs(const char *configPath);
+
   /** @brief Read-only access to the device factory (for WebUI and other modules). */
   static const DeviceFactory &factory() { return _factory; }
 

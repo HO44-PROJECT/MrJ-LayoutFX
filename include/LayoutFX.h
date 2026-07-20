@@ -94,6 +94,7 @@
   #include "api/ApiServer.h"
   #include "api/DeviceApi.h"
   #include "api/Identify.h"
+  #include "api/WifiApi.h"
 #endif
 
 #ifdef LFX_WEBUI_ENABLED
@@ -200,13 +201,19 @@ public:
   #endif
 #endif
 
-    // 1. Load config from LittleFS and init devices — SKIPPED in safe mode so a
-    //    broken config can never re-crash the boot; devices stay unloaded.
+    // 1. Load config from LittleFS and init devices — device/DCC init is SKIPPED
+    //    in safe mode so a broken config can never re-crash the boot, but LittleFS
+    //    itself must still be mounted (mountFs(), no device load): /api/config*
+    //    (DeviceApi) dereferences configPath() unconditionally once registered
+    //    below, and WifiApi's /wifi.json read/write — the double-reset "change
+    //    WiFi" flow this safe-mode AP exists for, #132 — needs the filesystem too.
     // NOTE: if the uart0 log bus is off, ConfigManager::init() closes UART0 itself,
     // BETWEEN parsing the config and calling initAll() — see the comment there for
     // why that ordering (not here, not at the end of this function) is required.
 #ifdef LFX_CONFIG_ENABLED
-    if (!SafeMode::active())
+    if (SafeMode::active())
+      ConfigManager::mountFs("/" CONFIG);
+    else
       ConfigManager::init("/" CONFIG);
 #endif
 
@@ -219,6 +226,7 @@ public:
     // 2. Register /api/* routes (requires config to be loaded first).
 #ifdef LFX_API_SERVER_ENABLED
     DeviceApi::init(ConfigManager::factory());
+    WifiApi::init();
 #endif
 
     // 3. Register /ui route (HTML page — requires DeviceApi routes to be up).
@@ -235,10 +243,28 @@ public:
     // Register /update on the WebServer before it starts.
     OtaUpdater::registerWebRoutes();
   #endif
-    // Safe mode only bypasses the config; it does NOT force the AP. WiFi is compile-time
-    // (config.h), so a bypassed config never breaks connectivity, and the normal
-    // STA→AP fallback already covers a genuinely unreachable network.
-    ApiServer::init(WIFI_SSID, WIFI_PASSWORD, WIFI_AP_SSID, WIFI_AP_PASSWORD, LFX_API_HTTP_PORT, false);
+    // STA credentials saved at runtime via POST /api/wifi (WifiApi, #132) take
+    // priority over compile-time WIFI_SSID/WIFI_PASSWORD — e.g. a web_installer
+    // build (no compiled-in creds) that's been provisioned by its owner. Falls
+    // back to the compile-time values, then to ApiServer's own STA→AP fallback
+    // if neither works or neither is set. Skipped in safe mode: LittleFS was
+    // never mounted (ConfigManager::init() was skipped above).
+    //
+    // Safe mode forces the AP directly (forceAp below) — this is also the
+    // user-facing way to reach the WiFi form on a device that's already happily
+    // joined to STA (nominal "I want to change networks" flow, #132): double-reset
+    // → guaranteed AP → WiFi gate. No separate always-on WebUI screen/auth needed.
+    String _staSsid = WIFI_SSID, _staPassword = WIFI_PASSWORD;
+  #ifdef LFX_CONFIG_ENABLED
+    if (!SafeMode::active())
+      WifiApi::load(_staSsid, _staPassword);
+  #endif
+    ApiServer::init(_staSsid.c_str(), _staPassword.c_str(), WIFI_AP_SSID, WIFI_AP_PASSWORD, LFX_API_HTTP_PORT,
+  #ifdef LFX_CONFIG_ENABLED
+                     SafeMode::active());
+  #else
+                     false);
+  #endif
   #ifdef LFX_OTA_ENABLED
     // ArduinoOTA (espota) + mDNS — after WiFi is up (works in STA and AP).
     OtaUpdater::beginArduinoOta();

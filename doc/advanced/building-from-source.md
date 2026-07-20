@@ -3,9 +3,10 @@
 [Docs](../README.md) / Advanced / Building from source
 
 Use this instead of the [browser flasher](../user/getting-started.md) when you
-need your own WiFi credentials, a different board (e.g. an AVR Nano), or a
-hardware feature outside the generic browser build (a specific bus mix, DCC,
-OLED…).
+need a different board (e.g. an AVR Nano) or a hardware feature outside the
+generic browser build (a specific bus mix, DCC, OLED…). WiFi credentials don't
+require a custom build either way — they're set at runtime, see
+[wifi-provisioning.md](../user/wifi-provisioning.md).
 
 ## Prerequisites
 
@@ -34,8 +35,6 @@ void loop()  { LayoutFX::loop(); }
 #pragma once
 
 #define CONFIG          "config.json"   // device config on LittleFS
-#define WIFI_SSID       "my-network"
-#define WIFI_PASSWORD   "my-password"
 #define WEBUI                           // web control panel (implies API)
 #define OTA                             // wireless updates afterwards
 #define LOG_SERIAL                      // boot/operational logs on USB serial
@@ -45,9 +44,14 @@ Add hardware flags as needed (`SPI_CARDS`, `I2C_CARDS`, `DCC_PIN`, `OLED`…).
 Every flag, with its default, is in
 [configuration-flags.md](configuration-flags.md).
 
-> WiFi needs **both** `WIFI_SSID` and `WIFI_PASSWORD`. `WEBUI`/`API` additionally
-> need `CONFIG`. If WiFi can't join, the device falls back to a SoftAP
-> (`WIFI_AP_SSID` / `WIFI_AP_PASSWORD`, defaults `MrJ-LayoutFX` / `mrjfx1234`).
+> `WEBUI`/`API` need `CONFIG`. WiFi credentials are **not** set here — leave
+> `WIFI_SSID`/`WIFI_PASSWORD` out entirely (recommended for anything you'll
+> distribute) and the device boots into its own SoftAP (`WIFI_AP_SSID` /
+> `WIFI_AP_PASSWORD`, defaults `MrJ-LayoutFX` / `mrjfx1234`), provisioned at
+> runtime from the WebUI's WiFi form — see
+> [wifi-provisioning.md](../user/wifi-provisioning.md). The two `#define`s
+> still exist for anyone who wants credentials baked in at compile time
+> instead, but that's no longer the recommended path.
 
 ## 3. Build & upload
 

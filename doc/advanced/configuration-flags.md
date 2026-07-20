@@ -27,8 +27,8 @@ Conventions:
 | `CONFIG` | `"file.json"` | — | Load the device config from LittleFS (filename, no leading `/`). Required for the WebUI/API to control anything. |
 | `API` | toggle | off | REST API server (`/api/…`). Requires WiFi **and** `CONFIG`. |
 | `WEBUI` | toggle | off | Web control panel (`/ui`). Implies `API`. Requires WiFi **and** `CONFIG`. |
-| `WIFI_SSID` | `"…"` | — | STA SSID. **Both** SSID and password are required to join WiFi and start the HTTP server. |
-| `WIFI_PASSWORD` | `"…"` | — | STA password. |
+| `WIFI_SSID` | `"…"` | — | STA SSID. **Optional** — omit both this and `WIFI_PASSWORD` to ship with no baked-in credentials (recommended for anything you'll distribute); the device boots into its own access point and is provisioned at runtime from the WebUI's WiFi form instead. See [wifi-provisioning.md](../user/wifi-provisioning.md). |
+| `WIFI_PASSWORD` | `"…"` | — | STA password. **Optional**, same as `WIFI_SSID` above. |
 | `WIFI_AP_SSID` | `"…"` | `"MrJ-LayoutFX"` | Access-point fallback SSID. |
 | `WIFI_AP_PASSWORD` | `"…"` | `"mrjfx1234"` | AP fallback password (min 8 chars, or `""` for an open network). |
 | `WIFI_FORCE_AP` | toggle | off | Skip STA entirely and boot straight into access-point mode. |
@@ -107,8 +107,6 @@ Override only if you hit a ceiling; larger values use more RAM.
 
 // Networking + control
 #define CONFIG          "config.json"   // device config on LittleFS
-#define WIFI_SSID       "my-network"
-#define WIFI_PASSWORD   "my-password"
 #define WEBUI                           // implies API
 #define OTA                             // wireless updates
 

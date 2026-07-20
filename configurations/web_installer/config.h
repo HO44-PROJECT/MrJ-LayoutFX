@@ -3,15 +3,13 @@
  *
  * @brief Configuration for the public browser USB flasher (web-installer/).
  *
- * Deliberately WiFi-agnostic: no configurations/auth/wifi.h include. This is
- * the one build that a stranger flashes from a web page with no way to
- * review what's baked in first, so it must never carry the maintainer's own
- * network credentials. It boots with no STA configured, so it comes up as
- * its own access point (default SSID/password come from WIFI_AP_SSID /
- * WIFI_AP_PASSWORD, see LayoutFX_define.h) — see
- * configurations/auth/wifi.h.example for how to override the AP defaults,
- * or add WIFI_SSID/WIFI_PASSWORD to join a home network in a build that
- * isn't distributed publicly.
+ * No compile-time WIFI_SSID/WIFI_PASSWORD — same as every other ESP32
+ * profile (#132): a stranger flashes this from a web page with no way to
+ * review what's baked in first, so it must never carry credentials at all.
+ * Boots straight into its own access point (default SSID/password come from
+ * WIFI_AP_SSID/WIFI_AP_PASSWORD, see LayoutFX_define.h) and gets its STA
+ * credentials at runtime via the WebUI's WiFi form (POST /api/wifi), stored
+ * in /wifi.json on LittleFS — never in the firmware image.
  *
  * Injected into every translation unit via -include in platformio.ini.
  *
