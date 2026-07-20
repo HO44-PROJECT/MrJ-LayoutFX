@@ -97,6 +97,22 @@ void ApiServer::on(const char *path, HTTPMethod method,
 /**
  * @brief Connect to WiFi in STA mode; fall back to AP mode if STA fails.
  *        Starts the HTTP server and launches the Core-0 system task.
+ *
+ * Decision flow:
+ *   1. startApDirect (forceAp, no ssid, or LFX_WIFI_FORCE_AP) → AP straight away,
+ *      skipping the STA retry loop for an attempt that can't succeed.
+ *   2. Otherwise, try STA for up to kWifiRetries * kWifiRetryMs; on success the
+ *      device joins the caller's network at WiFi.localIP().
+ *   3. If STA fails (or step 1 applied), _startAP() opens a fallback access
+ *      point at apSsid/apPassword and turns on the captive portal: a DNSServer
+ *      resolving every hostname to the AP's own IP, plus OS probe routes
+ *      (/generate_204, /hotspot-detect.html) and the onNotFound handler below,
+ *      all redirecting to /ui — so joining the AP pops the WiFi-setup page
+ *      automatically on phones/laptops, no URL typing needed (#132).
+ *
+ * _isAP tracks which mode is live so onNotFound() below only does the
+ * captive-portal redirect in AP mode (STA 404s stay plain JSON errors).
+ *
  * @param ssid       STA network SSID.
  * @param password   STA network password.
  * @param apSsid     AP fallback SSID.
@@ -123,6 +139,9 @@ void ApiServer::init(const char *ssid, const char *password,
     }
   });
 
+  // Opens the fallback AP + captive portal. Called either directly (forced AP)
+  // or after a failed STA attempt below — never both, so _isAP unambiguously
+  // reflects which mode is actually live once init() returns.
   auto _startAP = [&]() {
     WiFi.mode(WIFI_AP);
     const char *apPwd = (apPassword && strlen(apPassword) >= 8) ? apPassword : nullptr;
