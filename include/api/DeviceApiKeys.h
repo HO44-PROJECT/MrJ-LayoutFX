@@ -115,6 +115,7 @@ constexpr char kState[]  = "state";  ///< Device state value.
 constexpr char kOn[]     = "on";     ///< Boolean switch (POST /api/switch).
 constexpr char kBoard[]  = "board";  ///< Board index filter (POST /api/all).
 constexpr char kType[]   = "type";   ///< Device type filter (POST /api/group).
+constexpr char kAddress[] = "address"; ///< DCC address filter (POST /api/group, #10) — alternative to kType, mutually exclusive.
 constexpr char kSkipDelay[] = "skip_delay"; ///< #8: true to ignore start_delay_ms (config/Boards tab). POST /api/all, /api/group.
 constexpr char kAction[] = "action"; ///< Servo action string (POST /api/servo).
 constexpr char kSpeed[]  = "speed";  ///< Servo speed value (POST /api/servo).

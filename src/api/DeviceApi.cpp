@@ -284,8 +284,13 @@ void DeviceApi::_onAllDevices() {
 }
 
 /**
- * @brief Set state on all devices matching a given type name.
- *        Body: {"type":"<ClassName>","state":<n>}.
+ * @brief Set state on all devices matching a given type name, or all devices
+ *        sharing a given DCC address (#10 — address as a grouping key even
+ *        without a real DCC bus). Body: {"type":"<ClassName>","state":<n>} or
+ *        {"address":<n>,"state":<n>}; "address" wins if both are present.
+ *        skip_delay (#8) honoured like /api/all — omitted/false means each
+ *        member's configured startup delay still applies, so a group of e.g.
+ *        10 lamps on one address lights staggered, not as a block.
  */
 void DeviceApi::_onGroupDevices() {
   if (!ApiServer::server().hasArg(kArgPlain)) {
@@ -298,12 +303,22 @@ void DeviceApi::_onGroupDevices() {
     return;
   }
   int state = doc[kState].as<int>();
-  const char *type = doc[kType] | "";
+  bool skipDelay = doc[kSkipDelay] | false;
 
-  for (size_t i = 0; i < _factory->count(); i++) {
-    Device *d = _factory->device(i);
-    if (strcmp(type, (const char *)d->getDeviceName()) == 0)
-      d->newState((STATE_TYPE)state);
+  if (doc[kAddress].is<int>()) {
+    ADDRESS address = (ADDRESS)doc[kAddress].as<int>();
+    for (size_t i = 0; i < _factory->count(); i++) {
+      Device *d = _factory->device(i);
+      if (d->getDccAddress() == address)
+        d->newState((STATE_TYPE)state, skipDelay);
+    }
+  } else {
+    const char *type = doc[kType] | "";
+    for (size_t i = 0; i < _factory->count(); i++) {
+      Device *d = _factory->device(i);
+      if (strcmp(type, (const char *)d->getDeviceName()) == 0)
+        d->newState((STATE_TYPE)state, skipDelay);
+    }
   }
   ApiServer::sendJson(kOk, F("{\"ok\":true}"));
 }

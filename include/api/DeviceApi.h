@@ -17,6 +17,7 @@
  *   POST   /api/switch           — body {"id":"<id>","on":<bool>} — switchOn / switchOff
  *   POST   /api/all              — body {"state":<n>[,"board":<n>]} — all non-static devices
  *   POST   /api/group            — body {"type":"<name>","state":<n>} — all of one type
+ *                                   or {"address":<n>,"state":<n>} — all sharing a DCC address (#10)
  *   POST   /api/servo            — body {"id":"<id>","speed":<n>|"action":"reverse"}
  *   GET    /api/config           — download the active config file from LittleFS
  *   GET    /api/config/file      — download a named config file. Query: ?name=<file>
@@ -108,7 +109,7 @@ private:
   static void _onSwitch();
   /** @brief POST /api/all     — Set state on all non-static devices. Body: {"state":<n>[,"board":<n>]}. */
   static void _onAllDevices();
-  /** @brief POST /api/group   — Set state on all devices of a type. Body: {"type":"<name>","state":<n>}. */
+  /** @brief POST /api/group   — Set state on all devices of a type, or all sharing a DCC address (#10). Body: {"type":"<name>","state":<n>} or {"address":<n>,"state":<n>}. */
   static void _onGroupDevices();
   /** @brief POST /api/servo   — Set motor speed or reverse. Body: {"id":"<id>","speed":<n>|"action":"reverse"}. */
   static void _onServo();

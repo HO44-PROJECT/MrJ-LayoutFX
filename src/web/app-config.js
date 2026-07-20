@@ -46,6 +46,11 @@ function groupDevices(type, state) {
   post('/api/group', { type: type, state: state }).then(poll).catch(showErr);
 }
 
+// Turn all devices sharing a given DCC address on or off (#10).
+function groupByAddr(address, state) {
+  post('/api/group', { address: address, state: state }).then(poll).catch(showErr);
+}
+
 /* ── Config file switcher ───────────────────────────────────────────── */
 
 var CFG_PENDING_KEY = 'mrjfx_pending_cfg'; // persisted: file to activate on next restart

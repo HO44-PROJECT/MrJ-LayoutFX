@@ -65,6 +65,15 @@
   <div id="view-cockpit" class="view active">
     <div id="ck-toolbar" style="display:none">
       <input id="ck-search" type="search" data-i18n-placeholder="ck.search_placeholder" placeholder="Rechercher…" oninput="ckApplyFilters()" autocomplete="off">
+      <div class="ck-view-group" title="" data-i18n-title="ck.view_tip">
+        <button class="ck-view-btn" data-view="type" onclick="setCkView('type')" data-i18n="ck.view_type">Par type</button>
+        <button class="ck-view-btn" data-view="packed" onclick="setCkView('packed')" data-i18n="ck.view_packed">Compacte</button>
+        <button class="ck-view-btn" data-view="addr" onclick="setCkView('addr')" data-i18n="ck.view_addr">Par adresse DCC</button>
+      </div>
+      <div class="ck-density-group" title="" data-i18n-title="ck.density_tip">
+        <button class="ck-density-btn" data-density="comfortable" onclick="setCkDensity('comfortable')" data-i18n="ck.density_comfortable">Confort</button>
+        <button class="ck-density-btn" data-density="compact" onclick="setCkDensity('compact')" data-i18n="ck.density_compact">Dense</button>
+      </div>
       <div id="ck-type-filters"></div>
     </div>
     <div id="grid"></div>

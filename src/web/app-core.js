@@ -316,6 +316,32 @@ function card(d) {
 var _ckAllDevs = [];
 var _ckTypeFilter = null;
 
+// Cockpit view mode ('type' = grouped by device type, current default;
+// 'packed' = one flat auto-fill grid sorted by id; 'addr' = grouped by DCC
+// address, #10 — address as a grouping key even without a real DCC bus) and
+// card density ('comfortable' default; 'compact' = smaller cards, tighter
+// gaps). Both persisted in localStorage (#1) so the choice survives a reload.
+var _ckView = localStorage.getItem('mrj-ck-view') || 'type';
+var _ckDensity = localStorage.getItem('mrj-ck-density') || 'comfortable';
+
+function setCkView(mode) {
+  _ckView = (mode === 'packed' || mode === 'addr') ? mode : 'type';
+  localStorage.setItem('mrj-ck-view', _ckView);
+  document.querySelectorAll('.ck-view-btn').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-view') === _ckView);
+  });
+  ckApplyFilters();
+}
+
+function setCkDensity(mode) {
+  _ckDensity = (mode === 'compact') ? 'compact' : 'comfortable';
+  localStorage.setItem('mrj-ck-density', _ckDensity);
+  document.getElementById('grid').classList.toggle('ck-compact', _ckDensity === 'compact');
+  document.querySelectorAll('.ck-density-btn').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-density') === _ckDensity);
+  });
+}
+
 // Build type-filter pill buttons from the unique device types in devs.
 // Label: strip the "MrJDB" namespace prefix, then insert spaces before capitals
 //   ("MrJDBEntrySignal" → "Entry Signal").
@@ -339,7 +365,8 @@ function ckToggleType(type) {
   ckApplyFilters();
 }
 
-// Apply search text + type filter, rebuild filter pills, and re-render the grid.
+// Apply search text + type filter, rebuild filter pills, and re-render the grid
+// in whichever view mode is currently selected (#1).
 function ckApplyFilters() {
   var search = (document.getElementById('ck-search').value || '').trim().toLowerCase();
   var devs = _ckAllDevs.filter(function (d) {
@@ -348,7 +375,23 @@ function ckApplyFilters() {
     return true;
   });
   ckBuildTypeFilters(_ckAllDevs);
-  renderGrid(devs);
+  if (_ckView === 'packed') renderPacked(devs);
+  else if (_ckView === 'addr') renderByAddr(devs);
+  else renderGrid(devs);
+}
+
+// Packed view (#1): a single flat auto-fill grid, no per-type grouping, sorted
+// by id — packs the full row width instead of leaving small groups' rows half
+// empty. No group-level ON/OFF buttons (there's no group).
+function renderPacked(devs) {
+  var html;
+  if (devs.length === 0 && _ckAllDevs.length > 0) {
+    html = '<div class="prm-info">' + t('ck.no_match') + '</div>';
+  } else {
+    var sorted = devs.slice().sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+    html = '<div class="gcards ck-packed">' + sorted.map(card).join('') + '</div>';
+  }
+  document.getElementById('grid').innerHTML = html;
 }
 
 // Render the device grid, grouping cards by type with group-level ON/OFF buttons.
@@ -379,6 +422,47 @@ function renderGrid(devs) {
     html += '<div class="gcards">' + list.map(card).join('') + '</div>';
     html += '</div>';
   });
+  document.getElementById('grid').innerHTML = html;
+}
+
+// Render the device grid, grouping cards by DCC address (#10) — lets a group
+// of devices sharing one address (e.g. several lamps on the same decoder
+// address) be switched together even without a real DCC bus. Devices with no
+// address (addr <= 0) can't be grouped this way; they're listed last under a
+// single unaddressed bucket with no group buttons. skip_delay is never sent
+// from this UI, so each member's configured startup delay (#8) still applies.
+function renderByAddr(devs) {
+  var order = [];
+  var groups = {};
+  var unaddressed = [];
+  devs.forEach(function (d) {
+    if (!(d.addr > 0)) { unaddressed.push(d); return; }
+    if (!groups[d.addr]) { groups[d.addr] = []; order.push(d.addr); }
+    groups[d.addr].push(d);
+  });
+  order.sort(function (a, b) { return a - b; });
+  var html = '';
+  if (devs.length === 0 && _ckAllDevs.length > 0) {
+    html = '<div class="prm-info">' + t('ck.no_match') + '</div>';
+  }
+  order.forEach(function (addr) {
+    var list = groups[addr];
+    html += '<div class="group">';
+    html += '<div class="ghdr"><span class="gname">DCC ' + addr + ' <span class="gcnt">(' + list.length + ')</span></span>';
+    html += '<div class="gbtns">'
+      + '<button class="gbtn on" title="' + t('ck.grp_on_tip') + '" onclick="groupByAddr(' + addr + ',1)">' + t('ck.grp_on') + '</button>'
+      + '<button class="gbtn off" title="' + t('ck.grp_off_tip') + '" onclick="groupByAddr(' + addr + ',0)">' + t('ck.grp_off') + '</button>'
+      + '</div>';
+    html += '</div>';
+    html += '<div class="gcards">' + list.map(card).join('') + '</div>';
+    html += '</div>';
+  });
+  if (unaddressed.length > 0) {
+    html += '<div class="group">';
+    html += '<div class="ghdr"><span class="gname">' + t('ck.addr_none') + ' <span class="gcnt">(' + unaddressed.length + ')</span></span></div>';
+    html += '<div class="gcards">' + unaddressed.map(card).join('') + '</div>';
+    html += '</div>';
+  }
   document.getElementById('grid').innerHTML = html;
 }
 

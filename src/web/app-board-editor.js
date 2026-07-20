@@ -814,6 +814,13 @@ document.querySelectorAll('.theme-dot').forEach(function (b) {
 document.querySelectorAll('.pinlbl-btn').forEach(function (b) {
   b.classList.toggle('active', b.getAttribute('data-mode') === _dbgPinLabel);
 });
+document.querySelectorAll('.ck-view-btn').forEach(function (b) {
+  b.classList.toggle('active', b.getAttribute('data-view') === _ckView);
+});
+document.querySelectorAll('.ck-density-btn').forEach(function (b) {
+  b.classList.toggle('active', b.getAttribute('data-density') === _ckDensity);
+});
+document.getElementById('grid').classList.toggle('ck-compact', _ckDensity === 'compact');
 applyLang();
 (function () {
   var h = location.hash.slice(1);

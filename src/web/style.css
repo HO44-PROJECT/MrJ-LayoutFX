@@ -454,6 +454,47 @@
       font-size: .8rem;
       width: 160px
     }
+    /* View (by-type / packed) and density (comfortable / compact) toggles (#1). */
+    .ck-view-group, .ck-density-group {
+      display: flex;
+      gap: .3rem
+    }
+    .ck-view-btn, .ck-density-btn {
+      padding: .3rem .6rem;
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      background: var(--bg3);
+      color: var(--t2);
+      font-size: .72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s
+    }
+    .ck-view-btn.active, .ck-density-btn.active {
+      background: var(--t3);
+      color: #fff;
+      border-color: var(--t3)
+    }
+    /* Packed view (#1): one flat grid across the full width, sorted by id —
+       no per-type grouping, so small type groups no longer leave the row half
+       empty on wide screens. */
+    #grid > .ck-packed {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr))
+    }
+    /* Compact density (#1): smaller cards, tighter gaps — for a wall-mounted
+       tablet showing many devices at once. */
+    #grid.ck-compact {
+      gap: .5rem
+    }
+    #grid.ck-compact .gcards {
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: .35rem
+    }
+    #grid.ck-compact .card {
+      padding: .4rem;
+      gap: .2rem;
+      border-radius: 6px
+    }
     .ck-empty {
       display: flex;
       flex-direction: column;
@@ -652,6 +693,10 @@
       color: #e67e22
     }
 
+    /* nowrap+ellipsis (like .cid) — longer type labels (e.g. "Gas Lamp
+       (defective)") would otherwise wrap to a 2nd line and push everything
+       below down, breaking vertical alignment with shorter-labelled cards
+       in the same grid row. */
     .badge {
       font-size: .6rem;
       background: var(--bd);
@@ -659,13 +704,25 @@
       padding: 2px 6px;
       border-radius: 4px;
       align-self: flex-start;
-      letter-spacing: .5px
+      letter-spacing: .5px;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
     }
 
+    /* Fixed height (not min-height — some engines still collapse a childless
+       flex container despite min-height) reserves one tag row even when d has
+       no DCC/board/pin to show (meta() emits zero .mtag spans) — otherwise the
+       button row shifts up on those cards, breaking vertical alignment across
+       a grid row. */
     .meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 3px
+      gap: 3px;
+      height: 15px;
+      flex-shrink: 0;
+      overflow: hidden
     }
 
     .mtag {
