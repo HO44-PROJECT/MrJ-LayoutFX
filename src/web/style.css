@@ -2854,6 +2854,36 @@
 
     /* Grouped Features card: one labelled row per category (Core / Bus / OLED …). */
     .abt-feat-card { max-width: 34rem }
+
+    /* License/attribution card: same pastel functional-contrast recipe as the
+       cockpit buttons, in the "caution" hue — deliberately more visually
+       prominent than a plain .abt-card so it can't be skimmed past by a
+       redistributor copying the firmware/UI onto another platform. */
+    .abt-license-card {
+      max-width: 34rem;
+      background: var(--sem-caution-tint);
+      border-color: var(--sem-caution)
+    }
+
+    .abt-license-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      background: var(--sem-caution-tint-d);
+      border: 1.5px solid var(--sem-caution);
+      color: var(--sem-caution);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .5px
+    }
+
+    .abt-license-text {
+      font-size: .74rem;
+      line-height: 1.5;
+      color: var(--t1);
+      margin: 0
+    }
     .abt-feat-grp { display: flex; align-items: baseline; gap: .5rem; margin-top: .45rem }
     .abt-feat-grp-lbl {
       flex: 0 0 4.2rem; text-align: right; font-size: .6rem; font-weight: 700;

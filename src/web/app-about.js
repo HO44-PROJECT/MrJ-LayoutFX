@@ -11,10 +11,25 @@
  */
 
 var PROJECT_URLS = {
-  git:    'https://github.com/HO44-PROJECT/MrJ-LayoutFX',
-  issues: 'https://github.com/HO44-PROJECT/MrJ-LayoutFX/issues',
-  wiki:   '' // placeholder — to be filled when wiki is published
+  git:         'https://github.com/HO44-PROJECT/MrJ-LayoutFX',
+  issues:      'https://github.com/HO44-PROJECT/MrJ-LayoutFX/issues',
+  discussions: 'https://github.com/HO44-PROJECT/MrJ-LayoutFX/discussions',
+  wiki:        '' // placeholder — to be filled when wiki is published
 };
+
+// Shown verbatim in the About panel's license card (see abt.license_author) —
+// keep in sync with library.json's authors.name and the LICENSE file's
+// copyright line.
+var PROJECT_AUTHOR = 'MrJ (HO44 PROJECT)';
+
+// Other repos by the same author, surfaced in the About panel's "Related
+// projects" card: the ESP32/Nano carrier PCBs this firmware is designed to
+// run on, and the DB-style signal electronics project it grew out of.
+var RELATED_PROJECTS = [
+  { label: 'MrJ-LayoutFX-ESP32-PCB', url: 'https://github.com/HO44-PROJECT/MrJ-LayoutFX-ESP32-PCB' },
+  { label: 'MrJ-LayoutFX-Nano-PCB',  url: 'https://github.com/HO44-PROJECT/MrJ-LayoutFX-Nano-PCB' },
+  { label: 'MrJ DB-style train signals', url: 'https://github.com/HO44-PROJECT/MrJ-HO-scale-DB-style-Era-III-Train-Signals-Electronics' }
+];
 
 // Status bar warn/crit color thresholds (percent), shared by every metric
 // bar in this panel (heap, flash, devices, temp, RSSI...). See abtCard.
@@ -273,11 +288,23 @@ function renderAbout(s) {
   // ── Projet ─────────────────────────────────────────────────────────────────
   html += '<div class="abt-section-hdr">' + t('abt.sec_project') + '</div>';
 
+  // License & attribution — deliberately its own card, not folded into the
+  // links card below: this is the one thing a redistributor (Thingiverse,
+  // Printables, a repost, a video…) needs to see and keep, not just a
+  // reference link they can drop.
+  html += '<div class="abt-card abt-license-card"><div class="abt-card-title">' + t('abt.license') + '</div>'
+    + '<div class="abt-license-badge">' + t('abt.license_name') + '</div>'
+    + '<div class="abt-row"><span class="abt-label">' + t('abt.license_author') + '</span>'
+    + '<span class="abt-value">' + PROJECT_AUTHOR + '</span></div>'
+    + '<p class="abt-license-text">' + t('abt.license_text') + '</p>'
+    + '</div>';
+
   // Project links
   var urlLinks = [
-    { label: t('abt.proj_git'),    url: PROJECT_URLS.git },
-    { label: t('abt.proj_issues'), url: PROJECT_URLS.issues },
-    { label: t('abt.proj_wiki'),   url: PROJECT_URLS.wiki },
+    { label: t('abt.proj_git'),         url: PROJECT_URLS.git },
+    { label: t('abt.proj_issues'),      url: PROJECT_URLS.issues },
+    { label: t('abt.proj_discussions'), url: PROJECT_URLS.discussions },
+    { label: t('abt.proj_wiki'),        url: PROJECT_URLS.wiki },
   ].filter(function (r) { return r.url; });
 
   if (urlLinks.length) {
@@ -291,6 +318,20 @@ function renderAbout(s) {
     html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.project') + '</div>'
       + linkRows + '</div>';
   }
+
+  // Related MrJ projects — other repos under the same author/org, not part of
+  // this codebase but worth surfacing here (hardware companions: the ESP32/
+  // Nano carrier PCBs this firmware runs on, and the DB-style signal
+  // electronics project it grew out of).
+  var relatedRows = RELATED_PROJECTS.map(function (r) {
+    return '<div class="abt-url-row">'
+      + '<span class="abt-url-label">' + r.label + '</span>'
+      + '<a class="abt-url-val" href="' + r.url + '" target="_blank" rel="noopener">'
+      + r.url.replace(/^https?:\/\//, '') + '</a>'
+      + '</div>';
+  }).join('');
+  html += '<div class="abt-card"><div class="abt-card-title">' + t('abt.related') + '</div>'
+    + relatedRows + '</div>';
 
   document.getElementById('abt-grid').innerHTML = html;
 }
