@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "device_types.schema.json",
+  "title": "MrJ-LayoutFX — device type catalogue",
+  "description": "UI metadata for every device type served by /api/device-types. Drives the device editor (type list, wiring pin count) and the cockpit (card rendering category, state buttons). Each key is a device type name matching config.json devices[].type and the firmware C++ class name.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/deviceTypeDef"
+  },
+  "$defs": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "light",
+        "signal",
+        "servo",
+        "i2c_servo",
+        "i2c_motor",
+        "traffic",
+        "static",
+        "audio"
+      ],
+      "description": "Rendering category. Controls which cockpit card widget is used:\n  light     → generic ON/OFF toggle card (includes multi-pin alternating devices like RailwayCrossingLights)\n  signal    → multi-state button card (states required)\n  servo     → UART speed-preset card (states required, v may be 'REV')\n  i2c_servo → positional I²C servo card (positions from config, STOP + N position buttons); board field shown in editor\n  i2c_motor → continuous I²C motor card (ON/OFF with speed from config)\n  traffic   → traffic-light card (fixed GO/FLASH/STOP buttons)\n  static    → read-only label (no user control)\n  audio     → audio player card"
+    },
+    "stateValue": {
+      "description": "State sent to /api/device or /api/servo. Integer for signal states; 'REV' string for the servo reverse preset.",
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string",
+          "const": "REV"
+        }
+      ]
+    },
+    "stateDef": {
+      "type": "object",
+      "description": "One button in a multi-state card (signal or servo).",
+      "required": [
+        "v",
+        "l",
+        "c"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "$ref": "#/$defs/stateValue",
+          "description": "Value posted to the API when this button is pressed."
+        },
+        "l": {
+          "type": "string",
+          "description": "Button label text (e.g. 'HP0', 'SLOW', 'REV')."
+        },
+        "c": {
+          "type": "string",
+          "description": "CSS class applied to the button for color coding (e.g. 't-stop', 't-go', 't-off')."
+        }
+      }
+    },
+    "deviceTypeDef": {
+      "type": "object",
+      "description": "UI descriptor for one device type.",
+      "required": [
+        "category",
+        "wires"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/category"
+        },
+        "wires": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "Number of wiring values this device type requires (count, not the values themselves). 0 = bus-only device with no physical pin (SerialServo, DfAudio). Distinct from config.json `wiring` which holds the actual pin/channel value(s)."
+        },
+        "states": {
+          "type": "array",
+          "description": "State button definitions. Required when category is 'signal' or 'servo'. Absent for all other categories.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/stateDef"
+          }
+        },
+        "wire_aspects": {
+          "type": "array",
+          "description": "Per-position wiring-test aspects (DB signals), in canonical pin order: what identifying each pin position should light. Drives the device editor's wiring assistant.",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["l"],
+            "properties": {
+              "l": { "type": "string", "description": "Aspect label shown to the user (e.g. 'Rouge', 'Orange')." },
+              "c": { "type": "string", "description": "CSS color hint for the radio swatch (e.g. '#e74c3c')." }
+            }
+          }
+        },
+        "pin_count_const": {
+          "type": "string",
+          "description": "C++ constant name for the pin-array size (e.g. 'MrJDBBlocSignalState_PIN_COUNT'). Code-generation only — absent for most types."
+        },
+        "variable_pins": {
+          "type": "boolean",
+          "description": "True when the C++ constructor takes (count, pins[]) instead of a fixed-size array. Code-generation only (e.g. StaticLow)."
+        },
+        "ctor_style": {
+          "type": "string",
+          "enum": [
+            "single_pin",
+            "multi_pin",
+            "variable_pins",
+            "serial_servo",
+            "audio",
+            "i2c_servo",
+            "i2c_motor"
+          ],
+          "description": "Constructor style used by config_to_cpp.py when generating main.cpp for non-WebUI targets (AVR, etc.).\n  single_pin    → new Type(pin)\n  multi_pin     → new Type(pins_var)\n  variable_pins → new Type(count, pins_var)\n  serial_servo  → new Type(&Serial, servo_id)\n  audio         → new Type(rx, tx)\n  i2c_servo     → PCA9685Servo — not yet supported in code generation\n  i2c_motor     → PCA9685Motor — not yet supported in code generation"
+        },
+        "label": {
+          "type": "string",
+          "description": "Short human-readable display name shown once a device of this type is placed (cockpit card badge, editor list). Per-language override via TRANSLATIONS['dt.<type>.label'] in i18n.js; this is the fallback."
+        },
+        "dropdownLabel": {
+          "type": "string",
+          "description": "Display name shown in the device-type picker only. Falls back to `label` when absent. Lets a one-time selection dropdown carry more context (author credit) than the short `label` repeated on every card. Per-language override via TRANSLATIONS['dt.<type>.dropdownLabel']; this is the fallback."
+        }
+      },
+      "if": {
+        "properties": {
+          "category": {
+            "enum": [
+              "signal",
+              "servo"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "states"
+        ],
+        "description": "Signal and servo types must declare their state buttons."
+      },
+      "else": {
+        "properties": {
+          "states": {
+            "description": "Not applicable for this category — must be absent."
+          }
+        },
+        "not": {
+          "required": [
+            "states"
+          ]
+        }
+      }
+    }
+  }
+}

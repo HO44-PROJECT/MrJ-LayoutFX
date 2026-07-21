@@ -1,0 +1,3326 @@
+    /* ── Reset ─────────────────────────────────────────────────────────── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    /* ── Themes ─────────────────────────────────────────────────────────── */
+    :root {
+      /* Semantic action colors (#135) — same meaning (stop/go/caution/shunt/off)
+         across every ambient theme below, so they're set once here rather than
+         re-tuned per theme like the --bg/--t palette. Pastel pair per role: a
+         muted line/text color plus a soft tinted fill for the active state,
+         echoing the About screen's feature pills rather than a saturated block. */
+      --sem-stop: #b7433f;
+      --sem-stop-tint: #f3dbd9;
+      --sem-stop-tint-d: #f0d0cd;
+      --sem-go: #2f8f5b;
+      --sem-go-tint: #d9ecdf;
+      --sem-go-tint-d: #cce4d4;
+      --sem-caution: #c98a2c;
+      --sem-caution-tint: #f2e2c8;
+      --sem-caution-tint-d: #eed8b4;
+      --sem-shunt: #6b4f8c;
+      --sem-shunt-tint: #e2dae9;
+      --sem-shunt-tint-d: #d7cbe1;
+      --sem-off: #6b7688;
+      --sem-off-tint: #e2e6ea;
+      --sem-off-tint-d: #d6dbe1;
+
+      /* Ardoise — bleu-gris doux */
+      --bg0: #f2f4f8;
+      --bg1: #ffffff;
+      --bg2: #e8ecf2;
+      --bg3: #dde3ec;
+      --bd: #b8c8da;
+      --acc: #3a6fd8;
+      --t0: #1a2436;
+      --t1: #344a64;
+      --t2: #5a7290;
+      --t3: #8aa0b8;
+      --t4: #b4c4d4;
+      --ico: #3a6fd8;
+      --d0: #cfdec8;
+      --d1: #daebd2;
+      --d2: #8cb888;
+      --d3: #2a6030;
+      --d4: #c2d6ba
+    }
+
+    body.th-amber {
+      /* Parchemin — crème chaud */
+      --bg0: #f8f3e8;
+      --bg1: #fffef8;
+      --bg2: #f0e8d4;
+      --bg3: #e8dfc8;
+      --bd: #c8b090;
+      --acc: #9a5820;
+      --t0: #28180a;
+      --t1: #4a3018;
+      --t2: #7a5530;
+      --t3: #a07848;
+      --t4: #c0a068;
+      --ico: #9a5820;
+      --d0: #e0d4a0;
+      --d1: #eae0b8;
+      --d2: #b8a068;
+      --d3: #6a4418;
+      --d4: #d8cc90
+    }
+
+    body.th-signal {
+      /* Ciel — bleu azur clair */
+      --bg0: #eef4fc;
+      --bg1: #ffffff;
+      --bg2: #e2ecf8;
+      --bg3: #d4e4f4;
+      --bd: #a4c0e0;
+      --acc: #1868b8;
+      --t0: #081830;
+      --t1: #183050;
+      --t2: #385878;
+      --t3: #5880a8;
+      --t4: #88aac8;
+      --ico: #1868b8;
+      --d0: #bed4e8;
+      --d1: #cce0f0;
+      --d2: #78aad0;
+      --d3: #0e58a8;
+      --d4: #b4cce0
+    }
+
+    body.th-grey {
+      /* Béton — gris neutre */
+      --bg0: #eeeeee;
+      --bg1: #ffffff;
+      --bg2: #e2e2e2;
+      --bg3: #d4d4d4;
+      --bd: #b8b8b8;
+      --acc: #5a5a5a;
+      --t0: #202020;
+      --t1: #3a3a3a;
+      --t2: #5c5c5c;
+      --t3: #808080;
+      --t4: #a4a4a4;
+      --ico: #5a5a5a;
+      --d0: #cfdec8;
+      --d1: #daebd2;
+      --d2: #8cb888;
+      --d3: #2a6030;
+      --d4: #c2d6ba
+    }
+
+    body.th-dark {
+      /* Semantic action colors, lightened for legibility against this theme's
+         dark surfaces (the shared :root values read as too dim/desaturated here).
+         Tints go dark+muted instead of pale, so an "active" pill stays a soft
+         patch of color rather than a bright card against the night background. */
+      --sem-stop: #d9716d;
+      --sem-stop-tint: #3a2828;
+      --sem-stop-tint-d: #45302f;
+      --sem-go: #4caf7d;
+      --sem-go-tint: #24352c;
+      --sem-go-tint-d: #2c4034;
+      --sem-caution: #dba64e;
+      --sem-caution-tint: #3a3324;
+      --sem-caution-tint-d: #453c2a;
+      --sem-shunt: #a084c4;
+      --sem-shunt-tint: #322c3c;
+      --sem-shunt-tint-d: #3b3346;
+      --sem-off: #8a95a8;
+      --sem-off-tint: #2a2e36;
+      --sem-off-tint-d: #33373f;
+
+      /* Nuit — sombre, faible luminosité */
+      --bg0: #14161a;
+      --bg1: #1e2128;
+      --bg2: #262a32;
+      --bg3: #30343e;
+      --bd: #3c4150;
+      --acc: #6f9ceb;
+      --t0: #e8ecf4;
+      --t1: #c4cbdc;
+      --t2: #9aa4bc;
+      --t3: #74809c;
+      --t4: #545e78;
+      --ico: #6f9ceb;
+      --d0: #2a3a2c;
+      --d1: #345038;
+      --d2: #4c8850;
+      --d3: #7ad080;
+      --d4: #3a4c3c
+    }
+
+    body.th-light {
+      /* Papier — blanc pur, contraste maximal */
+      --bg0: #ffffff;
+      --bg1: #ffffff;
+      --bg2: #f4f4f4;
+      --bg3: #e8e8e8;
+      --bd: #cccccc;
+      --acc: #2a5cc0;
+      --t0: #000000;
+      --t1: #202020;
+      --t2: #444444;
+      --t3: #707070;
+      --t4: #999999;
+      --ico: #2a5cc0;
+      --d0: #d8ecd0;
+      --d1: #e4f4dc;
+      --d2: #6cb070;
+      --d3: #205020;
+      --d4: #c8e0c0
+    }
+
+    /* Theme switcher */
+    .theme-sw {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem 1.25rem .7rem;
+      border-top: 1px solid var(--bd)
+    }
+
+    .theme-sw-lbl {
+      font-size: .6rem;
+      color: var(--t4);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      margin-right: .25rem
+    }
+
+    .theme-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: border-color .15s
+    }
+
+    .theme-dot.active {
+      border-color: var(--t0)
+    }
+
+    .theme-dot-night {
+      background: #3a6fd8
+    }
+
+    .theme-dot-amber {
+      background: #9a5820
+    }
+
+    .theme-dot-signal {
+      background: #1868b8
+    }
+
+    .theme-dot-grey {
+      background: #5a5a5a
+    }
+
+    .theme-dot-dark {
+      background: #14161a
+    }
+
+    .theme-dot-light {
+      background: #ffffff;
+      border-color: #cccccc
+    }
+
+    body {
+      background: var(--bg0);
+      color: var(--t0);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    /* ── Error banner ───────────────────────────────────────────────────── */
+    #err {
+      display: none;
+      background: #c0392b;
+      color: #fff;
+      text-align: center;
+      padding: .4rem;
+      font-size: .8rem
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      background: var(--bg1);
+      padding: .75rem 1rem;
+      border-bottom: 2px solid var(--bd);
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      position: sticky;
+      top: 0;
+      z-index: 100
+    }
+
+    /* Burger button */
+    #burger {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--t0);
+      padding: .25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0
+    }
+
+    #burger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: currentColor;
+      border-radius: 2px;
+      transition: transform .25s, opacity .25s
+    }
+
+    /* Burger → X animation when drawer is open */
+    body.drawer-open #burger span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg)
+    }
+
+    body.drawer-open #burger span:nth-child(2) {
+      opacity: 0
+    }
+
+    body.drawer-open #burger span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg)
+    }
+
+    h1 {
+      font-size: 1rem;
+      color: var(--acc);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      flex: 1
+    }
+    #hdr-layout-name {
+      font-size: .75rem;
+      letter-spacing: 1px;
+      text-transform: none;
+      color: var(--t3);
+      font-weight: 400
+    }
+
+    .gbtn {
+      padding: .3rem .7rem;
+      border: 1.5px solid transparent;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transition: opacity .15s, background .12s
+    }
+
+    .gbtn:active {
+      opacity: .6
+    }
+
+    .gbtn.on {
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go)
+    }
+
+    .gbtn.off {
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
+    }
+
+    /* Status bar (cockpit) */
+    #sb {
+      font-size: .72rem;
+      color: var(--t4);
+      padding: .3rem 1rem;
+      background: var(--bg1);
+      border-bottom: 1px solid var(--bd)
+    }
+
+    #sb span {
+      color: #4CAF50
+    }
+
+    /* ── Overlay (closes drawer on outside click) ───────────────────────── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      z-index: 200
+    }
+
+    body.drawer-open #overlay {
+      display: block
+    }
+
+    /* ── Navigation drawer (slides in from left) ────────────────────────── */
+    #drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 240px;
+      background: var(--bg2);
+      border-right: 1px solid var(--bd);
+      z-index: 300;
+      transform: translateX(-100%);
+      transition: transform .28s ease;
+      display: flex;
+      flex-direction: column
+    }
+
+    body.drawer-open #drawer {
+      transform: translateX(0)
+    }
+
+    .drawer-title {
+      padding: 1.2rem 1rem .8rem;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--acc);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    #drawer nav {
+      flex: 1;
+      padding: .5rem 0
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .75rem 1.25rem;
+      cursor: pointer;
+      font-size: .85rem;
+      color: var(--t1);
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent
+    }
+
+    .nav-item:hover {
+      background: var(--bg1);
+      color: var(--t0)
+    }
+
+    .nav-item.active {
+      background: var(--bg1);
+      color: var(--acc);
+      border-left-color: var(--acc)
+    }
+
+    .nav-icon {
+      font-size: 1.1rem;
+      width: 1.4rem;
+      text-align: center
+    }
+
+    .drawer-footer {
+      padding: .75rem 1rem;
+      font-size: .65rem;
+      color: var(--t4);
+      border-top: 1px solid var(--bd)
+    }
+
+    /* ── Views ──────────────────────────────────────────────────────────── */
+    .view {
+      display: none
+    }
+
+    .view.active {
+      display: block
+    }
+
+    /* ── Cockpit view ───────────────────────────────────────────────────── */
+    /* Toolbar is 2 stacked rows: controls (search/view/density/all-on-off),
+       then type filter pills — each its own .ck-row so they never blur into
+       one undifferentiated strip. */
+    #ck-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: .45rem;
+      padding: .5rem 1rem;
+      border-bottom: 1px solid var(--bd);
+      background: var(--bg1)
+    }
+    .ck-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      flex-wrap: wrap
+    }
+    .ck-row-filters {
+      padding-top: .45rem;
+      border-top: 1px solid var(--bg3)
+    }
+    /* Thin vertical rule between functional groups within the main row —
+       makes "search | view | density | all-on-off" read as distinct groups
+       instead of one continuous row of buttons (#135). */
+    .ck-sep {
+      width: 1px;
+      align-self: stretch;
+      min-height: 1.4rem;
+      background: var(--bd)
+    }
+    .ck-all-group {
+      display: flex;
+      gap: .3rem
+    }
+    #ck-type-filters {
+      display: flex;
+      gap: .3rem;
+      flex-wrap: wrap
+    }
+    .ck-tf {
+      background: none;
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      padding: .25rem .4rem;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      opacity: .65;
+      transition: opacity .15s, background .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem
+    }
+    .ck-tf svg { width: 1.2rem; height: 1.2rem }
+    .ck-tf-lbl { font-size: .65rem; color: var(--t2) }
+    .ck-tf:hover { opacity: .9 }
+    .ck-tf.ck-tf-active {
+      opacity: 1;
+      background: var(--bd);
+      border-color: var(--t2)
+    }
+    #ck-search {
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      background: var(--bg0);
+      color: var(--t1);
+      padding: .3rem .6rem;
+      font-size: .8rem;
+      width: 160px
+    }
+    /* View (by-type / packed) and density (comfortable / compact) toggles (#1). */
+    .ck-view-group, .ck-density-group {
+      display: flex;
+      gap: .3rem
+    }
+    .ck-view-btn, .ck-density-btn {
+      padding: .3rem .6rem;
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      background: var(--bg3);
+      color: var(--t2);
+      font-size: .72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s
+    }
+    .ck-view-btn.active, .ck-density-btn.active {
+      background: var(--t3);
+      color: #fff;
+      border-color: var(--t3)
+    }
+    /* Packed view (#1): one flat grid across the full width, sorted by id —
+       no per-type grouping, so small type groups no longer leave the row half
+       empty on wide screens. */
+    #grid > .ck-packed {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr))
+    }
+    /* Compact density (#1): smaller cards, tighter gaps — for a wall-mounted
+       tablet showing many devices at once. */
+    #grid.ck-compact {
+      gap: .5rem
+    }
+    #grid.ck-compact .gcards {
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: .35rem
+    }
+    #grid.ck-compact .card {
+      padding: .4rem;
+      gap: .2rem;
+      border-radius: 6px
+    }
+    /* Compact cards are already smaller/tighter overall (#1) — the button
+       labels (state/effect text) should shrink a step too, or they end up
+       looking oversized relative to the rest of the shrunk card (#135). */
+    #grid.ck-compact .btn {
+      font-size: .62rem
+    }
+    #grid.ck-compact .tbtn {
+      font-size: .53rem
+    }
+    /* Compact cards are narrow enough that DCC + pin together truncated the
+       DCC value itself — pin is wiring detail, less useful than the address
+       in this dense view, so it's dropped here only (#135). */
+    #grid.ck-compact .mtag-pin {
+      display: none
+    }
+    .ck-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .9rem;
+      padding: 3rem 2rem;
+      text-align: center;
+      max-width: 420px;
+      margin: 2rem auto
+    }
+    .ck-empty-ico { font-size: 2.5rem; opacity: .4 }
+    .ck-empty-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--t2)
+    }
+    .ck-empty-body {
+      font-size: .82rem;
+      color: var(--t3);
+      line-height: 1.6
+    }
+    .ck-empty-btn {
+      margin-top: .4rem;
+      padding: .45rem 1.2rem;
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      background: var(--bg1);
+      color: var(--t2);
+      cursor: pointer;
+      font-size: .82rem
+    }
+    .ck-empty-btn:hover { background: var(--bd) }
+
+    #grid {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .ghdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .5rem;
+      border-bottom: 1px solid var(--bd);
+      padding-bottom: .35rem
+    }
+
+    .gname {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--t2);
+      letter-spacing: 2px;
+      text-transform: uppercase
+    }
+
+    .gcnt {
+      color: var(--t3);
+      font-size: .8rem;
+      font-weight: 400
+    }
+
+    .gbtns {
+      display: flex;
+      gap: .4rem
+    }
+
+    /* 130px was too narrow for longer-language labels (German compounds like
+       "Mittlere Geschwindigkeit" were clipping/overlapping inside .tbtn,
+       #135) — widened since there's room in a typical grid layout. */
+    .gcards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: .6rem
+    }
+
+    /* List view (#85): sortable table, one row per device, comment column. */
+    .ck-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      background: var(--bg1);
+      border-radius: 8px;
+      overflow: hidden
+    }
+
+    .ck-table th, .ck-table td {
+      text-align: left;
+      padding: .45rem .6rem;
+      border-bottom: 1px solid var(--bg2);
+      font-size: .85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    /* Fixed layout (above) needs explicit widths, otherwise every column
+       shares the leftover space equally — this is what stretched Type/DCC/
+       Board so far apart (#135). Narrow columns get just enough room for
+       their content; Comment gets a modest fixed share and Action (the
+       column that actually needs the room, holding a 2-5 button cluster)
+       takes whatever's left — an even split with Comment was squeezing
+       button clusters onto 2 lines for no reason (#135). */
+    .ck-table th:nth-child(1) { width: 2rem }
+    .ck-table th:nth-child(2) { width: 12% }
+    .ck-table th:nth-child(3) { width: 14% }
+    .ck-table th:nth-child(4) { width: 8%  }
+    .ck-table th:nth-child(5) { width: 12% }
+    .ck-table th:nth-child(6) { width: 16% }
+
+    .ck-table th {
+      color: var(--t2);
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap
+    }
+
+    .ck-table th:hover {
+      color: var(--t0)
+    }
+
+    .ck-table tbody tr:nth-child(even) {
+      background: var(--bg2)
+    }
+
+    .ck-table tbody tr:hover {
+      background: var(--bg3)
+    }
+
+    .ck-table th:first-child {
+      cursor: default
+    }
+
+    /* Action column (#135): every device category has a different number of
+       state buttons (a single toggle vs. a 2-5 button cluster), so without a
+       shared fixed width each button sizes to its own label and the whole
+       column reads as a ragged, right-stuck pile instead of a grid. Fixing
+       each button to the same width and left-aligning the cell makes every
+       row's buttons line up in columns regardless of how many there are.
+       It also holds real buttons (a flex cluster that wraps on its own), not
+       plain text, so the shared nowrap/ellipsis truncation above must not
+       apply here or it would clip/hide the buttons themselves. */
+    .ck-table td:last-child {
+      text-align: left;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal
+    }
+
+    /* Sized to its own label rather than a shared fixed width (#135) — a
+       uniform column grid looked tidy but wasted space on short labels (OFF)
+       and clipped longer ones (German compounds); auto width lets each
+       button be exactly as wide as it needs to be. */
+    .ck-table .btn, .ck-table .tbtn {
+      width: auto;
+      flex: 0 0 auto
+    }
+
+    /* .btn is styled full-width/bold for a card's own action slot — in a table
+       row that reads as an oversized, childish pill next to the compact .tbtn
+       clusters on other rows. Match the same compact sizing here instead —
+       same font-size as .tbtn (.58rem) so every button in the Action column
+       reads at one consistent size regardless of device category (#135). */
+    .ck-table .btn {
+      padding: .3rem .5rem;
+      font-size: .58rem;
+      letter-spacing: .3px;
+      border-radius: 5px
+    }
+
+    .ck-table-ico {
+      width: 1.4rem;
+      color: var(--ico)
+    }
+
+    .ck-table-ico svg {
+      width: 18px;
+      height: 18px;
+      display: block
+    }
+
+    /* Same state dot as the card view's .ch (#135) — the List view had lost
+       it when the redundant State column was removed, but the dot itself
+       (distinct from that column) is a useful at-a-glance status indicator
+       worth keeping next to the id. */
+    .ck-table-id {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem
+    }
+
+
+    .card {
+      background: var(--bg1);
+      border-radius: 8px;
+      border: 2px solid var(--bd);
+      padding: .7rem;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      transition: border-color .4s
+    }
+
+    .card.on {
+      border-color: #27ae60
+    }
+
+    .card.off {
+      border-color: #2c2c3e
+    }
+
+    .card.busy {
+      border-color: #e67e22
+    }
+
+    .card.stop {
+      border-color: #c0392b
+    }
+
+    .card.flash {
+      border-color: #e67e22
+    }
+
+    .ch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .cid {
+      font-weight: 700;
+      font-size: .85rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .dot.on {
+      background: #27ae60;
+      box-shadow: 0 0 6px #27ae60
+    }
+
+    /* OFF: hollow thin ring (shape = empty/inactive), distinct from the solid
+       "stable" disc and the spinning "transition" ring — no colour needed. */
+    .dot.off {
+      background: none;
+      border: 1.5px solid var(--t3);
+      box-sizing: border-box
+    }
+
+    /* Transition indicator: a spinning ring (shape, not colour) — unambiguous
+       regardless of theme/colour and distinct from the orange FLASH state. */
+    .dot.busy {
+      background: none;
+      border: 2px solid var(--bd);
+      border-top-color: var(--t1);
+      box-sizing: border-box;
+      animation: spin .6s linear infinite
+    }
+
+    .dot.stop {
+      background: #c0392b;
+      box-shadow: 0 0 6px #c0392b
+    }
+
+    .dot.flash {
+      background: #e67e22;
+      box-shadow: 0 0 6px #e67e22
+    }
+
+    @keyframes pulse {
+      from {
+        box-shadow: 0 0 2px #e67e22
+      }
+
+      to {
+        box-shadow: 0 0 10px #e67e22
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .icon {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ico)
+    }
+
+    .icon svg {
+      width: 30px;
+      height: 30px;
+      transition: color .4s
+    }
+
+    .card.on .icon {
+      color: #4CAF50
+    }
+
+    .card.busy .icon {
+      color: #e67e22
+    }
+
+    /* nowrap+ellipsis (like .cid) — longer type labels (e.g. "Gas Lamp
+       (defective)") would otherwise wrap to a 2nd line and push everything
+       below down, breaking vertical alignment with shorter-labelled cards
+       in the same grid row. */
+    .badge {
+      font-size: .6rem;
+      background: var(--bd);
+      color: var(--t2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+      letter-spacing: .5px;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    /* Fixed height (not just min-height) reserves exactly one tag row whether
+       d has 0 or 1 tag to show (DCC address and board/pin are mutually
+       exclusive per meta()'s own branches, so a device never shows both at
+       once) — this is what keeps the button row underneath at the same
+       vertical position across every card in the grid regardless of which
+       devices happen to have a DCC address (#135). nowrap since a single tag
+       never needs to wrap. */
+    .meta {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 3px;
+      height: 15px;
+      flex-shrink: 0;
+      overflow: hidden
+    }
+
+    .mtag {
+      font-size: .58rem;
+      background: var(--bg3);
+      color: var(--t3);
+      padding: 1px 5px;
+      border-radius: 3px;
+      letter-spacing: .3px
+    }
+
+    /* Functional-contrast style (#135): the button stays a thin outline in its
+       semantic color, filled solid only while mid-transition (busy) or for the
+       read-only static state — fill is reserved for the state that's actually
+       true right now, rather than a solid color block for every state. */
+    /* Height matches .tbtn's footprint (same padding/font-size) so a card with
+       a single on/off .btn (neon, campfire...) is the same height as a card
+       with a .tbtns cluster (servo, signal...) — otherwise cards in the same
+       grid row visibly differ in height (#135). */
+    .btn {
+      width: 100%;
+      padding: .3rem .15rem;
+      background: transparent;
+      border: 1.5px solid var(--bd);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      transition: opacity .15s, background .12s, color .12s
+    }
+
+    .btn:active {
+      opacity: .65
+    }
+
+    .btn.on {
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
+    }
+
+    .btn.off {
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go)
+    }
+
+    .btn.busy {
+      background: var(--sem-off-tint);
+      border-color: var(--sem-off);
+      color: var(--sem-off);
+      cursor: default
+    }
+
+    .btn.static {
+      background: transparent;
+      border-color: var(--bd);
+      color: var(--t3);
+      cursor: default;
+      font-style: italic
+    }
+
+    .tbtns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px
+    }
+
+    /* white-space:normal (not nowrap) so a label that still doesn't fit even
+       after widening the card grid (long German compounds, etc.) wraps onto
+       a 2nd line inside its own button instead of clipping/overlapping the
+       next button (#135). */
+    .tbtn {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: .3rem .15rem;
+      background: transparent;
+      border: 1.5px solid var(--bd);
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .58rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      white-space: normal;
+      line-height: 1.2;
+      text-align: center;
+      opacity: 1;
+      transition: background .12s, color .12s, border-color .12s
+    }
+
+    /* Functional-contrast style (#135): each tbtn is a thin outline in its
+       semantic color; only the currently-active one fills solid. Replaces the
+       old always-solid buttons + a barely-visible active ring (the ring showed
+       up poorly against light fills like t-slow's yellow) with a state that's
+       legible from the fill itself, on every ambient theme. */
+    .tbtn.t-off { border-color: var(--sem-off); color: var(--sem-off) }
+    .tbtn.t-stop { border-color: var(--sem-stop); color: var(--sem-stop) }
+    .tbtn.t-go { border-color: var(--sem-go); color: var(--sem-go) }
+    .tbtn.t-flash { border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.t-slow { border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.t-sh1 { border-color: var(--sem-shunt); color: var(--sem-shunt) }
+
+    .tbtn.active.t-off { background: var(--sem-off-tint-d); border-color: var(--sem-off); color: var(--sem-off) }
+    .tbtn.active.t-stop { background: var(--sem-stop-tint-d); border-color: var(--sem-stop); color: var(--sem-stop) }
+    .tbtn.active.t-go { background: var(--sem-go-tint-d); border-color: var(--sem-go); color: var(--sem-go) }
+    .tbtn.active.t-flash { background: var(--sem-caution-tint-d); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.active.t-slow { background: var(--sem-caution-tint-d); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.active.t-sh1 { background: var(--sem-shunt-tint-d); border-color: var(--sem-shunt); color: var(--sem-shunt) }
+
+    .tbtn:not(.active):not([disabled]):hover {
+      background: var(--bg2)
+    }
+
+    .tbtn[disabled] {
+      opacity: .35;
+      cursor: default
+    }
+
+    /* ── Config management section ──────────────────────────────────────── */
+    .cfgmgr {
+      border-top: 1px solid var(--bd);
+      margin-top: .5rem;
+      display: flex;
+      flex-direction: column
+    }
+
+    .cfgmgr-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: .9rem 1rem;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .cfgmgr-row-label {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      min-width: 130px;
+      max-width: 130px;
+      padding-top: .1rem;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--t1);
+      letter-spacing: .5px;
+      flex-shrink: 0
+    }
+
+    .cfgmgr-icon {
+      font-size: .95rem;
+      flex-shrink: 0
+    }
+
+    .cfgmgr-row-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      min-width: 0
+    }
+
+    .cfgmgr-row-desc {
+      font-size: .75rem;
+      color: var(--t3)
+    }
+
+    .cfgmgr-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .cfgmgr-upload-row {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem
+    }
+
+    .cfgmgr-filename {
+      font-size: .72rem;
+      color: var(--t3);
+      background: var(--bg2);
+      padding: .25rem .6rem;
+      border-radius: 4px;
+      border: 1px solid var(--bd);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .cfgmgr-btn {
+      padding: .38rem .85rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+      background: var(--acc);
+      color: #fff;
+      transition: opacity .15s
+    }
+
+    .cfgmgr-btn:active { opacity: .7 }
+
+    .cfgmgr-btn:disabled {
+      background: var(--bg3);
+      color: var(--t3);
+      cursor: default
+    }
+
+    .cfgmgr-btn.secondary {
+      background: var(--bg3);
+      color: var(--t1);
+      border: 1px solid var(--bd)
+    }
+
+    .cfgmgr-btn.secondary:hover { background: var(--bd) }
+
+    .cfgmgr-btn.danger {
+      background: #e67e22;
+      color: #fff
+    }
+
+    .cfgmgr-btn.danger:hover { background: #d35400 }
+
+    .cfgmgr-input-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+      padding: .4rem 0
+    }
+
+    .cfgmgr-input {
+      flex: 1;
+      min-width: 140px;
+      padding: .35rem .7rem;
+      border-radius: 5px;
+      border: 1px solid var(--bd);
+      background: var(--bg2);
+      color: var(--t1);
+      font-size: .78rem
+    }
+
+    .cfgmgr-confirm-msg {
+      font-size: .78rem;
+      color: var(--t2)
+    }
+
+    .cfg-filelist {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      margin-top: .4rem;
+    }
+
+    .cfg-fileitem {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .35rem .6rem;
+      border-radius: 6px;
+      border: 2px solid var(--bd);
+      background: var(--bg2);
+      cursor: default;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--t1)
+    }
+
+    .cfg-fileitem.active {
+      border-color: #27ae60;
+      background: var(--bg1);
+      color: var(--t0);
+      font-weight: 700
+    }
+
+    .cfg-fileitem.pending {
+      border-color: #e67e22;
+      background: var(--bg1)
+    }
+
+    .cfg-fileitem .cfg-filedot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      border: 2px solid var(--bd);
+      flex-shrink: 0
+    }
+
+    .cfg-fileitem.active .cfg-filedot {
+      background: #27ae60;
+      border-color: #27ae60
+    }
+
+    .cfg-fileitem.pending .cfg-filedot {
+      background: #e67e22;
+      border-color: #e67e22
+    }
+
+    .cfg-fname {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      /* kFsNameMax (DeviceApi.h) allows up to 32 chars incl. ".json" — size the
+         column to fit that in full instead of clipping mid-extension (#112). */
+      width: 33ch;
+      flex-shrink: 0
+    }
+
+    .cfg-flayout {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      font-size: .8rem;
+      color: var(--t3);
+      font-style: italic;
+      padding: 0 .5rem
+    }
+
+    /* Badge "actif" / "en attente" : dimensions identiques au bouton Activer (slot 1). */
+    .cfg-filebadge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      min-width: 4.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      background: #1a3a2a;
+      color: #27ae60;
+      border: 1px solid #27ae60
+    }
+
+    .cfg-filebadge.pending {
+      background: #3a2200;
+      color: #e67e22;
+      border-color: #e67e22
+    }
+
+    /* Fantôme : occupe la place d'un bouton absent sans être visible. */
+    .cfg-row-ghost {
+      visibility: hidden;
+      pointer-events: none;
+      border-color: transparent !important;
+      background: transparent !important
+    }
+
+    .cfg-row-btns {
+      display: flex;
+      gap: .2rem;
+      flex-shrink: 0
+    }
+
+    .cfg-row-btn {
+      border-radius: 4px;
+      border: 1px solid var(--bd);
+      background: var(--bg3);
+      color: var(--t1);
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      white-space: nowrap;
+      transition: border-color .12s, background .12s, color .12s
+    }
+
+    .cfg-row-btn:hover {
+      border-color: var(--t2);
+      background: var(--bg1)
+    }
+
+    .cfg-row-btn.primary {
+      border-color: var(--acc);
+      color: var(--acc);
+      min-width: 4.5rem
+    }
+
+    .cfg-row-btn.primary:hover {
+      background: var(--acc);
+      color: var(--bg0)
+    }
+
+    .cfg-row-btn.ok {
+      border-color: #27ae60;
+      color: #27ae60
+    }
+
+    .cfg-row-btn.ok:hover {
+      background: #27ae60;
+      color: var(--bg0)
+    }
+
+    .cfg-row-btn.danger:hover {
+      border-color: #c0392b;
+      color: #c0392b
+    }
+
+    .cfg-rename-inp {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg0);
+      border: 1px solid var(--acc);
+      color: var(--t0);
+      border-radius: 4px;
+      padding: .15rem .4rem;
+      font-size: .8rem
+    }
+
+    .cfg-btn {
+      flex: 1;
+      padding: .45rem .5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      background: #27ae60;
+      color: #fff;
+      transition: opacity .15s
+    }
+
+    .cfg-btn:active {
+      opacity: .7
+    }
+
+    .cfg-btn:disabled {
+      background: #1e3a5f;
+      color: var(--t3);
+      cursor: default
+    }
+
+    .cfg-btn.secondary {
+      background: #1e3a5f;
+      color: var(--t2)
+    }
+
+    .cfg-btn.secondary:hover {
+      color: var(--t0)
+    }
+
+    .cfg-status {
+      width: 100%;
+      padding: .8rem 1rem;
+      border-radius: 6px;
+      font-size: .8rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 1px
+    }
+
+    .cfg-status.ok {
+      background: #1a3a2a;
+      color: #27ae60;
+      border: 1px solid #27ae60
+    }
+
+    .cfg-status.err {
+      background: #3a1a1a;
+      color: #c0392b;
+      border: 1px solid #c0392b
+    }
+
+    /* ── Dirty banner ───────────────────────────────────────────────────── */
+    #dirty-banner {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      background: #3a2800;
+      color: #f0a500;
+      border-bottom: 2px solid #f0a500;
+      padding: .7rem 1.2rem;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .dirty-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    #dirty-banner span[data-i18n] {
+      flex: 1;
+    }
+
+    .dirty-btn {
+      background: #f0a500;
+      color: #1a1200;
+      border: none;
+      border-radius: 5px;
+      padding: .35rem .9rem;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .dirty-btn:hover {
+      background: #ffc200;
+    }
+
+    /* ── Params view ────────────────────────────────────────────────────── */
+    .prm-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 480px
+    }
+
+    .prm-section {
+      background: var(--bg1);
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem
+    }
+
+    .prm-section-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--t2);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .prm-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-height: 2rem
+    }
+
+    .prm-label {
+      flex: 1;
+      font-size: .8rem;
+      color: var(--t1)
+    }
+
+    .prm-field {
+      display: flex;
+      align-items: center;
+      gap: .4rem
+    }
+
+    .prm-input {
+      background: var(--bg3);
+      border: 1px solid var(--bd);
+      border-radius: 5px;
+      color: var(--t0);
+      font-size: .82rem;
+      padding: .3rem .5rem;
+      width: 90px;
+      text-align: right
+    }
+
+    .prm-input:focus {
+      outline: none;
+      border-color: var(--t3)
+    }
+
+    .prm-input-sm {
+      width: 72px
+    }
+
+    .prm-select {
+      background: var(--bg3);
+      border: 1px solid var(--bd);
+      border-radius: 5px;
+      color: var(--t0);
+      font-size: .82rem;
+      padding: .3rem .4rem;
+      width: 105px
+    }
+
+    .prm-unit {
+      font-size: .72rem;
+      color: var(--t3)
+    }
+
+    .prm-lang-btns {
+      display: flex;
+      gap: .4rem
+    }
+
+    .prm-lang-btn {
+      padding: .3rem .75rem;
+      border: 1px solid var(--bd);
+      border-radius: 4px;
+      background: var(--bg3);
+      color: var(--t2);
+      font-size: .75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .prm-lang-btn.active {
+      background: var(--t3);
+      color: #fff;
+      border-color: var(--t3)
+    }
+    /* GPIO ↔ DCC pin-label toggle (board view header) — active state. */
+    .pinlbl-btn.active {
+      background: var(--t3);
+      color: #fff;
+      border-color: var(--t3)
+    }
+
+    .prm-save-row {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem
+    }
+
+    .prm-status {
+      width: 100%;
+      padding: .8rem 1rem;
+      border-radius: 6px;
+      font-size: .8rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 1px
+    }
+
+    .prm-status.ok {
+      background: #1a3a2a;
+      color: #27ae60;
+      border: 1px solid #27ae60
+    }
+
+    .prm-status.err {
+      background: #3a1a1a;
+      color: #c0392b;
+      border: 1px solid #c0392b
+    }
+
+    .prm-info {
+      font-size: .8rem;
+      color: var(--t3);
+      text-align: center;
+      padding: .4rem
+    }
+
+    /* ── Debug (mise au point) ──────────────────────────────────────────── */
+    /* ── Config sub-tabs ────────────────────────────────────────────────── */
+    .cfg-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--bd);
+      background: var(--bg1);
+      padding: 0 1rem;
+      flex-shrink: 0;
+      overflow-x: auto
+    }
+
+    .cfg-tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      padding: .55rem 1.1rem;
+      font-size: .88rem;
+      color: var(--t2);
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: color .15s, border-color .15s
+    }
+
+    .cfg-tab:hover { color: var(--t0) }
+
+    .cfg-tab-name-inp {
+      margin-left: auto;
+      align-self: center;
+      border: 1px solid var(--bd);
+      border-radius: 5px;
+      background: var(--bg0);
+      color: var(--t1);
+      padding: .2rem .5rem;
+      font-size: .8rem;
+      width: 180px;
+      outline: none
+    }
+    .cfg-tab-name-inp:focus { border-color: var(--acc) }
+
+    .cfg-tab.active {
+      color: var(--acc);
+      border-bottom-color: var(--acc);
+      font-weight: 600
+    }
+
+    .cfg-tab[disabled] {
+      color: var(--t4);
+      cursor: default;
+      pointer-events: none
+    }
+
+    .cfg-tabpanel { display: none }
+    .cfg-tabpanel.active { display: block }
+
+    /* ── Debug / boards panel ───────────────────────────────────────────── */
+    .dbg-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .dbg-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    #i2c-result {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .4rem;
+      padding: .4rem .75rem;
+      background: var(--bg1);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      font-size: .8rem
+    }
+    .i2c-pins { color: var(--t2); font-size: .75rem }
+    .i2c-label { color: var(--t2) }
+    .i2c-none { color: var(--t2); font-style: italic }
+    .i2c-addr {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      background: var(--bg2);
+      border: 1px solid var(--bd);
+      border-radius: 4px;
+      padding: .1rem .4rem;
+      font-family: monospace
+    }
+    .i2c-name { color: var(--accent); font-family: inherit; font-size: .75rem }
+
+    /* ── DCC activity pills (Diagnostics tab) ────────────────────────────── */
+    .dcc-led-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    /* .dcc-led is a <button> for filterable categories, a <div> for "raw" (no detailed
+       log to filter on) — reset button-only defaults (font, cursor) so both render alike. */
+    .dcc-led {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .3rem .6rem;
+      border-radius: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--bd);
+      font: inherit;
+      font-size: .75rem;
+      color: var(--t2);
+      cursor: default;
+      transition: background .15s, border-color .15s, color .15s
+    }
+
+    button.dcc-led {
+      cursor: pointer
+    }
+
+    .dcc-led-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bd);
+      transition: background .15s, box-shadow .15s
+    }
+
+    /* Two independent signals, deliberately different visual channels so they never
+       get mistaken for one another: the DOT turns green on recent traffic (.lit),
+       the pill's BACKGROUND turns accent-colored when it's the active filter (.active). */
+    .dcc-led.lit .dcc-led-dot {
+      background: var(--d3);
+      box-shadow: 0 0 6px var(--d2)
+    }
+
+    .dcc-led.active {
+      background: var(--acc);
+      color: var(--bg1);
+      border-color: var(--acc)
+    }
+
+    .dcc-led.active .dcc-led-count {
+      color: var(--bg1)
+    }
+
+    .dcc-led-count {
+      font-family: monospace;
+      color: var(--t3);
+      font-size: .68rem
+    }
+
+    /* ── DCC event log (decoded events, newest first) ────────────────────── */
+
+    .dcc-log {
+      margin-top: .4rem;
+      max-height: 28rem;
+      overflow-y: auto;
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      background: var(--bg2);
+      font-family: monospace;
+      font-size: .78rem
+    }
+
+    .dcc-log-empty {
+      padding: .5rem .6rem;
+      color: var(--t3);
+      font-style: italic
+    }
+
+    /* Grid (not flex) so every row's columns line up vertically — fixed tracks per
+       field, Device takes whatever is left. */
+    .dcc-log-row {
+      display: grid;
+      grid-template-columns: 4.2em 5.5em 3.6em 4em 3em 1fr;
+      column-gap: .6rem;
+      align-items: baseline;
+      padding: .28rem .6rem;
+      border-bottom: 1px solid var(--bd);
+      color: var(--t1)
+    }
+
+    .dcc-log-row:last-child { border-bottom: none }
+
+    .dcc-log-time { color: var(--t3) }
+    .dcc-log-kind { color: var(--d3); font-weight: bold }
+    .dcc-log-addr { color: var(--t2) }
+    .dcc-log-value { color: var(--t1) }
+    .dcc-log-repeat {
+      color: var(--t3);
+      font-style: italic
+    }
+    .dcc-log-device {
+      color: var(--t2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .dbg-info {
+      padding: .5rem .75rem;
+      font-size: .78rem;
+      color: var(--t2);
+      font-style: italic
+    }
+
+    #dbg-boards {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 1rem
+    }
+
+    .dbg-board {
+      background: var(--bg1);
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      padding: 1rem;
+      display: inline-flex;
+      flex-direction: column;
+      gap: .75rem;
+      width: fit-content
+    }
+
+    .dbg-board-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem
+    }
+
+    .dbg-board-name {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--t0)
+    }
+
+    .dbg-idx-badge {
+      display: inline-block;
+      background: var(--bd);
+      color: var(--t3);
+      font-size: .65rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: .5rem;
+      letter-spacing: .5px
+    }
+
+    .dbg-board-actions {
+      display: flex;
+      gap: .3rem
+    }
+
+    .dbg-hbtn {
+      padding: .25rem .6rem;
+      border: 1.5px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      transition: opacity .15s, background .12s, color .12s, border-color .12s
+    }
+
+    /* Same functional-contrast/pastel recipe as the cockpit's .btn/.tbtn
+       (#135): tinted background + semantic-colour border/text instead of a
+       solid saturated fill with white text. */
+    .dbg-hbtn.on {
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
+    }
+
+    .dbg-hbtn.off {
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go)
+    }
+
+    .dbg-hbtn.test {
+      background: var(--sem-shunt-tint);
+      border-color: var(--sem-shunt);
+      color: var(--sem-shunt)
+    }
+
+    .dbg-hbtn.rm {
+      background: var(--d2);
+      border-color: var(--bd);
+      color: var(--t3)
+    }
+
+    .dbg-hbtn:active {
+      opacity: .6
+    }
+
+    /* Servo speed presets: same t-* semantic classes/colours as the cockpit's .tbtn */
+    .dbg-hbtn.t-stop  { background: var(--sem-off-tint); border-color: var(--sem-off); color: var(--sem-off) }
+    .dbg-hbtn.t-slow  { background: var(--sem-caution-tint); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .dbg-hbtn.t-go    { background: var(--sem-go-tint); border-color: var(--sem-go); color: var(--sem-go) }
+    .dbg-hbtn.t-flash { background: var(--sem-caution-tint); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .dbg-hbtn.t-sh1   { background: var(--sem-shunt-tint); border-color: var(--sem-shunt); color: var(--sem-shunt) }
+
+    /* Bus device rows (UART chains: LobotChain, DfAudio…) */
+    .dbg-bus-dev {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .3rem .1rem;
+      border-bottom: 1px solid var(--d2)
+    }
+
+    .dbg-bus-dev:last-of-type { border-bottom: none }
+
+    .dbg-bus-id {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--t0);
+      min-width: 5rem
+    }
+
+    .dbg-bus-addr {
+      font-size: .72rem;
+      color: var(--t3);
+      min-width: 2.5rem
+    }
+
+    .dbg-bus-add {
+      padding-top: .4rem
+    }
+
+    /* PCB area */
+    .dbg-pcb {
+      background: var(--d0);
+      border: 1px solid var(--d2);
+      border-radius: 6px;
+      padding: .75rem;
+      overflow-x: auto;
+      /* Shrink the green PCB block to its content and centre it in the card
+         instead of stretching to the parent width (avoids the green sliver on
+         the right of wrapped pin rows). max-width keeps overflow-x functional
+         on narrow screens. */
+      width: fit-content;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto
+    }
+
+    .dbg-extra-row {
+      display: flex;
+      gap: .25rem;
+      flex-wrap: wrap;
+      margin-bottom: .6rem;
+      padding-bottom: .6rem;
+      border-bottom: 1px dashed var(--d2)
+    }
+
+    .dbg-dip {
+      display: inline-flex;
+      flex-direction: column;
+      gap: .3rem
+    }
+    .dbg-chip-row {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch
+    }
+    .dbg-chip-row .dbg-chip {
+      flex: 1;
+      justify-content: center
+    }
+    .dbg-usb-bottom {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: .3rem;
+      padding: .3rem .5rem;
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--t3);
+      text-transform: uppercase
+    }
+    .dbg-usb-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .15rem;
+      padding: .2rem .5rem;
+      background: var(--d4);
+      border: 1px solid var(--d2);
+      border-left: none;
+      border-radius: 0 4px 4px 0;
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--t3);
+      text-transform: uppercase;
+      flex-shrink: 0
+    }
+
+    /* Mirror of .dbg-usb-right — edge-connector badge on the left of the chip
+       strip (e.g. the SPI IN header of the LayoutFX SPI Child card). */
+    .dbg-usb-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .15rem;
+      padding: .2rem .5rem;
+      background: var(--d4);
+      border: 1px solid var(--d2);
+      border-right: none;
+      border-radius: 4px 0 0 4px;
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--t3);
+      text-transform: uppercase;
+      flex-shrink: 0
+    }
+
+    .dbg-col {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: .25rem
+    }
+
+    /* Bus connector blocks flanking the first pin row */
+    .dbg-conn-row {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: .3rem
+    }
+    .dbg-bus-conn {
+      display: flex;
+      flex-direction: column;
+      gap: .18rem;
+      border: 1.5px solid var(--acc);
+      border-radius: 5px;
+      padding: .3rem .45rem;
+      background: var(--bg2);
+      box-sizing: border-box;
+      width: 100px;
+      flex-shrink: 0;
+      align-self: stretch
+    }
+    .dbg-bconn-lbl {
+      font-size: .48rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--acc);
+      text-transform: uppercase;
+      text-align: center;
+      padding-bottom: .18rem;
+      border-bottom: 1px solid var(--bd);
+      margin-bottom: .05rem
+    }
+    .dbg-bconn-pin {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: .3rem
+    }
+    .dbg-bconn-name {
+      font-size: .58rem;
+      font-weight: 600;
+      color: var(--t1)
+    }
+    .dbg-bconn-gpio {
+      font-size: .55rem;
+      color: var(--t3);
+      font-family: monospace
+    }
+
+    .dbg-usb {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: center;
+      gap: .3rem;
+      padding: .2rem .5rem;
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--t3);
+      text-transform: uppercase
+    }
+
+    .dbg-usb::before {
+      content: '';
+      display: inline-block;
+      width: 32px;
+      height: 22px;
+      border: 2px solid var(--t3);
+      border-radius: 3px;
+      position: relative;
+      box-shadow: inset 0 0 0 1.5px var(--bg1);
+      background: linear-gradient(to bottom, var(--t4) 20%, var(--bg1) 20%, var(--bg1) 80%, var(--t4) 80%)
+    }
+
+    .dbg-chip {
+      background: var(--d4);
+      border: 1px solid var(--d2);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      font-size: .62rem;
+      color: var(--d3);
+      letter-spacing: 1px;
+      padding: .4rem .75rem;
+      line-height: 1.5;
+      min-height: 28px;
+      min-width: 0;
+      overflow: visible;
+      word-break: break-word;
+      overflow-wrap: anywhere
+    }
+
+    .dbg-flat {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem;
+      align-items: center
+    }
+
+    .dbg-flat-sep {
+      width: 10px
+    }
+
+    /* Pin buttons */
+    .dbg-pin {
+      width: 48px;
+      height: 52px;
+      padding: 3px 2px;
+      border: 1px solid var(--d2);
+      background: var(--d1);
+      border-radius: 5px;
+      cursor: pointer;
+      color: var(--d3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: all .15s;
+      user-select: none;
+      box-sizing: border-box
+    }
+    /* Multi-pin device: members carry a single-colour accent bar on their left edge so
+       a "lot" is recognisable at rest; hovering/clicking lifts the whole set (.grp-hi). */
+    .dbg-pin[data-grp] {
+      box-shadow: inset 3px 0 0 0 var(--t2)
+    }
+    /* Linked-pins group: hovering/clicking one tile lifts the whole set in 3D
+       (single colour, colour-blind friendly). A click pins it for 3 s (JS). */
+    .dbg-pin.grp-hi {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, .5);
+      outline: 2px solid var(--t1);
+      outline-offset: -1px;
+      position: relative;
+      z-index: 3
+    }
+
+    .dbg-pin-ico {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .dbg-pin-ico svg {
+      width: 22px;
+      height: 22px
+    }
+
+    .dbg-pin-num {
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: .3px
+    }
+
+    .dbg-pin:not(.nc):not(.gnd):not(.pwr):not(.sys):not(.jtag):not(.ro):not(.boot):not(.flash):not(.busy):not(.bus-rsv):hover {
+      border-color: #27ae60;
+      color: #4CAF50
+    }
+
+    .dbg-pin.on {
+      background: #d4f0da;
+      border-color: #27ae60;
+      color: #1a6030;
+      box-shadow: 0 0 5px rgba(39, 174, 96, .25)
+    }
+
+    .dbg-pin.off {
+      background: #f4dada;
+      border-color: #c0392b;
+      color: #7a2020
+    }
+
+    .dbg-pin.cfg {
+      background: #e8e8f8;
+      border-color: #7878c0;
+      border-style: dashed;
+      color: #4848a0;
+      opacity: .75;
+      cursor: default
+    }
+    .dbg-pin.cfg .dbg-pin-ico {
+      opacity: .6
+    }
+
+    .dbg-pin.test-on {
+      background: #d0e8f4;
+      border-color: #2a80b8;
+      color: #1a5080
+    }
+
+    .dbg-pin.busy {
+      background: #f4ead0;
+      border-color: #c0780a;
+      color: #8a4a00;
+      cursor: default
+    }
+
+    .dbg-pin.sys {
+      background: #d8e4f0;
+      border-color: #4a78a8;
+      color: #1a4878;
+      cursor: default
+    }
+
+    .dbg-pin.jtag {
+      background: #e8e4d0;
+      border-color: #8a7838;
+      color: #5a4810;
+      cursor: default
+    }
+
+    .dbg-pin.ro {
+      background: #e4e4ec;
+      border-color: #7878a0;
+      color: #404060;
+      cursor: default
+    }
+
+    .dbg-pin.boot {
+      background: #f0e8d4;
+      border-color: #9a6818;
+      color: #6a4808;
+      cursor: default
+    }
+
+    .dbg-pin.flash {
+      border: none;
+      background: transparent;
+      color: #6a6a80;
+      cursor: default
+    }
+
+    .dbg-pin.bus-rsv {
+      background: #d0eae0;
+      border-color: #3a8a6a;
+      border-style: dashed;
+      color: #1a5a3a;
+      cursor: default
+    }
+
+    .dbg-pin.nc {
+      border: none;
+      background: transparent;
+      color: #6a806a;
+      cursor: default
+    }
+
+    .dbg-pin.gnd {
+      border: none;
+      background: transparent;
+      color: #2a7a3a;
+      cursor: default
+    }
+
+    .dbg-pin.pwr {
+      border: none;
+      background: transparent;
+      color: #7a3a10;
+      cursor: default
+    }
+
+    .dbg-pin-sys {
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: .2px;
+      line-height: 1;
+      color: inherit
+    }
+
+    .dbg-pin-state {
+      position: absolute;
+      top: 2px;
+      right: 3px;
+      font-size: .85rem;
+      font-weight: 700;
+      line-height: 1;
+      color: inherit;
+      opacity: .9;
+      z-index: 2
+    }
+
+    /* Raw GPIO test sub-button (LED icon) overlaid on pin */
+    .dbg-pin {
+      position: relative
+    }
+
+    .dbg-led-btn {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      border: 1px solid var(--t3);
+      background: var(--bg1);
+      color: var(--t1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .12s;
+      z-index: 2;
+      padding: 0;
+      opacity: .5
+    }
+
+    .dbg-led-btn svg {
+      width: 12px;
+      height: 12px
+    }
+
+    .dbg-pin:hover .dbg-led-btn { opacity: 1 }
+    .dbg-led-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }
+
+    .dbg-led-btn.on {
+      opacity: 1;
+      border-color: #27ae60;
+      background: rgba(39,174,96,.18);
+      color: #4de88a;
+      box-shadow: 0 0 5px rgba(39, 174, 96, .45)
+    }
+
+    .dbg-led-btn.off {
+      border-color: #c0392b;
+      background: rgba(192,57,43,.12);
+      color: #e87070
+    }
+
+    /* ── Reboot modal ───────────────────────────────────────────────────── */
+    #reboot-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 400
+    }
+    #reboot-overlay.active { display: block }
+    #reboot-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 401;
+      background: var(--d1);
+      border: 1px solid var(--d2);
+      border-radius: 10px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      min-width: 260px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6)
+    }
+    .reboot-spinner {
+      width: 40px; height: 40px;
+      margin: 0 auto .8rem;
+      border: 4px solid var(--d2);
+      border-top-color: var(--acc);
+      border-radius: 50%;
+      animation: reboot-spin .8s linear infinite
+    }
+    @keyframes reboot-spin { to { transform: rotate(360deg) } }
+    .reboot-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin: 0 0 .35rem;
+      color: var(--t0)
+    }
+    .reboot-msg {
+      font-size: .88rem;
+      color: var(--t2);
+      margin: 0 0 .6rem
+    }
+    .reboot-count {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--acc);
+      margin: 0;
+      min-height: 1.8rem
+    }
+
+    /* ── WiFi provisioning gate ───────────────────────────────────────── */
+    #wifi-gate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 500
+    }
+    #wifi-gate-overlay.active { display: block }
+    #wifi-gate-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 501;
+      background: var(--d1);
+      border: 1px solid var(--d2);
+      border-radius: 10px;
+      padding: 1.6rem 1.8rem;
+      width: min(380px, 92vw);
+      box-shadow: 0 8px 32px rgba(0,0,0,.6)
+    }
+    #wifi-gate-modal.active { display: block }
+    #wifi-gate-modal h2 {
+      margin: 0 0 .5rem;
+      font-size: 1.1rem;
+      color: var(--t0)
+    }
+    #wifi-gate-modal p {
+      margin: 0 0 1rem;
+      font-size: .85rem;
+      color: var(--t2)
+    }
+    #wifi-gate-modal .de-field { margin-bottom: .7rem }
+    #wifi-ssid-results {
+      max-height: 140px;
+      overflow-y: auto;
+      margin-top: .3rem;
+      border-radius: 6px
+    }
+    #wifi-ssid-results:empty { display: none }
+    .wifi-ssid-row {
+      padding: .5rem .6rem;
+      font-size: .85rem;
+      color: var(--t1);
+      background: var(--d2);
+      border-bottom: 1px solid var(--d1);
+      cursor: pointer
+    }
+    .wifi-ssid-row:last-child { border-bottom: none }
+    .wifi-ssid-row:hover, .wifi-ssid-row:active { background: var(--accent, var(--d1)) }
+
+    /* ── Device editor modal ────────────────────────────────────────────── */
+    #de-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 200
+    }
+    #de-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 201;
+      background: var(--d1);
+      border: 1px solid var(--d2);
+      border-radius: 10px;
+      width: min(560px, 95vw);
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6)
+    }
+    .de-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--d2);
+      font-weight: 700;
+      font-size: .92rem;
+      cursor: move;
+      user-select: none
+    }
+    .de-hdr .de-close { cursor: pointer }
+    .de-close {
+      background: none;
+      border: none;
+      color: var(--t3);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: .1rem .4rem;
+      border-radius: 4px
+    }
+    .de-close:hover { color: var(--t1) }
+    .de-body {
+      padding: .75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      max-height: 58vh;
+      overflow-y: auto
+    }
+    .de-field { display: flex; flex-direction: column; gap: .18rem }
+    /* Custom device-type picker: icon + name + pin count per row (a native <option>
+       can't render SVG). The hidden <select id="de-type"> stays the value holder. */
+    .de-type-dd { position: relative }
+    .de-type-trigger {
+      width: 100%; display: flex; align-items: center; gap: .5rem; font: inherit;
+      background: var(--d0); border: 1px solid var(--d2); border-radius: 5px;
+      color: var(--t1); padding: .3rem .5rem; cursor: pointer; text-align: left
+    }
+    .de-type-trigger:disabled { cursor: default; opacity: .75 }
+    .de-type-caret { margin-left: auto; color: var(--t3); font-size: .7rem }
+    .de-type-panel {
+      position: absolute; left: 0; right: 0; top: 100%; z-index: 30; margin-top: 2px;
+      max-height: 15rem; overflow-y: auto;
+      background: var(--d0); border: 1px solid var(--d2); border-radius: 5px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .5)
+    }
+    .de-type-opt { display: flex; align-items: center; gap: .5rem; padding: .35rem .5rem; cursor: pointer }
+    .de-type-opt:hover, .de-type-opt.hl { background: var(--d1) }
+    .de-type-opt.sel { outline: 1px solid var(--t3); outline-offset: -1px }
+    .de-type-opt-ico { flex: 0 0 auto; width: 1.5rem; height: 1.5rem; color: var(--t2) }
+    .de-type-opt-ico svg { width: 100%; height: 100%; display: block }
+    .de-type-opt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+    .de-type-opt-pins { flex: 0 0 auto; font-size: .7rem; color: var(--t3) }
+    .de-field label {
+      font-size: .68rem;
+      color: var(--t3);
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+    .de-field input, .de-field select {
+      background: var(--d0);
+      border: 1px solid var(--d2);
+      border-radius: 5px;
+      color: var(--t1);
+      padding: .32rem .5rem;
+      font-size: .83rem;
+      width: 100%;
+      box-sizing: border-box
+    }
+    .de-wiring-row { display: flex; gap: .35rem }
+    .de-wiring-row input { flex: 1 }
+    .de-wiring-fixed { padding: .28rem .65rem; background: var(--d2); border-radius: 4px; font-weight: bold; font-size: .95em }
+    /* DB-signal wiring assistant */
+    .de-wiring-col { display: flex; flex-direction: column; gap: .5rem }
+    .de-wire-hint { font-size: .72rem; color: var(--t2); margin-bottom: .3rem }
+    .de-wire-block { border: 1px solid var(--bd); border-radius: 6px; padding: .4rem .5rem }
+    .de-wire-head { display: flex; gap: .35rem; align-items: center }
+    .de-wire-head select { flex: 1 }
+    .de-wire-test { padding: .28rem .7rem; border: 1px solid var(--bd); border-radius: 5px;
+      background: var(--bg3); color: var(--t2); cursor: pointer; font-size: .72rem; font-weight: 700; white-space: nowrap }
+    .de-wire-test:hover { color: var(--t0) }
+    .de-wire-test.on { background: #e67e22; color: #fff; border-color: #e67e22 }
+    /* Aspect radios: forced onto a single, condensed line. */
+    .de-wire-aspects { display: flex; flex-wrap: nowrap; gap: .45rem; margin-top: .35rem; white-space: nowrap }
+    .de-wire-asp { display: inline-flex; align-items: center; gap: .18rem; font-size: .66rem; cursor: pointer; white-space: nowrap }
+    .de-wire-sw { width: .66rem; height: .66rem; border-radius: 50%; border: 1px solid rgba(0,0,0,.3); display: inline-block; flex: none }
+    .de-footer {
+      display: flex;
+      gap: .45rem;
+      align-items: center;
+      padding: .65rem 1rem;
+      border-top: 1px solid var(--d2)
+    }
+    /* Same functional-contrast/pastel recipe as the cockpit's .btn/.gbtn
+       (#135): tinted background + semantic-colour border/text instead of a
+       solid saturated fill with white text, for visual consistency between
+       the config screen and the cockpit. */
+    .de-btn {
+      padding: .32rem .85rem;
+      border-radius: 5px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      font-size: .8rem;
+      font-weight: 600
+    }
+    .de-btn.cancel { background: var(--d2); color: var(--t2) }
+    .de-btn.apply {
+      background: var(--sem-caution-tint);
+      border-color: var(--sem-caution);
+      color: var(--sem-caution)
+    }
+    .de-btn.save {
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go);
+      margin-left: auto
+    }
+    .de-btn.del {
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
+    }
+    .de-btn:disabled { opacity: .5; cursor: default }
+    .de-status {
+      padding: .28rem .6rem;
+      border-radius: 4px;
+      font-size: .78rem;
+      display: none
+    }
+    .de-status.ok   { background: #1e3a2a; color: #7ddf9b }
+    .de-status.err  { background: #3a1e1e; color: #df7d7d }
+    .de-status.warn { background: #3a2e10; color: #e0c060 }
+    .dbg-edit-btn {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      border: 1px solid #c0392b;
+      background: rgba(192,57,43,.12);
+      color: #e87070;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: .72rem;
+      line-height: 1;
+      z-index: 2;
+      padding: 0;
+      opacity: 1;
+      transition: all .12s
+    }
+    .dbg-edit-btn svg {
+      width: 12px;
+      height: 12px
+    }
+    .dbg-edit-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg3) }
+
+    /* Edit button inside bus device rows — override absolute positioning */
+    .dbg-bus-dev .dbg-edit-btn {
+      position: static;
+      width: auto;
+      height: auto;
+      padding: .18rem .45rem;
+      opacity: 1;
+      margin-left: auto;
+      font-size: .78rem
+    }
+    .dbg-bus-dev .dbg-edit-btn svg {
+      width: 13px;
+      height: 13px
+    }
+    .dbg-del-btn {
+      padding: .18rem .45rem;
+      border-radius: 4px;
+      border: 1px solid #c0392b;
+      background: transparent;
+      color: #c0392b;
+      cursor: pointer;
+      font-size: .78rem;
+      line-height: 1;
+      transition: background .12s, color .12s
+    }
+    .dbg-del-btn:hover { background: #c0392b; color: #fff }
+
+    /* ── About view ─────────────────────────────────────────────────────── */
+    .abt-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .abt-settings-section {
+      border-bottom: 1px solid var(--bd);
+      padding-bottom: 1rem;
+      margin-bottom: .5rem
+    }
+
+    .abt-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .abt-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--t2);
+      letter-spacing: 2px;
+      text-transform: uppercase
+    }
+
+    .abt-refresh {
+      padding: .3rem .75rem;
+      border: 1px solid var(--bd);
+      border-radius: 5px;
+      background: var(--bg3);
+      color: var(--t2);
+      font-size: .72rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: color .15s
+    }
+
+    .abt-refresh:hover {
+      color: var(--t0)
+    }
+    .abt-refresh.abt-danger {
+      color: #c0392b;
+      border-color: #5a2020
+    }
+    .abt-refresh.abt-danger:hover {
+      background: #c0392b;
+      color: #fff;
+      border-color: #c0392b
+    }
+    .abt-refresh.abt-export {
+      color: #27ae60;
+      border-color: #1a4a2a
+    }
+    .abt-refresh.abt-export:hover {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60
+    }
+
+    .abt-grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 1rem
+    }
+
+    .abt-section-hdr {
+      flex-basis: 100%;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--t3);
+      padding-bottom: .3rem;
+      border-bottom: 1px solid var(--bd);
+      margin-top: .25rem
+    }
+
+    .abt-card {
+      background: var(--bg1);
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+      min-width: 200px
+    }
+
+    .abt-card-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--t3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .abt-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .5rem
+    }
+
+    .abt-label {
+      font-size: .75rem;
+      color: var(--t2);
+      word-break: break-word
+    }
+
+    .abt-value {
+      font-size: .8rem;
+      color: var(--t0);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap
+    }
+
+    .abt-link {
+      font-size: .75rem;
+      color: var(--t3);
+      text-decoration: none
+    }
+
+    .abt-link:hover {
+      color: var(--acc)
+    }
+
+    .abt-url-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem
+    }
+
+    .abt-url-label {
+      font-size: .75rem;
+      color: var(--t2);
+      min-width: 3.5rem
+    }
+
+    .abt-url-val {
+      font-size: .75rem;
+      color: var(--acc);
+      text-decoration: none;
+      word-break: break-all
+    }
+
+    .abt-url-val:hover {
+      text-decoration: underline
+    }
+
+    .abt-bar-wrap {
+      height: 5px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: .1rem
+    }
+
+    .abt-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: #27ae60;
+      transition: width .5s
+    }
+
+    .abt-bar.warn {
+      background: #e67e22
+    }
+
+    .abt-bar.crit {
+      background: #c0392b
+    }
+
+    .abt-feat-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem;
+      padding-top: .2rem
+    }
+
+    /* Grouped Features card: one labelled row per category (Core / Bus / OLED …). */
+    .abt-feat-card { max-width: 34rem }
+
+    /* License/attribution card: same pastel functional-contrast recipe as the
+       cockpit buttons, in the "caution" hue — deliberately more visually
+       prominent than a plain .abt-card so it can't be skimmed past by a
+       redistributor copying the firmware/UI onto another platform. */
+    .abt-license-card {
+      max-width: 34rem;
+      background: var(--sem-caution-tint);
+      border-color: var(--sem-caution)
+    }
+
+    .abt-license-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      background: var(--sem-caution-tint-d);
+      border: 1.5px solid var(--sem-caution);
+      color: var(--sem-caution);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .5px
+    }
+
+    .abt-license-text {
+      font-size: .74rem;
+      line-height: 1.5;
+      color: var(--t1);
+      margin: 0
+    }
+    .abt-feat-grp { display: flex; align-items: baseline; gap: .5rem; margin-top: .45rem }
+    .abt-feat-grp-lbl {
+      flex: 0 0 4.2rem; text-align: right; font-size: .6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em; color: var(--t3)
+    }
+    .abt-feat-grp .abt-feat-row { flex: 1; padding-top: 0; margin: 0 }
+
+    .abt-feat {
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .18rem .55rem;
+      border-radius: 20px;
+      letter-spacing: .3px;
+      cursor: pointer
+    }
+
+    #abt-tooltip {
+      display: none;
+      position: fixed;
+      background: var(--t0);
+      color: var(--bg1);
+      font-size: .78rem;
+      line-height: 1.4;
+      padding: .5rem .75rem;
+      border-radius: 6px;
+      max-width: 240px;
+      z-index: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      pointer-events: none
+    }
+
+    .abt-feat.on {
+      background: var(--d0);
+      color: var(--d3);
+      border: 1px solid var(--d2)
+    }
+
+    .abt-feat.off {
+      background: var(--bg2);
+      color: var(--t3);
+      border: 1px solid var(--bd)
+    }
+
+    /* Feature description shown on hover (replaces the old click popup). */
+    .abt-feat[data-tip] { position: relative }
+    .abt-feat[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: max-content;
+      max-width: 230px;
+      white-space: normal;
+      text-align: left;
+      background: var(--d1);
+      color: var(--t0);
+      border: 1px solid var(--d2);
+      border-radius: 6px;
+      padding: .4rem .55rem;
+      font-size: .7rem;
+      font-weight: 400;
+      line-height: 1.35;
+      box-shadow: 0 4px 14px rgba(0,0,0,.5);
+      pointer-events: none
+    }
+
+    /* ── Placeholder views ───────────────────────────────────────────────── */
+    .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      height: calc(100vh - 120px);
+      color: var(--t4)
+    }
+
+    .placeholder-icon {
+      font-size: 3.5rem
+    }
+
+    .placeholder h2 {
+      font-size: 1rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--t3)
+    }
+
+    .placeholder p {
+      font-size: .8rem;
+      color: var(--t4);
+      text-align: center;
+      max-width: 280px
+    }
+
+    /* ── Setup wizard modal ── */
+    #wizard-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 300
+    }
+    #wizard-modal {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 301;
+      background: var(--bg1);
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      flex-direction: column;
+      width: min(480px, 96vw);
+      max-height: 90vh;
+      overflow: hidden
+    }
+    .wizard-header {
+      padding: 1.25rem 1.5rem .75rem;
+      background: var(--bg1);
+      border-bottom: 1px solid var(--bd);
+      flex-shrink: 0
+    }
+    .wizard-progress-track {
+      height: 4px;
+      background: var(--bd);
+      border-radius: 2px;
+      margin-bottom: .75rem;
+      overflow: hidden
+    }
+    .wizard-progress-fill {
+      height: 100%;
+      background: #4a9ede;
+      border-radius: 2px;
+      transition: width .3s ease
+    }
+    .wizard-step-info {
+      font-size: .75rem;
+      color: var(--t3);
+      margin-bottom: .3rem
+    }
+    .wizard-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--t1);
+      margin: 0
+    }
+    .wizard-body {
+      padding: 1rem 1.5rem;
+      overflow-y: auto;
+      flex: 1
+    }
+    .wizard-footer {
+      padding: .75rem 1.5rem;
+      background: var(--bg2);
+      border-top: 1px solid var(--bd);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-shrink: 0
+    }
+    .wizard-btn {
+      border: none;
+      border-radius: 6px;
+      padding: .5rem 1.2rem;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s
+    }
+    .wizard-btn:hover { opacity: .85 }
+    .wizard-btn:disabled { opacity: .45; cursor: not-allowed }
+    .wizard-btn-back {
+      background: var(--bg2);
+      color: var(--t2)
+    }
+    .wizard-btn-next {
+      background: #4a9ede;
+      color: #fff
+    }
+    .wizard-btn-finish {
+      background: #3aaa6a;
+      color: #fff
+    }
+    .wizard-btn-cancel {
+      background: transparent;
+      color: var(--t3);
+      border: 1px solid var(--bd)
+    }
+    .wiz-lang-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      padding: .5rem 0 1rem
+    }
+    .wiz-lang-btn {
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      padding: .9rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg1);
+      color: var(--t0);
+      transition: border-color .15s, background .15s
+    }
+    .wiz-lang-btn:hover { border-color: #4a9ede }
+    .wiz-lang-btn.wiz-lang-active {
+      border-color: #4a9ede;
+      background: rgba(74,158,222,.12);
+      color: #4a9ede
+    }
+    /* Bus toggle cards */
+    .wiz-bus-card {
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      margin-bottom: .6rem;
+      overflow: hidden;
+      transition: border-color .2s
+    }
+    .wiz-bus-card--on { border-color: #4a9ede }
+    .wiz-bus-header {
+      padding: .6rem .75rem;
+      background: var(--bg1)
+    }
+    .wiz-bus-toggle {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      cursor: pointer;
+      user-select: none
+    }
+    .wiz-bus-toggle input[type=checkbox] {
+      width: 1rem; height: 1rem;
+      accent-color: #4a9ede;
+      cursor: pointer
+    }
+    .wiz-bus-label {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--t1)
+    }
+    .wiz-bus-fields {
+      padding: .5rem .75rem .75rem;
+      display: flex;
+      flex-direction: column;
+      gap: .1rem
+    }
+    /* Expansion board rows */
+    .wiz-section-title {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--t2);
+      margin: .5rem 0 .4rem;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+    .wiz-expboard-section { margin-bottom: .75rem }
+    .wiz-expboard-row {
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      padding: .6rem .75rem;
+      margin-bottom: .4rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: .1rem
+    }
+    .wiz-add-board {
+      background: none;
+      border: 1px dashed var(--bd);
+      border-radius: 6px;
+      color: #4a9ede;
+      font-size: .82rem;
+      padding: .35rem .75rem;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: .4rem;
+      transition: background .15s
+    }
+    .wiz-add-board:hover { background: var(--bg1) }
+    .wiz-del-board {
+      position: absolute;
+      top: .4rem; right: .5rem;
+      background: none;
+      border: none;
+      color: var(--t3);
+      cursor: pointer;
+      font-size: .85rem;
+      padding: .1rem .3rem
+    }
+    .wiz-del-board:hover { color: #e05252 }
+    /* Summary */
+    .wiz-summary {
+      background: var(--bg1);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      margin-top: .75rem
+    }
+    .wiz-summary-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--t3);
+      margin: 0 0 .5rem
+    }
+    .wiz-summary-line {
+      font-size: .82rem;
+      color: var(--t2);
+      margin: .2rem 0
+    }
+    .wiz-err {
+      background: rgba(220,60,60,.08);
+      border: 1px solid rgba(220,60,60,.3);
+      border-radius: 6px;
+      color: #c0392b;
+      font-size: .82rem;
+      padding: .5rem .75rem;
+      margin-top: .5rem
+    }
+
+    /* ── Bus cards (Buses tab) ── */
+    #buses-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+      padding: .5rem 0
+    }
+    .bus-card {
+      background: var(--bg1);
+      border: 2px solid var(--bd);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem
+    }
+    .bus-card-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--t3);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding-bottom: .35rem;
+      border-bottom: 1px solid var(--bd);
+      display: flex;
+      align-items: center;
+      gap: .4rem
+    }
+    .bus-type-badge {
+      font-size: .65rem;
+      background: var(--bg3);
+      color: var(--t3);
+      border-radius: 4px;
+      padding: 1px 5px;
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+    .bus-structural-badge {
+      font-size: .6rem;
+      background: #3a2e10;
+      color: #c0a040;
+      border-radius: 4px;
+      padding: 1px 5px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-left: auto
+    }
+    .bus-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .5rem
+    }
+    .bus-lbl {
+      font-size: .75rem;
+      color: var(--t2);
+      white-space: nowrap
+    }
+    .bus-val {
+      font-size: .8rem;
+      color: var(--t0);
+      font-variant-numeric: tabular-nums
+    }
+    /* Per-type description — pinned to the BOTTOM of the card (margin-top:auto
+       eats the free space) so texts and buttons line up across cards of the
+       same grid row, whatever the field-row count above. */
+    .bus-desc {
+      font-size: .7rem;
+      color: var(--t2);
+      margin-top: auto;
+      padding-top: .3rem
+    }
+    .bus-card-actions {
+      display: flex;
+      gap: .3rem;
+      margin-top: auto; /* pins the buttons down on cards WITHOUT a .bus-desc */
+      padding-top: .4rem;
+      border-top: 1px solid var(--bd)
+    }
+    /* When a description is present it already carries the auto margin —
+       keep the buttons snug underneath it. */
+    .bus-desc ~ .bus-card-actions {
+      margin-top: .15rem
+    }
+    .bus-card.bus-structural {
+      border-color: #4a3e1a
+    }
+    .bus-card.bus-suggestion {
+      border-style: dashed;
+      opacity: .6
+    }
+    .bus-card.bus-suggestion:hover {
+      opacity: 1
+    }
+
+    /* ── Board/Bus editor modals (reuse de-modal shell) ── */
+    #be-overlay, #bue-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 200
+    }
+    #be-modal, #bue-modal {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      z-index: 201;
+      background: var(--bg1);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      flex-direction: column;
+      width: min(340px, 95vw);
+      max-height: 90vh;
+      overflow-y: auto
+    }

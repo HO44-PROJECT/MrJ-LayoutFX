@@ -1,0 +1,21 @@
+# Optimized partition table for MrJ-LayoutFX
+# Types embedded in firmware (PROGMEM) → LittleFS minimal (config only)
+#
+# ESP32 4MB Flash layout:
+#   Firmware:  1.6 MB × 2 (OTA support)
+#   LittleFS:  192 KB (optimized for config.json only)
+#   Coredump:  64 KB (crash diagnostics)
+#   NVS:       20 KB (system data)
+#   OTA data:  8 KB (OTA state)
+#   Free:      ~336 KB (future use)
+#
+# Usage in platformio.ini:
+#   board_build.partitions = partitions_optimized.csv
+#
+# Name,     Type, SubType,  Offset,   Size,     Flags
+nvs,        data, nvs,      0x9000,   0x5000,
+otadata,    data, ota,      0xe000,   0x2000,
+app0,       app,  ota_0,    0x10000,  0x190000,
+app1,       app,  ota_1,    0x1A0000, 0x190000,
+spiffs,     data, spiffs,   0x330000, 0x30000,
+coredump,   data, coredump, 0x360000, 0x10000,

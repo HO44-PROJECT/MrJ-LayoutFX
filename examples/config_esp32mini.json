@@ -1,0 +1,11 @@
+{
+  "$schema": "../schemas/config.schema.json",
+  "buses": {},
+  "boards": [
+    {
+      "id": "esp32",
+      "type": "ESP32Mini"
+    }
+  ],
+  "devices": []
+}

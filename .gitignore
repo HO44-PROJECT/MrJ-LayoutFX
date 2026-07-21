@@ -1,0 +1,20 @@
+.pio
+.vscode
+
+# Personal WiFi credentials (compile-time path, no longer the recommended
+# flow — see doc/user/wifi-provisioning.md — but still supported).
+configurations/auth/wifi.h
+
+# Built firmware binaries (.bin/.elf/.map), copied here per-env by
+# scripts/copy_to_dist.py after each build.
+dist/
+
+# All generated headers live here — regenerated on every build by
+# tools/build_webui.py (webui_html.h), build_embedded_data.py (embedded_*.h) and
+# gen_build_info.py (build_info.h). Source of truth: src/web/*, data/*.json.
+include/generated/
+
+# Python bytecode (tools/ scripts)
+__pycache__/
+*.pyc
+tests

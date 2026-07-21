@@ -1,0 +1,321 @@
+/**
+ * @file LayoutFX_define.h
+ * @brief Feature-gate and size-limit defines for the MrJ-LayoutFX library.
+ *
+ * Aggregates all public headers and exposes LayoutFX::init() / LayoutFX::loop()
+ * for a minimal user main.cpp:
+ *
+ *   #include <LayoutFX.h>
+ *   #include "config.h"
+ *
+ *   void setup() { LayoutFX::init(); }
+ *   void loop()  { LayoutFX::loop(); }
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * USER FLAGS — every #define the user may set in config.h. Presence enables the
+ * feature unless a <value> is shown. Each maps to an internal LFX_*_ENABLED
+ * macro below, or is consumed directly where noted. KEEP THIS LIST IN SYNC with
+ * the WebUI feature badges (DeviceStatusApi.cpp `feat[...]`).
+ * Toggle flags default to OFF (undefined); value flags show their default.
+ * Full reference with every default → doc/configuration-flags.md.
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Core / config / network (ESP32 only):
+ *   CONFIG "file.json"    Load the device config from LittleFS (filename, no '/').
+ *   API                   REST API server (/api/…). Requires CONFIG.
+ *   API_AUDIT             Log every handled API request (diagnostics).
+ *   WEBUI                 Web control panel (/ui). Implies API. Requires CONFIG.
+ *   WIFI_SSID "…"     \   STA credentials — optional at compile time; without
+ *   WIFI_PASSWORD "…" /   them the device boots straight into AP mode, and can
+ *                         still be given STA credentials later at runtime via
+ *                         POST /api/wifi (see WifiApi, #132) — same pattern as
+ *                         WLED/Tasmota-style installers.
+ *   WIFI_AP_SSID "…"      AP-fallback SSID     (default: LFX_PROJECT_NAME).
+ *   WIFI_AP_PASSWORD "…"  AP-fallback password (default "mrjfx1234", min 8 chars).
+ *   WIFI_FORCE_AP         Skip STA entirely, boot straight into access-point mode.
+ *   HTTP_PORT <n>         HTTP port (default 80).
+ *   OTA                   Wireless firmware update: espota (pio upload) + web /update.
+ *   OTA_HOSTNAME "…"      mDNS name prefix (default "layoutfx") → "<name>-<MAC>".
+ *   OTA_PASSWORD "…"      Optional auth for espota and the web uploader.
+ *
+ * Buses / hardware:
+ *   DCC_PIN <n>           NMRA DCC decoder on GPIO <n> (its presence enables DCC).
+ *   DCC_AUDIT             Log every received DCC packet (diagnostics).
+ *   SPI_CARDS             74HC595 SPI shift-register bus (chained digital outputs).
+ *   I2C_CARDS             I²C device drivers (PCA9685 servo boards…); brings up I²C.
+ *   I2C_SCAN              Expose GET /api/scan/i2c; also brings up the I²C bus.
+ *   I2C_SDA <n> / I2C_SCL <n>   I²C bus pins (default 21 / 22).
+ *   LOBOT                 Lobot LX-16A serial-servo protocol (implies LX16A).
+ *   LX16A                 LX-16A serial servo without the full Lobot stack.
+ *   AUDIO                 DFPlayer-style serial audio device support.
+ *   USE_JTAG              Do NOT drive GPIO 5/10/12-15 LOW at boot (keep JTAG usable).
+ *
+ * OLED display:
+ *   OLED                  SSD1306 OLED over I²C (brings up the I²C bus).
+ *   OLED_STATUS           Lightweight status screen via StatusOled (also on AVR).
+ *   OLED_SPLASH           Show a boot splash screen.
+ *   OLED_CONTRAST <n>     Contrast 0-255 (default: display default, not applied).
+ *   OLED_FLIP_MODE <n>    Rotation / flip mode (default: no flip).
+ *   OLED_HEIGHT <64|32>   Panel height in px (default 64; 32 for a 0.91" panel).
+ *   OLED_SDA <n> / OLED_SCL <n>   OLED on a separate bus (default = I2C_SDA / I2C_SCL).
+ *   OLED_EVENT_MS <n>     Event-screen display time (default 3000 ms).
+ *   OLED_DEBUG_METRICS    Show runtime metrics (heap, uptime…) on the OLED.
+ *   OLED_DEBUG_EVENTS     Show event traces on the OLED.
+ *
+ * Logging — independent sinks, NOT mutually exclusive. Three serial situations:
+ *   (boot default)        Serial.begin() at boot prints STRUCTURAL Tier-1 logs
+ *                         (banner, IP, config). Always on — NOT config-toggleable.
+ *   LOG_SERIAL            Operational Tier-2 logs on UART0 (LOG_PRINT…). Runtime-
+ *                         gated by the uart0 bus; remove it to free GPIO1/3.
+ *   MRJ_DEBUG_SERIAL      Verbose debug logs on UART0 (MRJ_DEBUG_PRINT…).
+ *   LOG_OLED              Mirror operational logs to the OLED.
+ *   MRJ_DEBUG_OLED         Send debug logs to the OLED instead of serial.
+ *
+ * Behaviour:
+ *   DEMO                  Built-in demo sequences (traffic, signals, servo, LED FX).
+ *
+ * Capacity limits (override the default shown):
+ *   BUS_MAX_SPI_CARDS 8    BUS_MAX_UART 4    BUS_MAX_I2C 2
+ *   FACTORY_MAX_DEVICES 256    FACTORY_MAX_BOARDS 12    FACTORY_MAX_BUSES 8
+ *   FACTORY_MAX_PORTS 4    FACTORY_MAX_BOARD_TYPES 16    FACTORY_MAX_SPI_CARDS 8
+ *
+ * @project MrJ-LayoutFX
+ * @repo    https://github.com/HO44-PROJECT/MrJ-LayoutFX
+ * @license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
+ */
+
+#pragma once
+
+#include <LayoutFX_default.h>
+
+// ── DCC ──────────────────────────────────────────────────────────────────────
+#ifdef DCC_PIN // DCC_PIN must be defined to enable DCC support.
+  #define LFX_DCC_ENABLED 1
+  #ifdef DCC_AUDIT
+    #define LFX_DCC_AUDIT_ENABLED 1
+  #else
+    #undef LFX_DCC_AUDIT_ENABLED
+  #endif
+#else
+  #undef LFX_DCC_ENABLED // DCC is disabled if DCC_PIN is not defined.
+  #undef LFX_DCC_AUDIT_ENABLED
+#endif // End DCC check
+
+// -- WIFI (ESP32 only) ────────────────────────────────────────────────────────
+// ── HTTP port default (user may override in config.h) ────────────────────────
+#ifdef ESP32 // WiFi is only supported on ESP32. WIFI_SSID/WIFI_PASSWORD are optional.
+  #ifdef HTTP_PORT
+    #define LFX_API_HTTP_PORT HTTP_PORT
+  #else
+    #define LFX_API_HTTP_PORT 80
+  #endif
+  #if defined(WIFI_SSID) && defined(WIFI_PASSWORD) // Both must be defined for compile-time STA credentials.
+    #define LFX_WIFI_ENABLED 1
+  #else
+    #undef LFX_WIFI_ENABLED // No compile-time credentials — AP mode until runtime provisioning (POST /api/wifi, #132).
+  #endif                      // End WIFI check
+  // No compile-time credentials at all (e.g. web_installer) — default to empty,
+  // so ApiServer::init(WIFI_SSID, WIFI_PASSWORD, ...) always has a valid arg and
+  // falls straight into its own AP fallback (WiFi.begin("","") fails cleanly).
+  #ifndef WIFI_SSID
+    #define WIFI_SSID ""
+  #endif
+  #ifndef WIFI_PASSWORD
+    #define WIFI_PASSWORD ""
+  #endif
+  // AP fallback credentials — user may override in wifi.h / config.h.
+  #ifndef WIFI_AP_SSID
+    #define WIFI_AP_SSID LFX_PROJECT_NAME
+  #endif
+  #ifndef WIFI_AP_PASSWORD
+    #define WIFI_AP_PASSWORD "mrjfx1234"
+  #endif
+  // Define WIFI_FORCE_AP in config.h to skip STA entirely and start in AP mode.
+  #ifdef WIFI_FORCE_AP
+    #define LFX_WIFI_FORCE_AP 1
+  #endif
+#endif // ESP32
+
+// -- json config file on LittleFS (ESP32 only)
+// ─────────────────────────────────────────────
+#ifdef ESP32 // CONFIG is the filename (without '/') of the config JSON file onBonjou LittleFS.
+  #ifdef CONFIG
+    #define LFX_CONFIG_ENABLED 1
+  #else
+    #undef LFX_CONFIG_ENABLED
+  #endif
+#else
+  #undef LFX_CONFIG_ENABLED
+#endif // ESP32
+
+#ifdef ESP32
+  #if defined(API) || defined(WEBUI) // API and WEBUI are only supported on ESP32 with CONFIG enabled.
+    // WIFI_SSID/WIFI_PASSWORD are NOT required here: ApiServer::init() falls
+    // back to AP mode on its own when STA credentials are absent or fail to
+    // connect (see ApiServer.cpp), which is exactly the boot path the public
+    // web_installer profile relies on (no baked-in credentials, see #132).
+    #if !defined(LFX_CONFIG_ENABLED)
+      #warning "API or WEBUI requires CONFIG to be enabled."
+      #undef LFX_API_SERVER_ENABLED
+    #else
+      #ifdef API
+        #define LFX_API_SERVER_ENABLED 1 // API server is required for the WebUI.
+      #endif
+      #ifdef WEBUI
+        #define LFX_WEBUI_ENABLED 1
+        #define LFX_API_SERVER_ENABLED 1 // API server is required for the WebUI.
+      #endif
+    #endif // End check for CONFIG
+  #else
+    #undef LFX_API_SERVER_ENABLED
+  #endif // WEBUI
+#else
+  #undef LFX_API_SERVER_ENABLED // WEBUI is only supported on ESP32.
+#endif
+
+#ifdef API_AUDIT // Log every handled API request (diagnostics), same spirit as DCC_AUDIT.
+  #define LFX_API_AUDIT_ENABLED 1
+#else
+  #undef LFX_API_AUDIT_ENABLED
+#endif
+
+#ifdef OLED // OLED support is enabled if OLED is defined (value is ignored).
+  #define LFX_OLED_ENABLED 1
+#else
+  #undef LFX_OLED_ENABLED
+#endif // End OLED check
+
+#if defined(LFX_OLED_ENABLED) && defined(OLED_SPLASH)
+  #define LFX_OLED_SPLASH_ENABLED 1
+#else
+  #undef LFX_OLED_SPLASH_ENABLED
+#endif
+
+// ── I²C bus (ESP32 only) ──────────────────────────────────────────────────────
+// Activated by any of: #define I2C_CARDS, #define I2C_SCAN, #define OLED.
+// Drives Wire.begin() in LayoutFX::init() via LFX_I2C_CARDS_ENABLED.
+#if defined(ESP32) && (defined(I2C_CARDS) || defined(I2C_SCAN) || defined(OLED))
+  #define LFX_I2C_CARDS_ENABLED 1
+#else
+  #undef LFX_I2C_CARDS_ENABLED
+#endif
+
+// ── Boot-sensitive pin release (ESP32 only) ───────────────────────────────────
+// GPIO 5, 10, 12-15 are driven LOW at startup by default (strapping + JTAG pins).
+// Define USE_JTAG in config.h to skip this entirely (e.g. when using a JTAG probe).
+#if defined(ESP32) && !defined(USE_JTAG)
+  #define LFX_RELEASE_JTAG 1
+#else
+  #undef LFX_RELEASE_JTAG
+#endif
+
+#ifdef SPI_CARDS // SPI shift-register bus support is enabled if SPI_CARDS is defined.
+  #define LFX_SPI_CARDS_ENABLED 1
+#else
+  #undef LFX_SPI_CARDS_ENABLED
+#endif // End SPI_CARDS check
+
+#ifdef AUDIO // AUDIO support is enabled if AUDIO is defined (value is ignored).
+  #define LFX_AUDIO_ENABLED 1
+#else
+  #undef LFX_AUDIO_ENABLED
+#endif // End AUDIO check
+
+// ── I2C scanner (ESP32 only) ──────────────────────────────────────────────────
+// GET /api/scan/i2c (web UI "Scan I2C" button) is available as soon as the I2C
+// bus is up — it only walks addresses on an already-initialised Wire bus, so it
+// has no dependency of its own. Enabled by I2C_CARDS, OLED or an explicit
+// I2C_SCAN (all three drive LFX_I2C_CARDS_ENABLED above).
+#if defined(LFX_I2C_CARDS_ENABLED)
+  #define LFX_I2C_SCAN_ENABLED 1
+#else
+  #undef LFX_I2C_SCAN_ENABLED
+#endif
+
+// ── I2C device drivers (ESP32 only) ──────────────────────────────────────────
+// Define I2C_CARDS in config.h to enable I2C-based board device drivers (PCA9685 servo, etc.)
+#if defined(ESP32) && defined(I2C_CARDS)
+  #define LFX_I2C_DEVICES_ENABLED 1
+#else
+  #undef LFX_I2C_DEVICES_ENABLED
+#endif
+
+// ── OTA firmware update (ESP32 only) ──────────────────────────────────────────
+// Define OTA in config.h to enable wireless firmware updates, both:
+//   • ArduinoOTA / espota  → `pio run -t upload` over WiFi (from a dev machine)
+//   • web endpoint /update → upload a .bin from a browser (field updates, no PC)
+// Needs WiFi (brought up by the API server) — enable alongside WEBUI / API.
+#if defined(ESP32) && defined(OTA)
+  #define LFX_OTA_ENABLED 1
+#else
+  #undef LFX_OTA_ENABLED
+#endif
+
+// ── Serial servo support (conditionally compiled) ─────────────────────────────
+#if defined(LOBOT) || defined(LX16A) // LOBOT implies LX16A, but user can define LX16A without LOBOT if they want.
+  #define LFX_SERIAL_SERVO_ENABLED 1
+  #if defined(LOBOT)
+    #define LFX_LOBOT_SERVO_ENABLED 1
+  #elif defined(LX16A)
+    #define LFX_LX16A_SERVO_ENABLED 1
+  #endif
+#else
+  #undef LFX_SERIAL_SERVO_ENABLED
+#endif // End Serial servo check
+
+// ── Bus registry limits ───────────────────────────────────────────────────
+#ifdef BUS_MAX_SPI_CARDS
+  #define LFX_BUS_MAX_SPI_CARDS BUS_MAX_SPI_CARDS
+#else
+  #define LFX_BUS_MAX_SPI_CARDS 8
+#endif
+
+#ifdef BUS_MAX_UART
+  #define LFX_BUS_MAX_UART BUS_MAX_UART
+#else
+  #define LFX_BUS_MAX_UART 4
+#endif
+
+#ifdef BUS_MAX_I2C
+  #define LFX_BUS_MAX_I2C BUS_MAX_I2C
+#else
+  #define LFX_BUS_MAX_I2C 2
+#endif
+
+// ── Max simultaneous devices ──────────────────────────────────────────────
+#ifdef FACTORY_MAX_DEVICES
+  #define LFX_FACTORY_MAX_DEVICES FACTORY_MAX_DEVICES
+#else
+  #define LFX_FACTORY_MAX_DEVICES 256
+#endif
+
+// ── DeviceFactory structure limits ───────────────────────────────────────
+#ifdef FACTORY_MAX_BOARDS
+  #define LFX_FACTORY_MAX_BOARDS FACTORY_MAX_BOARDS
+#else
+  #define LFX_FACTORY_MAX_BOARDS 12
+#endif
+
+#ifdef FACTORY_MAX_BUSES
+  #define LFX_FACTORY_MAX_BUSES FACTORY_MAX_BUSES
+#else
+  #define LFX_FACTORY_MAX_BUSES 8
+#endif
+
+#ifdef FACTORY_MAX_PORTS
+  #define LFX_FACTORY_MAX_PORTS FACTORY_MAX_PORTS
+#else
+  #define LFX_FACTORY_MAX_PORTS 4
+#endif
+
+#ifdef FACTORY_MAX_BOARD_TYPES
+  #define LFX_FACTORY_MAX_BOARD_TYPES FACTORY_MAX_BOARD_TYPES
+#else
+  #define LFX_FACTORY_MAX_BOARD_TYPES 16
+#endif
+
+#ifdef FACTORY_MAX_SPI_CARDS
+  #define LFX_FACTORY_MAX_SPI_CARDS FACTORY_MAX_SPI_CARDS
+#else
+  #define LFX_FACTORY_MAX_SPI_CARDS 8
+#endif

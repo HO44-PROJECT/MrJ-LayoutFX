@@ -1,0 +1,151 @@
+"""
+@file    build_webui.py
+@brief   PlatformIO pre-build script: bundle CSS + JS sources into a single
+         HTML page, minify them, gzip-compress the result, and emit a PROGMEM
+         byte-array header.
+
+@details
+  Source layout:
+    src/web/webui.html          — HTML skeleton with %%STYLE%%, %%I18N%%, %%ICONS%%, %%APP%% markers
+    src/web/style.css           — all CSS
+    src/web/i18n.js             — translations (TOOLTIPS, TRANSLATIONS, _lang, t(), setLang(), applyLang())
+    src/web/icons.js            — SVG icon map (ICONS)
+    src/web/app-core.js         — globals, nav, cockpit cards, poll
+    src/web/app-wizard.js       — setup wizard, resetConfig, exportCode
+    src/web/app-config.js       — device toggles, config file management, debug data loading
+    src/web/app-boards.js       — I2C scanner, board/DIP rendering, GPIO/SPI test actions
+    src/web/app-about.js        — about page, params
+    src/web/app-device-editor.js — device add/edit modal
+    src/web/app-board-editor.js — board editor, bus editor, boot sequence
+
+  The APP_MODULES list is concatenated in order and minified as a single unit.
+
+  Minification (Python packages, auto-installed on first build):
+    rjsmin  — strips JS comments and collapses whitespace
+    rcssmin — strips CSS comments and collapses whitespace
+
+  Output:
+    include/generated/webui_html.h — PROGMEM gzip payload for WebUI.cpp
+
+@project MrJ-LayoutFX
+@license AGPL-3.0-or-later — Copyright (c) 2026 HO44 PROJECT
+"""
+
+Import("env")  # noqa: F821
+
+import gzip
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Auto-install minifier dependencies if missing
+# ---------------------------------------------------------------------------
+try:
+    import rjsmin
+    import rcssmin
+except ImportError:
+    print("[build_webui] Installing rjsmin and rcssmin...")
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "rjsmin", "rcssmin", "--quiet"]
+    )
+    import rjsmin  # noqa: E402
+    import rcssmin  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Paths — resolved from PROJECT_DIR regardless of caller layout. SCons
+# exec()s pre: hook scripts rather than importing them, so __file__ is not
+# defined here. PlatformIO runs this either as the project itself
+# (PROJECT_DIR IS the library root) or as a dependency pulled in by a parent
+# project (PROJECT_DIR/lib/<name>/ is the library root, the dev repo's
+# layout).
+# ---------------------------------------------------------------------------
+def _library_root() -> Path:
+    project_dir = Path(env.get("PROJECT_DIR"))  # noqa: F821
+    if (project_dir / "tools" / "build_webui.py").exists():
+        return project_dir
+    for candidate in (project_dir / "lib").glob("*"):
+        if (candidate / "tools" / "build_webui.py").exists():
+            return candidate
+    raise RuntimeError(f"Could not locate library root from PROJECT_DIR={project_dir}")
+
+
+_LIB = str(_library_root())
+_WEB = os.path.join(_LIB, "src", "web")
+_HDR = os.path.join(_LIB, "include", "generated", "webui_html.h")
+
+
+def read(name):
+    with open(os.path.join(_WEB, name), "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def brand():
+    """Displayed brand name — parsed from LFX_PROJECT_NAME in the firmware
+    header (single source of truth). Every %%BRAND%% token in the web sources
+    is substituted with it at bundle time."""
+    hdr = os.path.join(_LIB, "include", "LayoutFX_default.h")
+    with open(hdr, "r", encoding="utf-8") as f:
+        m = re.search(r'#define\s+LFX_PROJECT_NAME\s+"([^"]+)"', f.read())
+    if not m:
+        raise RuntimeError("LFX_PROJECT_NAME not found in LayoutFX_default.h")
+    return m.group(1)
+
+
+# ---------------------------------------------------------------------------
+# JS module list — concatenated in order into a single bundle
+# ---------------------------------------------------------------------------
+APP_MODULES = [
+    "app-pure.js",
+    "app-core.js",
+    "app-wizard.js",
+    "app-config.js",
+    "app-boards.js",
+    "app-dcc.js",
+    "app-about.js",
+    "app-device-editor.js",
+    "app-board-editor.js",
+]
+
+# ---------------------------------------------------------------------------
+# Read and minify sources
+# ---------------------------------------------------------------------------
+html = read("webui.html")
+css = rcssmin.cssmin(read("style.css"))
+i18n = rjsmin.jsmin(read("i18n.js"))
+icons = rjsmin.jsmin(read("icons.js"))
+app = rjsmin.jsmin("\n".join(read(m) for m in APP_MODULES))
+
+# ---------------------------------------------------------------------------
+# Assemble, compress, emit header
+# ---------------------------------------------------------------------------
+html = html.replace("%%STYLE%%", css)
+html = html.replace("%%I18N%%", i18n)
+html = html.replace("%%ICONS%%", icons)
+html = html.replace("%%APP%%", app)
+# Brand substitution LAST so it covers the html AND the bundled JS (i18n labels).
+html = html.replace("%%BRAND%%", brand())
+
+raw = html.encode("utf-8")
+# mtime=0 → reproducible output (no embedded timestamp); the header only changes
+# when the bundled web sources actually change, not on every build.
+gz = gzip.compress(raw, compresslevel=9, mtime=0)
+
+hex_list = [f"0x{b:02x}" for b in gz]
+rows = ["  " + ", ".join(hex_list[i : i + 16]) for i in range(0, len(hex_list), 16)]
+
+os.makedirs(os.path.dirname(_HDR), exist_ok=True)
+with open(_HDR, "w") as f:
+    f.write("// Auto-generated by tools/build_webui.py — DO NOT EDIT\n")
+    f.write("// Re-generated automatically on every PlatformIO build.\n")
+    f.write("#pragma once\n")
+    f.write("#include <pgmspace.h>\n\n")
+    f.write(f"static const size_t   WEBUI_HTML_GZ_LEN = {len(gz)};\n")
+    f.write("static const uint8_t  WEBUI_HTML_GZ[] PROGMEM = {\n")
+    f.write(",\n".join(rows))
+    f.write("\n};\n")
+
+gain = 100 - 100 * len(gz) // len(raw)
+print(f"[build_webui] {len(raw)} B -> gzip {len(gz)} B (-{gain}%)")

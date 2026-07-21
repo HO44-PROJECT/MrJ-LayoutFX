@@ -1,0 +1,95 @@
+{
+  "$schema": "../schemas/bus_types.schema.json",
+  "spi_master_only": {
+    "label": "SPI Master",
+    "fields": [
+      {
+        "key": "mosi",
+        "label": "MOSI (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 23
+      },
+      {
+        "key": "sclk",
+        "label": "SCLK (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 18
+      },
+      {
+        "key": "latch",
+        "label": "LATCH (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 5
+      }
+    ]
+  },
+  "uart": {
+    "label": "UART",
+    "fields": [
+      {
+        "key": "tx",
+        "label": "TX (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 17
+      },
+      {
+        "key": "rx",
+        "label": "RX (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 16
+      },
+      {
+        "key": "baud",
+        "label": "Baud",
+        "type": "number",
+        "min": 300,
+        "max": 921600,
+        "placeholder": 115200
+      }
+    ]
+  },
+  "i2c": {
+    "label": "I²C",
+    "fields": [
+      {
+        "key": "sda",
+        "label": "SDA (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 21
+      },
+      {
+        "key": "scl",
+        "label": "SCL (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 22
+      }
+    ]
+  },
+  "dcc": {
+    "label": "DCC",
+    "fields": [
+      {
+        "key": "pin",
+        "label": "Pin (GPIO)",
+        "type": "gpio",
+        "min": 0,
+        "max": 39,
+        "placeholder": 34
+      }
+    ]
+  }
+}

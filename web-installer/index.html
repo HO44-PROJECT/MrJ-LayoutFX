@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install MrJ-LayoutFX</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      background: #11151c; color: #e6edf3;
+      font: 16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    main {
+      width: min(560px, 92vw); padding: 2rem; border: 1px solid #283040;
+      border-radius: 14px; background: #161b24; box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    }
+    h1 { margin: 0 0 .25rem; font-size: 1.6rem; }
+    .sub { margin: 0 0 1.5rem; color: #9fb0c3; }
+    ol { padding-left: 1.2rem; color: #c7d2de; }
+    ol li { margin: .35rem 0; }
+    esp-web-install-button { display: block; margin: 1.5rem 0; }
+    button[slot=activate] {
+      font: inherit; font-weight: 600; cursor: pointer;
+      padding: .7rem 1.4rem; border: 0; border-radius: 9px;
+      background: #2f7d4f; color: #fff;
+    }
+    button[slot=activate]:hover { background: #36925c; }
+    .note { font-size: .82rem; color: #8aa0b8; }
+    .warn { color: #e0a44a; }
+    a { color: #5aa9ff; }
+    code { background: #0d1117; padding: .1rem .35rem; border-radius: 4px; }
+    .foot { margin-top: 1.5rem; font-size: .85rem; }
+    .next-steps {
+      display: none; margin: 1.5rem 0 0; padding: 1rem 1.2rem;
+      border: 1px solid #2f7d4f; border-radius: 10px; background: #12241a;
+    }
+    .next-steps.show { display: block; }
+    .next-steps h2 { margin: 0 0 .5rem; font-size: 1.05rem; color: #6fdb9a; }
+    .next-steps ol { margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>MrJ-LayoutFX</h1>
+    <p class="sub">Flash the firmware to your ESP32 right from this page — no PlatformIO, no compiling.</p>
+
+    <ol>
+      <li>Use <strong>Chrome</strong> or <strong>Edge</strong> on a desktop
+        (Web Serial isn't available on Firefox, Safari or mobile).</li>
+      <li>Connect the ESP32 over <strong>USB</strong>.</li>
+      <li>Click <em>Install</em>, choose the serial port, and wait for it to finish.</li>
+    </ol>
+
+    <esp-web-install-button id="install-btn" manifest="./manifest.json">
+      <button slot="activate">Install MrJ-LayoutFX</button>
+      <span slot="unsupported" class="note warn">
+        This browser can't flash over USB — open this page in Chrome or Edge on a computer.
+      </span>
+      <span slot="not-allowed" class="note warn">
+        Web Serial needs a secure context — serve this page over HTTPS (or http://localhost).
+      </span>
+    </esp-web-install-button>
+
+    <div class="next-steps" id="next-steps">
+      <h2>Flash complete — now connect to it</h2>
+      <ol>
+        <li>Power-cycle the board (unplug/replug USB, or press reset).</li>
+        <li>On your phone or computer's WiFi settings, join the network named
+          <strong>MrJ-LayoutFX</strong> (it starts its own access point since it
+          isn't configured for your home WiFi yet).</li>
+        <li>Open <code>http://192.168.4.1/ui</code> in a browser to finish setup
+          (enter your WiFi, configure your layout).</li>
+      </ol>
+    </div>
+
+    <p class="note">
+      Prefer a serial monitor? Connect at <strong>115200 baud</strong> after
+      flashing to read the board's status and IP address directly.
+    </p>
+
+    <p class="foot">
+      <a href="https://github.com/HO44-PROJECT/MrJ-LayoutFX" target="_blank" rel="noopener">
+        Project &amp; documentation ↗</a>
+    </p>
+  </main>
+
+  <script>
+    document.getElementById('install-btn')
+      .addEventListener('state-changed', function (ev) {
+        if (ev.detail.state === 'finished') {
+          document.getElementById('next-steps').classList.add('show');
+        }
+      });
+  </script>
+</body>
+</html>

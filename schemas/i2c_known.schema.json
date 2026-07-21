@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "i2c_known.schema.json",
+  "title": "MrJ-LayoutFX — I²C known-device table",
+  "description": "Lookup table served by /api/i2c-known. Maps I²C device addresses (decimal string) to chip names shown in the I²C scanner results.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-7])$": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Chip name or slash-separated alternatives (e.g. 'SSD1306/SH1106'). Key is the 7-bit I²C address in decimal (0-127)."
+    }
+  }
+}

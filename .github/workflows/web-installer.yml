@@ -1,0 +1,60 @@
+# Builds the ESP32 firmware and publishes the browser USB flasher (ESP Web Tools)
+# to GitHub Pages — a WLED-style "install from a web page" experience.
+#
+# One-time setup before this runs green:
+#   Repo Settings → Pages → Source = "GitHub Actions".
+name: Web installer
+
+on:
+  push:
+    tags: ['v*']        # publish on every version tag
+  workflow_dispatch: {} # …or run it by hand
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only the latest run for a ref needs to publish.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Deliberately WiFi-agnostic (no configurations/auth/wifi.h) — this
+      # binary is published to strangers, so it must never bake in the
+      # maintainer's own WiFi credentials. See configurations/web_installer/.
+      PIO_ENV: web_installer
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Build firmware
+        run: pio run -e "$PIO_ENV"
+
+      - name: Assemble web-installer/
+        run: python3 scripts/build_web_installer.py --env "$PIO_ENV"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web-installer
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
