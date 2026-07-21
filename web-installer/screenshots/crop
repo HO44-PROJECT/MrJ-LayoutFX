@@ -1,0 +1,1 @@
+magick "$1" -fuzz 5% -trim +repage "$1.cropped.png"

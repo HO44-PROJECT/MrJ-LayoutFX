@@ -62,9 +62,8 @@ void ConfigManager::init(const char *configPath) {
   bool configMissing = !LittleFS.exists(_configPath);
 
   if (configMissing) {
-    Serial.println(F("[FS] WARNING: filesystem is empty or incomplete."));
-    Serial.println(F("[FS]   -> In PlatformIO: run 'Upload Filesystem Image' (littlefs) to upload the data/ folder."));
-    Serial.println(F("[FS]   missing: config.json"));
+    Serial.println(F("[FS] no config.json yet — this is normal on a freshly flashed board."));
+    Serial.println(F("[FS]   -> Use the WebUI to set up your layout; it will create config.json."));
     Serial.println(F("[Factory] no config — skipping device load"));
     return;
   }
