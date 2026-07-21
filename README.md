@@ -19,6 +19,19 @@ This project addresses the need for a versatile, DCC-controlled accessory decode
 
 The design focuses on lighting applications, leveraging the ESP32's computational capabilities to generate realistic lighting effects such as traffic lights, railway signals, beacons, campfires, gas lamps, welding arcs, and many others. However, the board's architecture extends beyond simple LED control, providing standardized interfaces for I2C, UART, and SPI peripherals, making it suitable for controlling servos, sensors, and other intelligent accessories.
 
+## Install
+
+Flash a ready-to-run build straight from your browser — no toolchain, no local server:
+
+**[Install MrJ-LayoutFX](https://ho44-project.github.io/MrJ-LayoutFX/)** (Chrome or Edge, ESP32 connected over USB).
+
+See [web-installer/README.md](web-installer/README.md) for details and a full walkthrough with screenshots.
+
+## Documentation
+
+Start at [doc/](doc/) — organized by who you are (user, advanced, contributing),
+with a "Je veux…" index to jump straight to the page you need.
+
 ## Related projects
 
 - [MrJ-LayoutFX-ESP32-PCB](https://github.com/HO44-PROJECT/MrJ-LayoutFX-ESP32-PCB) — carrier PCB for the ESP32 DevKitC build.
