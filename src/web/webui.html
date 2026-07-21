@@ -20,10 +20,6 @@
       <span></span><span></span><span></span>
     </button>
     <h1>&#9881; %%BRAND%%<span id="hdr-layout-name"></span></h1>
-    <div id="hdr-actions">
-      <button class="gbtn on" onclick="allDevices(1)" data-i18n="hdr.allon" data-i18n-title="hdr.allon_tip">TOUT ALLUMER</button>
-      <button class="gbtn off" onclick="allDevices(0)" data-i18n="hdr.alloff" data-i18n-title="hdr.alloff_tip">TOUT ÉTEINDRE</button>
-    </div>
   </header>
 
   <!-- Status bar (cockpit only) -->
@@ -64,17 +60,26 @@
   <!-- ── View: Cockpit ─────────────────────────────────────────────────── -->
   <div id="view-cockpit" class="view active">
     <div id="ck-toolbar" style="display:none">
-      <input id="ck-search" type="search" data-i18n-placeholder="ck.search_placeholder" placeholder="Rechercher…" oninput="ckApplyFilters()" autocomplete="off">
-      <div class="ck-view-group" title="" data-i18n-title="ck.view_tip">
-        <button class="ck-view-btn" data-view="type" onclick="setCkView('type')" data-i18n="ck.view_type">Par type</button>
-        <button class="ck-view-btn" data-view="packed" onclick="setCkView('packed')" data-i18n="ck.view_packed">Compacte</button>
-        <button class="ck-view-btn" data-view="addr" onclick="setCkView('addr')" data-i18n="ck.view_addr">Par adresse DCC</button>
+      <div class="ck-row ck-row-main">
+        <input id="ck-search" type="search" data-i18n-placeholder="ck.search_placeholder" placeholder="Rechercher…" oninput="ckApplyFilters()" autocomplete="off">
+        <span class="ck-sep"></span>
+        <div class="ck-view-group" title="" data-i18n-title="ck.view_tip">
+          <button class="ck-view-btn" data-view="type" onclick="setCkView('type')" data-i18n="ck.view_type">Par type</button>
+          <button class="ck-view-btn" data-view="packed" onclick="setCkView('packed')" data-i18n="ck.view_packed">Compacte</button>
+          <button class="ck-view-btn" data-view="addr" onclick="setCkView('addr')" data-i18n="ck.view_addr">Par adresse DCC</button>
+          <button class="ck-view-btn" data-view="list" onclick="setCkView('list')" data-i18n="ck.view_list">Liste</button>
+        </div>
+        <div id="ck-density-group" class="ck-density-group" title="" data-i18n-title="ck.density_tip">
+          <button class="ck-density-btn" data-density="comfortable" onclick="setCkDensity('comfortable')" data-i18n="ck.density_comfortable">Confort</button>
+          <button class="ck-density-btn" data-density="compact" onclick="setCkDensity('compact')" data-i18n="ck.density_compact">Dense</button>
+        </div>
+        <span class="ck-sep"></span>
+        <div class="ck-all-group">
+          <button class="gbtn on" onclick="allDevices(1)" data-i18n="hdr.allon" data-i18n-title="hdr.allon_tip">TOUT ALLUMER</button>
+          <button class="gbtn off" onclick="allDevices(0)" data-i18n="hdr.alloff" data-i18n-title="hdr.alloff_tip">TOUT ÉTEINDRE</button>
+        </div>
       </div>
-      <div class="ck-density-group" title="" data-i18n-title="ck.density_tip">
-        <button class="ck-density-btn" data-density="comfortable" onclick="setCkDensity('comfortable')" data-i18n="ck.density_comfortable">Confort</button>
-        <button class="ck-density-btn" data-density="compact" onclick="setCkDensity('compact')" data-i18n="ck.density_compact">Dense</button>
-      </div>
-      <div id="ck-type-filters"></div>
+      <div id="ck-type-filters" class="ck-row ck-row-filters"></div>
     </div>
     <div id="grid"></div>
   </div>

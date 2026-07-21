@@ -7,6 +7,27 @@
 
     /* ── Themes ─────────────────────────────────────────────────────────── */
     :root {
+      /* Semantic action colors (#135) — same meaning (stop/go/caution/shunt/off)
+         across every ambient theme below, so they're set once here rather than
+         re-tuned per theme like the --bg/--t palette. Pastel pair per role: a
+         muted line/text color plus a soft tinted fill for the active state,
+         echoing the About screen's feature pills rather than a saturated block. */
+      --sem-stop: #b7433f;
+      --sem-stop-tint: #f3dbd9;
+      --sem-stop-tint-d: #f0d0cd;
+      --sem-go: #2f8f5b;
+      --sem-go-tint: #d9ecdf;
+      --sem-go-tint-d: #cce4d4;
+      --sem-caution: #c98a2c;
+      --sem-caution-tint: #f2e2c8;
+      --sem-caution-tint-d: #eed8b4;
+      --sem-shunt: #6b4f8c;
+      --sem-shunt-tint: #e2dae9;
+      --sem-shunt-tint-d: #d7cbe1;
+      --sem-off: #6b7688;
+      --sem-off-tint: #e2e6ea;
+      --sem-off-tint-d: #d6dbe1;
+
       /* Ardoise — bleu-gris doux */
       --bg0: #f2f4f8;
       --bg1: #ffffff;
@@ -91,6 +112,26 @@
     }
 
     body.th-dark {
+      /* Semantic action colors, lightened for legibility against this theme's
+         dark surfaces (the shared :root values read as too dim/desaturated here).
+         Tints go dark+muted instead of pale, so an "active" pill stays a soft
+         patch of color rather than a bright card against the night background. */
+      --sem-stop: #d9716d;
+      --sem-stop-tint: #3a2828;
+      --sem-stop-tint-d: #45302f;
+      --sem-go: #4caf7d;
+      --sem-go-tint: #24352c;
+      --sem-go-tint-d: #2c4034;
+      --sem-caution: #dba64e;
+      --sem-caution-tint: #3a3324;
+      --sem-caution-tint-d: #453c2a;
+      --sem-shunt: #a084c4;
+      --sem-shunt-tint: #322c3c;
+      --sem-shunt-tint-d: #3b3346;
+      --sem-off: #8a95a8;
+      --sem-off-tint: #2a2e36;
+      --sem-off-tint-d: #33373f;
+
       /* Nuit — sombre, faible luminosité */
       --bg0: #14161a;
       --bg1: #1e2128;
@@ -271,21 +312,15 @@
       font-weight: 400
     }
 
-    /* Global on/off — only visible on cockpit view */
-    #hdr-actions {
-      display: flex;
-      gap: .5rem
-    }
-
     .gbtn {
       padding: .3rem .7rem;
-      border: none;
+      border: 1.5px solid transparent;
       border-radius: 5px;
       cursor: pointer;
       font-size: .72rem;
       font-weight: 700;
       letter-spacing: 1px;
-      transition: opacity .15s
+      transition: opacity .15s, background .12s
     }
 
     .gbtn:active {
@@ -293,13 +328,15 @@
     }
 
     .gbtn.on {
-      background: #27ae60;
-      color: #fff
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go)
     }
 
     .gbtn.off {
-      background: #c0392b;
-      color: #fff
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
     }
 
     /* Status bar (cockpit) */
@@ -409,14 +446,39 @@
     }
 
     /* ── Cockpit view ───────────────────────────────────────────────────── */
+    /* Toolbar is 2 stacked rows: controls (search/view/density/all-on-off),
+       then type filter pills — each its own .ck-row so they never blur into
+       one undifferentiated strip. */
     #ck-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: .45rem;
+      padding: .5rem 1rem;
+      border-bottom: 1px solid var(--bd);
+      background: var(--bg1)
+    }
+    .ck-row {
       display: flex;
       align-items: center;
       gap: .6rem;
-      padding: .5rem 1rem;
-      border-bottom: 1px solid var(--bd);
-      background: var(--bg1);
       flex-wrap: wrap
+    }
+    .ck-row-filters {
+      padding-top: .45rem;
+      border-top: 1px solid var(--bg3)
+    }
+    /* Thin vertical rule between functional groups within the main row —
+       makes "search | view | density | all-on-off" read as distinct groups
+       instead of one continuous row of buttons (#135). */
+    .ck-sep {
+      width: 1px;
+      align-self: stretch;
+      min-height: 1.4rem;
+      background: var(--bd)
+    }
+    .ck-all-group {
+      display: flex;
+      gap: .3rem
     }
     #ck-type-filters {
       display: flex;
@@ -495,6 +557,21 @@
       gap: .2rem;
       border-radius: 6px
     }
+    /* Compact cards are already smaller/tighter overall (#1) — the button
+       labels (state/effect text) should shrink a step too, or they end up
+       looking oversized relative to the rest of the shrunk card (#135). */
+    #grid.ck-compact .btn {
+      font-size: .62rem
+    }
+    #grid.ck-compact .tbtn {
+      font-size: .53rem
+    }
+    /* Compact cards are narrow enough that DCC + pin together truncated the
+       DCC value itself — pin is wiring detail, less useful than the address
+       in this dense view, so it's dropped here only (#135). */
+    #grid.ck-compact .mtag-pin {
+      display: none
+    }
     .ck-empty {
       display: flex;
       flex-direction: column;
@@ -564,11 +641,131 @@
       gap: .4rem
     }
 
+    /* 130px was too narrow for longer-language labels (German compounds like
+       "Mittlere Geschwindigkeit" were clipping/overlapping inside .tbtn,
+       #135) — widened since there's room in a typical grid layout. */
     .gcards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
       gap: .6rem
     }
+
+    /* List view (#85): sortable table, one row per device, comment column. */
+    .ck-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      background: var(--bg1);
+      border-radius: 8px;
+      overflow: hidden
+    }
+
+    .ck-table th, .ck-table td {
+      text-align: left;
+      padding: .45rem .6rem;
+      border-bottom: 1px solid var(--bg2);
+      font-size: .85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    /* Fixed layout (above) needs explicit widths, otherwise every column
+       shares the leftover space equally — this is what stretched Type/DCC/
+       Board so far apart (#135). Narrow columns get just enough room for
+       their content; Comment gets a modest fixed share and Action (the
+       column that actually needs the room, holding a 2-5 button cluster)
+       takes whatever's left — an even split with Comment was squeezing
+       button clusters onto 2 lines for no reason (#135). */
+    .ck-table th:nth-child(1) { width: 2rem }
+    .ck-table th:nth-child(2) { width: 12% }
+    .ck-table th:nth-child(3) { width: 14% }
+    .ck-table th:nth-child(4) { width: 8%  }
+    .ck-table th:nth-child(5) { width: 12% }
+    .ck-table th:nth-child(6) { width: 16% }
+
+    .ck-table th {
+      color: var(--t2);
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap
+    }
+
+    .ck-table th:hover {
+      color: var(--t0)
+    }
+
+    .ck-table tbody tr:nth-child(even) {
+      background: var(--bg2)
+    }
+
+    .ck-table tbody tr:hover {
+      background: var(--bg3)
+    }
+
+    .ck-table th:first-child {
+      cursor: default
+    }
+
+    /* Action column (#135): every device category has a different number of
+       state buttons (a single toggle vs. a 2-5 button cluster), so without a
+       shared fixed width each button sizes to its own label and the whole
+       column reads as a ragged, right-stuck pile instead of a grid. Fixing
+       each button to the same width and left-aligning the cell makes every
+       row's buttons line up in columns regardless of how many there are.
+       It also holds real buttons (a flex cluster that wraps on its own), not
+       plain text, so the shared nowrap/ellipsis truncation above must not
+       apply here or it would clip/hide the buttons themselves. */
+    .ck-table td:last-child {
+      text-align: left;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal
+    }
+
+    /* Sized to its own label rather than a shared fixed width (#135) — a
+       uniform column grid looked tidy but wasted space on short labels (OFF)
+       and clipped longer ones (German compounds); auto width lets each
+       button be exactly as wide as it needs to be. */
+    .ck-table .btn, .ck-table .tbtn {
+      width: auto;
+      flex: 0 0 auto
+    }
+
+    /* .btn is styled full-width/bold for a card's own action slot — in a table
+       row that reads as an oversized, childish pill next to the compact .tbtn
+       clusters on other rows. Match the same compact sizing here instead —
+       same font-size as .tbtn (.58rem) so every button in the Action column
+       reads at one consistent size regardless of device category (#135). */
+    .ck-table .btn {
+      padding: .3rem .5rem;
+      font-size: .58rem;
+      letter-spacing: .3px;
+      border-radius: 5px
+    }
+
+    .ck-table-ico {
+      width: 1.4rem;
+      color: var(--ico)
+    }
+
+    .ck-table-ico svg {
+      width: 18px;
+      height: 18px;
+      display: block
+    }
+
+    /* Same state dot as the card view's .ch (#135) — the List view had lost
+       it when the redundant State column was removed, but the dot itself
+       (distinct from that column) is a useful at-a-glance status indicator
+       worth keeping next to the id. */
+    .ck-table-id {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem
+    }
+
 
     .card {
       background: var(--bg1);
@@ -711,14 +908,16 @@
       text-overflow: ellipsis
     }
 
-    /* Fixed height (not min-height — some engines still collapse a childless
-       flex container despite min-height) reserves one tag row even when d has
-       no DCC/board/pin to show (meta() emits zero .mtag spans) — otherwise the
-       button row shifts up on those cards, breaking vertical alignment across
-       a grid row. */
+    /* Fixed height (not just min-height) reserves exactly one tag row whether
+       d has 0 or 1 tag to show (DCC address and board/pin are mutually
+       exclusive per meta()'s own branches, so a device never shows both at
+       once) — this is what keeps the button row underneath at the same
+       vertical position across every card in the grid regardless of which
+       devices happen to have a DCC address (#135). nowrap since a single tag
+       never needs to wrap. */
     .meta {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 3px;
       height: 15px;
       flex-shrink: 0;
@@ -734,16 +933,25 @@
       letter-spacing: .3px
     }
 
+    /* Functional-contrast style (#135): the button stays a thin outline in its
+       semantic color, filled solid only while mid-transition (busy) or for the
+       read-only static state — fill is reserved for the state that's actually
+       true right now, rather than a solid color block for every state. */
+    /* Height matches .tbtn's footprint (same padding/font-size) so a card with
+       a single on/off .btn (neon, campfire...) is the same height as a card
+       with a .tbtns cluster (servo, signal...) — otherwise cards in the same
+       grid row visibly differ in height (#135). */
     .btn {
       width: 100%;
-      padding: .45rem;
-      border: none;
+      padding: .3rem .15rem;
+      background: transparent;
+      border: 1.5px solid var(--bd);
       border-radius: 6px;
       cursor: pointer;
-      font-size: .78rem;
+      font-size: .68rem;
       font-weight: 700;
-      letter-spacing: 1px;
-      transition: opacity .15s
+      letter-spacing: .5px;
+      transition: opacity .15s, background .12s, color .12s
     }
 
     .btn:active {
@@ -751,23 +959,27 @@
     }
 
     .btn.on {
-      background: #c0392b;
-      color: #fff
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
     }
 
     .btn.off {
-      background: #27ae60;
-      color: #fff
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go)
     }
 
     .btn.busy {
-      background: #52525f;
-      color: #e2e2e6;
+      background: var(--sem-off-tint);
+      border-color: var(--sem-off);
+      color: var(--sem-off);
       cursor: default
     }
 
     .btn.static {
-      background: #1e3a5f;
+      background: transparent;
+      border-color: var(--bd);
       color: var(--t3);
       cursor: default;
       font-style: italic
@@ -779,62 +991,54 @@
       gap: 3px
     }
 
+    /* white-space:normal (not nowrap) so a label that still doesn't fit even
+       after widening the card grid (long German compounds, etc.) wraps onto
+       a 2nd line inside its own button instead of clipping/overlapping the
+       next button (#135). */
     .tbtn {
       flex: 1 1 auto;
       min-width: 0;
       padding: .3rem .15rem;
-      border: none;
+      background: transparent;
+      border: 1.5px solid var(--bd);
       border-radius: 5px;
       cursor: pointer;
       font-size: .58rem;
       font-weight: 700;
       letter-spacing: 0;
-      white-space: nowrap;
+      white-space: normal;
+      line-height: 1.2;
+      text-align: center;
       opacity: 1;
-      transition: opacity .15s
+      transition: background .12s, color .12s, border-color .12s
     }
 
-    .tbtn.active {
-      box-shadow: 0 0 0 2px rgba(255,255,255,.55)
-    }
+    /* Functional-contrast style (#135): each tbtn is a thin outline in its
+       semantic color; only the currently-active one fills solid. Replaces the
+       old always-solid buttons + a barely-visible active ring (the ring showed
+       up poorly against light fills like t-slow's yellow) with a state that's
+       legible from the fill itself, on every ambient theme. */
+    .tbtn.t-off { border-color: var(--sem-off); color: var(--sem-off) }
+    .tbtn.t-stop { border-color: var(--sem-stop); color: var(--sem-stop) }
+    .tbtn.t-go { border-color: var(--sem-go); color: var(--sem-go) }
+    .tbtn.t-flash { border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.t-slow { border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.t-sh1 { border-color: var(--sem-shunt); color: var(--sem-shunt) }
+
+    .tbtn.active.t-off { background: var(--sem-off-tint-d); border-color: var(--sem-off); color: var(--sem-off) }
+    .tbtn.active.t-stop { background: var(--sem-stop-tint-d); border-color: var(--sem-stop); color: var(--sem-stop) }
+    .tbtn.active.t-go { background: var(--sem-go-tint-d); border-color: var(--sem-go); color: var(--sem-go) }
+    .tbtn.active.t-flash { background: var(--sem-caution-tint-d); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.active.t-slow { background: var(--sem-caution-tint-d); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .tbtn.active.t-sh1 { background: var(--sem-shunt-tint-d); border-color: var(--sem-shunt); color: var(--sem-shunt) }
 
     .tbtn:not(.active):not([disabled]):hover {
-      opacity: .8
+      background: var(--bg2)
     }
 
     .tbtn[disabled] {
       opacity: .35;
       cursor: default
-    }
-
-    .tbtn.t-off {
-      background: #52525f;
-      color: #e2e2e6
-    }
-
-    .tbtn.t-stop {
-      background: #c0392b;
-      color: #fff
-    }
-
-    .tbtn.t-go {
-      background: #27ae60;
-      color: #fff
-    }
-
-    .tbtn.t-flash {
-      background: #e67e22;
-      color: #fff
-    }
-
-    .tbtn.t-slow {
-      background: #d4a017;
-      color: #fff
-    }
-
-    .tbtn.t-sh1 {
-      background: #6c3483;
-      color: #fff
     }
 
     /* ── Config management section ──────────────────────────────────────── */
@@ -1637,32 +1841,39 @@
 
     .dbg-hbtn {
       padding: .25rem .6rem;
-      border: none;
+      border: 1.5px solid transparent;
       border-radius: 4px;
       cursor: pointer;
       font-size: .65rem;
       font-weight: 700;
       letter-spacing: .5px;
-      transition: opacity .15s
+      transition: opacity .15s, background .12s, color .12s, border-color .12s
     }
 
+    /* Same functional-contrast/pastel recipe as the cockpit's .btn/.tbtn
+       (#135): tinted background + semantic-colour border/text instead of a
+       solid saturated fill with white text. */
     .dbg-hbtn.on {
-      background: #27ae60;
-      color: #fff
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
     }
 
     .dbg-hbtn.off {
-      background: #c0392b;
-      color: #fff
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go)
     }
 
     .dbg-hbtn.test {
-      background: #8e44ad;
-      color: #fff
+      background: var(--sem-shunt-tint);
+      border-color: var(--sem-shunt);
+      color: var(--sem-shunt)
     }
 
     .dbg-hbtn.rm {
-      background: #1a2a3a;
+      background: var(--d2);
+      border-color: var(--bd);
       color: var(--t3)
     }
 
@@ -1670,12 +1881,12 @@
       opacity: .6
     }
 
-    /* Servo speed preset colors (reused from cockpit .tbtn palette) */
-    .dbg-hbtn.t-stop  { background: #7f8c8d; color: #fff }
-    .dbg-hbtn.t-slow  { background: #2980b9; color: #fff }
-    .dbg-hbtn.t-go    { background: #27ae60; color: #fff }
-    .dbg-hbtn.t-flash { background: #e67e22; color: #fff }
-    .dbg-hbtn.t-sh1   { background: #8e44ad; color: #fff }
+    /* Servo speed presets: same t-* semantic classes/colours as the cockpit's .tbtn */
+    .dbg-hbtn.t-stop  { background: var(--sem-off-tint); border-color: var(--sem-off); color: var(--sem-off) }
+    .dbg-hbtn.t-slow  { background: var(--sem-caution-tint); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .dbg-hbtn.t-go    { background: var(--sem-go-tint); border-color: var(--sem-go); color: var(--sem-go) }
+    .dbg-hbtn.t-flash { background: var(--sem-caution-tint); border-color: var(--sem-caution); color: var(--sem-caution) }
+    .dbg-hbtn.t-sh1   { background: var(--sem-shunt-tint); border-color: var(--sem-shunt); color: var(--sem-shunt) }
 
     /* Bus device rows (UART chains: LobotChain, DfAudio…) */
     .dbg-bus-dev {
@@ -2361,18 +2572,35 @@
       padding: .65rem 1rem;
       border-top: 1px solid var(--d2)
     }
+    /* Same functional-contrast/pastel recipe as the cockpit's .btn/.gbtn
+       (#135): tinted background + semantic-colour border/text instead of a
+       solid saturated fill with white text, for visual consistency between
+       the config screen and the cockpit. */
     .de-btn {
       padding: .32rem .85rem;
       border-radius: 5px;
-      border: none;
+      border: 1.5px solid transparent;
       cursor: pointer;
       font-size: .8rem;
       font-weight: 600
     }
     .de-btn.cancel { background: var(--d2); color: var(--t2) }
-    .de-btn.apply  { background: #e67e22; color: #fff }
-    .de-btn.save   { background: #27ae60; color: #fff; margin-left: auto }
-    .de-btn.del    { background: #c0392b; color: #fff }
+    .de-btn.apply {
+      background: var(--sem-caution-tint);
+      border-color: var(--sem-caution);
+      color: var(--sem-caution)
+    }
+    .de-btn.save {
+      background: var(--sem-go-tint);
+      border-color: var(--sem-go);
+      color: var(--sem-go);
+      margin-left: auto
+    }
+    .de-btn.del {
+      background: var(--sem-stop-tint);
+      border-color: var(--sem-stop);
+      color: var(--sem-stop)
+    }
     .de-btn:disabled { opacity: .5; cursor: default }
     .de-status {
       padding: .28rem .6rem;

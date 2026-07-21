@@ -356,7 +356,8 @@ function renderBusDevice(boardApiIdx, dev) {
         ? 'revServo(\'' + sf + '\')'
         : 'setServo(\'' + sf + '\',' + s.v + ')';
       var mk = SERVO_MEANING[s.l];
-      html += '<button class="dbg-hbtn ' + s.c + '" title="' + (mk ? t(mk) : s.l) + '" onclick="' + action + '">' + s.l + '</button>';
+      var lblTxt = mk ? t(mk) : s.l;
+      html += '<button class="dbg-hbtn ' + s.c + '" title="' + lblTxt + '" onclick="' + action + '">' + lblTxt + '</button>';
     });
   }
   html += '<button class="dbg-edit-btn" title="' + t('de.edit_tip') + '"'
