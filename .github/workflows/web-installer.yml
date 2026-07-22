@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {} # …or run it by hand
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -63,3 +63,36 @@ jobs:
     steps:
       - id: deploy
         uses: actions/deploy-pages@v4
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Build firmware
+        run: pio run -e web_installer
+
+      - name: Assemble web-installer/
+        run: python3 scripts/build_web_installer.py --env web_installer --version "${{ github.ref_name }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            web-installer/bootloader.bin
+            web-installer/partitions.bin
+            web-installer/boot_app0.bin
+            web-installer/app.bin
+            web-installer/manifest.json
