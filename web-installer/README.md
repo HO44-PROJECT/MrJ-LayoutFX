@@ -80,6 +80,24 @@ password) since it has no WiFi credentials yet. Join it and open
 `http://192.168.4.1/ui` to enter your home WiFi and configure your layout —
 the board then reboots onto your network, as in screenshot 9.
 
+## Manual flashing (advanced, no browser)
+
+Most users should use the [browser installer](https://ho44-project.github.io/MrJ-LayoutFX/)
+instead — this section is only for flashing the raw `.bin` files from a GitHub
+Release with [esptool.py](https://docs.espressif.com/projects/esptool/en/latest/esp32/):
+
+```sh
+pip install esptool
+esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash \
+  0x1000  bootloader.bin \
+  0x8000  partitions.bin \
+  0xe000  boot_app0.bin \
+  0x10000 app.bin
+```
+
+`manifest.json` lists the same four files and offsets (it's what the browser
+installer reads) — use it as the reference if in doubt.
+
 ## Browser support
 
 Web Serial is **Chromium-only** (Chrome, Edge, Opera) on **desktop**. Firefox,

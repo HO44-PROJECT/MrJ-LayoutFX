@@ -89,6 +89,15 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          body: |
+            ## Install this version
+
+            Most users: **[Install in your browser](https://ho44-project.github.io/MrJ-LayoutFX/)** — Chrome or Edge, ESP32 over USB, no tools to install.
+
+            The `.bin` files and `manifest.json` below are only needed for manual
+            flashing with `esptool.py` — see
+            [web-installer/README.md § Manual flashing](https://github.com/HO44-PROJECT/MrJ-LayoutFX/blob/main/web-installer/README.md#manual-flashing-advanced-no-browser).
+          append_body: true
           generate_release_notes: true
           files: |
             web-installer/bootloader.bin
