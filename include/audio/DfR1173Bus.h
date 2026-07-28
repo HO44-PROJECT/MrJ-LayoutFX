@@ -104,15 +104,19 @@ public:
      */
     bool checkAck();
 
+#ifdef DCC_AUDIT
     /**
-     * @brief TEMP DEBUG: blocking drain of RX for forMs, logging every byte seen.
+     * @brief Debug helper: blocking drain of RX for forMs, logging every byte seen.
+     *        Only compiled under DCC_AUDIT (see sendCommand()'s TX/RX logging).
      */
     void debugDrainRx(uint32_t forMs);
 
     /**
-     * @brief TEMP DEBUG: sends the 0x42 playback-status query.
+     * @brief Debug helper: sends the 0x42 playback-status query for manual inspection.
+     *        Only compiled under DCC_AUDIT.
      */
     void debugQueryStatus();
+#endif
 
     // Contrôle de lecture
     void playTrack(uint8_t trackNumber);

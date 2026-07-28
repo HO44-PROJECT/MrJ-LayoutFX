@@ -98,32 +98,35 @@ int DfRobotSerialMP3::runCoroutine() {
 
         setState(s);
 
-        // TEMP DEBUG: continuousLoopPlayback(false) (0x11) removed to test whether this
-        // module-wide toggle command, sent before every play and never sent by the working
-        // poc_dfr1173, is itself what's silently blocking playback on the real firmware.
-        //
+        // The module needs to actually finish processing a command before the next one
+        // arrives — sending two commands back-to-back with zero delay made it silently
+        // drop one (ACK still came back, but nothing played). Rather than a fixed delay,
+        // wait for the module's own ACK (0x7E 0x41 0xEF, datasheet §3.2.3) with a safety
+        // timeout after EVERY command in this startup sequence, not just the last one.
+        // A COROUTINE_DELAY inside must run directly in runCoroutine()'s own body (it's a
+        // macro that suspends via labels in this function's switch, not a real function
+        // call), so this has to stay a macro here rather than a member function.
+#define WAIT_FOR_ACK() do { \
+          _ackWaitStartMs = millis(); \
+          while (!bus->checkAck() && millis() - _ackWaitStartMs < 100) { \
+            COROUTINE_DELAY(5); \
+          } \
+        } while (0)
+
         // Clear any continuous-loop toggle left on from a previous state before starting
         // this one — 0x11 is a standalone toggle (not implicitly reset by playTrack/
         // playSpecificFolder), so a prior folder/first + next/repeat state would otherwise
         // keep advancing/looping underneath this state's own playback.
-        // continuousLoopPlayback(false);
+        continuousLoopPlayback(false);
+        WAIT_FOR_ACK();
 
-        // TEMP DEBUG: set volume before playback (matches working poc_dfr1173 order),
-        // testing whether the module ignores/ratchets volume differently once already playing.
+        // Set volume before playback so it's already correct when the file starts (no
+        // audible pop/ramp for the no-fade case); the fade-in branch below re-sends it
+        // progressively instead.
         if (_rampDurMs == 0) {
           _currentVolume = _targetVolume;
           setVolume(_currentVolume);
-        }
-
-        // The module needs to actually finish processing a command before the next one
-        // arrives — sending setVolume+playTrack back-to-back with zero delay made it
-        // silently drop one (ACK still came back, but nothing played). Rather than a fixed
-        // delay, wait for the module's own ACK (0x7E 0x41 0xEF, datasheet §3.2.3) with a
-        // safety timeout, per the protocol's own handshake design. `as` is a reference into
-        // _states[], not a stack local, so it stays valid across the suspend.
-        _ackWaitStartMs = millis();
-        while (!bus->checkAck() && millis() - _ackWaitStartMs < 100) {
-          COROUTINE_DELAY(5);
+          WAIT_FOR_ACK();
         }
 
         // Start playback before/at the ramp so the fade-in is audible from track start.
@@ -139,6 +142,8 @@ int DfRobotSerialMP3::runCoroutine() {
             playTrack(as.start_num);
             break;
         }
+        WAIT_FOR_ACK();
+
         if (as.on_end == AudioOnEnd::REPEAT) {
           // 0x08 (single-track loop) only makes sense for a specific file; for folder/first
           // "repeat" reads as "keep looping through everything" since there's no single
@@ -148,11 +153,16 @@ int DfRobotSerialMP3::runCoroutine() {
           } else {
             continuousLoopPlayback(true);
           }
+          WAIT_FOR_ACK();
         } else if (as.on_end == AudioOnEnd::NEXT && as.start != AudioStart::FILE) {
           continuousLoopPlayback(true);
+          WAIT_FOR_ACK();
         } else if (as.on_end == AudioOnEnd::RANDOM) {
           randomPlayback();
+          WAIT_FOR_ACK();
         }
+
+#undef WAIT_FOR_ACK
 
         // ── Fade in ──────────────────────────────────────────────────────
         if (_rampDurMs > 0 && _currentVolume != _targetVolume) {
@@ -167,12 +177,10 @@ int DfRobotSerialMP3::runCoroutine() {
             COROUTINE_DELAY(20);
           }
         } else {
+          // No fade: volume was already set above, right before playTrack() — resending
+          // the identical value here would be a redundant command with zero delay before
+          // the next one, which the module can silently drop (see the ACK-wait above).
           _currentVolume = _targetVolume;
-          // TEMP DEBUG: setVolume() removed here — with _rampDurMs==0 this duplicated the
-          // setVolume() already sent before playTrack() (line ~111) with the exact same
-          // value, back-to-back with zero delay, and never happens in the working
-          // poc_dfr1173 (which sends volume once). Testing whether that immediate repeat
-          // is what's silently blocking playback on the module.
         }
 
         // ── Timed hold (skipped when interrupted; duration_ms == 0 means no

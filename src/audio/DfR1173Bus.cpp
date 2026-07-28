@@ -117,9 +117,9 @@ bool DfR1173Bus::checkAck()
     return ackSeen;
 }
 
+#ifdef DCC_AUDIT
 void DfR1173Bus::debugDrainRx(uint32_t forMs)
 {
-#ifdef DCC_AUDIT
     uint32_t start = millis();
     bool any = false;
     while (millis() - start < forMs) {
@@ -132,9 +132,6 @@ void DfR1173Bus::debugDrainRx(uint32_t forMs)
     }
     if (any) LOG_PRINTLN(F(""));
     else LOG_PRINTLN(F("[DfR1173] DRAIN RX: (nothing)"));
-#else
-    (void)forMs;
-#endif
 }
 
 void DfR1173Bus::debugQueryStatus()
@@ -142,6 +139,7 @@ void DfR1173Bus::debugQueryStatus()
     uint8_t command[] = {0x7E, 0x42, 0x00, 0x02, 0x00, 0x00, 0xEF};
     sendCommand(command, sizeof(command));
 }
+#endif
 
 bool DfR1173Bus::pollTrackFinished()
 {
