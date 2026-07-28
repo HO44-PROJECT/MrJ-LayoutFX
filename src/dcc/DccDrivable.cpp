@@ -121,6 +121,27 @@ void DccDrivable::notifyDccSigOutputState(uint16_t Addr, uint8_t State) {
     logDccEvent(DCC_MSG_SIGNAL, Addr, State, nullptr);
 }
 
+/**
+ * @brief Per-group base function number and bit-mask lookup, decoding a FN_GROUP/FuncState
+ *        pair into individual 0-28 function indices.
+ * @details Not a uniform `1 << (fn - base)` shift: FN_0_4's bits are NOT in numeric order
+ *          (F0 = 0x10, sitting in the middle of the byte; F1-F4 = 0x01,0x02,0x04,0x08), per
+ *          NmraDcc.h. FN_5_8/FN_9_12/FN_13_20/FN_21_28 are regular ascending bit orders but
+ *          are still tabulated here explicitly to avoid mixing a shift-based path with a
+ *          lookup-based one for FN_0_4.
+ */
+struct FnGroupBits {
+  uint8_t base;         ///< Lowest function number in this group.
+  uint8_t count;        ///< Number of functions in this group.
+  const uint8_t *bits;  ///< bits[i] = FuncState mask for function (base + i).
+};
+
+static const uint8_t kFnBits_0_4[]   = {0x10, 0x01, 0x02, 0x04, 0x08};             // F0,F1,F2,F3,F4
+static const uint8_t kFnBits_5_8[]   = {0x01, 0x02, 0x04, 0x08};                   // F5-F8
+static const uint8_t kFnBits_9_12[]  = {0x01, 0x02, 0x04, 0x08};                   // F9-F12
+static const uint8_t kFnBits_13_20[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80}; // F13-F20
+static const uint8_t kFnBits_21_28[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80}; // F21-F28
+
 void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) {
   trackDccMsg(DCC_MSG_FUNC);
   #ifdef LFX_DCC_AUDIT_ENABLED
@@ -143,10 +164,31 @@ void DccDrivable::notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP 
 
   #endif
 
-  // No registered device currently reacts to raw function-group packets (setDccFunction
-  // is wired from notifyDccState, a distinct legacy path) — logged with no device name so
-  // the diagnostic log still shows the packet arrived, which is the point of this callback.
-  logDccEvent(DCC_MSG_FUNC, Addr, FuncState, nullptr);
+  FnGroupBits grp;
+  switch (FuncGrp) {
+    case FN_0_4:   grp = {0,  5, kFnBits_0_4};   break;
+    case FN_5_8:   grp = {5,  4, kFnBits_5_8};   break;
+    case FN_9_12:  grp = {9,  4, kFnBits_9_12};  break;
+    case FN_13_20: grp = {13, 8, kFnBits_13_20}; break;
+    case FN_21_28: grp = {21, 8, kFnBits_21_28}; break;
+    default:
+      // Logged with no device name so the diagnostic log still shows the packet arrived.
+      logDccEvent(DCC_MSG_FUNC, Addr, FuncState, nullptr);
+      return;
+  }
+
+  bool matched = false;
+  for (uint8_t i = 0; i < DccDrivableDeviceNumber; i++) {
+    if (DccDrivableAddresses[i] == Addr) {
+      matched = true;
+      for (uint8_t bit = 0; bit < grp.count; bit++) {
+        DccDrivableDevices[i]->setDccFunctionState(grp.base + bit, (FuncState & grp.bits[bit]) != 0);
+      }
+      logDccEvent(DCC_MSG_FUNC, Addr, FuncState, static_cast<Device *>(DccDrivableDevices[i])->getDeviceName());
+    }
+  }
+  if (!matched)
+    logDccEvent(DCC_MSG_FUNC, Addr, FuncState, nullptr);
 }
 
 /**

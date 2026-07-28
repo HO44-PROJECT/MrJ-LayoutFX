@@ -1544,9 +1544,9 @@
     "busType": "uart",
     "pins": []
   },
-  "DfPlayerMini": {
-    "label": "DFPlayer Mini",
-    "description": "UART MP3 audio module — rx/tx from bus, no physical pin representation",
+  "DfR1173": {
+    "label": "DFR1173",
+    "description": "UART MP3 audio module (DFRobot DFR1173) — rx/tx from bus, no physical pin representation",
     "rows": 0,
     "busType": "uart",
     "no_devices": true,

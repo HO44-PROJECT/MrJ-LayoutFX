@@ -172,7 +172,7 @@
     },
     "busUart": {
       "type": "object",
-      "description": "UART serial bus. Used for servo chains (LobotChain) and audio modules (DfPlayerMini).",
+      "description": "UART serial bus. Used for servo chains (LobotChain) and audio modules (DfR1173).",
       "required": [
         "type",
         "tx",
@@ -254,7 +254,7 @@
             "HC595x2_biface",
             "HC595x2_uniface",
             "LobotChain",
-            "DfPlayerMini",
+            "DfR1173",
             "SSD1306",
             "PCA9685"
           ]
@@ -344,11 +344,11 @@
           }
         },
         {
-          "description": "DfPlayerMini requires bus.",
+          "description": "DfR1173 requires bus.",
           "if": {
             "properties": {
               "type": {
-                "const": "DfPlayerMini"
+                "const": "DfR1173"
               }
             },
             "required": [
@@ -419,7 +419,7 @@
             "Beacon",
             "CampFire",
             "DefectLamp",
-            "DfAudio",
+            "DfRobotSerialMP3",
             "DoubleBeacon",
             "ElectricLamp",
             "GasLamp",
@@ -557,40 +557,92 @@
         },
         "states": {
           "type": "array",
-          "description": "PCA9685Motor: list of named motor states. State 0 = OFF (ramp to neutral); states 1..N map to states[0..N-1].",
+          "description": "PCA9685Motor: list of named motor states (state 0 = OFF/ramp to neutral). DfRobotSerialMP3: list of named audio states (state 0 = OFF/fade to silence). States 1..N map to states[0..N-1].",
           "minItems": 1,
           "maxItems": 8,
           "items": {
-            "type": "object",
-            "required": ["speed"],
-            "additionalProperties": false,
-            "properties": {
-              "label": {
-                "type": "string",
-                "description": "Optional display name shown on the cockpit button."
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["speed"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "description": "Optional display name shown on the cockpit button."
+                  },
+                  "speed": {
+                    "type": "integer",
+                    "minimum": -100,
+                    "maximum": 100,
+                    "description": "Running speed [-100..+100]; sign = direction. Maps to µs via neutral_us - speed×10."
+                  },
+                  "duration_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Run duration in ms. 0 = perpetual (runs until next newState command)."
+                  },
+                  "ramp_up_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Ramp-up duration in ms from current PWM to target speed (0 = instant)."
+                  },
+                  "ramp_down_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Ramp-down duration in ms to neutral at end of run or on OFF (0 = instant)."
+                  }
+                }
               },
-              "speed": {
-                "type": "integer",
-                "minimum": -100,
-                "maximum": 100,
-                "description": "Running speed [-100..+100]; sign = direction. Maps to µs via neutral_us - speed×10."
-              },
-              "duration_ms": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Run duration in ms. 0 = perpetual (runs until next newState command)."
-              },
-              "ramp_up_ms": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Ramp-up duration in ms from current PWM to target speed (0 = instant)."
-              },
-              "ramp_down_ms": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Ramp-down duration in ms to neutral at end of run or on OFF (0 = instant)."
+              {
+                "type": "object",
+                "required": ["start"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "description": "Optional display name shown on the cockpit button."
+                  },
+                  "start": {
+                    "type": "string",
+                    "enum": ["file", "folder", "first"],
+                    "description": "Where playback begins: 'file' = a specific file number (start_num, from the root), 'folder' = first file of folder number start_num, 'first' = first file on the module (start_num ignored)."
+                  },
+                  "start_num": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 255,
+                    "description": "File number (start=file) or folder number (start=folder). Ignored when start=first."
+                  },
+                  "on_end": {
+                    "type": "string",
+                    "enum": ["stop", "repeat", "next", "random"],
+                    "description": "What happens when the current file finishes: 'stop' = stop, 'repeat' = loop (single-track loop for start=file, native continuous loop for folder/first), 'next' = advance in order (RX-polled chaining for start=file, native continuous loop for folder/first), 'random' = advance to a random file (module-native random playback, library-wide regardless of start)."
+                  },
+                  "volume": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 30,
+                    "description": "Target volume [0-30] held during the run phase."
+                  },
+                  "duration_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Auto-stop after this many ms (0 = no auto-stop timer; holds until interrupted)."
+                  },
+                  "fade_in_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Volume ramp from current to target at run start (0 = instant)."
+                  },
+                  "fade_out_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Volume ramp to 0 at run end or on OFF (0 = instant)."
+                  }
+                }
               }
-            }
+            ]
           }
         }
       },
@@ -615,11 +667,11 @@
           }
         },
         {
-          "description": "DfAudio requires board (must be a DfPlayerMini board). No wiring.",
+          "description": "DfRobotSerialMP3 requires board (must be a DfR1173 board). No wiring.",
           "if": {
             "properties": {
               "type": {
-                "const": "DfAudio"
+                "const": "DfRobotSerialMP3"
               }
             },
             "required": [
@@ -677,7 +729,7 @@
               "type": {
                 "not": {
                   "enum": [
-                    "DfAudio",
+                    "DfRobotSerialMP3",
                     "SerialServo"
                   ]
                 }

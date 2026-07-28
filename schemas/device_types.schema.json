@@ -79,7 +79,7 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 4,
-          "description": "Number of wiring values this device type requires (count, not the values themselves). 0 = bus-only device with no physical pin (SerialServo, DfAudio). Distinct from config.json `wiring` which holds the actual pin/channel value(s)."
+          "description": "Number of wiring values this device type requires (count, not the values themselves). 0 = bus-only device with no physical pin (SerialServo, DfRobotSerialMP3). Distinct from config.json `wiring` which holds the actual pin/channel value(s)."
         },
         "states": {
           "type": "array",

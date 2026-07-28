@@ -34,7 +34,7 @@
  *   board with no bus (root MCU)      → wiring = GPIO pin number
  *   board on spi_master_only bus       → wiring = output bit (1-based in chain)
  *   board on uart bus (LobotChain)     → wiring = servo ID
- *   board on uart bus (DfPlayerMini)   → no wiring (rx/tx from bus)
+ *   board on uart bus (DfR1173)        → no wiring (rx/tx from bus)
  *
  * The "type" field of a board entry is a free string used by the frontend to look
  * up the visual definition in board_types.json.  The firmware never interprets it.
@@ -93,7 +93,7 @@ public:
     BUS_NONE = 0,       ///< No bus — root MCU board, wiring = GPIO.
     BUS_SPI_MASTER = 1, ///< spi_master_only — wiring = output bit (1-based in daisy-chain).
     BUS_SPI_FULL = 2,   ///< spi_full_duplex — reserved.
-    BUS_UART = 3,       ///< uart — wiring = servo ID (LobotChain) or no wiring (DfPlayerMini).
+    BUS_UART = 3,       ///< uart — wiring = servo ID (LobotChain) or no wiring (DfR1173).
     BUS_I2C = 4,        ///< i2c — reserved.
     BUS_DCC = 5,        ///< dcc — input only, no boards attached.
   };

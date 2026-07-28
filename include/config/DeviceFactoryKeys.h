@@ -92,7 +92,7 @@ constexpr char kDevMrJDBEntrySignal[] = "MrJDBEntrySignal";
 constexpr char kDevTrafficLight3[] = "TrafficLight3ph";
 constexpr char kDevTrafficLight4[] = "TrafficLight4ph";
 constexpr char kDevMrJDBExitSignal[] = "MrJDBExitSignal";
-constexpr char kDevDfAudio[] = "DfAudio";
+constexpr char kDevDfRobotSerialMP3[] = "DfRobotSerialMP3";
 constexpr char kDevSerialServo[] = "SerialServo";
 constexpr char kDevI2cPwmServo[] = "PCA9685Servo";
 constexpr char kDevI2cPwmMotor[] = "PCA9685Motor";
@@ -113,5 +113,16 @@ constexpr char kFRampUpMs[]   = "ramp_up_ms";   ///< Ramp-up duration in ms for 
 constexpr char kFRampDownMs[] = "ramp_down_ms"; ///< Ramp-down duration in ms for a MotorState (default 0 = instant).
 constexpr char kFPulseMinUs[] = "pulse_min_us"; ///< PWM µs for −90° on PCA9685Servo (default 1000).
 constexpr char kFPulseMaxUs[] = "pulse_max_us"; ///< PWM µs for +90° on PCA9685Servo (default 2000).
+
+// ── DfRobotSerialMP3 (DFR1173 audio) field keys ───────────────────────────────
+// "states" (kFStates) and "duration_ms" (kFDurationMs) reuse the keys already
+// defined above for PCA9685Motor — same JSON shape (array of state objects,
+// each with an auto-stop timer), different fields inside each object.
+constexpr char kFStart[]     = "start";       ///< Start point for an AudioState: "file" (default) | "folder" | "first".
+constexpr char kFStartNum[]  = "start_num";   ///< File number (start=file) or folder number (start=folder) for an AudioState.
+constexpr char kFOnEnd[]     = "on_end";      ///< What happens when the current file ends: "stop" (default) | "repeat" | "next" | "random".
+constexpr char kFVolume[]    = "volume";      ///< Target volume [0-30] for an AudioState.
+constexpr char kFFadeInMs[]  = "fade_in_ms";  ///< Volume fade-in duration in ms for an AudioState (default 0 = instant).
+constexpr char kFFadeOutMs[] = "fade_out_ms"; ///< Volume fade-out duration in ms for an AudioState (default 0 = instant).
 
 } // namespace factory_keys

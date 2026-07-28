@@ -257,6 +257,19 @@ public:
   virtual void setDccFunction(uint8_t State) {}
 
   /**
+   * @brief Sets a single loco function's on/off state for the device.
+   * @param funcIndex Function number (0-28), decoded from a notifyDccFunc() FN_GROUP/FuncState pair.
+   * @param on true if the function was just turned on, false if turned off.
+   * @details Distinct from setDccFunction()/notifyDccState() (an unrelated, pre-existing
+   *          accessory-address path): this hook is wired from notifyDccFunc(), the
+   *          loco-address function-group path, and can identify *which* function changed —
+   *          setDccFunction()'s single State byte cannot. No-op by default; devices that
+   *          react to individual loco functions (e.g. DfRobotSerialMP3: next/prev/random on
+   *          specific function numbers) override it.
+   */
+  virtual void setDccFunctionState(uint8_t funcIndex, bool on) {}
+
+  /**
    * @brief Sets the DCC signal output state for the device.
    * @param State Signal output state (e.g., 0 for off, non-zero for on).
    * @details Pure virtual method to be overridden by subclasses to handle DCC signal

@@ -35,8 +35,8 @@
   #include "signals/MrJDbExitSignal.h"
   #include "traffic/TrafficLight3Phase.h"
   #include "traffic/TrafficLight4Phase.h"
-  #ifdef LFX_AUDIO_ENABLED
-    #include "audio/DfAudio.h"
+  #ifdef LFX_SERIAL_AUDIO_ENABLED
+    #include "audio/DfRobotSerialMP3.h"
   #endif
   #ifdef LFX_SERIAL_SERVO_ENABLED
     #include "servo/SerialServoMotorMode.h"
@@ -544,8 +544,8 @@ DeviceFactory::BusType DeviceFactory::_resolveBusType(const char *busKey) const 
 /**
  * @brief Find the PortCfg for a given uart bus key, or nullptr.
  *
- * Used by DfAudio to retrieve the rx/tx pin numbers without activating the UART.
- * DfAudio uses SoftwareSerial internally and drives the pins itself.
+ * Used by DfRobotSerialMP3 to retrieve the rx/tx pin numbers without activating the UART.
+ * DfRobotSerialMP3 uses SoftwareSerial internally and drives the pins itself.
  */
 DeviceFactory::PortCfg *DeviceFactory::_findPort(const char *busKey) {
   for (size_t i = 0; i < _portCount; i++) {
@@ -681,7 +681,7 @@ size_t DeviceFactory::_pins(JsonVariant v, PIN_ID *out, size_t maxPins, uint8_t 
  *   two-pin     : DoubleBeacon, RailwayCrossingLights, MrJDBBlocSignal
  *   three-pin   : MrJDBEntrySignal, TrafficLight3Phase, TrafficLight4Phase
  *   four-pin    : MrJDBExitSignal
- *   bus-driven  : DfAudio (uart, SoftwareSerial), SerialServo (uart, HardwareSerial)
+ *   bus-driven  : DfRobotSerialMP3 (uart, SoftwareSerial), SerialServo (uart, HardwareSerial)
  */
 Device *DeviceFactory::_createDevice(JsonObject obj) {
   const char *type = obj[kFType] | "";
@@ -869,33 +869,78 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
   }
 
   // ------------------------------------------------------------------
-  // DfAudio — uses SoftwareSerial driven by rx/tx from the board's uart bus.
-  // The HardwareSerial port is NOT opened here; DfAudio owns its own pins.
+  // DfRobotSerialMP3 — uses SoftwareSerial driven by rx/tx from the board's uart bus.
+  // The HardwareSerial port is NOT opened here; DfRobotSerialMP3 owns its own pins.
   // ------------------------------------------------------------------
-  else if (strcmp(type, kDevDfAudio) == 0) {
-  #ifdef LFX_AUDIO_ENABLED
+  else if (strcmp(type, kDevDfRobotSerialMP3) == 0) {
+  #ifdef LFX_SERIAL_AUDIO_ENABLED
     if (boardIdx == 0 || boardIdx > _boardCount) {
-      LOG_PRINTLN(F("DeviceFactory: DfAudio — board not found"));
+      LOG_PRINTLN(F("DeviceFactory: DfRobotSerialMP3 — board not found"));
       return nullptr;
     }
     const BoardCfg &bcfg = _boards_cfg[boardIdx - 1];
     if (bcfg.busType != BUS_UART) {
-      LOG_PRINT(F("DeviceFactory: DfAudio — board is not on a uart bus: "));
+      LOG_PRINT(F("DeviceFactory: DfRobotSerialMP3 — board is not on a uart bus: "));
       LOG_PRINTLN(bcfg.id);
       return nullptr;
     }
     PortCfg *cfg = _findPort(bcfg.busKey);
     if (!cfg || cfg->rx < 0 || cfg->tx < 0) {
-      LOG_PRINT(F("DeviceFactory: DfAudio — uart config missing for bus: "));
+      LOG_PRINT(F("DeviceFactory: DfRobotSerialMP3 — uart config missing for bus: "));
       LOG_PRINTLN(bcfg.busKey);
       return nullptr;
     }
     #ifdef LFX_SPI_CARDS_ENABLED
-    d = new DfAudio(PIN_ID::gpio((uint8_t)cfg->rx), PIN_ID::gpio((uint8_t)cfg->tx));
+    d = new DfRobotSerialMP3(PIN_ID::gpio((uint8_t)cfg->rx), PIN_ID::gpio((uint8_t)cfg->tx), cfg->baud);
     #else
-    d = new DfAudio((PIN_ID)(uint8_t)cfg->rx, (PIN_ID)(uint8_t)cfg->tx);
+    d = new DfRobotSerialMP3((PIN_ID)(uint8_t)cfg->rx, (PIN_ID)(uint8_t)cfg->tx, cfg->baud);
     #endif
-  #endif // LFX_AUDIO_ENABLED
+
+    {
+      DfRobotSerialMP3::AudioState states[DfRobotSerialMP3::MAX_STATES];
+      uint8_t stateCount = 0;
+
+      auto parseStart = [](const char *s) -> DfRobotSerialMP3::AudioStart {
+        if (strcmp(s, "folder") == 0) return DfRobotSerialMP3::AudioStart::FOLDER;
+        if (strcmp(s, "first")  == 0) return DfRobotSerialMP3::AudioStart::FIRST;
+        return DfRobotSerialMP3::AudioStart::FILE;
+      };
+      auto parseOnEnd = [](const char *s) -> DfRobotSerialMP3::AudioOnEnd {
+        if (strcmp(s, "repeat") == 0) return DfRobotSerialMP3::AudioOnEnd::REPEAT;
+        if (strcmp(s, "next")   == 0) return DfRobotSerialMP3::AudioOnEnd::NEXT;
+        if (strcmp(s, "random") == 0) return DfRobotSerialMP3::AudioOnEnd::RANDOM;
+        return DfRobotSerialMP3::AudioOnEnd::STOP;
+      };
+
+      if (obj[kFStates].is<JsonArray>()) {
+        for (JsonObject s : obj[kFStates].as<JsonArray>()) {
+          if (stateCount >= DfRobotSerialMP3::MAX_STATES) break;
+          states[stateCount].start      = parseStart(s[kFStart] | "file");
+          states[stateCount].start_num  = (uint8_t)(s[kFStartNum]  | 1);
+          states[stateCount].on_end     = parseOnEnd(s[kFOnEnd] | "stop");
+          states[stateCount].volume      = (uint8_t)(s[kFVolume]     | 20);
+          states[stateCount].duration_ms = (uint32_t)(s[kFDurationMs] | 0);
+          states[stateCount].fade_in_ms  = (uint32_t)(s[kFFadeInMs]  | 0);
+          states[stateCount].fade_out_ms = (uint32_t)(s[kFFadeOutMs] | 0);
+          const char *lbl = s[kFLabel] | "";
+          strncpy(states[stateCount].label, lbl, sizeof(states[stateCount].label) - 1);
+          states[stateCount].label[sizeof(states[stateCount].label) - 1] = '\0';
+          stateCount++;
+        }
+      } else {
+        states[0].start       = parseStart(obj[kFStart] | "file");
+        states[0].start_num   = (uint8_t)(obj[kFStartNum] | 1);
+        states[0].on_end      = parseOnEnd(obj[kFOnEnd] | "stop");
+        states[0].volume      = (uint8_t)(obj[kFVolume]     | 20);
+        states[0].duration_ms = 0;
+        states[0].fade_in_ms  = 0;
+        states[0].fade_out_ms = 0;
+        states[0].label[0]    = '\0';
+        stateCount = 1;
+      }
+      static_cast<DfRobotSerialMP3 *>(d)->setStates(states, stateCount);
+    }
+  #endif // LFX_SERIAL_AUDIO_ENABLED
   }
 
   // ------------------------------------------------------------------

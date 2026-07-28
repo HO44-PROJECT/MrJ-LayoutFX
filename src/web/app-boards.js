@@ -210,7 +210,7 @@ function renderDbgBoard(board, boardApiIdx) {
 }
 
 // Render the PCB diagram for one board.
-// rows=0 boards (UART servo chains, DfAudio, I²C modules…) have no physical pins
+// rows=0 boards (UART servo chains, DfRobotSerialMP3, I²C modules…) have no physical pins
 // to display; they render a flat device list instead.
 // Multi-column boards (e.g. ESP32Mini) use col:1/col:2 to arrange two pin columns per side.
 function renderDipPcb(board, boardApiIdx, def) {
@@ -333,7 +333,7 @@ function renderDipPcb(board, boardApiIdx, def) {
   return '<div class="dbg-pcb">' + dip + '</div>';
 }
 
-// Render one device row for a rows=0 bus board (UART servo chain, DfAudio, etc.)
+// Render one device row for a rows=0 bus board (UART servo chain, DfRobotSerialMP3, etc.)
 function renderBusDevice(boardApiIdx, dev) {
   var isServo = SERVO_TYPES.indexOf(dev.type) >= 0;
   var isOn = dev.desired > 0;
@@ -368,7 +368,7 @@ function renderBusDevice(boardApiIdx, dev) {
   return html;
 }
 
-// Delete a bus-board device from config.json (UART servo chain, DfAudio, etc.).
+// Delete a bus-board device from config.json (UART servo chain, DfRobotSerialMP3, etc.).
 function deleteBusDev(id) {
   if (!confirm(t('de.del_confirm', { id: id }))) return;
   fetch('/api/config')

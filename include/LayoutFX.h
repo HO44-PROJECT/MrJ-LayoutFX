@@ -114,9 +114,9 @@
 #endif // End LFX_SPI_CARDS_ENABLED includes
 
 // ── Audio ────────────────────────────────────────────────────────────────────
-#ifdef LFX_AUDIO_ENABLED
-  #include <audio/DfAudio.h>
-#endif // End of LFX_AUDIO_ENABLED includes
+#ifdef LFX_SERIAL_AUDIO_ENABLED
+  #include <audio/DfRobotSerialMP3.h>
+#endif // End of LFX_SERIAL_AUDIO_ENABLED includes
 
 // ── DCC support (conditionally compiled) ─────────────────────────────────
 #ifdef LFX_DCC_ENABLED // DCC support is enabled if DCC_PIN is defined.

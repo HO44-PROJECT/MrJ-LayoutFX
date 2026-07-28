@@ -18,7 +18,7 @@
     "wires": 1,
     "ctor_style": "single_pin"
   },
-  "DfAudio": {
+  "DfRobotSerialMP3": {
     "label": "Audio Player",
     "category": "audio",
     "wires": 0,

@@ -193,9 +193,9 @@ A continuous-rotation motor/fan on a PCA9685 I²C PWM driver board — runs name
 
 Serial audio playback modules.
 
-### Audio Player (`DfAudio`)
+### Audio Player (`DfRobotSerialMP3`)
 
-A DFPlayer-style serial audio module — plays sound clips on command.
+A DFRobot DFR1173 (MP3 Voice Prompter) serial audio module — plays sound clips on command.
 
 - **Wires:** 0 (bus device, no GPIO wiring)
 

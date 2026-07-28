@@ -220,7 +220,7 @@ var ICONS = {
     + '<line x1="12" y1="19" x2="12" y2="22"/>'
     + E,
 
-  'DfAudio': S
+  'DfRobotSerialMP3': S
     + '<polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>'
     + '<path d="M15.5 8.5a5 5 0 0 1 0 7"/>'
     + '<path d="M19 5a10 10 0 0 1 0 14"/>'

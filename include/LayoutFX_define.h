@@ -216,9 +216,9 @@
 #endif // End SPI_CARDS check
 
 #ifdef AUDIO // AUDIO support is enabled if AUDIO is defined (value is ignored).
-  #define LFX_AUDIO_ENABLED 1
+  #define LFX_SERIAL_AUDIO_ENABLED 1
 #else
-  #undef LFX_AUDIO_ENABLED
+  #undef LFX_SERIAL_AUDIO_ENABLED
 #endif // End AUDIO check
 
 // ── I2C scanner (ESP32 only) ──────────────────────────────────────────────────

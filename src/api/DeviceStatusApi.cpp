@@ -97,7 +97,7 @@ void DeviceApi::_onGetStatus() {
   #else
   feat[kFeatDcc] = false;
   #endif
-  #ifdef LFX_AUDIO_ENABLED
+  #ifdef LFX_SERIAL_AUDIO_ENABLED
   feat[kFeatAudio] = true;
   #else
   feat[kFeatAudio] = false;
