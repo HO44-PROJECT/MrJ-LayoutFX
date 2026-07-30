@@ -250,7 +250,7 @@ function renderDipPcb(board, boardApiIdx, def) {
       + devs.map(function (d) { return renderBusDevice(boardApiIdx, d); }).join('')
       + (def.no_devices ? '' :
         '<div class="dbg-bus-add"><button class="dbg-hbtn" onclick="openDevEditor('
-        + boardApiIdx + ',1,null,SERVO_TYPES)">' + t('de.add_btn') + '</button></div>')
+        + boardApiIdx + ',1,null)">' + t('de.add_btn') + '</button></div>')
       + '</div>';
   }
   var allPins = def.pins || [];
