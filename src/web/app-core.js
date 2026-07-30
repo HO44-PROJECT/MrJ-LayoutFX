@@ -20,6 +20,7 @@ var POLL = 3000; // cockpit poll interval in ms; user-adjustable, persisted in l
 var SERVO_TYPES = [];
 var I2C_SERVO_TYPES = [];
 var I2C_MOTOR_TYPES = [];
+var AUDIO_TYPES = [];
 var STATIC_TYPES = [];
 var TRAFFIC_TYPES = [];
 var SERVO_STATES = [];
@@ -181,6 +182,18 @@ function ckAction(d) {
       btnsM += mbtn(s.label || (t('de.card_state') + ' ' + (i + 1)), i + 1, 't-go');
     });
     return '<div class="tbtns ck-tbtns">' + btnsM + '</div>';
+  }
+  if (AUDIO_TYPES.indexOf(d.type) >= 0) {
+    var astates = d.states || [];
+    function abtn(label, st, css) {
+      var act = (d.desired === st && !busy) ? 'active' : '';
+      return '<button class="tbtn ' + css + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + st + ')" ' + (busy ? 'disabled' : '') + '>' + label + '</button>';
+    }
+    var btnsA = abtn(t('servo.stop'), 0, 't-stop');
+    astates.forEach(function (s, i) {
+      btnsA += abtn(s.label || (t('de.card_state') + ' ' + (i + 1)), i + 1, 't-go');
+    });
+    return '<div class="tbtns ck-tbtns">' + btnsA + '</div>';
   }
   if ((_deviceTypes[d.type] || {}).category === 'signal') {
     var states = (_deviceTypes[d.type] || {}).states || [];
@@ -356,6 +369,34 @@ function cardI2cMotor(d) {
     + '</div>';
 }
 
+// Render an audio-module card (DfRobotSerialMP3). State 0 = OFF, states 1..N
+// are the configured audio effects from d.states[] — mirrors cardI2cMotor
+// since both are "N configured runs, no continuous range" devices.
+function cardAudio(d) {
+  var states = d.states || [];
+  var busy = d.state < 0;
+  var dis = busy ? 'disabled' : '';
+  var ico = ICONS[d.type] || ICONS['_'];
+  var tip = tooltip(d.type);
+  var c = busy ? 'busy' : (d.desired > 0 ? 'on' : 'off');
+  function abtn(label, st, css) {
+    var act = (d.desired === st && !busy) ? 'active' : '';
+    return '<button class="tbtn ' + css + ' ' + act + '" onclick="setSig(\'' + d.id + '\',' + st + ')" ' + dis + '>' + label + '</button>';
+  }
+  var btns = abtn(t('servo.stop'), 0, 't-stop');
+  states.forEach(function (s, i) {
+    btns += abtn(s.label || (t('de.card_state') + ' ' + (i + 1)), i + 1, 't-go');
+  });
+  return '<div class="card ' + c + '">'
+    + '<div class="ch"><span class="cid" title="' + d.id + '">' + d.id + '</span>'
+    + '<span class="dot ' + c + '"></span></div>'
+    + '<div class="icon" title="' + tip + '">' + ico + '</div>'
+    + '<span class="badge">' + dtLabel(d.type) + '</span>'
+    + meta(d)
+    + '<div class="tbtns">' + btns + '</div>'
+    + '</div>';
+}
+
 // Render a positional I²C servo card (PCA9685Servo).
 // State 0 = STOP (emergency stop), states 1..N = positions from d.positions[].
 function cardI2cServo(d) {
@@ -389,6 +430,7 @@ function card(d) {
   if (SERVO_TYPES.indexOf(d.type) >= 0) return cardServo(d);
   if (I2C_SERVO_TYPES.indexOf(d.type) >= 0) return cardI2cServo(d);
   if (I2C_MOTOR_TYPES.indexOf(d.type) >= 0) return cardI2cMotor(d);
+  if (AUDIO_TYPES.indexOf(d.type) >= 0) return cardAudio(d);
   if ((_deviceTypes[d.type] || {}).category === 'signal') return cardSignal(d);
   var c = cls(d);
   // 'static' devices are read-only; 'busy' (mid-transition) stays clickable — the

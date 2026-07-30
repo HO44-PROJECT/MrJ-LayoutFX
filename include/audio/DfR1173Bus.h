@@ -116,6 +116,24 @@ public:
      *        Only compiled under DCC_AUDIT.
      */
     void debugQueryStatus();
+
+    /**
+     * @brief Debug helper: sends the 0x4A "query total number of files in storage" command
+     *        (datasheet §3.1/§4.2) for manual inspection — the total file count as the
+     *        module's own physical index sees it, independent of what's visible in a file
+     *        browser (see datasheet §5.3: playback order/indexing follows physical write
+     *        time, not file name). Pair with debugDrainRx() to see the reply.
+     */
+    void debugQueryTotalFiles();
+
+    /**
+     * @brief Debug helper: sends the 0x4E "query current file index in storage" command
+     *        (datasheet §3.1/§4.2) for manual inspection — reports which physical file
+     *        index the module currently considers "current" (e.g. right after a
+     *        playSpecificFolder() call), to check whether it landed where expected. Pair
+     *        with debugDrainRx() to see the reply.
+     */
+    void debugQueryCurrentFileIndex();
 #endif
 
     // Contrôle de lecture
@@ -135,6 +153,18 @@ public:
     void repeatPlayback(uint8_t trackNumber);
     void randomPlayback();
     void continuousLoopPlayback(bool enable);
+
+    /**
+     * @brief Sends the 0x19 "set the currently playing track to loop playback" command
+     *        (datasheet §4.1.8) — loops whatever is playing right now, no track number
+     *        needed. Must be sent while the chip is actively playing (paused/stopped chip
+     *        ignores it). Per the datasheet's own command table, the enable/disable data
+     *        byte is inverted from what you'd expect: DL=0x00 enables the loop, DL=0x01
+     *        disables it.
+     *
+     * @param enable true to enable single-track loop on the current track, false to disable.
+     */
+    void setCurrentTrackLoop(bool enable);
 
     // Contrôle par dossier/fichier
     void playSpecificFolder(uint8_t folderNumber, uint8_t fileNumber);

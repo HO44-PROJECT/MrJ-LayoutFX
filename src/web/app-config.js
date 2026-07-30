@@ -528,6 +528,7 @@ function _applyDeviceTypes(dt) {
   SERVO_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'servo'; });
   I2C_SERVO_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'i2c_servo'; });
   I2C_MOTOR_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'i2c_motor'; });
+  AUDIO_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'audio'; });
   STATIC_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'static'; });
   TRAFFIC_TYPES = Object.keys(dt).filter(function (k) { return dt[k].category === 'traffic'; });
   SERVO_STATES = (dt['SerialServo'] || {}).states || [];

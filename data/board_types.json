@@ -1542,6 +1542,7 @@
     "description": "LX-16A controller on UART bus — servo ID addressing, no physical pin representation",
     "rows": 0,
     "busType": "uart",
+    "deviceCategories": ["servo"],
     "pins": []
   },
   "DfR1173": {
@@ -1549,7 +1550,7 @@
     "description": "UART MP3 audio module (DFRobot DFR1173) — rx/tx from bus, no physical pin representation",
     "rows": 0,
     "busType": "uart",
-    "no_devices": true,
+    "deviceCategories": ["audio"],
     "pins": []
   },
   "SSD1306": {
@@ -1565,6 +1566,7 @@
     "description": "PCA9685 16-channel PWM/servo controller — I²C, address 0x40-0x4F (A0-A5 jumpers). Each channel drives one positional servo.",
     "rows": 16,
     "busType": "i2c",
+    "deviceCategories": ["i2c_servo", "i2c_motor"],
     "pins": [
       {
         "wiring": 0,

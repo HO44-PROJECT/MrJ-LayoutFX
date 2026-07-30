@@ -120,6 +120,7 @@ constexpr char kFPulseMaxUs[] = "pulse_max_us"; ///< PWM µs for +90° on PCA968
 // each with an auto-stop timer), different fields inside each object.
 constexpr char kFStart[]     = "start";       ///< Start point for an AudioState: "file" (default) | "folder" | "first".
 constexpr char kFStartNum[]  = "start_num";   ///< File number (start=file) or folder number (start=folder) for an AudioState.
+constexpr char kFFolderFileNum[] = "folder_file_num"; ///< File number within the folder (start=folder only, default 1).
 constexpr char kFOnEnd[]     = "on_end";      ///< What happens when the current file ends: "stop" (default) | "repeat" | "next" | "random".
 constexpr char kFVolume[]    = "volume";      ///< Target volume [0-30] for an AudioState.
 constexpr char kFFadeInMs[]  = "fade_in_ms";  ///< Volume fade-in duration in ms for an AudioState (default 0 = instant).

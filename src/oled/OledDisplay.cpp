@@ -937,6 +937,24 @@ void OledDisplay::_drawIcon(const char *type, uint8_t ox, uint8_t oy) {
     return;
   }
 
+  // ── Audio (DFR1173 MP3 module) ───────────────────────────────────────────
+  // Same glyph as the WebUI icon (src/web/icons.js): speaker cone (polygon
+  // 11,5 6,9 2,9 2,15 6,15 11,19) + two sound-wave arcs.
+  //      polygon → (15,7) (8,12) (3,12) (3,20) (8,20) (15,25)
+  //      inner arc  cx=15.5 cy=12 r≈5.5 (right-opening quarter-circle)
+  //      outer arc  cx=19   cy=12 r≈9   (right-opening quarter-circle)
+  if (strcmp(type, factory_keys::kDevDfRobotSerialMP3) == 0) {
+    _u8g2.drawLine(ox + 15, oy + 7, ox + 8, oy + 12);
+    _u8g2.drawLine(ox + 8, oy + 12, ox + 3, oy + 12);
+    _u8g2.drawVLine(ox + 3, oy + 12, 8);
+    _u8g2.drawLine(ox + 3, oy + 20, ox + 8, oy + 20);
+    _u8g2.drawLine(ox + 8, oy + 20, ox + 15, oy + 25);
+    _u8g2.drawVLine(ox + 15, oy + 7, 18);
+    _u8g2.drawEllipse(ox + 15, oy + 16, 6, 7, U8G2_DRAW_UPPER_RIGHT | U8G2_DRAW_LOWER_RIGHT);
+    _u8g2.drawEllipse(ox + 15, oy + 16, 10, 11, U8G2_DRAW_UPPER_RIGHT | U8G2_DRAW_LOWER_RIGHT);
+    return;
+  }
+
   // ── Default: question-mark circle ────────────────────────────────────────
   _u8g2.setFont(u8g2_font_6x10_tr);
   _u8g2.drawCircle(ox + 16, oy + 16, 12);

@@ -63,6 +63,9 @@ int DfRobotSerialMP3::runCoroutine() {
           _currentVolume = (uint8_t)((int32_t)_rampFromVolume -
             (int32_t)_rampFromVolume * (int32_t)elapsed / (int32_t)_stopFadeOutMs);
           setVolume(_currentVolume);
+          // Pacing delay (~50Hz step rate for the volume ramp), unrelated to
+          // WAIT_FOR_ACK()'s 5ms polling delay below — this one paces the fade itself,
+          // not a wait for the module's response.
           COROUTINE_DELAY(20);
         }
       }
@@ -75,26 +78,38 @@ int DfRobotSerialMP3::runCoroutine() {
       // ── Active state 1..N ─────────────────────────────────────────────
       uint8_t s;
       s = (uint8_t)getTargetState();
+      LOG_PRINT(F("DBG DfRobotSerialMP3::runCoroutine target state="));
+      LOG_PRINT(s);
+      LOG_PRINT(F(" _stateCount="));
+      LOG_PRINTLN(_stateCount);
       if (s < 1 || s > _stateCount) {
         setState(s); // out-of-range — commit without running
       } else {
-        // Snapshot all state fields into member vars BEFORE any COROUTINE_DELAY.
+        // Snapshot ALL state fields into member vars BEFORE any COROUTINE_DELAY — "as"
+        // itself (a reference into _states[]) and the local "s" do not survive suspension
+        // (COROUTINE_DELAY returns out of this function; on resume the stack is rebuilt
+        // from scratch, so any local/reference taken before it is dangling — this crashed
+        // with a LoadProhibited fault the first time "as" was read after WAIT_FOR_ACK()'s
+        // COROUTINE_DELAY below). Only _xxx members may be read past this point.
         const AudioState &as = _states[s - 1];
         _stopFadeOutMs = as.fade_out_ms;
         _targetVolume  = as.volume;
         _rampDurMs     = as.fade_in_ms;
         _runDurMs      = as.duration_ms;
         _onEnd         = as.on_end;
-        // Manual "next" (file-by-file via RX polling) only applies when starting from a
-        // single, specific file: the module has no "start at file N, then auto-advance"
-        // command (0x11 continuous-loop is root-directory-wide with no start-track param —
-        // datasheet §4.1.6), so chaining from a specific file has to be done by us, one
-        // track at a time, off the playback-complete frames. When start is folder/first,
-        // 0x11 already does exactly what NEXT means (advance through everything, looping
-        // forever) so no RX polling is needed. "random" never needs RX polling either: the
-        // module's native randomPlayback() (0x18) picks across its whole library on its own
-        // regardless of start, so we never have to guess how many files exist.
-        _manualAdvance = (as.start == AudioStart::FILE) && (as.on_end == AudioOnEnd::NEXT);
+        _start         = as.start;
+        _startNum      = as.start_num;
+        _folderFileNum = as.folder_file_num;
+        // Manual "next" (one 0x01 per finished track, via RX polling) applies to FILE and
+        // FOLDER starts: neither has a native "start here, then auto-advance" command — 0x01
+        // (next track, §3.1) and 0x11 (continuous loop, §4.1.6) both advance by the device's
+        // physical storage order with no notion of "starting point", so chaining has to be
+        // driven by us, one track at a time, off the playback-complete frames. FIRST has no
+        // single targeted file to chain from, so it keeps the native 0x11 continuous-loop
+        // instead. "random" never needs RX polling either: the module's native
+        // randomPlayback() (0x18) picks across its whole library on its own regardless of
+        // start, so we never have to guess how many files exist.
+        _manualAdvance = (_start == AudioStart::FILE || _start == AudioStart::FOLDER) && (_onEnd == AudioOnEnd::NEXT);
 
         setState(s);
 
@@ -106,6 +121,12 @@ int DfRobotSerialMP3::runCoroutine() {
         // A COROUTINE_DELAY inside must run directly in runCoroutine()'s own body (it's a
         // macro that suspends via labels in this function's switch, not a real function
         // call), so this has to stay a macro here rather than a member function.
+        //
+        // The COROUTINE_DELAY(5) below is a polling tick, not a fixed protocol wait: it just
+        // yields to the scheduler between two checkAck() polls so this wait doesn't busy-loop
+        // and starve every other coroutine (DCC decoding, other devices, etc.) for up to
+        // 100ms. It is unrelated to — and not replaced by — the COROUTINE_DELAY(20) calls
+        // used elsewhere in this function for fade/poll pacing (see their own comments).
 #define WAIT_FOR_ACK() do { \
           _ackWaitStartMs = millis(); \
           while (!bus->checkAck() && millis() - _ackWaitStartMs < 100) { \
@@ -113,11 +134,14 @@ int DfRobotSerialMP3::runCoroutine() {
           } \
         } while (0)
 
-        // Clear any continuous-loop toggle left on from a previous state before starting
-        // this one — 0x11 is a standalone toggle (not implicitly reset by playTrack/
-        // playSpecificFolder), so a prior folder/first + next/repeat state would otherwise
-        // keep advancing/looping underneath this state's own playback.
+        // Clear any loop toggle left on from a previous state before starting this one —
+        // 0x11 and 0x19 are standalone toggles, not implicitly reset by playTrack/
+        // playSpecificFolder (datasheet §4.1.8 point 2 requires an explicit disable for
+        // 0x19), so a prior folder/first + next/repeat state would otherwise keep
+        // advancing/looping underneath this state's own playback.
         continuousLoopPlayback(false);
+        WAIT_FOR_ACK();
+        setCurrentTrackLoop(false);
         WAIT_FOR_ACK();
 
         // Set volume before playback so it's already correct when the file starts (no
@@ -130,34 +154,40 @@ int DfRobotSerialMP3::runCoroutine() {
         }
 
         // Start playback before/at the ramp so the fade-in is audible from track start.
-        switch (as.start) {
+        switch (_start) {
           case AudioStart::FOLDER:
-            bus->playSpecificFolder(as.start_num, 1);
+            bus->playSpecificFolder(_startNum, _folderFileNum);
             break;
           case AudioStart::FIRST:
             playTrack(1);
             break;
           case AudioStart::FILE:
           default:
-            playTrack(as.start_num);
+            playTrack(_startNum);
             break;
         }
         WAIT_FOR_ACK();
 
-        if (as.on_end == AudioOnEnd::REPEAT) {
-          // 0x08 (single-track loop) only makes sense for a specific file; for folder/first
-          // "repeat" reads as "keep looping through everything" since there's no single
-          // starting track to loop on, so it maps to the same native continuous-loop as NEXT.
-          if (as.start == AudioStart::FILE) {
-            repeatPlayback(as.start_num);
+        if (_onEnd == AudioOnEnd::REPEAT) {
+          // 0x08 (single-track loop, datasheet §4.1.3) takes a physical track number, which
+          // is exactly what _startNum already is when _start == FILE. For FOLDER, the file
+          // just started via playSpecificFolder() (0x0F) has no known physical track number
+          // — but 0x19 (datasheet §4.1.8) loops whatever is playing right now with no track
+          // number needed, so it repeats the exact file just started. FIRST has no single
+          // targeted file (it's just "the module's first file"), so it keeps the old
+          // whole-library continuous-loop behavior.
+          if (_start == AudioStart::FILE) {
+            repeatPlayback(_startNum);
+          } else if (_start == AudioStart::FOLDER) {
+            setCurrentTrackLoop(true);
           } else {
             continuousLoopPlayback(true);
           }
           WAIT_FOR_ACK();
-        } else if (as.on_end == AudioOnEnd::NEXT && as.start != AudioStart::FILE) {
+        } else if (_onEnd == AudioOnEnd::NEXT && _start == AudioStart::FIRST) {
           continuousLoopPlayback(true);
           WAIT_FOR_ACK();
-        } else if (as.on_end == AudioOnEnd::RANDOM) {
+        } else if (_onEnd == AudioOnEnd::RANDOM) {
           randomPlayback();
           WAIT_FOR_ACK();
         }
@@ -174,6 +204,8 @@ int DfRobotSerialMP3::runCoroutine() {
             _currentVolume = (uint8_t)((int32_t)_rampFromVolume +
               (int32_t)(_targetVolume - _rampFromVolume) * (int32_t)elapsed / (int32_t)_rampDurMs);
             setVolume(_currentVolume);
+            // Pacing delay for the fade-in ramp (~50Hz step rate) — same role as the
+            // OFF-state fade-out delay above, not a protocol wait.
             COROUTINE_DELAY(20);
           }
         } else {
@@ -192,8 +224,20 @@ int DfRobotSerialMP3::runCoroutine() {
           while (getState() > OFF_STATE) {
             if (_runDurMs > 0 && millis() - _runStartMs >= _runDurMs) break;
             if (_manualAdvance && bus->pollTrackFinished()) {
-              playTrack(_lastTrack + 1);
+              // FILE: next physical track is _lastTrack + 1, kept in sync via playTrack()
+              // so repeat (F3-style, 0x08) still has a valid track number to loop on. FOLDER:
+              // no known physical track number to compute from (started via 0x0F, not a
+              // physical index) — 0x01 (next track, §3.1) advances one file natively without
+              // needing one.
+              if (_start == AudioStart::FILE) {
+                playTrack(_lastTrack + 1);
+              } else {
+                nextTrack();
+              }
             }
+            // Pacing delay for this loop's own polling rate (~50Hz): how often
+            // pollTrackFinished() is checked and, when there's no _manualAdvance, simply how
+            // often the duration_ms cutoff is re-evaluated. Not a protocol wait.
             COROUTINE_DELAY(20);
           }
 
@@ -208,6 +252,8 @@ int DfRobotSerialMP3::runCoroutine() {
                 _currentVolume = (uint8_t)((int32_t)_rampFromVolume -
                   (int32_t)_rampFromVolume * (int32_t)elapsed / (int32_t)_stopFadeOutMs);
                 setVolume(_currentVolume);
+                // Pacing delay for the auto fade-out ramp — same role as the other
+                // fade loops' COROUTINE_DELAY(20) above, not a protocol wait.
                 COROUTINE_DELAY(20);
               }
             } else {

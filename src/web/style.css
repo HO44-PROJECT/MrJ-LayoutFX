@@ -2548,6 +2548,21 @@
       width: 100%;
       box-sizing: border-box
     }
+    .de-pos-row { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .3rem }
+    .de-pos-row input, .de-pos-row select { width: auto }
+    /* Audio-state row (États audio): 3 stacked sub-lines instead of one wide
+       row of 8 fields, which overflowed the modal (fields wrapped mid-row). */
+    .de-ast-row {
+      flex-direction: column; align-items: stretch; gap: .3rem;
+      padding: .4rem .5rem; border: 1px solid var(--d2); border-radius: 6px;
+      margin-bottom: .4rem
+    }
+    .de-ast-line { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center }
+    .de-ast-line input, .de-ast-line select { width: auto }
+    .de-ast-txt { font-size: .8rem; color: var(--t2); white-space: nowrap }
+    /* Keeps a field and its trailing unit (e.g. the volume input + "%") from being
+       split across a flex-wrap line break — the pair must wrap together or not at all. */
+    .de-ast-grp { display: inline-flex; align-items: center; gap: .2rem; white-space: nowrap }
     .de-wiring-row { display: flex; gap: .35rem }
     .de-wiring-row input { flex: 1 }
     .de-wiring-fixed { padding: .28rem .65rem; background: var(--d2); border-radius: 4px; font-weight: bold; font-size: .95em }

@@ -23,16 +23,15 @@ function _dePinHint(tp) {
   return n + ' ' + (n === 1 ? t('de.pin_one') : t('de.pins'));
 }
 
-// Device types a board can host, by its bus kind: GPIO/SPI = digital output effects,
-// I2C = PCA9685 servo/motor, UART = serial servo / audio.
+// Device types a board can host. Each bus board type declares its own
+// deviceCategories in board_types.json (e.g. DfR1173 -> ["audio"], LobotChain ->
+// ["servo"]) since two boards can share a busType (uart) while hosting completely
+// different, mutually-exclusive hardware. GPIO/SPI boards have no deviceCategories
+// (they're generic digital outputs) and fall back to the light/signal/traffic/static set.
 function _deAllowedTypes(boardIdx) {
   var b = (boardIdx !== undefined && _dbgBoards[boardIdx]) ? _dbgBoards[boardIdx] : null;
   var bt = b ? (_boardTypes[b.type] || {}) : {};
-  var busType = (b && b.spiRank > 0) ? 'spi' : bt.busType; // null/undefined = GPIO
-  var allow;
-  if (busType === 'i2c') allow = ['i2c_servo', 'i2c_motor'];
-  else if (busType === 'uart') allow = ['servo', 'audio'];
-  else allow = ['light', 'signal', 'traffic', 'static']; // GPIO + SPI digital outputs
+  var allow = bt.deviceCategories || ['light', 'signal', 'traffic', 'static'];
   return Object.keys(_deviceTypes).filter(function (k) {
     return allow.indexOf((_deviceTypes[k] || {}).category) >= 0;
   });
@@ -484,11 +483,68 @@ function deUpdateDefState(dev) {
 // I2C servo (PCA9685): channel is fixed from pin-click context — shown as a badge.
 // GPIO/SPI: <select> dropdown filtered to available output pins.
 // Called on modal open (prefillPin/dev provided) and on type/board change (no args).
+// volume is stored/sent as the module's native 0-30 scale, but shown to the
+// user as a 0-100% slider value since "20/30" reads as a fraction, not a level.
+function audioVolToPct(v) { return Math.round(((v !== undefined ? v : 20) / 30) * 100); }
+function audioPctToVol(p) { return Math.round(((p !== undefined ? p : 66) / 100) * 30); }
+
+function makeAudioStateRow(lbl, start, startNum, onEnd, vol, dur, fadeIn, fadeOut, folderFileNum) {
+  start = start || 'file';
+  onEnd = onEnd || 'stop';
+  var AUDIO_START_LABELS = { file: t('de.ast_start_file'), folder: t('de.ast_start_folder'), first: t('de.ast_start_first') };
+  var AUDIO_ONEND_LABELS = { stop: t('de.ast_onend_stop'), repeat: t('de.ast_onend_repeat'), next: t('de.ast_onend_next'), random: t('de.ast_onend_random') };
+  var startSel = ['file', 'folder', 'first'].map(function (v) {
+    return '<option value="' + v + '"' + (v === start ? ' selected' : '') + '>' + AUDIO_START_LABELS[v] + '</option>';
+  }).join('');
+  var onEndSel = ['stop', 'repeat', 'next', 'random'].map(function (v) {
+    return '<option value="' + v + '"' + (v === onEnd ? ' selected' : '') + '>' + AUDIO_ONEND_LABELS[v] + '</option>';
+  }).join('');
+  var isFirst = (start === 'first');
+  var isFolder = (start === 'folder');
+  return '<div class="de-pos-row de-ast-row">'
+    + '<div class="de-ast-line de-ast-line-lbl">'
+    + '<input type="text" class="de-ast-lbl" placeholder="' + t('de.ast_lbl_ph') + '" value="' + (lbl || '') + '" style="flex:1">'
+    + '<button type="button" class="de-pos-del" onclick="deRemoveAudioState(this)">×</button>'
+    + '</div>'
+    + '<div class="de-ast-line de-ast-line-src">'
+    + '<span class="de-ast-txt de-ast-txt-le"' + (isFirst ? ' style="display:none"' : '') + '>' + t('de.ast_le') + '</span>'
+    + '<input type="number" class="de-ast-num" min="1" max="255" value="' + (startNum !== undefined ? startNum : 1) + '"'
+    + ' style="width:3.5rem' + (isFirst ? ';display:none' : '') + '" title="' + t('de.ast_num_tip') + '"'
+    + (isFirst ? ' disabled' : '') + '>'
+    + '<span class="de-ast-txt de-ast-txt-eme"' + (isFirst ? ' style="display:none"' : '') + '>' + t('de.ast_eme') + '</span>'
+    + '<select class="de-ast-start" onchange="deUpdateAudioStartField(this)" style="width:8rem">' + startSel + '</select>'
+    + '<span class="de-ast-txt de-ast-txt-file"' + (isFolder ? '' : ' style="display:none"') + '>' + t('de.ast_folder_file') + '</span>'
+    + '<input type="number" class="de-ast-folder-file-num" min="1" max="255" value="' + (folderFileNum !== undefined ? folderFileNum : 1) + '"'
+    + ' style="width:3.5rem' + (isFolder ? '' : ';display:none') + '" title="' + t('de.ast_folder_file_tip') + '"'
+    + (isFolder ? '' : ' disabled') + '>'
+    + '</div>'
+    + '<div class="de-ast-line de-ast-line-vol">'
+    + '<span class="de-ast-txt">' + t('de.ast_fin_lbl') + '</span>'
+    + '<input type="number" class="de-ast-fin" min="0" max="30000" value="' + (fadeIn || 0) + '" style="width:4rem" title="' + t('de.ast_fin_tip') + '">'
+    + '<span class="de-ast-txt">' + t('de.ast_vol_lbl') + '</span>'
+    + '<span class="de-ast-grp">'
+    + '<input type="number" class="de-ast-vol-pct" min="0" max="100" value="' + audioVolToPct(vol) + '" style="width:3.5rem" title="' + t('de.ast_vol_tip') + '">'
+    + '<span class="de-ast-txt">%</span>'
+    + '</span>'
+    + '<span class="de-ast-txt">' + t('de.ast_fout_lbl') + '</span>'
+    + '<input type="number" class="de-ast-fout" min="0" max="30000" value="' + (fadeOut || 0) + '" style="width:4rem" title="' + t('de.ast_fout_tip') + '">'
+    + '<span class="de-ast-txt">' + t('de.ast_ms') + '</span>'
+    + '</div>'
+    + '<div class="de-ast-line de-ast-line-end">'
+    + '<span class="de-ast-txt">' + t('de.ast_dur_lbl') + '</span>'
+    + '<input type="number" class="de-ast-dur" min="0" max="600000" value="' + (dur || 0) + '" style="width:5rem" title="' + t('de.ast_dur_tip') + '">'
+    + '<span class="de-ast-txt">' + t('de.ast_onend_lbl') + '</span>'
+    + '<select class="de-ast-onend" style="width:8rem">' + onEndSel + '</select>'
+    + '</div>'
+    + '</div>';
+}
+
 function deUpdateWiring(prefillPin, dev) {
   var type = document.getElementById('de-type').value;
   var isServo = SERVO_TYPES.indexOf(type) >= 0;
   var isI2cServo = I2C_SERVO_TYPES.indexOf(type) >= 0;
   var isI2cMotor = I2C_MOTOR_TYPES.indexOf(type) >= 0;
+  var isAudio = AUDIO_TYPES.indexOf(type) >= 0;
   var count = (_deviceTypes[type] || {}).wires !== undefined ? (_deviceTypes[type] || {}).wires : 1;
   // Serial servos declare wires:0 (they live on a UART bus, not a GPIO pin) but the
   // editor still needs one field for the bus ID — force a single input.
@@ -568,6 +624,16 @@ function deUpdateWiring(prefillPin, dev) {
         + '<input type="number" id="de-motor-neutral" min="1000" max="2000" value="' + neu + '" style="width:5rem">'
         + '<span style="font-size:.75rem;color:var(--c-muted)">' + t('de.mst_neutral_hint') + '</span>'
         + '</div></div>';
+    } else if (isAudio) {
+      var audioStates = (dev && dev.states) || [];
+      var aRowsHtml = audioStates.map(function (s) {
+        return makeAudioStateRow(s.label, s.start, s.start_num, s.on_end, s.volume, s.duration_ms, s.fade_in_ms, s.fade_out_ms, s.folder_file_num);
+      }).join('');
+      if (!aRowsHtml) aRowsHtml = makeAudioStateRow('', 'file', 1, 'stop', 20, 0, 0, 0, 1);
+      extraGrp.innerHTML = '<div class="de-field"><label>' + t('de.ast_section_lbl') + '</label>'
+        + '<div id="de-audio-states-list">' + aRowsHtml + '</div>'
+        + '<button type="button" class="btn de-pos-add" onclick="deAddAudioState()">' + t('de.ast_add_btn') + '</button>'
+        + '</div>';
     } else {
       extraGrp.innerHTML = '';
     }
@@ -747,6 +813,46 @@ function deRemoveMotorState(btn) {
   if (row && row.parentElement) row.parentElement.removeChild(row);
 }
 
+// Add a new (empty) audio state row to the audio states list editor.
+function deAddAudioState() {
+  var list = document.getElementById('de-audio-states-list');
+  if (!list) return;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = makeAudioStateRow('', 'file', 1, 'stop', 20, 0, 0, 0, 1);
+  list.appendChild(wrap.firstChild);
+}
+
+// Remove an audio state row (called from the × button inside the row).
+function deRemoveAudioState(btn) {
+  var row = btn.parentElement;
+  if (row && row.parentElement) row.parentElement.removeChild(row);
+}
+
+// start=first plays from the module's first file regardless of start_num — hide
+// the (meaningless) "Le [n] ème" wording so it's clear it won't be used, matching
+// the C++ side's AudioStart::FIRST, which ignores start_num entirely.
+function deUpdateAudioStartField(sel) {
+  var row = sel.closest('.de-pos-row');
+  if (!row) return;
+  var isFirst = (sel.value === 'first');
+  var isFolder = (sel.value === 'folder');
+  var numEl = row.querySelector('.de-ast-num');
+  if (numEl) {
+    numEl.disabled = isFirst;
+    numEl.style.display = isFirst ? 'none' : '';
+  }
+  row.querySelectorAll('.de-ast-txt-le, .de-ast-txt-eme').forEach(function (el) {
+    el.style.display = isFirst ? 'none' : '';
+  });
+  var folderFileEl = row.querySelector('.de-ast-folder-file-num');
+  if (folderFileEl) {
+    folderFileEl.disabled = !isFolder;
+    folderFileEl.style.display = isFolder ? '' : 'none';
+  }
+  var folderFileLbl = row.querySelector('.de-ast-txt-file');
+  if (folderFileLbl) folderFileLbl.style.display = isFolder ? '' : 'none';
+}
+
 // Generate a suggested device ID from the type name and first pin (shown as placeholder when id is empty).
 function deUpdateIdPlaceholder() {
   var idEl = document.getElementById('de-id');
@@ -836,6 +942,7 @@ function saveDevEditor() {
   var isServo = SERVO_TYPES.indexOf(type) >= 0;
   var isI2cServo2 = I2C_SERVO_TYPES.indexOf(type) >= 0;
   var isI2cMotor2 = I2C_MOTOR_TYPES.indexOf(type) >= 0;
+  var isAudio2 = AUDIO_TYPES.indexOf(type) >= 0;
   if (isServo && count < 1) count = 1; // serial servo: the single wiring value is the bus ID
   var wiring = [];
   if (count > 0) {
@@ -965,6 +1072,41 @@ function saveDevEditor() {
     }
     if (neuV !== 1500) dev.neutral_us = neuV;
     else delete dev.neutral_us;
+  }
+  if (isAudio2) {
+    var aRows = document.querySelectorAll('#de-audio-states-list .de-pos-row');
+    var aStates = [];
+    var aErr = false;
+    aRows.forEach(function (row) {
+      var lbl = (row.querySelector('.de-ast-lbl').value || '').trim();
+      var start = row.querySelector('.de-ast-start').value;
+      var startNum = parseInt(row.querySelector('.de-ast-num').value, 10);
+      var onEnd = row.querySelector('.de-ast-onend').value;
+      var volPct = parseInt(row.querySelector('.de-ast-vol-pct').value, 10);
+      var dur = parseInt(row.querySelector('.de-ast-dur').value, 10);
+      var fadeIn = parseInt(row.querySelector('.de-ast-fin').value, 10);
+      var fadeOut = parseInt(row.querySelector('.de-ast-fout').value, 10);
+      var folderFileNumEl = row.querySelector('.de-ast-folder-file-num');
+      var folderFileNum = folderFileNumEl ? parseInt(folderFileNumEl.value, 10) : 1;
+      if (isNaN(volPct) || volPct < 0 || volPct > 100) { aErr = true; return; }
+      var vol = audioPctToVol(volPct);
+      if (start !== 'first' && (isNaN(startNum) || startNum < 1 || startNum > 255)) { aErr = true; return; }
+      if (start === 'folder' && (isNaN(folderFileNum) || folderFileNum < 1 || folderFileNum > 255)) { aErr = true; return; }
+      if (isNaN(dur) || dur < 0) dur = 0;
+      if (isNaN(fadeIn) || fadeIn < 0) fadeIn = 0;
+      if (isNaN(fadeOut) || fadeOut < 0) fadeOut = 0;
+      var as = { start: start, on_end: onEnd, volume: vol };
+      if (start !== 'first') as.start_num = startNum;
+      if (start === 'folder') as.folder_file_num = folderFileNum;
+      if (dur > 0) as.duration_ms = dur;
+      if (fadeIn > 0) as.fade_in_ms = fadeIn;
+      if (fadeOut > 0) as.fade_out_ms = fadeOut;
+      if (lbl) as.label = lbl;
+      aStates.push(as);
+    });
+    if (aErr) { deStatus(t('de.err_ast_invalid'), 'err'); document.getElementById('de-save-btn').disabled = false; return; }
+    if (aStates.length === 0) { deStatus(t('de.err_ast_empty'), 'err'); document.getElementById('de-save-btn').disabled = false; return; }
+    dev.states = aStates;
   }
 
   document.getElementById('de-save-btn').disabled = true;

@@ -315,6 +315,17 @@
           "items": {
             "$ref": "#/$defs/linkedBusDef"
           }
+        },
+        "deviceCategories": {
+          "type": "array",
+          "description": "Device categories (from device_types.json) that may be attached to a board of this type.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "no_devices": {
+          "type": "boolean",
+          "description": "True if no device can be attached to a board of this type via the UI's device editor (e.g. a display driven entirely by config, not a device entry)."
         }
       }
     }

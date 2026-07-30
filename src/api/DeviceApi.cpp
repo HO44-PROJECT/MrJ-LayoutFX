@@ -168,6 +168,35 @@ void DeviceApi::_onGetDevices() {
       json += ']';
     }
   #endif
+  #ifdef LFX_SERIAL_AUDIO_ENABLED
+    if (strcmp_P("DfRobotSerialMP3", (const char *)d->getDeviceName()) == 0) {
+      auto *aud = static_cast<DfRobotSerialMP3 *>(d);
+      json += F(",\"states\":[");
+      for (uint8_t si = 0; si < aud->getAudioStateCount(); si++) {
+        if (si > 0) json += ',';
+        const DfRobotSerialMP3::AudioState &as = aud->getAudioState(si);
+        json += F("{\"start\":");
+        json += (int)as.start;
+        json += F(",\"start_num\":");
+        json += (int)as.start_num;
+        json += F(",\"folder_file_num\":");
+        json += (int)as.folder_file_num;
+        json += F(",\"on_end\":");
+        json += (int)as.on_end;
+        json += F(",\"volume\":");
+        json += (int)as.volume;
+        json += F(",\"duration_ms\":");
+        json += (unsigned long)as.duration_ms;
+        json += F(",\"fade_in_ms\":");
+        json += (unsigned long)as.fade_in_ms;
+        json += F(",\"fade_out_ms\":");
+        json += (unsigned long)as.fade_out_ms;
+        if (as.label[0]) { json += F(",\"label\":\""); json += as.label; json += '"'; }
+        json += '}';
+      }
+      json += ']';
+    }
+  #endif
     json += F("}");
     server.sendContent(json);
   }
@@ -202,6 +231,10 @@ void DeviceApi::_onPostDevice() {
   for (size_t i = 0; i < _factory->count(); i++) {
     if (strcmp(_factory->deviceId(i), id) == 0) {
       Device *d = _factory->device(i);
+      LOG_PRINT(F("DBG /api/device id="));
+      LOG_PRINT(id);
+      LOG_PRINT(F(" requested state="));
+      LOG_PRINTLN(state);
       d->newState((STATE_TYPE)state, skipDelay);
   #ifdef LFX_OLED_ENABLED
       OledDisplay::notify(String(d->getDeviceName()).c_str(), id, state);

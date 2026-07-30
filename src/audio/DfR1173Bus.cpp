@@ -139,6 +139,18 @@ void DfR1173Bus::debugQueryStatus()
     uint8_t command[] = {0x7E, 0x42, 0x00, 0x02, 0x00, 0x00, 0xEF};
     sendCommand(command, sizeof(command));
 }
+
+void DfR1173Bus::debugQueryTotalFiles()
+{
+    uint8_t command[] = {0x7E, 0x4A, 0x00, 0x02, 0x00, 0x00, 0xEF};
+    sendCommand(command, sizeof(command));
+}
+
+void DfR1173Bus::debugQueryCurrentFileIndex()
+{
+    uint8_t command[] = {0x7E, 0x4E, 0x00, 0x02, 0x00, 0x00, 0xEF};
+    sendCommand(command, sizeof(command));
+}
 #endif
 
 bool DfR1173Bus::pollTrackFinished()
@@ -272,6 +284,15 @@ void DfR1173Bus::continuousLoopPlayback(bool enable)
     // Not track-scoped — DL is just the on/off flag (0x01 start, 0x00 stop), unlike 0x08
     // (single-track loop, which takes a track number).
     uint8_t command[] = {0x7E, 0x11, 0x00, 0x02, 0x00, (uint8_t)(enable ? 0x01 : 0x00), 0xEF};
+    sendCommand(command, sizeof(command));
+}
+
+void DfR1173Bus::setCurrentTrackLoop(bool enable)
+{
+    // 0x19 (datasheet §4.1.8): loops whatever is currently playing, no track number needed —
+    // unlike 0x08 (single-track loop by physical track number) or 0x11 (whole root directory).
+    // Per the datasheet's command table, DL is inverted: 0x00 enables, 0x01 disables.
+    uint8_t command[] = {0x7E, 0x19, 0x00, 0x02, 0x00, (uint8_t)(enable ? 0x00 : 0x01), 0xEF};
     sendCommand(command, sizeof(command));
 }
 

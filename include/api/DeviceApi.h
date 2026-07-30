@@ -81,6 +81,9 @@
     #include "servo/I2cPwmMotorDevice.h"
     #include "servo/I2cPwmServoDevice.h"
   #endif
+  #ifdef LFX_SERIAL_AUDIO_ENABLED
+    #include "audio/DfRobotSerialMP3.h"
+  #endif
   #ifdef LFX_I2C_SCAN_ENABLED
     #include <Wire.h>
   #endif

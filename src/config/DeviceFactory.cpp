@@ -917,6 +917,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
           if (stateCount >= DfRobotSerialMP3::MAX_STATES) break;
           states[stateCount].start      = parseStart(s[kFStart] | "file");
           states[stateCount].start_num  = (uint8_t)(s[kFStartNum]  | 1);
+          states[stateCount].folder_file_num = (uint8_t)(s[kFFolderFileNum] | 1);
           states[stateCount].on_end     = parseOnEnd(s[kFOnEnd] | "stop");
           states[stateCount].volume      = (uint8_t)(s[kFVolume]     | 20);
           states[stateCount].duration_ms = (uint32_t)(s[kFDurationMs] | 0);
@@ -930,6 +931,7 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       } else {
         states[0].start       = parseStart(obj[kFStart] | "file");
         states[0].start_num   = (uint8_t)(obj[kFStartNum] | 1);
+        states[0].folder_file_num = (uint8_t)(obj[kFFolderFileNum] | 1);
         states[0].on_end      = parseOnEnd(obj[kFOnEnd] | "stop");
         states[0].volume      = (uint8_t)(obj[kFVolume]     | 20);
         states[0].duration_ms = 0;

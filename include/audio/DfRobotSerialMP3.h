@@ -79,6 +79,7 @@ public:
     struct AudioState {
         AudioStart start;      ///< Where playback begins.
         uint8_t    start_num;  ///< File number (start==FILE) or folder number (start==FOLDER).
+        uint8_t    folder_file_num; ///< File number within the folder (start==FOLDER only; 1-255). Ignored otherwise.
         AudioOnEnd on_end;     ///< What to do when the current file ends.
         uint8_t  volume;       ///< Target volume [0-30] held during the run phase.
         uint32_t duration_ms;  ///< Auto-stop after this many ms (0 = no auto-stop timer).
@@ -112,6 +113,15 @@ public:
     virtual ~DfRobotSerialMP3() { delete bus; }
 
     /**
+     * @brief Device type name, matching the factory key ("DfRobotSerialMP3") used
+     *        everywhere else (device_types.json, config.schema.json, icons.js,
+     *        OledDisplay::_drawIcon()). Without this override, Device::getDeviceName()'s
+     *        "Unknown" default is what reaches OledDisplay::notify() and the
+     *        /api/devices JSON — breaking the OLED icon lookup and the WebUI type match.
+     */
+    virtual const __FlashStringHelper *getDeviceName() const override { return F("DfRobotSerialMP3"); }
+
+    /**
      * @brief No-op: RX/TX pins are already fully owned and configured by DfR1173Bus's
      *        SoftwareSerial (begin() attaches the RX interrupt). The base Device::initPins()
      *        would otherwise call pinMode(rxPin, OUTPUT) + digitalWrite(rxPin, LOW) on the
@@ -120,7 +130,9 @@ public:
      *        are never seen again (TX unaffected, which is why this bug was silent: bytes
      *        out looked correct, nothing ever came back).
      */
-    virtual bool initPins() override { return true; }
+    virtual bool initPins() override {
+        return true;
+    }
 
     /**
      * @brief Assigns the configured audio-state table (copied in, clamped to MAX_STATES).
@@ -137,6 +149,22 @@ public:
     uint8_t getStateCount() const override { return _stateCount + 1; } // OFF + N states
 
     /**
+     * @brief Read-only access to a configured AudioState by index, for JSON introspection
+     *        (mirrors I2cPwmMotorDevice::getMotorState()) — used by DeviceApi's /api/devices
+     *        to expose per-state labels so the cockpit can render one button per state
+     *        instead of a single on/off toggle.
+     *
+     * @param i Index into the configured states (0-based, < getAudioStateCount()).
+     */
+    const AudioState &getAudioState(uint8_t i) const { return _states[i]; }
+
+    /**
+     * @brief Number of configured audio states (excludes the implicit OFF state 0),
+     *        i.e. getStateCount() - 1. Use this to bound loops over getAudioState(i).
+     */
+    uint8_t getAudioStateCount() const { return _stateCount; }
+
+    /**
      * @brief Coroutine loop: drives the volume fade/hold/auto-stop state machine.
      *
      * Mirrors I2cPwmMotorDevice::runCoroutine()'s ramp state machine (see that file's
@@ -145,41 +173,6 @@ public:
      * (0 = no auto-stop), fade out and stop playback, then auto-trigger OFF.
      */
     int runCoroutine() override;
-
-    /**
-     * @brief Sets the audio volume from a DCC speed command, mapped from [-1000, 1000]
-     *        into the module's [0, 30] volume range.
-     *
-     * @param Speed Mapped loco speed from notifyDccSpeed() (magnitude used; direction ignored).
-     */
-    virtual void setDccSpeed(int16_t Speed) override
-    {
-        uint8_t vol = (uint8_t)constrain((long)abs(Speed) * 30L / 1000L, 0, 30);
-        setVolume(vol);
-    }
-
-    /**
-     * @brief Maps a single loco function (F0-F28) to a playback action.
-     *
-     * Wired from DccDrivable::notifyDccFunc() via the new setDccFunctionState() hook
-     * (design doc §4) — distinct from setDccAccessoryState()/setDccFunction(), which are
-     * driven from the accessory-address path. Reacts only on the rising edge (on == true);
-     * a function's "off" edge is a no-op for these one-shot playback actions.
-     *
-     * Fixed mapping (no per-device config — these are transport controls, not effects):
-     *   F1 = next track, F2 = previous track, F3 = toggle repeat, F4 = toggle random.
-     */
-    virtual void setDccFunctionState(uint8_t funcIndex, bool on) override
-    {
-        if (!on) return;
-        switch (funcIndex) {
-            case 1: nextTrack(); break;
-            case 2: previousTrack(); break;
-            case 3: repeatPlayback(_lastTrack); break;
-            case 4: randomPlayback(); break;
-            default: break;
-        }
-    }
 
 public:
     /**
@@ -237,6 +230,7 @@ public:
     inline void repeatPlayback(uint8_t trackNumber) { _lastTrack = trackNumber; bus->repeatPlayback(trackNumber); }
     inline void randomPlayback() { bus->randomPlayback(); }
     inline void continuousLoopPlayback(bool enable) { bus->continuousLoopPlayback(enable); }
+    inline void setCurrentTrackLoop(bool enable) { bus->setCurrentTrackLoop(enable); }
 
     // Contrôle par dossier/fichier
     inline void playSpecificFolder(uint8_t folderNumber, uint8_t fileNumber)
@@ -272,6 +266,9 @@ private:
     uint32_t _stopFadeOutMs  = 0;
     uint32_t _ackWaitStartMs = 0;
     AudioOnEnd _onEnd        = AudioOnEnd::STOP;
+    AudioStart _start        = AudioStart::FILE; ///< Snapshot of the active state's start mode (see runCoroutine()).
+    uint8_t  _startNum       = 1; ///< Snapshot of the active state's start_num (see runCoroutine()).
+    uint8_t  _folderFileNum  = 1; ///< Snapshot of the active state's folder_file_num (see runCoroutine()).
     bool     _manualAdvance  = false; ///< True while polling RX to chain to the next file (see runCoroutine()).
 };
 
