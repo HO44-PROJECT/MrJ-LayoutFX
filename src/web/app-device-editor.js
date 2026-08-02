@@ -1129,7 +1129,19 @@ function saveDevEditor() {
             return Promise.reject(null);
           }
         }
-        cfg.devices.push(dev);
+        // A board hosts one physical module (e.g. one DFR1173): its states are
+        // entries in ONE device's states[], never separate devices[] entries.
+        // If a device already sits on this board, merge the new states into it
+        // instead of pushing a second device for the same hardware.
+        var existingOnBoard = null;
+        for (var k = 0; k < cfg.devices.length; k++) {
+          if (cfg.devices[k].board === dev.board) { existingOnBoard = cfg.devices[k]; break; }
+        }
+        if (existingOnBoard && dev.states && existingOnBoard.states) {
+          existingOnBoard.states = existingOnBoard.states.concat(dev.states);
+        } else {
+          cfg.devices.push(dev);
+        }
       }
       return fetch('/api/config', {
         method: 'POST',
