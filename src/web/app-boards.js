@@ -336,12 +336,14 @@ function renderDipPcb(board, boardApiIdx, def) {
 // Render one device row for a rows=0 bus board (UART servo chain, DfRobotSerialMP3, etc.)
 function renderBusDevice(boardApiIdx, dev) {
   var isServo = SERVO_TYPES.indexOf(dev.type) >= 0;
-  // A variable states[] (no per-state wiring/address) means one physical
-  // attachment point with several configs to pick from — one button per
-  // state, exclusive, like cardAudio()/cardI2cServo() already do in the
+  // A variable states[]/positions[] (no per-state wiring/address) means one
+  // physical attachment point with several configs to pick from — one button
+  // per state, exclusive, like cardAudio()/cardI2cServo() already do in the
   // cockpit. Distinct wiring/address per instance (e.g. servos on a chain)
   // stays one device per attachment, handled by the isServo branch below.
-  var hasStates = Array.isArray(dev.states) && dev.states.length > 0;
+  var stateList = Array.isArray(dev.states) ? dev.states
+    : (Array.isArray(dev.positions) ? dev.positions : null);
+  var hasStates = !!(stateList && stateList.length > 0);
   var isOn = dev.desired > 0;
   var sf = dev.id.replace(/'/g, "\\'");
   var html = '<div class="dbg-bus-dev">';
@@ -356,7 +358,7 @@ function renderBusDevice(boardApiIdx, dev) {
   if (hasStates) {
     html += '<button class="dbg-hbtn ' + (dev.desired === 0 ? 'on' : 'off') + '"'
       + ' onclick="dbgSetDevState(\'' + sf + '\',0)">' + t('servo.stop') + '</button>';
-    dev.states.forEach(function (s, i) {
+    stateList.forEach(function (s, i) {
       var st = i + 1;
       var lbl = s.label || (t('de.card_state') + ' ' + st);
       html += '<button class="dbg-hbtn ' + (dev.desired === st ? 'on' : 'off') + '"'
@@ -604,10 +606,18 @@ function dbgSetDevState(id, state) {
     .catch(function (e) { console.error('dbgSetDevState', e); });
 }
 
-// Cycle a multi-state device (e.g. PCA9685Servo) through its states on each click.
-// desired=current state, stateCount=total states (0=STOP + N positions).
+// Last state requested per device from the Config tab's cycle button. Some
+// devices (e.g. PCA9685Servo) auto-release back to desired=0 shortly after
+// reaching a position, so dev.desired from /api/devices can already be stale
+// by the time of the next click — cycling off of it would then always land
+// back on state 1. Track the last requested target ourselves instead, same
+// as the cockpit's per-state buttons (setSig) which always send an explicit
+// absolute target rather than computing "next" from the reported state.
+var _dbgLastRequested = {};
 function dbgCycleDev(id, desired, stateCount) {
-  var next = (desired + 1) % stateCount;
+  var base = _dbgLastRequested.hasOwnProperty(id) ? _dbgLastRequested[id] : desired;
+  var next = (base + 1) % stateCount;
+  _dbgLastRequested[id] = next;
   // #8: instant response for a wiring test, not staggered like the cockpit.
   post('/api/device', { id: id, state: next, skip_delay: true })
     .then(poll) // state-only change: refresh devices (RAM), not boards/config (flash) — avoids POV jitter
