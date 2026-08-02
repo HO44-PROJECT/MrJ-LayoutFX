@@ -336,6 +336,12 @@ function renderDipPcb(board, boardApiIdx, def) {
 // Render one device row for a rows=0 bus board (UART servo chain, DfRobotSerialMP3, etc.)
 function renderBusDevice(boardApiIdx, dev) {
   var isServo = SERVO_TYPES.indexOf(dev.type) >= 0;
+  // A variable states[] (no per-state wiring/address) means one physical
+  // attachment point with several configs to pick from — one button per
+  // state, exclusive, like cardAudio()/cardI2cServo() already do in the
+  // cockpit. Distinct wiring/address per instance (e.g. servos on a chain)
+  // stays one device per attachment, handled by the isServo branch below.
+  var hasStates = Array.isArray(dev.states) && dev.states.length > 0;
   var isOn = dev.desired > 0;
   var sf = dev.id.replace(/'/g, "\\'");
   var html = '<div class="dbg-bus-dev">';
@@ -347,9 +353,20 @@ function renderBusDevice(boardApiIdx, dev) {
     : (dev.addr > 0 ? dev.addr : null);
   if (busId !== null)
     html += '<span class="dbg-bus-addr">#' + busId + '</span>';
-  html += '<button class="dbg-hbtn ' + (isOn ? 'on' : 'off') + '"'
-    + ' onclick="dbgToggleDev(\'' + sf + '\',' + (isOn ? 0 : 1) + ')">'
-    + (isOn ? 'ON' : 'OFF') + '</button>';
+  if (hasStates) {
+    html += '<button class="dbg-hbtn ' + (dev.desired === 0 ? 'on' : 'off') + '"'
+      + ' onclick="dbgSetDevState(\'' + sf + '\',0)">' + t('servo.stop') + '</button>';
+    dev.states.forEach(function (s, i) {
+      var st = i + 1;
+      var lbl = s.label || (t('de.card_state') + ' ' + st);
+      html += '<button class="dbg-hbtn ' + (dev.desired === st ? 'on' : 'off') + '"'
+        + ' onclick="dbgSetDevState(\'' + sf + '\',' + st + ')">' + lbl + '</button>';
+    });
+  } else {
+    html += '<button class="dbg-hbtn ' + (isOn ? 'on' : 'off') + '"'
+      + ' onclick="dbgToggleDev(\'' + sf + '\',' + (isOn ? 0 : 1) + ')">'
+      + (isOn ? 'ON' : 'OFF') + '</button>';
+  }
   if (isServo) {
     SERVO_STATES.forEach(function (s) {
       var action = s.v === 'REV'
@@ -577,6 +594,14 @@ function dbgToggleDev(id, on) {
   post('/api/switch', { id: id, on: !!on })
     .then(poll) // state-only change: refresh devices (RAM), not boards/config (flash) — avoids POV jitter
     .catch(function (e) { console.error('dbgToggleDev', e); });
+}
+
+// Set a multi-state device (variable states[], one attachment point — e.g.
+// DfRobotSerialMP3) directly to the given state index (0=STOP).
+function dbgSetDevState(id, state) {
+  post('/api/device', { id: id, state: state, skip_delay: true })
+    .then(poll)
+    .catch(function (e) { console.error('dbgSetDevState', e); });
 }
 
 // Cycle a multi-state device (e.g. PCA9685Servo) through its states on each click.
