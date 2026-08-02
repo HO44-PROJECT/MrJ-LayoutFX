@@ -204,6 +204,24 @@ public:
         newState(State ? 1 : 0);
     }
 
+    /**
+     * @brief DCC extended-accessory (signal aspect) dispatch — lets a single DCC address
+     * select any of this device's configured states directly (aspect 0 = OFF, 1..N = the
+     * matching AudioState), the same way MrJDBBlocSignal/MrJDBEntrySignal map an aspect to
+     * HP0/HP1/HP2. The basic accessory packet (setDccAccessoryState) only carries one bit
+     * (on/off) per address, so it can't reach state 2+ on a device with more than one
+     * state — sending an extended-accessory packet (e.g. DCC-EX's "<A addr aspect>", or
+     * JMRI's CommandStation.sendAccSignalDecoderPkt(addr, aspect, count) — NmraPacket's bare
+     * accSignalDecoderPkt() only builds the packet, it doesn't transmit it) to this device's
+     * address is the only DCC path that can pick a specific state. Out-of-range aspects clamp
+     * to the last state rather than falling back to OFF, matching newState()'s own clamping
+     * elsewhere.
+     */
+    virtual void setDccSigOutputState(uint8_t State) override
+    {
+        newState(State > _stateCount ? _stateCount : State);
+    }
+
     inline virtual void switchOn(bool skipDelay = false) override
     {
         if (_stateCount > 0) newState(1, skipDelay);
