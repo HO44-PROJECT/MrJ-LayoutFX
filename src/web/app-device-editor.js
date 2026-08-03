@@ -627,7 +627,10 @@ function deUpdateWiring(prefillPin, dev) {
     } else if (isAudio) {
       var audioStates = (dev && dev.states) || [];
       var aRowsHtml = audioStates.map(function (s) {
-        return makeAudioStateRow(s.label, s.start, s.start_num, s.on_end, s.volume, s.duration_ms, s.fade_in_ms, s.fade_out_ms, s.folder_file_num);
+        // start_num is the single schema field for both meanings (file number
+        // / folder number, see uploadConfig's save path) — prefill both UI
+        // inputs from it so switching start=file/folder keeps the value.
+        return makeAudioStateRow(s.label, s.start, s.start_num, s.on_end, s.volume, s.duration_ms, s.fade_in_ms, s.fade_out_ms, s.start_num);
       }).join('');
       if (!aRowsHtml) aRowsHtml = makeAudioStateRow('', 'file', 1, 'stop', 20, 0, 0, 0, 1);
       extraGrp.innerHTML = '<div class="de-field"><label>' + t('de.ast_section_lbl') + '</label>'
@@ -1088,16 +1091,18 @@ function saveDevEditor() {
       var fadeOut = parseInt(row.querySelector('.de-ast-fout').value, 10);
       var folderFileNumEl = row.querySelector('.de-ast-folder-file-num');
       var folderFileNum = folderFileNumEl ? parseInt(folderFileNumEl.value, 10) : 1;
+      // start_num is a single schema field reused for both meanings ("file
+      // number" when start=file, "folder number" when start=folder) — the UI
+      // shows two separate inputs for ergonomics, but only one must be written.
+      var effectiveStartNum = (start === 'folder') ? folderFileNum : startNum;
       if (isNaN(volPct) || volPct < 0 || volPct > 100) { aErr = true; return; }
       var vol = audioPctToVol(volPct);
-      if (start !== 'first' && (isNaN(startNum) || startNum < 1 || startNum > 255)) { aErr = true; return; }
-      if (start === 'folder' && (isNaN(folderFileNum) || folderFileNum < 1 || folderFileNum > 255)) { aErr = true; return; }
+      if (start !== 'first' && (isNaN(effectiveStartNum) || effectiveStartNum < 1 || effectiveStartNum > 255)) { aErr = true; return; }
       if (isNaN(dur) || dur < 0) dur = 0;
       if (isNaN(fadeIn) || fadeIn < 0) fadeIn = 0;
       if (isNaN(fadeOut) || fadeOut < 0) fadeOut = 0;
       var as = { start: start, on_end: onEnd, volume: vol };
-      if (start !== 'first') as.start_num = startNum;
-      if (start === 'folder') as.folder_file_num = folderFileNum;
+      if (start !== 'first') as.start_num = effectiveStartNum;
       if (dur > 0) as.duration_ms = dur;
       if (fadeIn > 0) as.fade_in_ms = fadeIn;
       if (fadeOut > 0) as.fade_out_ms = fadeOut;

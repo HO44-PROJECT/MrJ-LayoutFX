@@ -275,8 +275,20 @@ function uploadConfig() {
 
   var reader = new FileReader();
   reader.onload = function (e) {
-    try { JSON.parse(e.target.result); }
+    var parsed;
+    try { parsed = JSON.parse(e.target.result); }
     catch (err) { cfgStatus('JSON invalide : ' + err.message, 'err'); return; }
+
+    // validateConfig is generated at build time from schemas/config.schema.json
+    // (see gen_config_validator.py) and absent when Node/Ajv weren't available
+    // at build time, or NO_CONFIG_SCHEMA_VALIDATION was set — in which case
+    // upload falls back to the JSON.parse() check above only.
+    var schemaValidated = typeof validateConfig === 'function';
+    if (schemaValidated && !validateConfig(parsed)) {
+      cfgErrorList(validateConfig.errors || []);
+      return;
+    }
+    cfgErrorList([]); // clear any previous validation error list
 
     document.getElementById('cfg-upload-btn').disabled = true;
     cfgStatus('Envoi en cours… → ' + safeName, 'ok');
@@ -287,7 +299,11 @@ function uploadConfig() {
       body: e.target.result
     })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function () { cfgStatus(t('cfg.saved'), 'ok'); document.getElementById('cfg-upload-btn').disabled = false; loadConfigs(); })
+      .then(function () {
+        cfgStatus(t(schemaValidated ? 'cfg.saved_validated' : 'cfg.saved'), 'ok');
+        document.getElementById('cfg-upload-btn').disabled = false;
+        loadConfigs();
+      })
       .catch(function (err) { cfgStatus(t('de.err_prefix') + err.message, 'err'); });
   };
   reader.readAsText(file);
@@ -373,6 +389,24 @@ function cfgStatus(msg, cls) {
   el.style.display = msg ? '' : 'none';
   el.className = 'cfg-status ' + cls;
   el.textContent = msg;
+}
+
+// Render Ajv errors (from validateConfig.errors, see uploadConfig()) as a
+// short, readable, translated list — instead of dumping Ajv's raw messages
+// into the single-line .cfg-status banner (unreadable wall of bold text).
+// Pass an empty array to hide/clear the list.
+function cfgErrorList(errors) {
+  var box = document.getElementById('cfg-err-list');
+  if (!errors.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+  // Dedup + i18n templating is pure logic, unit-tested in app-pure.js —
+  // this function only turns the resulting lines into DOM.
+  var lines = formatConfigErrors(errors, t);
+
+  var title = t('cfg.err.title', { n: lines.length });
+  box.innerHTML = '<div class="cfg-err-list-title">' + escapeHtml(title) + '</div><ul>' +
+    lines.map(function (l) { return '<li>' + escapeHtml(l) + '</li>'; }).join('') + '</ul>';
+  box.style.display = '';
 }
 
 /* ── WiFi provisioning gate (#132) ─────────────────────────────────────

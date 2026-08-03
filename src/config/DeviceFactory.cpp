@@ -942,6 +942,9 @@ Device *DeviceFactory::_createDevice(JsonObject obj) {
       }
       static_cast<DfRobotSerialMP3 *>(d)->setStates(states, stateCount);
     }
+  #else
+    LOG_PRINTLN(F("DeviceFactory: DfRobotSerialMP3 requires build_flags = -DAUDIO"));
+    return nullptr;
   #endif // LFX_SERIAL_AUDIO_ENABLED
   }
 

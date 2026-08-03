@@ -46,7 +46,58 @@ function mergeDeviceForEditor(rtDev, cfgDev) {
   return d;
 }
 
+// Minimal HTML-escaping for text interpolated into innerHTML (see
+// cfgErrorList() in app-config.js) — property names/paths come from the
+// user's own uploaded JSON file, so treat them as untrusted text.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Turns Ajv's raw errors[] (see validateConfig.errors, app-config.js
+// uploadConfig()) into one short, translated line per distinct instancePath.
+//
+// Ajv reports one error per failed oneOf branch PLUS a summary 'oneOf' error
+// for the same instancePath — keeping all of them produces the unreadable
+// wall of near-duplicate messages this function exists to avoid. Only the
+// most specific error per path is kept: 'oneOf' summaries are skipped in
+// favor of an already-seen, more precise error (e.g. additionalProperties)
+// for that same path.
+//
+// `translate` is injected (rather than calling the global t() directly) so
+// this stays a pure, dependency-free function testable under node --test —
+// pass the real i18n t() from app-config.js at the call site.
+function formatConfigErrors(errors, translate) {
+  var byPath = {};
+  errors.forEach(function (e) {
+    var path = e.instancePath || '';
+    if (!(path in byPath) || e.keyword !== 'oneOf') byPath[path] = e;
+  });
+
+  return Object.keys(byPath).map(function (path) {
+    var e = byPath[path];
+    var rootLabel = translate('cfg.err.root');
+    var niceParams = {
+      path: path || rootLabel,
+      prop: (e.params && (e.params.additionalProperty || e.params.missingProperty)) || '',
+      type: e.params && e.params.type,
+      limit: e.params && e.params.limit,
+      allowed: e.params && e.params.allowedValues ? e.params.allowedValues.join(', ') : ''
+    };
+    var key = 'cfg.err.' + e.keyword;
+    var template = translate(key);
+    // translate() returns the key itself when unmapped — fall back to Ajv's
+    // own message rather than showing a raw, untranslated key to the user.
+    if (template === key) return (path || rootLabel) + ': ' + e.message;
+    return template.replace(/\{(\w+)\}/g, function (_, k) { return niceParams[k]; });
+  });
+}
+
 // Export for node tests; no-op in the browser bundle (module is undefined there).
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { deDefaultStateValue, mergeDeviceForEditor };
+  module.exports = { deDefaultStateValue, mergeDeviceForEditor, escapeHtml, formatConfigErrors };
 }

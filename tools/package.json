@@ -1,0 +1,10 @@
+{
+  "name": "mrj-layoutfx-build-tools",
+  "private": true,
+  "description": "Build-time-only Node tooling (not shipped in firmware). See _ajv_gen.mjs.",
+  "type": "module",
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "esbuild": "^0.24.0"
+  }
+}

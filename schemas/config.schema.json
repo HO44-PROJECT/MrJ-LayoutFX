@@ -250,6 +250,7 @@
           "enum": [
             "ESP32DevkitC",
             "ESP32Mini",
+            "MrJRailwayFX_v1",
             "HC595",
             "HC595x2_biface",
             "HC595x2_uniface",
@@ -479,12 +480,17 @@
           "description": "DCC decoder address. Omit to skip DCC registration. Independent of wiring — DCC is a control layer, not a wiring layer."
         },
         "default_state": {
-          "type": "string",
-          "enum": [
-            "on",
-            "off"
-          ],
-          "description": "Initial state applied at boot. Omit or 'off' to start inactive."
+          "description": "Initial state applied at boot. Omit or 'off' to start inactive. Binary devices use the 'on'/'off' string; multi-state devices (signals, servos with named states) use the numeric state index (see DeviceFactory::load()).",
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["on", "off"]
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
         },
         "start_delay_ms": {
           "type": "integer",
