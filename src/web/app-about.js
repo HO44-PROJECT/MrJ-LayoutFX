@@ -247,7 +247,7 @@ function renderAbout(s) {
       config: 'Config', api: 'API', api_audit: 'API audit', webui: 'WebUI', wifi: 'WiFi', wifi_force_ap: 'Force AP', ota: 'OTA',
       dcc: 'DCC', dcc_audit: 'DCC audit',
       spi: 'SPI', i2c: 'I²C', i2c_scan: 'I²C scan',
-      lobot_servo: 'Lobot Servo', lx16a_servo: 'LX-16A Servo',
+      lobot_servo: 'Lobot Servo',
       audio: 'Audio',
       oled: 'OLED', oled_status: 'OLED status', oled_splash: 'OLED splash',
       oled_metrics: 'OLED metrics', oled_events: 'OLED events',
@@ -258,7 +258,7 @@ function renderAbout(s) {
     // so 26 badges read as 5 tidy lines instead of one blob.
     var FEAT_GROUPS = [
       ['abt.featgrp.core',   ['config', 'api', 'api_audit', 'webui', 'wifi', 'wifi_force_ap', 'ota']],
-      ['abt.featgrp.bus',    ['dcc', 'dcc_audit', 'spi', 'i2c', 'i2c_scan', 'lobot_servo', 'lx16a_servo', 'audio']],
+      ['abt.featgrp.bus',    ['dcc', 'dcc_audit', 'spi', 'i2c', 'i2c_scan', 'lobot_servo', 'audio']],
       ['abt.featgrp.oled',   ['oled', 'oled_status', 'oled_splash', 'oled_metrics', 'oled_events']],
       ['abt.featgrp.log',    ['log_serial', 'debug_serial', 'log_oled', 'debug_oled']],
       ['abt.featgrp.behave', ['jtag', 'demo']]

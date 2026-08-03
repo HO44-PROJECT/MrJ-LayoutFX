@@ -438,11 +438,14 @@ void OledDisplay::_drawIdle() {
   // ── Line 4 (y=52): active features — compile-time constant ────────────────
   {
     static const char kFeats[] =
-    #ifdef LFX_API_SERVER_ENABLED
-      "WiFi "
+    #ifdef LFX_SERIAL_AUDIO_ENABLED
+      "AUDIO "
     #endif
     #ifdef LFX_CONFIG_ENABLED
       "CFG "
+    #endif
+    #ifdef LFX_DCC_ENABLED
+      "DCC "
     #endif
     #ifdef LFX_I2C_DEVICES_ENABLED
       "I2C "
@@ -450,11 +453,11 @@ void OledDisplay::_drawIdle() {
     #ifdef LFX_SPI_CARDS_ENABLED
       "SPI "
     #endif
-    #ifdef LFX_DCC_ENABLED
-      "DCC"
+    #ifdef LFX_API_SERVER_ENABLED
+      "WiFi"
     #endif
       "";
-    _u8g2.setFont(u8g2_font_5x7_tr);
+    _u8g2.setFont(u8g2_font_4x6_tr);
     _u8g2.drawStr(0, 52, kFeats);
   }
 
