@@ -5,6 +5,30 @@ issue it closes; the date is the issue's GitHub closing date. Started
 2026-07-11 by reconstructing dates from `gh issue list --state closed` —
 earlier project history (pre-#3) lives only in `git log`.
 
+## 2026-08-03
+
+- OLED idle screen's features line was missing an `AUDIO` badge despite the
+  feature existing and working; the badge list is now also sorted
+  alphabetically and uses a narrower font so it fits on 128px. (#138)
+- About panel's feature badges are now sorted alphabetically within each
+  group, instead of source-order. (#136)
+- Removed the "LX-16A Servo" feature badge from the About panel — always
+  showed "off" since no board configures it; the underlying driver
+  (`SerialServoMotorMode`) is untouched and stays available for future use.
+  (#137)
+- `config.json` is now validated against its schema client-side before
+  upload, instead of only writing it atomically. (#78)
+
+## 2026-08-02
+
+- Added full support for the DFR1173 serial MP3 audio device: device type,
+  bus, DCC multi-state control, and a dedicated audio-state editor
+  (folder/file, fade, repeat/next/random) in the Boards & extensions page.
+  (#9)
+- Release page now points users at the browser installer instead of the raw
+  `.bin` files, with a manual `esptool.py` flashing section added to
+  `web-installer/README.md` for the advanced case.
+
 ## 2026-07-19
 
 - The Boards & extensions page's DCC and DELAY pin-label modes no longer fall
