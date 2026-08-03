@@ -104,16 +104,16 @@ public:
      */
     bool checkAck();
 
-#ifdef DCC_AUDIT
+#ifdef LFX_DCC_AUDIT_ENABLED
     /**
      * @brief Debug helper: blocking drain of RX for forMs, logging every byte seen.
-     *        Only compiled under DCC_AUDIT (see sendCommand()'s TX/RX logging).
+     *        Only compiled under LFX_DCC_AUDIT_ENABLED (see sendCommand()'s TX/RX logging).
      */
     void debugDrainRx(uint32_t forMs);
 
     /**
      * @brief Debug helper: sends the 0x42 playback-status query for manual inspection.
-     *        Only compiled under DCC_AUDIT.
+     *        Only compiled under LFX_DCC_AUDIT_ENABLED.
      */
     void debugQueryStatus();
 

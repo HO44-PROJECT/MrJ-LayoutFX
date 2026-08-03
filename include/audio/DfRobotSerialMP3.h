@@ -227,7 +227,11 @@ public:
         if (_stateCount > 0) newState(1, skipDelay);
     }
 
-    // Contrôle de lecture
+    // Contrôle de lecture — thin delegations to DfR1173Bus (see that class for the actual
+    // command bytes/datasheet references); this class only adds the bookkeeping needed by
+    // runCoroutine()'s manual-advance logic (_lastTrack).
+    /// Plays a physical track and remembers it in _lastTrack, so a later manual "next" (see
+    /// runCoroutine()'s _manualAdvance) or F3-style repeat toggle has a valid track number.
     inline void playTrack(uint8_t trackNumber) { _lastTrack = trackNumber; bus->playTrack(trackNumber); }
     inline void nextTrack() { bus->nextTrack(); }
     inline void previousTrack() { bus->previousTrack(); }
@@ -236,6 +240,8 @@ public:
     inline void stopPlayback() { bus->stopPlayback(); }
 
     // Volume
+    /// Sets playback volume and mirrors it into the `volume` member, so start()/stop()
+    /// (mute/unmute) can restore the last non-zero level without the caller tracking it.
     inline void setVolume(uint8_t level)
     {
         volume = level;
@@ -245,6 +251,8 @@ public:
     inline void decreaseVolume() { bus->decreaseVolume(); }
 
     // Modes de lecture
+    /// Same _lastTrack bookkeeping as playTrack() — repeatPlayback() also targets a specific
+    /// physical track, so a later state change referencing "the last track" stays consistent.
     inline void repeatPlayback(uint8_t trackNumber) { _lastTrack = trackNumber; bus->repeatPlayback(trackNumber); }
     inline void randomPlayback() { bus->randomPlayback(); }
     inline void continuousLoopPlayback(bool enable) { bus->continuousLoopPlayback(enable); }
@@ -265,7 +273,7 @@ public:
     inline void enterLowPowerMode() { bus->enterLowPowerMode(); }
 
     DfR1173Bus *bus = nullptr;         ///< Serial protocol layer for the DFR1173 module.
-    DFAUDIO_VOLUME volume = 0;         ///< Current volume level (0–30).
+    DFAUDIO_VOLUME volume = 0;         ///< Current volume level (0–30), last value passed to setVolume() — restored by start() after a stop()/mute.
 
 private:
     uint8_t    _stateCount = 0;
