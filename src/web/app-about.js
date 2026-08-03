@@ -266,6 +266,8 @@ function renderAbout(s) {
     var groups = FEAT_GROUPS.map(function (g) {
       var keys = g[1].filter(function (k) { return s.features[k] !== undefined; });
       if (!keys.length) return '';
+      // Alphabetical by displayed label within each group, not build-flag order.
+      keys.sort(function (a, b) { return FEAT_LABELS[a].localeCompare(FEAT_LABELS[b]); });
       var badges = keys.map(function (k) {
         var tip = t('abt.feat.' + k).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
         return '<span class="abt-feat' + (s.features[k] ? ' on' : ' off') + '" data-tip="' + tip + '">' + FEAT_LABELS[k] + '</span>';
