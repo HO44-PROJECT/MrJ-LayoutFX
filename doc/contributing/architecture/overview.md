@@ -14,7 +14,7 @@ its output(s). Control (WebUI / API / DCC) only sets *intent*; the coroutines do
 - `oled/` — `OledDisplay` (rich display) / `StatusOled` (lightweight, AVR).
 - `api/` — `ApiServer` (WiFi + HTTP) and the endpoint handlers.
 - `dcc/` — NmraDcc integration and accessory-address dispatch.
-- `audio/` — DFPlayer Mini.
+- `audio/` — DFRobot DFR1173 serial MP3 (`DfRobotSerialMP3`).
 - `web/` — the WebUI (`app-*.js`, i18n, styles), bundled into the firmware.
 
 ## Config-driven model
@@ -25,6 +25,63 @@ its output(s). Control (WebUI / API / DCC) only sets *intent*; the coroutines do
 - **Catalog** (`device_types.json`, `board_types.json`, `bus_types.json`, `i2c_known.json`): the
   metadata the WebUI needs to render and validate. Embedded **gzipped in PROGMEM** and served from
   the firmware → a catalog change needs a **reflash**, not just a filesystem upload.
+
+### Buses
+The `buses` section replaces what used to be a single `system` section. Each bus has a free-form
+JSON key, a `type`, and type-specific properties — the types themselves are library constants:
+
+| type               | direction  | properties                    |
+|--------------------|------------|--------------------------------|
+| `dcc`              | input      | `pin`                          |
+| `spi_master_only`  | output     | `mosi`, `sclk`, `latch`        |
+| `spi_full_duplex`  | bidir      | `mosi`, `miso`, `sclk`, `cs`    |
+| `uart`             | bidir      | `tx`, `rx`, `baud`             |
+| `i2c`              | bidir      | `sda`, `scl`                   |
+
+The `dcc` bus is input-only and configures the DCC receiver pin — no board attaches to it; a
+device's DCC `address` is a control-mechanism attribute, independent of its physical output wiring.
+
+```json
+"buses": {
+  "dcc":  { "type": "dcc", "pin": 34 },
+  "uart2": { "type": "uart", "tx": 17, "rx": 16, "baud": 115200 },
+  "spi":  { "type": "spi_master_only", "mosi": 23, "sclk": 18, "latch": 5 },
+  "i2c0": { "type": "i2c", "sda": 21, "scl": 22 }
+}
+```
+
+### Board types
+A board is a physical entity exposing wiring points (pins, SPI output bits, servo IDs, …). Known
+board types (also library constants), with the bus they expect and what their `wiring` field means:
+
+| type           | expected bus       | `wiring` semantics                  |
+|----------------|--------------------|--------------------------------------|
+| `ESP32DevkitC` | none (root board)  | GPIO number                         |
+| `HC595`        | `spi_master_only`  | output bit number (1-based)         |
+| `LobotChain`   | `uart`             | servo ID within the chain           |
+| `SSD1306`      | `i2c`              | — (no wiring, single device)        |
+
+The root board (e.g. `ESP32DevkitC`) is the central MCU — it references no bus since it's the
+master of all buses, but must still be declared explicitly in `boards` so the WebUI can render it.
+
+```json
+"boards": [
+  { "id": "esp32",     "type": "ESP32DevkitC" },
+  { "id": "spi1",      "type": "HC595",      "bus": "spi",   "pin_count": 16 },
+  { "id": "servo_bus", "type": "LobotChain", "bus": "uart2" },
+  { "id": "oled",      "type": "SSD1306",    "bus": "i2c0"  }
+]
+```
+
+For an SPI daisy-chain, declaration order in `boards` sets the chain rank (1-based) — a board's
+SPI address *is* its rank.
+
+### Devices
+Each device matches a predefined type (a C++ class), attaches to a board via `board`, and carries a
+`wiring` value (scalar or array) whose meaning depends on the board type (GPIO number for
+`ESP32DevkitC`, output bit for `HC595`, servo ID for `LobotChain`, …). A device may also carry a DCC
+`address` (control mechanism, independent of wiring) and may be multi-state (always an OFF state
+plus one or more active states). A device with no explicit `board` wires directly to the root board.
 
 ## Pins & buses
 - A `PIN_ID` abstracts a target: a raw MCU **GPIO**, or an **SPI** 74HC595 (card, channel). Devices

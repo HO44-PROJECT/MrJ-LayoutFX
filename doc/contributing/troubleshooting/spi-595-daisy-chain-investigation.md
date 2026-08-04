@@ -190,9 +190,10 @@ wiring 9-16 pilotables depuis l'UI **sans aucun changement de code**.
 
 ## Bugs firmware **réels** découverts en chemin (indépendants du non-pilotage 595)
 
-Ces points sont de vrais défauts, à traiter séparément — cartes backlog : **#56**
+Ces points sont de vrais défauts, tous **corrigés et fermés** depuis : **#56**
 (resize hot-reload), **#54** (pin_count éditeur), **#52** (indicateur actif),
-**#53** (upload). La réparation matérielle du breadboard est suivie par **#57** :
+**#53** (upload). La réparation matérielle du breadboard est suivie par **#57**,
+également fermée. Conservé ci-dessous pour l'historique de l'enquête.
 
 1. **La chaîne SPI n'est pas redimensionnée au hot-reload.** (→ #56)
    `BusRegistry::activateSpi()` est idempotent (`if (_spiReady) return;`) et

@@ -52,6 +52,18 @@ Conventions:
 | `AUDIO` | toggle | off | DFPlayer-style serial audio device support. |
 | `USE_JTAG` | toggle | off | Do **not** drive GPIO 5/10/12-15 LOW at boot (keep a JTAG probe usable). |
 
+### PCA9685 (I²C servos/motors) notes
+
+- Default I²C address is `0x40` (all A0-A5 jumpers at 0); several boards can
+  share the same `i2c0` bus as long as each has a distinct `i2c_address`.
+  Confirm a board actually responds at its configured address with
+  `GET /api/scan/i2c` (needs `I2C_SCAN`).
+- On boot, a `PCA9685Servo`/`PCA9685Motor` device is driven to its state-0
+  position/speed immediately (`initPins()`); if `default_state: "on"` is set,
+  it then transitions to state 1 on the very first coroutine `loop()`.
+- See [`PCA9685_OSCILLATOR_CALIBRATION.md`](../contributing/troubleshooting/pca9685-oscillator-calibration.md)
+  if every channel on a board shares the same neutral-point offset.
+
 ## OLED display
 
 | Flag | Type | Default | Effect |

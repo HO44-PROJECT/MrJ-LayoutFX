@@ -26,6 +26,12 @@ investigation.
   Speed/Func à haut débit pouvait évincer un événement Signal/Accessoire rare
   avant que le polling WebUI ne l'ait récupéré. Résolu par un tampon par
   catégorie (#76).
+- [pca9685-oscillator-calibration.md](pca9685-oscillator-calibration.md) —
+  ✅ résolu — « tous les servos/moteurs d'une carte PCA9685 ont le même point
+  neutre décalé » : l'oscillateur interne du chip (nominal 25 MHz, tolérance
+  ±10 %) tourne à une fréquence différente de celle supposée par le firmware.
+  Mesure du neutre réel + calcul de `oscillator_hz`, réglable par board dans
+  `config.json`.
 
 ## Writing a new entry
 
