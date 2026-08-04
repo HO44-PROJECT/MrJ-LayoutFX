@@ -29,3 +29,7 @@ tools/._ajv_standalone_tmp_*.cjs
 __pycache__/
 *.pyc
 tests
+
+# Investigation post-mortems: personal debugging notes, not shipped project
+# documentation — kept locally only.
+doc/contributing/troubleshooting/
