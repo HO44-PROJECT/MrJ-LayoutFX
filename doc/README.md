@@ -6,16 +6,16 @@ a self-served web control panel, and a rich set of signal/lamp/servo effects.
 > Documentation is in **English** for now. A French translation may follow.
 
 Docs are organized by **who you are**, not by topic — pick your section below.
-Looking for something specific instead? See **Je veux…** right below.
+Looking for something specific instead? See **I want to…** right below.
 
-## Je veux…
+## I want to…
 
 | | |
 |---|---|
-| …installer depuis le navigateur | [getting-started.md — Option A, browser flash](user/getting-started.md#option-a--browser-flash-no-install-no-platformio) |
-| …compiler moi-même | [building-from-source.md](advanced/building-from-source.md) |
-| …changer le mot de passe WiFi | [wifi-provisioning.md](user/wifi-provisioning.md) |
-| …sauvegarder ma configuration | [usage.md — Files](user/usage.md#files) |
+| …install from the browser | [getting-started.md — Option A, browser flash](user/getting-started.md#option-a--browser-flash-no-install-no-platformio) |
+| …build it myself | [building-from-source.md](advanced/building-from-source.md) |
+| …change the WiFi password | [wifi-provisioning.md](user/wifi-provisioning.md) |
+| …back up my configuration | [usage.md — Files](user/usage.md#files) |
 
 ## [user/](user/) — flash it, run it, drive it from the browser
 

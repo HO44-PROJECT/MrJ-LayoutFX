@@ -1,19 +1,19 @@
 # JavaScript Files — MrJ-LayoutFX WebUI
 
-## Vue d'ensemble
+## Overview
 
-Tous les fichiers JavaScript du projet suivent maintenant un format d'en-tête standardisé conforme au reste du projet.
+All JavaScript files in the project now follow a standardized header format consistent with the rest of the project.
 
 ---
 
-## Format d'en-tête standard
+## Standard header format
 
 ```javascript
 /**
  * @file <filename>.js
- * @brief <description courte>
+ * @brief <short description>
  *
- * <description détaillée facultative>
+ * <optional detailed description>
  *
  * @project MrJ-LayoutFX
  * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
@@ -23,101 +23,110 @@ Tous les fichiers JavaScript du projet suivent maintenant un format d'en-tête s
 
 ---
 
-## Liste des fichiers JavaScript standardisés
+## List of standardized JavaScript files
 
-### **1. app.js**
-Main SPA controller, navigation, et architecture globale.
-- Cockpit view (device cards + polling)
-- Config view (boards, buses, files)
-- About view (system info)
+There is no `app.js` file: `build_webui.py` concatenates the `app-*.js`
+modules below, in `APP_MODULES` order, directly into the final bundle —
+there is no separate "main controller".
+
+### **1. app-pure.js**
+Pure helpers, no DOM or fetch (input data → output data). The only
+module tested by the native Node tests (`test/web/`) — a CommonJS guard at
+the bottom of the file exports the functions for tests without affecting the
+browser bundle.
 
 ### **2. app-core.js**
-Cockpit view core : globals, device card renderers, filter, grid, polling.
+Cockpit view core: globals, device card renderers, filter, grid, polling.
 
-### **3. app-config.js**
-Configuration management et device state actions.
-- Config file upload/download
-- Device state management
-- Debug data loading
-
-### **4. app-device-editor.js**
-Modal d'édition de devices individuels.
-- Création/modification devices
-- Pin selection
-- Type picker
-- Parameter configuration
-
-### **5. app-board-editor.js**
-Modal d'édition de boards (I2C/SPI expansion).
-- PCA9685, MCP23017, 74HC595
-- Board configuration
-
-### **6. app-boards.js**
-I2C scanner et board management.
-- I2C device detection
-- Board listing
-- Bus configuration
-
-### **7. app-wizard.js**
-Setup wizard et utilitaires de configuration.
+### **3. app-wizard.js**
+Setup wizard and configuration utilities.
 - First-boot wizard
 - Configuration reset
 - Code export
 
-### **8. app-about.js**
-Panel About avec informations système.
+### **4. app-config.js**
+Configuration management and device state actions.
+- Config file upload/download (client-side validation via `validate_config.js`, generated — see [build-pipeline.md](../../doc/contributing/build-pipeline.md))
+- Device state management
+- Debug data loading
+
+### **5. app-boards.js**
+I2C scanner and board management.
+- I2C device detection
+- Board listing
+- Bus configuration
+
+### **6. app-dcc.js**
+Diagnostics tab: live DCC activity indicators (polls `/api/dcc-status`).
+- One indicator per message category (bus/speed/func/accessory/signal)
+- Distinguishes a "dead bus" from a "bus alive but ignored by this decoder"
+
+### **7. app-about.js**
+About panel with system information.
 - Firmware version
 - Hardware info
 - Memory usage
 - Project links
 
-### **9. icons.js**
-Définitions SVG pour tous les types de devices.
+### **8. app-device-editor.js**
+Modal for editing individual devices.
+- Device creation/editing
+- Pin selection
+- Type picker
+- Parameter configuration
+
+### **9. app-board-editor.js**
+Modal for editing boards (I2C/SPI expansion), the bus editor, and the boot sequence.
+- PCA9685, MCP23017, 74HC595
+- Board configuration
+
+### **10. icons.js**
+SVG definitions for all device types.
 - Railway signals
 - Lamps (gas, electric, oil, etc.)
 - Beacons
 - Traffic lights
 - Effects (storm, campfire, etc.)
 
-### **10. i18n.js**
-Internationalisation (French tooltips).
+### **11. i18n.js**
+Internationalization (fr/de/es/en).
 - Device type translations
 - UI labels
-- French/English support
 
 ---
 
-## Architecture du code
+## Code architecture
 
-### **Dépendances entre fichiers**
+### **Concatenation order (`APP_MODULES` in `build_webui.py`)**
 
 ```
-app.js (main controller)
-  ├─ app-core.js (cockpit view)
-  ├─ app-config.js (config management)
-  ├─ app-device-editor.js (device modal)
-  ├─ app-board-editor.js (board modal)
-  ├─ app-boards.js (I2C scanner)
-  ├─ app-wizard.js (setup wizard)
-  ├─ app-about.js (about panel)
-  ├─ icons.js (SVG definitions)
-  └─ i18n.js (translations)
+style.css + i18n.js + icons.js (markers %%STYLE%%/%%I18N%%/%%ICONS%%)
+  └─ app-pure.js         (pure helpers, tested in Node)
+  └─ app-core.js         (cockpit view)
+  └─ app-wizard.js        (setup wizard)
+  └─ app-config.js        (config management)
+  └─ app-boards.js         (I2C scanner)
+  └─ app-dcc.js             (DCC diagnostics)
+  └─ app-about.js            (about panel)
+  └─ app-device-editor.js     (device modal)
+  └─ app-board-editor.js       (board/bus modal)
+  [+ validate_config.js, generated, if present — see build-pipeline.md]
 ```
 
 ### **Build pipeline**
 
-Tous les fichiers JS sont :
-1. Concaténés par `build_webui.py`
-2. Minifiés avec `rjsmin` (commentaires supprimés)
-3. Injectés dans `webui.html`
-4. Compressés en gzip
-5. Convertis en tableau C++ (`webui_html_gz[]`)
+All JS files are:
+1. Concatenated by `build_webui.py`
+2. Minified with `rjsmin` (comments stripped)
+3. Injected into `webui.html`
+4. Compressed with gzip
+5. Converted to a C++ array (`webui_html_gz[]`)
 
 ---
 
-## Conventions de code
+## Code conventions
 
-### **Globals prefixés**
+### **Prefixed globals**
 ```javascript
 var _dbgDevs = [];      // runtime device list
 var _dbgCfg = null;     // loaded config
@@ -125,39 +134,39 @@ var _boardTypes = null; // board catalogue
 var _deviceTypes = null;// device catalogue
 ```
 
-### **Fonctions nommées**
+### **Named functions**
 ```javascript
 function openDevEditor() { ... }
 function scanI2c() { ... }
 function uploadConfig() { ... }
 ```
 
-### **Commentaires**
-- En-tête de fichier : format JSDoc standardisé
-- Commentaires inline : explicatifs uniquement (minifiés à la build)
-- Pas de commentaires TODO/FIXME en production
+### **Comments**
+- File header: standardized JSDoc format
+- Inline comments: explanatory only (stripped on minification)
+- No TODO/FIXME comments in production
 
-### **Format des chaînes**
+### **String formatting**
 ```javascript
 // OK
 var msg = 'Device created';
 
-// Éviter (moins lisible après minification)
+// Avoid (less readable after minification)
 var msg = "Device created";
 ```
 
 ---
 
-## Ajout d'un nouveau fichier JavaScript
+## Adding a new JavaScript file
 
-1. **Créer le fichier** dans `src/web/`
-2. **Ajouter l'en-tête standardisé** :
+1. **Create the file** in `src/web/`
+2. **Add the standardized header**:
    ```javascript
    /**
     * @file app-newfeature.js
-    * @brief Description courte de la fonctionnalité
+    * @brief Short description of the feature
     *
-    * Description détaillée (optionnelle)
+    * Detailed description (optional)
     *
     * @project MrJ-LayoutFX
     * @repo https://github.com/HO44-PROJECT/MrJ-LayoutFX
@@ -165,11 +174,11 @@ var msg = "Device created";
     */
    ```
 
-3. **Ajouter au build** :
-   - Modifier `tools/build_webui.py` si nécessaire
-   - Ordre de concaténation : dépendances en premier
+3. **Add it to the build**:
+   - Update `tools/build_webui.py` if needed
+   - Concatenation order: dependencies first
 
-4. **Tester** :
+4. **Test**:
    ```bash
    python tools/build_webui.py
    pio run -e <env> --target upload
@@ -179,37 +188,37 @@ var msg = "Device created";
 
 ## Maintenance
 
-### **Vérification des en-têtes**
+### **Header check**
 
 ```bash
-# Lister tous les fichiers JS
+# List all JS files
 find src/web -name "*.js"
 
-# Vérifier que tous ont l'en-tête standard
+# Check that all have the standard header
 grep -L "@project MrJ-LayoutFX" src/web/*.js
 ```
 
-### **Format automatique** (si configuré)
+### **Automatic formatting** (if configured)
 
 ```bash
-# Prettier (si installé)
+# Prettier (if installed)
 prettier --write src/web/*.js
 
-# ESLint (si installé)
+# ESLint (if installed)
 eslint --fix src/web/*.js
 ```
 
 ---
 
-## Références
+## References
 
-- **Build script** : `tools/build_webui.py`
-- **HTML template** : `src/web/webui.html`
-- **WebUI server** : `src/api/WebUI.cpp`
-- **Documentation API** : voir `src/api/README.md`
+- **Build script**: `tools/build_webui.py`
+- **HTML template**: `src/web/webui.html`
+- **WebUI server**: `src/api/WebUI.cpp`
+- **API documentation**: see `src/api/README.md`
 
 ---
 
-**Date de standardisation** : 2026-06-02  
-**Version** : 1.0  
-**Projet** : MrJ-LayoutFX
+**Standardization date**: 2026-06-02
+**Version**: 1.0
+**Project**: MrJ-LayoutFX
