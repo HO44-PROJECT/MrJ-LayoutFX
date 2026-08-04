@@ -4,23 +4,26 @@
 
 Several kinds of "source" in this project are not C++: the device/board/bus
 catalogs are JSON, the WebUI is HTML/CSS/JS, and the declared library versions
-live in `platformio.ini`. None of that can be `#include`d directly. Three
-pre-build hooks bridge the gap: they run before compilation and emit C++ headers
-into a single generated directory, which the firmware then includes normally.
+live in `platformio.ini`. None of that can be `#include`d directly. Four
+pre-build hooks bridge the gap: they run before compilation and emit generated
+output (C++ headers, or a JS module) into a single generated directory each,
+which is then included/bundled normally.
 
 ```
 data/*.json ─┐
-             ├─ build_embedded_data.py ─→ include/generated/embedded_*.h
+             ├─ build_embedded_data.py  ─→ include/generated/embedded_*.h
 board_types  ┘                            include/generated/embedded_board_pincounts.h
 
-src/web/*   ──── build_webui.py       ─→ include/generated/webui_html.h
+schemas/config.schema.json ─ gen_config_validator.py ─→ src/web/generated/validate_config.js
+
+src/web/*   ──── build_webui.py        ─→ include/generated/webui_html.h
+                 (also bundles validate_config.js above, if present)
 
 platformio.ini
- (lib_deps)  ─── gen_build_info.py    ─→ include/generated/build_info.h
+ (lib_deps)  ─── gen_build_info.py     ─→ include/generated/build_info.h
 ```
 
-All generated headers land under `lib/MrJ-RailwayFX.local/include/generated/`,
-which is **gitignored**. They are regenerated on every build, never hand-edited,
+All generated headers land under `include/generated/`, which is **gitignored**. They are regenerated on every build, never hand-edited,
 and never committed — the source of truth is always the JSON / web / `.ini` input.
 Each generator also creates the directory on demand, so a clean checkout builds
 without any manual setup.
@@ -53,8 +56,25 @@ gzipped catalog on the AVR — so this tiny table is passed to
 This hook also runs standalone for a quick regen without a full build:
 
 ```sh
-python3 lib/MrJ-RailwayFX.local/tools/build_embedded_data.py
+python3 tools/build_embedded_data.py
 ```
+
+## `gen_config_validator.py` — JSON Schema → standalone JS validator
+
+Runs only for WebUI environments, **before** `build_webui.py` (which bundles its
+output). It compiles `schemas/config.schema.json` into a dependency-free JS
+validator via Ajv's standalone codegen (`_ajv_gen.mjs`) and esbuild, emitting
+`src/web/generated/validate_config.js`. `uploadConfig()` in `app-config.js`
+checks `typeof validateConfig` at call time, so the feature degrades cleanly
+(falls back to a `JSON.parse()`-only check) when Node/Ajv aren't available or
+`NO_CONFIG_SCHEMA_VALIDATION` is set in `config.h` — a build never fails because
+of this hook.
+
+This hook is easy to leave unwired when duplicating a `platformio.ini` (e.g. the
+library repo's own standalone `.ini` for native tests): nothing fails loudly if
+it's missing, `uploadConfig()` just silently falls back. Confirm
+`pre:tools/gen_config_validator.py` is present in every `platformio.ini`'s
+`esp32_webui_base` (or equivalent) `extra_scripts`, ahead of `build_webui.py`.
 
 ## `build_webui.py` — web sources → one gzipped page
 

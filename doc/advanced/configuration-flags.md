@@ -87,9 +87,9 @@ These are **independent** and not mutually exclusive.
 |---|---|---|---|
 | *(boot default)* | — | **always on** | `Serial.begin()` at boot prints **structural Tier-1** logs (banner, IP, config result). Not toggleable via `config.h`. |
 | `LOG_SERIAL` | toggle | off | **Operational Tier-2** logs on UART0 (`LOG_PRINT…`). Runtime-gated by the `uart0` bus — remove it to free GPIO1/3. |
-| `DEBUG_SERIAL` | toggle | off | **Verbose debug** logs on UART0 (`DEBUG_PRINT…`). |
+| `MRJ_DEBUG_SERIAL` | toggle | off | **Verbose debug** logs on UART0 (`MRJ_DEBUG_PRINT…`). |
 | `LOG_OLED` | toggle | off | Mirror operational logs to the OLED. |
-| `DEBUG_OLED` | toggle | off | Send debug logs to the OLED instead of serial. |
+| `MRJ_DEBUG_OLED` | toggle | off | Send debug logs to the OLED instead of serial. |
 
 ## Behaviour
 

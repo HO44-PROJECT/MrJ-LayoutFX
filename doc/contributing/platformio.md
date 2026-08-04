@@ -79,7 +79,7 @@ The global `[env]` section applies to *every* environment:
 ```ini
 [env]
 build_flags  = -DPIOENV_NAME='"${PIOENV}"'          ; env name → firmware string (About panel)
-extra_scripts = pre:lib/MrJ-RailwayFX.local/tools/build_embedded_data.py
+extra_scripts = pre:lib/MrJ-LayoutFX.local/tools/build_embedded_data.py
     pre:scripts/name_firmware.py
 ```
 
@@ -95,14 +95,17 @@ the WebUI-only generators:
 
 ```ini
 extra_scripts =
-    ${env.extra_scripts}                                       ; keep the global hooks
-    pre:lib/MrJ-RailwayFX.local/tools/build_webui.py           ; WebUI bundle
-    pre:lib/MrJ-RailwayFX.local/tools/gen_build_info.py        ; lib-deps table
+    ${env.extra_scripts}                                             ; keep the global hooks
+    pre:lib/MrJ-LayoutFX.local/tools/gen_config_validator.py        ; config.json JS validator
+    pre:lib/MrJ-LayoutFX.local/tools/build_webui.py                 ; WebUI bundle (needs the validator above)
+    pre:lib/MrJ-LayoutFX.local/tools/gen_build_info.py              ; lib-deps table
 ```
 
-So `build_webui.py` and `gen_build_info.py` run only for WebUI environments,
-while `build_embedded_data.py` and `name_firmware.py` run everywhere. What each
-hook does is covered in [build-pipeline.md](build-pipeline.md).
+So `gen_config_validator.py`, `build_webui.py` and `gen_build_info.py` run only
+for WebUI environments, while `build_embedded_data.py` and `name_firmware.py`
+run everywhere. `gen_config_validator.py` must precede `build_webui.py`, since
+the latter bundles its generated output when present. What each hook does is
+covered in [build-pipeline.md](build-pipeline.md).
 
 ## Where to look
 

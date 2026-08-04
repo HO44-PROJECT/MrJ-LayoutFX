@@ -11,7 +11,7 @@ not a replacement for them.
 
 ## 0. Scope — what #111 actually asks for
 
-> "Mix entre gas lamp et defect lamp" — same base behaviour as `GasLamp`
+> "Mix between gas lamp and defect lamp" — same base behaviour as `GasLamp`
 > (ignition → flicker → brightening → stable flame → extinction), but the
 > stable flame occasionally suffers a rare, subtle malfunction, in the spirit
 > of `DefectLamp`. **`DefectLamp` itself is not modified.** This is a brand
@@ -140,7 +140,7 @@ no new API field), so this is the only i18n surface.
 ## 5. UI parity
 
 The goal stated by the user is that this behaves as a first-class effect,
-"connu de l'UI avec le même design que les autres effets" — meaning no
+"known to the UI with the same design as the other effects" — meaning no
 special-casing anywhere in the WebUI beyond the standard per-type
 icon/label/tooltip lookups already keyed by `type` string. Once steps 3–4 are
 done, the device editor, the dashboard tile, and the OLED status screen pick
@@ -153,10 +153,10 @@ against `GasLamp`'s once the WebUI is rebuilt.
 
 Per the standing process, builds/flashes are done by the maintainer only.
 Cheap local checks before handing off:
-- `python3 -c "import json; json.load(open('lib/MrJ-RailwayFX.local/data/device_types.json'))"`
-- `python3 -c "import json; json.load(open('lib/MrJ-RailwayFX.local/schemas/config.schema.json'))"` (should be unaffected, but confirm it still parses)
-- `node --check lib/MrJ-RailwayFX.local/src/web/icons.js`
-- `node --check lib/MrJ-RailwayFX.local/src/web/i18n.js`
+- `python3 -c "import json; json.load(open('data/device_types.json'))"`
+- `python3 -c "import json; json.load(open('schemas/config.schema.json'))"` (should be unaffected, but confirm it still parses)
+- `node --check src/web/icons.js`
+- `node --check src/web/i18n.js`
 - Manual brace/paren balance review of `GasLampDefect.cpp`/`.h`,
   `DeviceFactory.cpp`, `OledDisplay.cpp` (no local compiler for the AVR/ESP32
   targets).
@@ -165,7 +165,7 @@ Cheap local checks before handing off:
 
 - Issue #111 already exists on the backlog board — move it Todo → In
   Progress when work starts.
-- One commit per repo touched (main project vs. `lib/MrJ-RailwayFX.local`) —
+- One commit per repo touched (main/dev project vs. this library repo) —
   this change is entirely inside the library, so a single commit there
   covers it, unless a `configurations/<env>/` example/demo is added too.
 - Do not close the issue / update `CHANGELOG.md` / commit until the user has
