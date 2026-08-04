@@ -41,6 +41,7 @@ instead of the WebUI.
 |---|---|
 | [building-from-source.md](advanced/building-from-source.md) | PlatformIO build, `config.h`, flashing firmware + filesystem. |
 | [configuration-flags.md](advanced/configuration-flags.md) | **Every `config.h` flag**, its type, default and effect. |
+| [bus-configuration.md](advanced/bus-configuration.md) | Structural vs application buses (I²C/UART/SPI): reserved pins, `config.json` layer, limits. |
 
 ## [contributing/](contributing/) — changing the code itself
 
